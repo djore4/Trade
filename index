@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Swing Trade - O Caminho da Verdade</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --bg: #f4f7f6;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--primary); padding: 20px; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: var(--primary); border-bottom: 2px solid var(--accent); padding-bottom: 10px; }
+        
+        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .card { background: #fff; border: 1px solid #ddd; padding: 15px; border-radius: 8px; text-align: center; }
+        .card label { font-size: 0.85rem; text-transform: uppercase; color: #7f8c8d; display: block; margin-bottom: 5px; }
+        .card span { font-size: 1.4rem; font-weight: bold; }
+        
+        .inputs { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 10px; margin-bottom: 20px; align-items: end; }
+        input, select { padding: 10px; border: 1px solid #ccc; border-radius: 5px; width: 100%; box-sizing: border-box; }
+        button { padding: 10px 20px; background: var(--accent); color: white; border: none; border-radius: 5px; cursor: pointer; transition: 0.3s; }
+        button:hover { background: #2980b9; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; }
+        .pos-long { color: var(--success); font-weight: bold; }
+        .pos-short { color: var(--danger); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Simulador de Gestão de Posição</h2>
+    
+    <div class="dashboard">
+        <div class="card">
+            <label>Capital Inicial (€)</label>
+            <input type="number" id="capTotal" value="10000" oninput="atualizarGeral()">
+        </div>
+        <div class="card">
+            <label>Preço Atual Mercado</label>
+            <input type="number" id="precoMercado" value="100" oninput="atualizarGeral()">
+        </div>
+        <div class="card">
+            <label>Preço Médio</label>
+            <span id="labelPrecoMedio">0.00</span>
+        </div>
+        <div class="card">
+            <label>Alavancagem Atual</label>
+            <span id="labelAlavancagem">0.00x</span>
+        </div>
+        <div class="card">
+            <label>P&L Aberto</label>
+            <span id="labelPL">0.00%</span>
+        </div>
+    </div>
+
+    <div class="inputs">
+        <div>
+            <label>Tipo</label>
+            <select id="tipoOperacao">
+                <option value="Compra">Compra (Long)</option>
+                <option value="Venda">Venda (Saída)</option>
+            </select>
+        </div>
+        <div>
+            <label>Preço</label>
+            <input type="number" id="inputPreco" placeholder="Ex: 105">
+        </div>
+        <div>
+            <label>Quantidade</label>
+            <input type="number" id="inputQtd" placeholder="Ex: 10">
+        </div>
+        <button onclick="adicionarOperacao()">Registar</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Tipo</th>
+                <th>Preço</th>
+                <th>Qtd</th>
+                <th>Total</th>
+                <th>Ação</th>
+            </tr>
+        </thead>
+        <tbody id="listaOperacoes"></tbody>
+    </table>
+</div>
+
+<script>
+    let operacoes = [];
+
+    function adicionarOperacao() {
+        const tipo = document.getElementById('tipoOperacao').value;
+        const preco = parseFloat(document.getElementById('inputPreco').value);
+        const qtd = parseFloat(document.getElementById('inputQtd').value);
+
+        if (isNaN(preco) || isNaN(qtd)) return alert("Preencha os valores corretamente.");
+
+        operacoes.push({ tipo, preco, qtd });
+        atualizarGeral();
+        renderizarTabela();
+        
+        // Limpar inputs
+        document.getElementById('inputPreco').value = '';
+        document.getElementById('inputQtd').value = '';
+    }
+
+    function atualizarGeral() {
+        const capTotal = parseFloat(document.getElementById('capTotal').value) || 0;
+        const precoAtual = parseFloat(document.getElementById('precoMercado').value) || 0;
+
+        let totalQtd = 0;
+        let custoTotalEntradas = 0;
+        let qtdEntradas = 0;
+
+        operacoes.forEach(op => {
+            if (op.tipo === "Compra") {
+                totalQtd += op.qtd;
+                custoTotalEntradas += (op.preco * op.qtd);
+                qtdEntradas += op.qtd;
+            } else {
+                totalQtd -= op.qtd;
+            }
+        });
+
+        const precoMedio = qtdEntradas > 0 ? custoTotalEntradas / qtdEntradas : 0;
+        const exposicaoNominal = totalQtd * precoAtual;
+        const alavancagem = capTotal > 0 ? exposicaoNominal / capTotal : 0;
+        const pl = precoMedio > 0 ? ((precoAtual / precoMedio) - 1) * 100 : 0;
+
+        // Atualizar UI
+        document.getElementById('labelPrecoMedio').innerText = precoMedio.toFixed(2) + "€";
+        document.getElementById('labelAlavancagem').innerText = alavancagem.toFixed(2) + "x";
+        
+        const elPL = document.getElementById('labelPL');
+        elPL.innerText = pl.toFixed(2) + "%";
+        elPL.style.color = pl >= 0 ? "var(--success)" : "var(--danger)";
+        
+        if (alavancagem > 3) document.getElementById('labelAlavancagem').style.color = "var(--danger)";
+        else document.getElementById('labelAlavancagem').style.color = "var(--primary)";
+    }
+
+    function renderizarTabela() {
+        const tbody = document.getElementById('listaOperacoes');
+        tbody.innerHTML = '';
+
+        operacoes.forEach((op, index) => {
+            const row = `<tr>
+                <td class="${op.tipo === 'Compra' ? 'pos-long' : 'pos-short'}">${op.tipo}</td>
+                <td>${op.preco.toFixed(2)}€</td>
+                <td>${op.qtd}</td>
+                <td>${(op.preco * op.qtd).toFixed(2)}€</td>
+                <td><button onclick="remover(${index})" style="background:var(--danger); padding: 5px 10px;">X</button></td>
+            </tr>`;
+            tbody.innerHTML += row;
+        });
+    }
+
+    function remover(index) {
+        operacoes.splice(index, 1);
+        atualizarGeral();
+        renderizarTabela();
+    }
+</script>
+
+</body>
+</html>
