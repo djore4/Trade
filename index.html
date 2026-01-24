@@ -3,43 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Futures Terminal Pro | APT Fix</title>
+    <title>Futures Terminal Pro | GitHub Fixed</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
         :root { --primary: #1a1a1a; --accent: #f3d42f; --success: #00c853; --danger: #ff3d00; --bg: #0d0d0d; --text: #e0e0e0; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 20px; margin: 0; }
         .container { max-width: 1200px; margin: auto; }
-        
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 20px; margin-bottom: 20px; }
-        
         .dashboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
         .card { background: #161616; padding: 20px; border-radius: 10px; border: 1px solid #333; text-align: center; }
         .card label { color: #888; font-size: 0.7rem; text-transform: uppercase; display: block; margin-bottom: 8px; }
         .card span { font-size: 1.4rem; font-weight: bold; }
-
-        /* GRÁFICO COM BORDA DE CONTRASTE */
+        
+        /* Container do Gráfico com Borda de Visibilidade */
         #chart { 
             background: #000; 
             border-radius: 12px; 
-            border: 1px solid #f3d42f; /* Borda amarela discreta para veres onde está o gráfico */
+            border: 1px solid #444; 
             margin-bottom: 20px; 
             height: 450px; 
             width: 100%; 
-            box-shadow: 0 0 15px rgba(243, 212, 47, 0.1);
-            overflow: hidden;
+            position: relative;
         }
 
         .trade-panel { background: #161616; padding: 25px; border-radius: 10px; border: 1px solid #222; display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr auto; gap: 15px; align-items: end; }
         .input-group { display: flex; flex-direction: column; }
         .input-group label { font-size: 0.75rem; color: #888; margin-bottom: 6px; }
-        
-        input, select { background: #222; border: 1px solid #444; color: white; padding: 12px; border-radius: 6px; width: 100%; box-sizing: border-box; }
+        input, select { background: #222; border: 1px solid #444; color: white; padding: 12px; border-radius: 6px; width: 100%; }
         button { background: var(--accent); color: black; border: none; padding: 0 25px; border-radius: 6px; font-weight: bold; cursor: pointer; height: 48px; }
-        
         table { width: 100%; margin-top: 30px; border-collapse: collapse; }
-        th { text-align: left; color: #888; padding: 15px; border-bottom: 2px solid #333; font-size: 0.8rem; }
-        td { padding: 15px; border-bottom: 1px solid #1a1a1a; font-size: 0.9rem; }
+        th { text-align: left; color: #888; padding: 15px; border-bottom: 2px solid #333; }
+        td { padding: 15px; border-bottom: 1px solid #1a1a1a; }
     </style>
 </head>
 <body>
@@ -115,11 +110,17 @@
     function initCandleChart() {
         const chartElement = document.getElementById('chart');
         
-        // Se já existir um gráfico (ex: ao mudar par), limpamos o contentor
-        chartElement.innerHTML = '';
+        // Verificação Robusta
+        if (typeof window.LightweightCharts === 'undefined') {
+            chartElement.innerHTML = '<p style="color:orange; text-align:center; padding-top:200px;">A carregar motor gráfico...</p>';
+            setTimeout(initCandleChart, 1000); // Tenta de novo em 1 seg
+            return;
+        }
 
-        chart = LightweightCharts.createChart(chartElement, {
-            layout: { background: { color: '#000000' }, textColor: '#d1d4dc' },
+        chartElement.innerHTML = ''; // Limpa o aviso de carregamento
+
+        chart = window.LightweightCharts.createChart(chartElement, {
+            layout: { background: { type: 'solid', color: '#000000' }, textColor: '#d1d4dc' },
             grid: { vertLines: { color: '#111' }, horzLines: { color: '#111' } },
             priceScale: { borderColor: '#333' },
             timeScale: { borderColor: '#333', timeVisible: true },
@@ -136,26 +137,20 @@
 
     async function loadHistory() {
         try {
-            const response = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${currentSymbol}&interval=15&limit=200`);
-            const data = await response.json();
+            // Proxy AllOrigins para evitar CORS no GitHub Pages
+            const target = `https://api.bybit.com/v5/market/kline?category=linear&symbol=${currentSymbol}&interval=15&limit=200`;
+            const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(target)}`);
+            const json = await response.json();
+            const data = JSON.parse(json.contents);
             
-            if (data.result && data.result.list && data.result.list.length > 0) {
+            if (data.result && data.result.list) {
                 const klines = data.result.list.map(k => ({
-                    time: k[0] / 1000, 
-                    open: parseFloat(k[1]), 
-                    high: parseFloat(k[2]), 
-                    low: parseFloat(k[3]), 
-                    close: parseFloat(k[4])
+                    time: k[0] / 1000, open: parseFloat(k[1]), high: parseFloat(k[2]), low: parseFloat(k[3]), close: parseFloat(k[4])
                 })).reverse();
-
                 candleSeries.setData(klines);
                 chart.timeScale().fitContent();
-            } else {
-                console.error("Bybit não devolveu Klines. Verifica o par ou a internet.");
             }
-        } catch (e) { 
-            console.error("Erro ao carregar histórico (Provavelmente CORS):", e); 
-        }
+        } catch (e) { console.error("Erro API:", e); }
     }
 
     function updateEntryLine(price) {
@@ -180,10 +175,7 @@
             if (data.result?.list?.length > 0) {
                 const price = parseFloat(data.result.list[0].markPrice);
                 document.getElementById('livePrice').innerText = price.toFixed(4);
-                
-                if(candleSeries) {
-                    candleSeries.update({ time: Math.floor(Date.now() / 1000), close: price });
-                }
+                if (candleSeries) candleSeries.update({ time: Math.floor(Date.now() / 1000), close: price });
                 atualizarPainelPar(price);
             }
         } catch (e) {}
@@ -200,20 +192,14 @@
                     const avgBefore = totalNominalValue / currentQty;
                     totalNominalValue -= (avgBefore * q);
                     currentQty -= q;
-                } else {
-                    totalNominalValue -= (p * q); currentQty -= q;
-                }
+                } else { totalNominalValue -= (p * q); currentQty -= q; }
             }
         });
 
         const equity = 145.68; 
         const avg = currentQty > 0 ? (totalNominalValue / currentQty) : 0;
         const usage = (Math.abs(currentQty) * livePrice) / equity;
-        
-        let plCash = 0;
-        if (Math.abs(currentQty) > 0) {
-            plCash = (currentQty > 0) ? (livePrice - avg) * currentQty : (avg - livePrice) * Math.abs(currentQty);
-        }
+        const plCash = (currentQty > 0) ? (livePrice - avg) * currentQty : (avg - livePrice) * Math.abs(currentQty);
         const plPerc = (plCash / equity) * 100;
 
         document.getElementById('avgPrice').innerText = "$" + avg.toFixed(4);
@@ -231,7 +217,7 @@
     function mudarPar(shouldLoadHistory = true) {
         currentSymbol = document.getElementById('parTicker').value;
         document.getElementById('displayPar').innerText = currentSymbol;
-        if (shouldLoadHistory) initCandleChart(); 
+        if (shouldLoadHistory) loadHistory(); 
         renderTrades();
     }
 
@@ -261,13 +247,12 @@
     }
 
     function sugerirQtd() {
-        const equity = 145.68;
         const p = parseFloat(document.getElementById('tPrice').value) || 0;
         const l = parseFloat(document.getElementById('tLev').value) || 0;
-        if (p > 0 && l > 0) document.getElementById('tQty').value = ((equity * l) / p).toFixed(4);
+        if (p > 0 && l > 0) document.getElementById('tQty').value = ((145.68 * l) / p).toFixed(4);
     }
 
-    // Inicialização Blindada
+    // Inicialização Blindada para GitHub
     window.addEventListener('load', () => {
         initCandleChart();
         loadData();
