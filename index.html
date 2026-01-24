@@ -78,7 +78,7 @@
         <button onclick="saveTrade()">EXECUTAR</button>
     </div>
 
-    <table id="tradeTable">
+    <table>
         <thead>
             <tr><th>Data/Hora</th><th>Lado</th><th>Preço</th><th>Qtd</th><th>Lev.</th><th>Ação</th></tr>
         </thead>
@@ -87,24 +87,28 @@
 </div>
 
 <script>
-    // --- CONFIGURAÇÃO SUPABASE ---
+    // --- ATENÇÃO: PREENCHE AQUI COM DADOS REAIS ---
+    // Exemplo: 'https://xyz.supabase.co'
     const SUPABASE_URL = 'https://pmdvckcxwfiwhrhibupo.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_bRa-mZWTaf0g6sNyWL9OmQ_uvo7Ex5H';
-    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let _supabase;
+    try {
+        _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    } catch (e) {
+        console.error("Erro ao configurar Supabase:", e.message);
+    }
 
     let currentSymbol = "APTUSDT";
     let allTrades = [];
     let chart, candleSeries, entryLine;
 
-    // 1. INICIALIZAÇÃO GRÁFICO
     function initCandleChart() {
         const chartElement = document.getElementById('chart');
-        
         if (typeof window.LightweightCharts === 'undefined') {
             setTimeout(initCandleChart, 500);
             return;
         }
-
         chartElement.innerHTML = '';
         chart = window.LightweightCharts.createChart(chartElement, {
             layout: { background: { type: 'solid', color: '#000000' }, textColor: '#d1d4dc' },
@@ -113,12 +117,10 @@
             timeScale: { borderColor: '#333', timeVisible: true },
             autoSize: true
         });
-
         candleSeries = chart.addCandlestickSeries({
             upColor: '#00c853', downColor: '#ff3d00', borderDownColor: '#ff3d00',
             borderUpColor: '#00c853', wickDownColor: '#ff3d00', wickUpColor: '#00c853'
         });
-
         loadHistory();
     }
 
@@ -126,16 +128,12 @@
         try {
             const url = `https://api.bybit.com/v5/market/kline?category=linear&symbol=${currentSymbol}&interval=15&limit=200`;
             const response = await fetch(url);
-            if (!response.ok) throw new Error("Erro na rede");
-            
             const data = await response.json();
             if (data.result && data.result.list) {
                 const klines = data.result.list.map(k => ({
                     time: parseInt(k[0]) / 1000, 
-                    open: parseFloat(k[1]), 
-                    high: parseFloat(k[2]), 
-                    low: parseFloat(k[3]), 
-                    close: parseFloat(k[4])
+                    open: parseFloat(k[1]), high: parseFloat(k[2]), 
+                    low: parseFloat(k[3]), close: parseFloat(k[4])
                 })).reverse();
                 candleSeries.setData(klines);
                 chart.timeScale().fitContent();
@@ -152,8 +150,8 @@
         }
     }
 
-    // 2. LÓGICA DE DADOS
     async function loadData() {
+        if (!_supabase) return;
         const { data } = await _supabase.from('trades').select('*').order('created_at', { ascending: true });
         allTrades = data || [];
         mudarPar(false);
@@ -208,7 +206,7 @@
     function mudarPar(shouldLoadHistory = true) {
         currentSymbol = document.getElementById('parTicker').value;
         document.getElementById('displayPar').innerText = currentSymbol;
-        if (shouldLoadHistory) initCandleChart(); 
+        if (shouldLoadHistory) loadHistory(); 
         renderTrades();
     }
 
@@ -229,7 +227,7 @@
         const p = parseFloat(document.getElementById('tPrice').value);
         const q = parseFloat(document.getElementById('tQty').value);
         const lev = parseFloat(document.getElementById('tLev').value) || 0;
-        if(!p || !q) return;
+        if (!p || !q || !_supabase) return;
         await _supabase.from('trades').insert([{ par: currentSymbol, tipo: document.getElementById('tType').value, preco: p, quantidade: q, alavancagem_alvo: lev }]);
         loadData();
     }
