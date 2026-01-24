@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Futures Terminal | Pure Supabase Data</title>
+    <title>Futures Terminal | Adjusted Leverage Equity</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
@@ -42,21 +42,21 @@
     <div class="header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
         <h2 style="margin:0;"><span id="displayPar">VISÃO GERAL</span></h2>
         <div style="text-align: right;">
-            <label id="equityLabel" style="font-size: 0.7rem; color: #666;">EQUITY TOTAL (DB)</label>
+            <label id="equityLabel" style="font-size: 0.7rem; color: #666;">EQUITY (MARGIN + P&L)</label>
             <div style="font-size: 1.5rem; font-weight: bold; color: var(--accent);" id="globalEquityDisplay">$0.00</div>
         </div>
     </div>
 
     <div class="dashboard">
-        <div class="card"><label id="l1">Status</label><span id="v1">SISTEMA ATIVO</span></div>
+        <div class="card"><label id="l1">Status</label><span id="v1">LIVE</span></div>
         <div class="card"><label id="l2">Posições</label><span id="v2">0</span></div>
-        <div class="card"><label id="l3">Capital em Jogo</label><span id="v3">$0.00</span></div>
+        <div class="card"><label id="l3">Margem Alocada</label><span id="v3">$0.00</span></div>
         <div class="card"><label id="l4">P&L Flutuante</label><span id="v4">$0.00</span><br><small id="v4perc">0.00%</small></div>
     </div>
 
     <div class="chart-wrapper">
         <div class="chart-header">
-            <span id="chartTitle" style="font-weight: bold; color: var(--accent);">MARKET DATA</span>
+            <span id="chartTitle" style="font-weight: bold; color: var(--accent);">MARKET PERFORMANCE</span>
             <div id="tfControls">
                 <button class="tf-btn" onclick="changeTF('1', this)">1m</button>
                 <button class="tf-btn" onclick="changeTF('5', this)">5m</button>
@@ -71,7 +71,7 @@
     </div>
 
     <div class="trade-panel">
-        <div><label style="font-size:0.7rem; color:#888;">Ticker</label><input type="text" id="parTicker" placeholder="Ex: BTCUSDT"></div>
+        <div><label style="font-size:0.7rem; color:#888;">Ticker</label><input type="text" id="parTicker" placeholder="BTCUSDT"></div>
         <div><label style="font-size:0.7rem; color:#888;">Lado</label><select id="tType"><option value="Compra">LONG</option><option value="Venda">SHORT</option></select></div>
         <div><label style="font-size:0.7rem; color:#888;">Preço</label><input type="number" id="tPrice" step="any"></div>
         <div><label style="font-size:0.7rem; color:#888;">Alavancagem</label><input type="number" id="tLev" step="0.1" value="1.0"></div>
@@ -80,7 +80,7 @@
     </div>
 
     <table>
-        <thead><tr><th>Hora</th><th>Par</th><th>Lado</th><th>Preço</th><th>Qtd</th><th>Ação</th></tr></thead>
+        <thead><tr><th>Hora</th><th>Par</th><th>Lado</th><th>Preço</th><th>Qtd</th><th>Lev</th><th>Ação</th></tr></thead>
         <tbody id="tradeLog"></tbody>
     </table>
 </div>
@@ -136,27 +136,33 @@
             const d = await resp.json();
             if (d.result?.list) {
                 d.result.list.forEach(item => { activePrices[item.symbol] = parseFloat(item.markPrice); });
-                calculatePureSupabaseMetrics();
+                calculateLeveragedMetrics();
             }
         } catch (e) { console.error(e); }
     }
 
-    function calculatePureSupabaseMetrics() {
+    function calculateLeveragedMetrics() {
         let totalUnrealizedPL = 0;
-        let totalCostBasis = 0; // Valor nominal investido
+        let totalMarginUsed = 0; // Margem Real (Custo / Alavancagem)
         let activePosCount = 0;
         let tickerSpecificPL = 0;
-        let tickerCostBasis = 0;
+        let tickerMarginUsed = 0;
 
         const saldos = {};
         allTrades.forEach(t => {
-            if (!saldos[t.par]) saldos[t.par] = { qty: 0, cost: 0 };
+            if (!saldos[t.par]) saldos[t.par] = { qty: 0, marginCost: 0, nominalCost: 0, currentLev: t.alavancagem_alvo || 1 };
+            
+            const tradeNominal = t.preco * t.quantidade;
+            const tradeMargin = tradeNominal / (t.alavancagem_alvo || 1);
+
             if (t.tipo === "Compra") { 
-                saldos[t.par].cost += (t.preco * t.quantidade); 
-                saldos[t.par].qty += t.quantidade; 
+                saldos[t.par].qty += t.quantidade;
+                saldos[t.par].marginCost += tradeMargin;
+                saldos[t.par].nominalCost += tradeNominal;
             } else { 
-                const avgBefore = saldos[t.par].cost / saldos[t.par].qty;
-                saldos[t.par].cost -= (avgBefore * t.quantidade);
+                const ratio = t.quantidade / saldos[t.par].qty;
+                saldos[t.par].marginCost -= (saldos[t.par].marginCost * ratio);
+                saldos[t.par].nominalCost -= (saldos[t.par].nominalCost * ratio);
                 saldos[t.par].qty -= t.quantidade;
             }
         });
@@ -165,45 +171,43 @@
             const pos = saldos[ticker];
             if (Math.abs(pos.qty) > 0.0001) {
                 const price = activePrices[ticker] || 0;
-                const avg = pos.cost / pos.qty;
-                const pl = (price - avg) * pos.qty;
+                const avgEntry = pos.nominalCost / pos.qty;
+                const pl = (price - avgEntry) * pos.qty;
                 
                 totalUnrealizedPL += pl;
-                totalCostBasis += pos.cost;
+                totalMarginUsed += pos.marginCost;
                 activePosCount++;
 
                 if (currentMode === "TICKER" && currentSymbol === ticker) {
                     tickerSpecificPL = pl;
-                    tickerCostBasis = pos.cost;
-                    updateTickerUI(price, avg, pl, pos.qty);
+                    tickerMarginUsed = pos.marginCost;
+                    updateTickerUI(price, avgEntry, pl, pos.marginCost);
                 }
             }
         });
 
-        // EQUITY 100% BASEADA EM POSIÇÕES DO SUPABASE
-        const globalEquity = totalCostBasis + totalUnrealizedPL;
+        // EQUITY = MARGEM ALOCADA + P&L
+        const globalEquity = totalMarginUsed + totalUnrealizedPL;
 
         if (currentMode === "OVERVIEW") {
             document.getElementById('globalEquityDisplay').innerText = "$" + globalEquity.toFixed(2);
-            document.getElementById('equityLabel').innerText = "EQUITY TOTAL (DB)";
             document.getElementById('v2').innerText = activePosCount;
-            document.getElementById('v3').innerText = "$" + totalCostBasis.toFixed(2);
+            document.getElementById('v3').innerText = "$" + totalMarginUsed.toFixed(2);
             document.getElementById('v4').innerText = (totalUnrealizedPL >= 0 ? "+" : "") + "$" + totalUnrealizedPL.toFixed(2);
-            document.getElementById('v4perc').innerText = totalCostBasis > 0 ? ((totalUnrealizedPL / totalCostBasis) * 100).toFixed(2) + "%" : "0.00%";
+            document.getElementById('v4perc').innerText = totalMarginUsed > 0 ? ((totalUnrealizedPL / totalMarginUsed) * 100).toFixed(2) + "%" : "0.00%";
             document.getElementById('v4').style.color = totalUnrealizedPL >= 0 ? "var(--success)" : "var(--danger)";
         } else {
-            const tickerEquity = tickerCostBasis + tickerSpecificPL;
+            const tickerEquity = tickerMarginUsed + tickerSpecificPL;
             document.getElementById('globalEquityDisplay').innerText = "$" + tickerEquity.toFixed(2);
-            document.getElementById('equityLabel').innerText = "EQUITY " + currentSymbol;
         }
     }
 
-    function updateTickerUI(price, avg, pl, qty) {
+    function updateTickerUI(price, avg, pl, margin) {
         document.getElementById('v1').innerText = price.toFixed(4);
         document.getElementById('v2').innerText = "$" + avg.toFixed(4);
-        document.getElementById('v3').innerText = "$" + (avg * qty).toFixed(2);
+        document.getElementById('v3').innerText = "$" + margin.toFixed(2);
         document.getElementById('v4').innerText = (pl >= 0 ? "+" : "") + "$" + pl.toFixed(2);
-        document.getElementById('v4perc').innerText = ((pl / (avg * qty)) * 100).toFixed(2) + "%";
+        document.getElementById('v4perc').innerText = margin > 0 ? ((pl / margin) * 100).toFixed(2) + "%" : "0.00%";
         document.getElementById('v4').style.color = pl >= 0 ? "var(--success)" : "var(--danger)";
         
         if (entryLine) candleSeries.removePriceLine(entryLine);
@@ -228,13 +232,13 @@
     function updateView() {
         if (currentMode === "TICKER") {
             document.getElementById('l1').innerText = "Mark Price"; document.getElementById('l2').innerText = "Entry Price";
-            document.getElementById('l3').innerText = "Nominal Par"; document.getElementById('displayPar').innerText = currentSymbol;
+            document.getElementById('l3').innerText = "Margem Par"; document.getElementById('displayPar').innerText = currentSymbol;
             document.getElementById('tfControls').style.display = 'flex';
             candleSeries.applyOptions({ visible: true }); areaSeries.applyOptions({ visible: false });
             loadHistory();
         } else {
-            document.getElementById('l1').innerText = "Status"; document.getElementById('l2').innerText = "Posições";
-            document.getElementById('l3').innerText = "Total Investido"; document.getElementById('displayPar').innerText = "VISÃO GERAL";
+            document.getElementById('l1').innerText = "Live Status"; document.getElementById('l2').innerText = "Ativos Abertos";
+            document.getElementById('l3').innerText = "Margem Total"; document.getElementById('displayPar').innerText = "VISÃO GERAL";
             document.getElementById('tfControls').style.display = 'none';
             candleSeries.applyOptions({ visible: false }); areaSeries.applyOptions({ visible: true });
             loadEquityCurve();
@@ -242,7 +246,7 @@
     }
 
     function loadEquityCurve() {
-        const points = allTrades.map((t, i) => ({ time: Math.floor(new Date(t.created_at).getTime() / 1000), value: (i * 10) })); 
+        const points = allTrades.map((t, i) => ({ time: Math.floor(new Date(t.created_at).getTime() / 1000), value: i })); 
         areaSeries.setData(points); chart.timeScale().fitContent();
     }
 
@@ -256,7 +260,7 @@
     }
 
     function renderTable() {
-        document.getElementById('tradeLog').innerHTML = allTrades.slice().reverse().map(t => `<tr><td>${new Date(t.created_at).toLocaleTimeString()}</td><td>${t.par}</td><td style="color:${t.tipo==='Compra'?'var(--success)':'var(--danger)'}">${t.tipo}</td><td>$${t.preco.toFixed(4)}</td><td>${t.quantidade}</td><td><button onclick="deleteTrade('${t.id}')">×</button></td></tr>`).join('');
+        document.getElementById('tradeLog').innerHTML = allTrades.slice().reverse().map(t => `<tr><td>${new Date(t.created_at).toLocaleTimeString()}</td><td>${t.par}</td><td style="color:${t.tipo==='Compra'?'var(--success)':'var(--danger)'}">${t.tipo}</td><td>$${t.preco.toFixed(4)}</td><td>${t.quantidade}</td><td>${t.alavancagem_alvo}x</td><td><button onclick="deleteTrade('${t.id}')">×</button></td></tr>`).join('');
     }
 
     async function saveTrade() {
@@ -266,6 +270,7 @@
     }
 
     async function deleteTrade(id) { if(confirm("Apagar?")) { await _supabase.from('trades').delete().eq('id', id); loadData(); } }
+    
     init();
 </script>
 </body>
