@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>[v2.2.0] Futures Pro Terminal</title>
+    <title>[v2.2.1] Futures Pro Terminal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
@@ -12,7 +12,7 @@
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 5px; margin: 0; }
         .container { max-width: 1400px; margin: auto; }
         .asset-nav { display: flex; gap: 5px; margin-bottom: 8px; overflow-x: auto; padding-bottom: 5px; border-bottom: 1px solid #222; scrollbar-width: none; }
-        .nav-btn { background: #1a1a1a; color: #777; border: 1px solid #333; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; white-space: nowrap; }
+        .nav-btn { background: #1a1a1a; color: #777; border: 1px solid #333; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.8rem; white-space: nowrap; }
         .nav-btn.active { background: var(--accent); color: #000; }
         .dashboard { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 10px; }
         @media (min-width: 1024px) { .dashboard { grid-template-columns: repeat(5, 1fr); } }
@@ -21,7 +21,7 @@
         .card span { font-size: 1rem; font-weight: bold; }
         .chart-wrapper { background: #000; border-radius: 8px; border: 1px solid #333; margin-bottom: 10px; overflow: hidden; }
         .chart-header { background: #1a1a1a; padding: 6px 10px; display: flex; justify-content: space-between; align-items: center; }
-        #chart { height: 400px; width: 100%; }
+        #chart { height: 380px; width: 100%; }
         .trade-panel { background: #161616; padding: 12px; border-radius: 8px; border: 1px solid #222; display: flex; flex-wrap: wrap; gap: 8px; }
         .field { flex: 1 1 calc(50% - 4px); display: flex; flex-direction: column; }
         @media (min-width: 768px) { .field { flex: 1; } }
@@ -43,7 +43,7 @@
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding: 0 5px;">
         <span id="displayPar" style="font-size: 0.9rem; font-weight: bold; color: var(--accent);">VISÃO GERAL</span>
         <div style="text-align: right;">
-            <label style="font-size: 0.55rem; color: #666;">EQUITY TOTAL [v2.2.0]</label>
+            <label style="font-size: 0.55rem; color: #666;">EQUITY TOTAL [v2.2.1]</label>
             <div style="font-size: 1.1rem; font-weight: bold; color: #fff;" id="globalEquityDisplay">$0.00</div>
         </div>
     </div>
@@ -58,8 +58,8 @@
 
     <div class="chart-wrapper">
         <div class="chart-header">
-            <span id="chartTitle" style="font-size:0.7rem; color:#888;">HISTÓRICO P&L (250 pts)</span>
-            <div style="font-size: 0.6rem; color: #555;">SYNC: REALTIME</div>
+            <span id="chartTitle" style="font-size:0.7rem; color:#888;">P&L PERFORMANCE (250 pts)</span>
+            <div style="font-size: 0.6rem; color: #555;">OFFSET READY</div>
         </div>
         <div id="chart"></div>
     </div>
@@ -88,7 +88,7 @@
 
     let currentMode = "OVERVIEW", currentSymbol = "BTCUSDT", activePrices = {}, allTrades = [];
     let chart, candleSeries, mainLine, subLines = {}, entryLineMarker, liqLineMarker;
-    const colors = ['#f3d42f', '#ff6b6b', '#4dabf7', '#51cf66', '#cc5de8', '#ff922b'];
+    const colors = ['#f3d42f', '#ff6b6b', '#4dabf7', '#51cf66', '#cc5de8', '#ff922b', '#ff8787', '#94d82d', '#20c997'];
 
     window.onload = async () => {
         initChart();
@@ -100,11 +100,17 @@
         chart = LightweightCharts.createChart(document.getElementById('chart'), { 
             layout: { background: { color: '#000' }, textColor: '#888', fontSize: 10 },
             grid: { vertLines: { color: '#111' }, horzLines: { color: '#111' } },
-            timeScale: { timeVisible: true, borderVisible: false, rightOffset: 5 },
+            timeScale: { 
+                timeVisible: true, 
+                borderVisible: false, 
+                rightOffset: 12, // Espaço à direita para a vela atual
+                shiftVisibleRangeOnNewBar: true 
+            },
             rightPriceScale: { borderVisible: false, autoScale: true }
         });
         candleSeries = chart.addCandlestickSeries({ upColor: '#00c853', downColor: '#ff3d00' });
-        mainLine = chart.addLineSeries({ color: colors[0], lineWidth: 3, title: 'Total' });
+        mainLine = chart.addLineSeries({ color: colors[0], lineWidth: 3, title: 'TOTAL' });
+        updateView();
     }
 
     async function loadData() {
@@ -112,11 +118,10 @@
         allTrades = data || [];
         updateAssetNav();
         renderTable();
-        await syncHistoryPL();
+        if (currentMode === "OVERVIEW") await syncHistoryPL();
     }
 
     async function syncHistoryPL() {
-        if (currentMode !== "OVERVIEW") return;
         const tickers = [...new Set(allTrades.map(t => t.par))];
         if (tickers.length === 0) return;
 
@@ -134,7 +139,6 @@
         const totalPoints = [];
         const tickerPoints = {};
 
-        // 250 pontos para preencher o ecrã
         for (let i = 0; i < 250; i++) {
             let pointTotal = 0;
             let time = 0;
@@ -155,10 +159,18 @@
         mainLine.setData(totalPoints);
         tickers.forEach((tic, idx) => {
             if (tickerPoints[tic]) {
-                subLines[tic] = chart.addLineSeries({ color: colors[(idx+1)%colors.length], lineWidth: 1, lineStyle: 2, title: tic });
+                subLines[tic] = chart.addLineSeries({ 
+                    color: colors[(idx+1)%colors.length], 
+                    lineWidth: 1.5, 
+                    title: tic,
+                    priceLineVisible: false, // Remove a linha tracejada horizontal
+                    lastValueVisible: false
+                });
                 subLines[tic].setData(tickerPoints[tic]);
             }
         });
+        // Sincroniza a escala temporal para garantir margem à esquerda
+        chart.timeScale().fitContent();
     }
 
     function getPositionAt(ticker) {
