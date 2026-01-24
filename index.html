@@ -46,7 +46,7 @@
     <div class="header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
         <h3 style="margin:0; font-size: 0.9rem;"><span id="displayPar">VISÃO GERAL</span></h3>
         <div style="text-align: right;">
-            <label id="eqLabel" style="font-size: 0.6rem; color: #666;">EQUITY REAL (SUM + P&L)</label>
+            <label id="eqLabel" style="font-size: 0.6rem; color: #666;">EQUITY (MARGIN + P&L)</label>
             <div style="font-size: 1.1rem; font-weight: bold; color: var(--accent);" id="globalEquityDisplay">$0.00</div>
         </div>
     </div>
@@ -60,12 +60,15 @@
 
     <div class="chart-wrapper">
         <div class="chart-header">
-            <span id="chartTitle" style="font-size:0.75rem; font-weight: bold; color: var(--accent);">EQUITY vs P&L (DUAL SCALE)</span>
+            <span id="chartTitle" style="font-size:0.75rem; font-weight: bold; color: var(--accent);">DUAL SCALE PERFORMANCE</span>
             <div id="tfControls">
                 <button class="tf-btn" onclick="changeTF('1', this)">1m</button>
+                <button class="tf-btn" onclick="changeTF('5', this)">5m</button>
                 <button class="tf-btn active" onclick="changeTF('15', this)">15m</button>
                 <button class="tf-btn" onclick="changeTF('60', this)">1h</button>
+                <button class="tf-btn" onclick="changeTF('240', this)">4h</button>
                 <button class="tf-btn" onclick="changeTF('D', this)">1D</button>
+                <button class="tf-btn" onclick="changeTF('W', this)">1W</button>
             </div>
         </div>
         <div id="chart"></div>
@@ -89,6 +92,7 @@
 </div>
 
 <script>
+    // --- PREENCHER COM TEUS DADOS DO SUPABASE ---
     const SUPABASE_URL = 'https://pmdvckcxwfiwhrhibupo.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_bRa-mZWTaf0g6sNyWL9OmQ_uvo7Ex5H';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -110,8 +114,8 @@
             layout: { background: { color: '#000' }, textColor: '#d1d4dc', fontSize: 11 },
             grid: { vertLines: { color: '#111' }, horzLines: { color: '#111' } },
             timeScale: { timeVisible: true, borderVisible: false },
-            leftPriceScale: { visible: true, borderVisible: false }, // Para o P&L
-            rightPriceScale: { visible: true, borderVisible: false } // Para a Equity / Velas
+            leftPriceScale: { visible: true, borderVisible: false }, 
+            rightPriceScale: { visible: true, borderVisible: false } 
         });
 
         candleSeries = chart.addCandlestickSeries({ upColor: '#00c853', downColor: '#ff3d00', priceScaleId: 'right' });
@@ -144,7 +148,6 @@
         let totalUnrealizedPL = 0, totalMarginLocked = 0, posCount = 0, tickerPL = 0, tickerMargin = 0;
         const saldos = {};
         
-        // Reconstrói saldos do Supabase
         allTrades.forEach(t => {
             if(!saldos[t.par]) saldos[t.par] = { q:0, cost:0, margin:0 };
             const tradeNominal = t.preco * t.quantidade;
@@ -155,7 +158,7 @@
                 saldos[t.par].cost += tradeNominal; 
                 saldos[t.par].margin += tradeMargin; 
             } else { 
-                const r = t.quantidade / saldos[t.par].q;
+                const r = t.quantidade / Math.max(saldos[t.par].q, 1);
                 saldos[t.par].margin -= (saldos[t.par].margin * r);
                 saldos[t.par].cost -= (saldos[t.par].cost * r);
                 saldos[t.par].q -= t.quantidade; 
@@ -175,8 +178,7 @@
             }
         });
 
-        // EQUITY = SOMA DAS MARGENS + P&L GLOBAL
-        const currentEquity = totalMarginLocked + totalUnrealizedPL;
+        const currentEquity = totalMarginLocked + (currentMode === "OVERVIEW" ? totalUnrealizedPL : tickerPL);
         document.getElementById('globalEquityDisplay').innerText = "$" + Math.max(0, currentEquity).toFixed(2);
 
         if(currentMode === "OVERVIEW") {
