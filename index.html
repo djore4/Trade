@@ -3,35 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Futures Terminal Pro | Portfolio Manager</title>
+    <title>Futures Terminal | Pure Supabase Data</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
         :root { --primary: #1a1a1a; --accent: #f3d42f; --success: #00c853; --danger: #ff3d00; --bg: #0d0d0d; --text: #e0e0e0; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 20px; margin: 0; }
         .container { max-width: 1200px; margin: auto; }
-        
         .asset-nav { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; border-bottom: 1px solid #333; padding-bottom: 12px; }
         .nav-btn { background: #1a1a1a; color: #777; border: 1px solid #333; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
         .nav-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
         .nav-btn.overview { border-color: var(--success); color: var(--success); }
         .nav-btn.overview.active { background: var(--success); color: #000; }
-
         .dashboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
         .card { background: #161616; padding: 20px; border-radius: 10px; border: 1px solid #333; text-align: center; }
         .card label { color: #888; font-size: 0.7rem; text-transform: uppercase; display: block; margin-bottom: 8px; }
         .card span { font-size: 1.4rem; font-weight: bold; }
-
         .chart-wrapper { background: #000; border-radius: 12px; border: 1px solid #333; margin-bottom: 20px; overflow: hidden; }
         .chart-header { background: #1a1a1a; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
         .tf-btn { background: #222; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; margin-left: 5px; }
         .tf-btn.active { background: var(--accent); color: #000; font-weight: bold; }
         #chart { height: 450px; width: 100%; }
-
         .trade-panel { background: #161616; padding: 20px; border-radius: 10px; border: 1px solid #222; display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr auto; gap: 15px; align-items: end; }
         input, select { background: #111; border: 1px solid #333; color: white; padding: 12px; border-radius: 6px; font-size: 0.9rem; }
         .exec-btn { background: var(--accent); color: #000; border: none; padding: 0 25px; border-radius: 6px; font-weight: bold; cursor: pointer; height: 48px; }
-        
         table { width: 100%; margin-top: 20px; border-collapse: collapse; }
         th { text-align: left; color: #666; padding: 12px; border-bottom: 2px solid #222; font-size: 0.75rem; }
         td { padding: 12px; border-bottom: 1px solid #1a1a1a; font-size: 0.85rem; }
@@ -44,26 +39,27 @@
         <button class="nav-btn overview active" onclick="setMode('OVERVIEW')">VISÃO GERAL</button>
     </div>
 
-    <div class="header">
+    <div class="header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
         <h2 style="margin:0;"><span id="displayPar">VISÃO GERAL</span></h2>
         <div style="text-align: right;">
-            <label style="font-size: 0.7rem; color: #666;">EQUITY TOTAL (SUM + P&L)</label>
-            <div style="font-size: 1.5rem; font-weight: bold; color: var(--success);" id="globalEquityDisplay">$145.68</div>
+            <label id="equityLabel" style="font-size: 0.7rem; color: #666;">EQUITY TOTAL (DB)</label>
+            <div style="font-size: 1.5rem; font-weight: bold; color: var(--accent);" id="globalEquityDisplay">$0.00</div>
         </div>
     </div>
 
     <div class="dashboard">
-        <div class="card"><label id="l1">Status</label><span id="v1">CONTA ATIVA</span></div>
+        <div class="card"><label id="l1">Status</label><span id="v1">SISTEMA ATIVO</span></div>
         <div class="card"><label id="l2">Posições</label><span id="v2">0</span></div>
-        <div class="card"><label id="l3">Alavancagem Global</label><span id="v3">0.00x</span></div>
+        <div class="card"><label id="l3">Capital em Jogo</label><span id="v3">$0.00</span></div>
         <div class="card"><label id="l4">P&L Flutuante</label><span id="v4">$0.00</span><br><small id="v4perc">0.00%</small></div>
     </div>
 
     <div class="chart-wrapper">
         <div class="chart-header">
-            <span id="chartTitle" style="font-weight: bold; color: var(--accent);">PERFORMANCE</span>
+            <span id="chartTitle" style="font-weight: bold; color: var(--accent);">MARKET DATA</span>
             <div id="tfControls">
                 <button class="tf-btn" onclick="changeTF('1', this)">1m</button>
+                <button class="tf-btn" onclick="changeTF('5', this)">5m</button>
                 <button class="tf-btn active" onclick="changeTF('15', this)">15m</button>
                 <button class="tf-btn" onclick="changeTF('60', this)">1h</button>
                 <button class="tf-btn" onclick="changeTF('240', this)">4h</button>
@@ -75,34 +71,28 @@
     </div>
 
     <div class="trade-panel">
-        <div style="display:flex; flex-direction:column">
-            <label style="font-size:0.7rem; color:#888; margin-bottom:5px">Ticker</label>
-            <input type="text" id="parTicker" placeholder="Ex: BTCUSDT">
-        </div>
+        <div><label style="font-size:0.7rem; color:#888;">Ticker</label><input type="text" id="parTicker" placeholder="Ex: BTCUSDT"></div>
         <div><label style="font-size:0.7rem; color:#888;">Lado</label><select id="tType"><option value="Compra">LONG</option><option value="Venda">SHORT</option></select></div>
-        <div><label style="font-size:0.7rem; color:#888;">Preço</label><input type="number" id="tPrice" step="any" oninput="sugerirQtd()"></div>
-        <div><label style="font-size:0.7rem; color:#888;">Alavancagem</label><input type="number" id="tLev" step="0.1" value="2.5" oninput="sugerirQtd()"></div>
+        <div><label style="font-size:0.7rem; color:#888;">Preço</label><input type="number" id="tPrice" step="any"></div>
+        <div><label style="font-size:0.7rem; color:#888;">Alavancagem</label><input type="number" id="tLev" step="0.1" value="1.0"></div>
         <div><label style="font-size:0.7rem; color:#888;">Qtd</label><input type="number" id="tQty" step="any"></div>
         <button class="exec-btn" onclick="saveTrade()">EXECUTAR</button>
     </div>
 
     <table>
-        <thead>
-            <tr><th>Hora</th><th>Par</th><th>Lado</th><th>Preço</th><th>Qtd</th><th>Ação</th></tr>
-        </thead>
+        <thead><tr><th>Hora</th><th>Par</th><th>Lado</th><th>Preço</th><th>Qtd</th><th>Ação</th></tr></thead>
         <tbody id="tradeLog"></tbody>
     </table>
 </div>
 
 <script>
-    const SUPABASE_URL = 'https://pmdvckcxwfiwhrhibupo.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_bRa-mZWTaf0g6sNyWL9OmQ_uvo7Ex5H';
+    const SUPABASE_URL = 'https://TEU_URL.supabase.co';
+    const SUPABASE_KEY = 'TUA_KEY';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let currentMode = "OVERVIEW", currentSymbol = "", currentTF = "15";
     let allTrades = [], activePrices = {};
     let chart, candleSeries, areaSeries, entryLine;
-    const EQUITY_BASE = 145.68;
 
     async function init() {
         createChart();
@@ -146,21 +136,25 @@
             const d = await resp.json();
             if (d.result?.list) {
                 d.result.list.forEach(item => { activePrices[item.symbol] = parseFloat(item.markPrice); });
-                calculateGlobalMetrics();
+                calculatePureSupabaseMetrics();
             }
         } catch (e) { console.error(e); }
     }
 
-    function calculateGlobalMetrics() {
+    function calculatePureSupabaseMetrics() {
         let totalUnrealizedPL = 0;
-        let totalNominalValue = 0;
-        let positionsCount = 0;
+        let totalCostBasis = 0; // Valor nominal investido
+        let activePosCount = 0;
+        let tickerSpecificPL = 0;
+        let tickerCostBasis = 0;
 
         const saldos = {};
         allTrades.forEach(t => {
             if (!saldos[t.par]) saldos[t.par] = { qty: 0, cost: 0 };
-            if (t.tipo === "Compra") { saldos[t.par].cost += (t.preco * t.quantidade); saldos[t.par].qty += t.quantidade; }
-            else { 
+            if (t.tipo === "Compra") { 
+                saldos[t.par].cost += (t.preco * t.quantidade); 
+                saldos[t.par].qty += t.quantidade; 
+            } else { 
                 const avgBefore = saldos[t.par].cost / saldos[t.par].qty;
                 saldos[t.par].cost -= (avgBefore * t.quantidade);
                 saldos[t.par].qty -= t.quantidade;
@@ -173,36 +167,45 @@
                 const price = activePrices[ticker] || 0;
                 const avg = pos.cost / pos.qty;
                 const pl = (price - avg) * pos.qty;
+                
                 totalUnrealizedPL += pl;
-                totalNominalValue += (price * Math.abs(pos.qty));
-                positionsCount++;
+                totalCostBasis += pos.cost;
+                activePosCount++;
 
                 if (currentMode === "TICKER" && currentSymbol === ticker) {
+                    tickerSpecificPL = pl;
+                    tickerCostBasis = pos.cost;
                     updateTickerUI(price, avg, pl, pos.qty);
                 }
             }
         });
 
-        const currentTotalEquity = EQUITY_BASE + totalUnrealizedPL;
-        document.getElementById('globalEquityDisplay').innerText = "$" + currentTotalEquity.toFixed(2);
-        
+        // EQUITY 100% BASEADA EM POSIÇÕES DO SUPABASE
+        const globalEquity = totalCostBasis + totalUnrealizedPL;
+
         if (currentMode === "OVERVIEW") {
-            document.getElementById('v2').innerText = positionsCount;
-            document.getElementById('v3').innerText = (totalNominalValue / currentTotalEquity).toFixed(2) + "x";
+            document.getElementById('globalEquityDisplay').innerText = "$" + globalEquity.toFixed(2);
+            document.getElementById('equityLabel').innerText = "EQUITY TOTAL (DB)";
+            document.getElementById('v2').innerText = activePosCount;
+            document.getElementById('v3').innerText = "$" + totalCostBasis.toFixed(2);
             document.getElementById('v4').innerText = (totalUnrealizedPL >= 0 ? "+" : "") + "$" + totalUnrealizedPL.toFixed(2);
-            document.getElementById('v4perc').innerText = ((totalUnrealizedPL / EQUITY_BASE) * 100).toFixed(2) + "%";
+            document.getElementById('v4perc').innerText = totalCostBasis > 0 ? ((totalUnrealizedPL / totalCostBasis) * 100).toFixed(2) + "%" : "0.00%";
             document.getElementById('v4').style.color = totalUnrealizedPL >= 0 ? "var(--success)" : "var(--danger)";
+        } else {
+            const tickerEquity = tickerCostBasis + tickerSpecificPL;
+            document.getElementById('globalEquityDisplay').innerText = "$" + tickerEquity.toFixed(2);
+            document.getElementById('equityLabel').innerText = "EQUITY " + currentSymbol;
         }
     }
 
     function updateTickerUI(price, avg, pl, qty) {
         document.getElementById('v1').innerText = price.toFixed(4);
         document.getElementById('v2').innerText = "$" + avg.toFixed(4);
-        document.getElementById('v3').innerText = (Math.abs(price * qty) / EQUITY_BASE).toFixed(2) + "x";
+        document.getElementById('v3').innerText = "$" + (avg * qty).toFixed(2);
         document.getElementById('v4').innerText = (pl >= 0 ? "+" : "") + "$" + pl.toFixed(2);
-        document.getElementById('v4perc').innerText = ((pl / EQUITY_BASE) * 100).toFixed(2) + "%";
+        document.getElementById('v4perc').innerText = ((pl / (avg * qty)) * 100).toFixed(2) + "%";
         document.getElementById('v4').style.color = pl >= 0 ? "var(--success)" : "var(--danger)";
-
+        
         if (entryLine) candleSeries.removePriceLine(entryLine);
         entryLine = candleSeries.createPriceLine({ price: avg, color: pl >= 0 ? '#00c853' : '#ff3d00', lineWidth: 2, lineStyle: 2, title: 'ENTRY' });
         candleSeries.update({ time: Math.floor(Date.now() / 1000), close: price });
@@ -219,22 +222,19 @@
 
     function setMode(mode, ticker = "") {
         currentMode = mode; currentSymbol = ticker;
-        updateView();
-        updateAssetNav();
+        updateView(); updateAssetNav();
     }
 
     function updateView() {
         if (currentMode === "TICKER") {
             document.getElementById('l1').innerText = "Mark Price"; document.getElementById('l2').innerText = "Entry Price";
-            document.getElementById('l3').innerText = "Alavancagem Par";
-            document.getElementById('displayPar').innerText = currentSymbol;
+            document.getElementById('l3').innerText = "Nominal Par"; document.getElementById('displayPar').innerText = currentSymbol;
             document.getElementById('tfControls').style.display = 'flex';
             candleSeries.applyOptions({ visible: true }); areaSeries.applyOptions({ visible: false });
             loadHistory();
         } else {
-            document.getElementById('l1').innerText = "Status"; document.getElementById('l2').innerText = "Posições Ativas";
-            document.getElementById('l3').innerText = "Alavancagem Global";
-            document.getElementById('displayPar').innerText = "VISÃO GERAL";
+            document.getElementById('l1').innerText = "Status"; document.getElementById('l2').innerText = "Posições";
+            document.getElementById('l3').innerText = "Total Investido"; document.getElementById('displayPar').innerText = "VISÃO GERAL";
             document.getElementById('tfControls').style.display = 'none';
             candleSeries.applyOptions({ visible: false }); areaSeries.applyOptions({ visible: true });
             loadEquityCurve();
@@ -242,15 +242,13 @@
     }
 
     function loadEquityCurve() {
-        const points = allTrades.map((t, i) => ({ time: Math.floor(new Date(t.created_at).getTime() / 1000), value: EQUITY_BASE + (i * 0.5) }));
-        areaSeries.setData(points);
-        chart.timeScale().fitContent();
+        const points = allTrades.map((t, i) => ({ time: Math.floor(new Date(t.created_at).getTime() / 1000), value: (i * 10) })); 
+        areaSeries.setData(points); chart.timeScale().fitContent();
     }
 
     async function loadHistory() {
         const url = `https://api.bybit.com/v5/market/kline?category=linear&symbol=${currentSymbol}&interval=${currentTF}&limit=200`;
-        const resp = await fetch(url);
-        const d = await resp.json();
+        const resp = await fetch(url); const d = await resp.json();
         if (d.result?.list) {
             candleSeries.setData(d.result.list.map(k => ({ time: k[0]/1000, open: parseFloat(k[1]), high: parseFloat(k[2]), low: parseFloat(k[3]), close: parseFloat(k[4]) })).reverse());
             chart.timeScale().fitContent();
@@ -268,7 +266,6 @@
     }
 
     async function deleteTrade(id) { if(confirm("Apagar?")) { await _supabase.from('trades').delete().eq('id', id); loadData(); } }
-    function sugerirQtd() { const p = parseFloat(document.getElementById('tPrice').value), l = parseFloat(document.getElementById('tLev').value); if(p>0 && l>0) document.getElementById('tQty').value = ((EQUITY_BASE * l)/p).toFixed(4); }
     init();
 </script>
 </body>
