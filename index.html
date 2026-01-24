@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>[v2.2.2] Futures Pro Terminal</title>
+    <title>[v2.2.3] Futures Pro Terminal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
@@ -20,7 +20,9 @@
         .card label { color: #666; font-size: 0.55rem; text-transform: uppercase; display: block; margin-bottom: 3px; }
         .card span { font-size: 1rem; font-weight: bold; }
         .chart-wrapper { background: #000; border-radius: 8px; border: 1px solid #333; margin-bottom: 10px; overflow: hidden; }
-        .chart-header { background: #1a1a1a; padding: 6px 10px; display: flex; justify-content: space-between; align-items: center; }
+        .chart-header { background: #1a1a1a; padding: 6px 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 5px; }
+        .tf-btn { background: #222; color: #fff; border: none; padding: 5px 8px; border-radius: 4px; font-size: 0.65rem; cursor: pointer; }
+        .tf-btn.active { background: var(--accent); color: #000; font-weight: bold; }
         #chart { height: 400px; width: 100%; }
         .trade-panel { background: #161616; padding: 12px; border-radius: 8px; border: 1px solid #222; display: flex; flex-wrap: wrap; gap: 8px; }
         .field { flex: 1 1 calc(50% - 4px); display: flex; flex-direction: column; }
@@ -43,7 +45,7 @@
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding: 0 5px;">
         <span id="displayPar" style="font-size: 0.9rem; font-weight: bold; color: var(--accent);">VISÃO GERAL</span>
         <div style="text-align: right;">
-            <label style="font-size: 0.55rem; color: #666;">EQUITY TOTAL [v2.2.2]</label>
+            <label style="font-size: 0.55rem; color: #666;">EQUITY TOTAL [v2.2.3]</label>
             <div style="font-size: 1.1rem; font-weight: bold; color: #fff;" id="globalEquityDisplay">$0.00</div>
         </div>
     </div>
@@ -58,8 +60,16 @@
 
     <div class="chart-wrapper">
         <div class="chart-header">
+            <div id="tfControls">
+                <button class="tf-btn" onclick="changeTF('1', this)">1m</button>
+                <button class="tf-btn" onclick="changeTF('5', this)">5m</button>
+                <button class="tf-btn active" onclick="changeTF('15', this)">15m</button>
+                <button class="tf-btn" onclick="changeTF('60', this)">1h</button>
+                <button class="tf-btn" onclick="changeTF('240', this)">4h</button>
+                <button class="tf-btn" onclick="changeTF('D', this)">1D</button>
+                <button class="tf-btn" onclick="changeTF('W', this)">1W</button>
+            </div>
             <span id="chartTitle" style="font-size:0.7rem; color:#888;">P&L PERFORMANCE</span>
-            <div style="font-size: 0.6rem; color: #555;">SYNC: OK</div>
         </div>
         <div id="chart"></div>
     </div>
@@ -82,49 +92,15 @@
 </div>
 
 <script>
-    // --- CREDENCIAIS ---
     const SUPABASE_URL = 'https://pmdvckcxwfiwhrhibupo.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_bRa-mZWTaf0g6sNyWL9OmQ_uvo7Ex5H';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    let currentMode = "OVERVIEW", currentSymbol = "BTCUSDT", activePrices = {}, allTrades = [];
+    let currentMode = "OVERVIEW", currentSymbol = "BTCUSDT", currentTF = "15", activePrices = {}, allTrades = [];
     let chart, candleSeries, mainLine, subLines = {}, entryLineMarker, liqLineMarker;
     const colors = ['#f3d42f', '#ff6b6b', '#4dabf7', '#51cf66', '#cc5de8', '#ff922b'];
 
-    // 1. Definição das funções ANTES da execução
-    function updateView() {
-        const isT = currentMode === "TICKER";
-        candleSeries.applyOptions({ visible: isT });
-        mainLine.applyOptions({ visible: !isT });
-        loadHistory(isT);
-    }
-
-    async function loadHistory(fit = false) {
-        const sym = currentMode === "TICKER" ? currentSymbol : "BTCUSDT";
-        const resp = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${sym}&interval=15&limit=250`);
-        const d = await resp.json();
-        if(d.result?.list) {
-            const k = d.result.list.map(v => ({ time: parseInt(v[0])/1000, open: parseFloat(v[1]), high: parseFloat(v[2]), low: parseFloat(v[3]), close: parseFloat(v[4]) })).reverse();
-            if(currentMode === "TICKER") candleSeries.setData(k);
-            if(fit) setTimeout(() => chart.timeScale().fitContent(), 100);
-        }
-    }
-
-    function initChart() {
-        chart = LightweightCharts.createChart(document.getElementById('chart'), { 
-            layout: { background: { color: '#000' }, textColor: '#888', fontSize: 10 },
-            grid: { vertLines: { color: '#111' }, horzLines: { color: '#111' } },
-            timeScale: { timeVisible: true, borderVisible: false, rightOffset: 15 },
-            rightPriceScale: { borderVisible: false, autoScale: true }
-        });
-        candleSeries = chart.addCandlestickSeries({ upColor: '#00c853', downColor: '#ff3d00' });
-        mainLine = chart.addLineSeries({ color: colors[0], lineWidth: 3, title: 'TOTAL' });
-        
-        // Agora podemos chamar sem erro
-        updateView();
-    }
-
-    // 2. Lógica de Negócio
+    // 1. Funções de Suporte
     function getPositionAt(ticker) {
         let q = 0, cost = 0, margin = 0;
         allTrades.filter(t => t.par === ticker).forEach(t => {
@@ -138,15 +114,17 @@
 
     async function syncHistoryPL() {
         const tickers = [...new Set(allTrades.map(t => t.par))];
-        if (tickers.length === 0 || currentMode !== "OVERVIEW") return;
+        if (currentMode !== "OVERVIEW") return;
 
         mainLine.setData([]);
         Object.values(subLines).forEach(l => chart.removeSeries(l));
         subLines = {};
 
+        if (tickers.length === 0) return;
+
         const histData = {};
         for (const t of tickers) {
-            const r = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${t}&interval=15&limit=250`);
+            const r = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${t}&interval=${currentTF}&limit=250`);
             const j = await r.json();
             if (j.result?.list) histData[t] = j.result.list.map(v => ({ t: parseInt(v[0])/1000, c: parseFloat(v[4]) })).reverse();
         }
@@ -172,17 +150,45 @@
         mainLine.setData(totalPoints);
         tickers.forEach((tic, idx) => {
             if (tickerPoints[tic]) {
-                subLines[tic] = chart.addLineSeries({ 
-                    color: colors[(idx+1)%colors.length], 
-                    lineWidth: 1.5, 
-                    title: tic,
-                    priceLineVisible: false,
-                    lastValueVisible: false
-                });
+                subLines[tic] = chart.addLineSeries({ color: colors[(idx+1)%colors.length], lineWidth: 1.5, title: tic, priceLineVisible: false, lastValueVisible: false });
                 subLines[tic].setData(tickerPoints[tic]);
             }
         });
         chart.timeScale().fitContent();
+    }
+
+    function updateView() {
+        const isT = currentMode === "TICKER";
+        candleSeries.applyOptions({ visible: isT });
+        mainLine.applyOptions({ visible: !isT });
+        loadHistory(true);
+    }
+
+    async function loadHistory(fit = false) {
+        const sym = currentMode === "TICKER" ? currentSymbol : "BTCUSDT";
+        const resp = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${sym}&interval=${currentTF}&limit=250`);
+        const d = await resp.json();
+        if(d.result?.list) {
+            const k = d.result.list.map(v => ({ time: parseInt(v[0])/1000, open: parseFloat(v[1]), high: parseFloat(v[2]), low: parseFloat(v[3]), close: parseFloat(v[4]) })).reverse();
+            if(currentMode === "TICKER") candleSeries.setData(k);
+            if(fit) setTimeout(() => chart.timeScale().fitContent(), 100);
+        }
+        if(currentMode === "OVERVIEW") syncHistoryPL();
+    }
+
+    // 2. Inicialização e Loop
+    window.onload = async () => {
+        chart = LightweightCharts.createChart(document.getElementById('chart'), { 
+            layout: { background: { color: '#000' }, textColor: '#888', fontSize: 10 },
+            grid: { vertLines: { color: '#111' }, horzLines: { color: '#111' } },
+            timeScale: { timeVisible: true, borderVisible: false, rightOffset: 15 },
+            rightPriceScale: { borderVisible: false, autoScale: true }
+        });
+        candleSeries = chart.addCandlestickSeries({ upColor: '#00c853', downColor: '#ff3d00' });
+        mainLine = chart.addLineSeries({ color: colors[0], lineWidth: 3, title: 'TOTAL' });
+        
+        await loadData();
+        setInterval(refreshPrices, 3000);
     }
 
     async function refreshPrices() {
@@ -195,21 +201,17 @@
     }
 
     function updateUI() {
-        let gPL = 0, gMarg = 0, gNom = 0;
-        const now = Math.floor(Date.now()/1000);
-        allTrades.forEach(t => activePrices[t.par] = activePrices[t.par] || 0);
-
+        let gPL = 0, gMarg = 0, gNom = 0, now = Math.floor(Date.now()/1000);
         const tickers = [...new Set(allTrades.map(t => t.par))];
+        
         tickers.forEach(tic => {
             const s = getPositionAt(tic);
             if (Math.abs(s.q) > 0.0001) {
-                const p = activePrices[tic] || 0;
-                const pl = (p - (s.cost/s.q)) * s.q;
+                const p = activePrices[tic] || 0, pl = (p - (s.cost/s.q)) * s.q;
                 gPL += pl; gMarg += s.margin; gNom += (p * Math.abs(s.q));
                 if (currentMode === "OVERVIEW" && subLines[tic]) subLines[tic].update({ time: now, value: pl });
                 if (currentMode === "TICKER" && currentSymbol === tic) {
-                    const avg = s.cost / s.q;
-                    const eq = s.margin + pl;
+                    const avg = s.cost / s.q, eq = s.margin + pl;
                     const liq = s.q > 0 ? avg * (1 - (0.8 / (s.cost/s.margin/avg))) : avg * (1 + (0.8 / (Math.abs(s.cost)/s.margin/avg)));
                     document.getElementById('v1').innerText = p.toFixed(4);
                     document.getElementById('v2').innerText = avg.toFixed(4);
@@ -221,6 +223,7 @@
                     entryLineMarker = candleSeries.createPriceLine({ price: avg, color: '#f3d42f', lineWidth: 2, lineStyle: 2, title: 'ENTRY' });
                     liqLineMarker = candleSeries.createPriceLine({ price: liq, color: '#ff3d00', lineWidth: 2, lineStyle: 0, title: 'LIQ' });
                     candleSeries.update({ time: now, close: p });
+                    document.getElementById('globalEquityDisplay').innerText = "$" + eq.toFixed(2);
                 }
             }
         });
@@ -235,32 +238,30 @@
         }
     }
 
-    // 3. Inicialização e Eventos
-    window.onload = async () => {
-        initChart();
-        await loadData();
-        setInterval(refreshPrices, 3000);
-    };
-
-    async function loadData() {
-        const { data } = await _supabase.from('trades').select('*').order('created_at', { ascending: true });
-        allTrades = data || [];
-        updateAssetNav(); renderTable();
-        if (currentMode === "OVERVIEW") await syncHistoryPL();
+    async function changeTF(tf, btn) {
+        currentTF = tf;
+        document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        await loadHistory(true);
     }
 
     async function setMode(m, t="") {
         currentMode = m; currentSymbol = t;
         document.getElementById('displayPar').innerText = m === "OVERVIEW" ? "VISÃO GERAL" : currentSymbol;
-        if (m === "OVERVIEW") { await syncHistoryPL(); }
-        else { Object.values(subLines).forEach(l => chart.removeSeries(l)); subLines = {}; }
         updateView(); updateAssetNav(); renderTable();
+    }
+
+    async function loadData() {
+        const { data } = await _supabase.from('trades').select('*').order('created_at', { ascending: true });
+        allTrades = data || [];
+        updateAssetNav(); renderTable();
+        updateView();
     }
 
     async function saveTrade() {
         const tic = document.getElementById('parTicker').value.toUpperCase() || currentSymbol;
         await _supabase.from('trades').insert([{ par: tic, tipo: document.getElementById('tType').value, preco: parseFloat(document.getElementById('tPrice').value), quantidade: parseFloat(document.getElementById('tQty').value), alavancagem_alvo: parseFloat(document.getElementById('tLev').value) }]);
-        loadData();
+        await loadData();
     }
 
     function renderTable() {
@@ -268,7 +269,7 @@
         document.getElementById('tradeLog').innerHTML = f.slice().reverse().map(t => `<tr><td>${new Date(t.created_at).toLocaleString()}</td><td>${t.par}</td><td style="color:${t.tipo==='Compra'?'#00c853':'#ff3d00'}">${t.tipo === 'Compra' ? 'LONG' : 'SHORT'}</td><td>${t.preco}</td><td>${t.alavancagem_alvo}x</td><td>${t.quantidade}</td><td><button onclick="deleteTrade('${t.id}')" style="color:red; background:none; border:none; cursor:pointer;">×</button></td></tr>`).join('');
     }
 
-    async function deleteTrade(id) { if(confirm("Apagar?")) { await _supabase.from('trades').delete().eq('id', id); loadData(); } }
+    async function deleteTrade(id) { if(confirm("Apagar?")) { await _supabase.from('trades').delete().eq('id', id); await loadData(); } }
     
     function updateAssetNav() { 
         const n = document.getElementById('assetNav'); const tics = [...new Set(allTrades.map(t => t.par))];
