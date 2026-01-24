@@ -3,173 +3,276 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador de Swing Trade - O Caminho da Verdade</title>
+    <title>Futures Terminal Pro | APT Fix</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
     <style>
-        :root {
-            --primary: #2c3e50;
-            --accent: #3498db;
-            --success: #27ae60;
-            --danger: #e74c3c;
-            --bg: #f4f7f6;
-        }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--primary); padding: 20px; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: var(--primary); border-bottom: 2px solid var(--accent); padding-bottom: 10px; }
+        :root { --primary: #1a1a1a; --accent: #f3d42f; --success: #00c853; --danger: #ff3d00; --bg: #0d0d0d; --text: #e0e0e0; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 20px; margin: 0; }
+        .container { max-width: 1200px; margin: auto; }
         
-        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
-        .card { background: #fff; border: 1px solid #ddd; padding: 15px; border-radius: 8px; text-align: center; }
-        .card label { font-size: 0.85rem; text-transform: uppercase; color: #7f8c8d; display: block; margin-bottom: 5px; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 20px; margin-bottom: 20px; }
+        
+        .dashboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
+        .card { background: #161616; padding: 20px; border-radius: 10px; border: 1px solid #333; text-align: center; }
+        .card label { color: #888; font-size: 0.7rem; text-transform: uppercase; display: block; margin-bottom: 8px; }
         .card span { font-size: 1.4rem; font-weight: bold; }
+
+        /* GRÁFICO COM BORDA DE CONTRASTE */
+        #chart { 
+            background: #000; 
+            border-radius: 12px; 
+            border: 1px solid #f3d42f; /* Borda amarela discreta para veres onde está o gráfico */
+            margin-bottom: 20px; 
+            height: 450px; 
+            width: 100%; 
+            box-shadow: 0 0 15px rgba(243, 212, 47, 0.1);
+            overflow: hidden;
+        }
+
+        .trade-panel { background: #161616; padding: 25px; border-radius: 10px; border: 1px solid #222; display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr auto; gap: 15px; align-items: end; }
+        .input-group { display: flex; flex-direction: column; }
+        .input-group label { font-size: 0.75rem; color: #888; margin-bottom: 6px; }
         
-        .inputs { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 10px; margin-bottom: 20px; align-items: end; }
-        input, select { padding: 10px; border: 1px solid #ccc; border-radius: 5px; width: 100%; box-sizing: border-box; }
-        button { padding: 10px 20px; background: var(--accent); color: white; border: none; border-radius: 5px; cursor: pointer; transition: 0.3s; }
-        button:hover { background: #2980b9; }
+        input, select { background: #222; border: 1px solid #444; color: white; padding: 12px; border-radius: 6px; width: 100%; box-sizing: border-box; }
+        button { background: var(--accent); color: black; border: none; padding: 0 25px; border-radius: 6px; font-weight: bold; cursor: pointer; height: 48px; }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background: #f8f9fa; }
-        .pos-long { color: var(--success); font-weight: bold; }
-        .pos-short { color: var(--danger); font-weight: bold; }
+        table { width: 100%; margin-top: 30px; border-collapse: collapse; }
+        th { text-align: left; color: #888; padding: 15px; border-bottom: 2px solid #333; font-size: 0.8rem; }
+        td { padding: 15px; border-bottom: 1px solid #1a1a1a; font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Simulador de Gestão de Posição</h2>
-    
+    <div class="header">
+        <h2 style="margin:0;">Terminal: <span id="displayPar" style="color:var(--accent)">APTUSDT</span></h2>
+        <div style="text-align: right;">
+            <label style="font-size: 0.7rem; color: #666;">EQUITY GLOBAL</label>
+            <div style="font-size: 1.5rem; font-weight: bold; color: var(--success);" id="globalEquityDisplay">$145.68</div>
+        </div>
+    </div>
+
     <div class="dashboard">
-        <div class="card">
-            <label>Capital Inicial (€)</label>
-            <input type="number" id="capTotal" value="10000" oninput="atualizarGeral()">
-        </div>
-        <div class="card">
-            <label>Preço Atual Mercado</label>
-            <input type="number" id="precoMercado" value="100" oninput="atualizarGeral()">
-        </div>
-        <div class="card">
-            <label>Preço Médio</label>
-            <span id="labelPrecoMedio">0.00</span>
-        </div>
-        <div class="card">
-            <label>Alavancagem Atual</label>
-            <span id="labelAlavancagem">0.00x</span>
-        </div>
+        <div class="card"><label>Mark Price</label><span id="livePrice" style="color:var(--accent)">0.0000</span></div>
+        <div class="card"><label>Entry Price</label><span id="avgPrice">$0.00</span></div>
+        <div class="card"><label>Leverage Real</label><span id="levUsage">0.00x</span></div>
         <div class="card">
             <label>P&L Aberto</label>
-            <span id="labelPL">0.00%</span>
+            <span id="openPLCash">$0.00</span><br>
+            <small id="openPLPerc" style="font-weight: bold; font-size: 0.85rem;">0.00%</small>
         </div>
     </div>
 
-    <div class="inputs">
-        <div>
-            <label>Tipo</label>
-            <select id="tipoOperacao">
-                <option value="Compra">Compra (Long)</option>
-                <option value="Venda">Venda (Saída)</option>
+    <div id="chart"></div>
+
+    <div class="trade-panel">
+        <div class="input-group">
+            <label>Ticker</label>
+            <select id="parTicker" onchange="mudarPar()">
+                <option value="APTUSDT">APTUSDT</option>
+                <option value="BTCUSDT">BTCUSDT</option>
+                <option value="ETHUSDT">ETHUSDT</option>
             </select>
         </div>
-        <div>
+        <div class="input-group">
+            <label>Lado</label>
+            <select id="tType"><option value="Compra">LONG</option><option value="Venda">SHORT</option></select>
+        </div>
+        <div class="input-group">
             <label>Preço</label>
-            <input type="number" id="inputPreco" placeholder="Ex: 105">
+            <input type="number" id="tPrice" step="any" oninput="sugerirQtd()">
         </div>
-        <div>
-            <label>Quantidade</label>
-            <input type="number" id="inputQtd" placeholder="Ex: 10">
+        <div class="input-group">
+            <label>Alavancagem</label>
+            <input type="number" id="tLev" step="0.1" oninput="sugerirQtd()">
         </div>
-        <button onclick="adicionarOperacao()">Registar</button>
+        <div class="input-group">
+            <label>Qtd</label>
+            <input type="number" id="tQty" step="any">
+        </div>
+        <button onclick="saveTrade()">EXECUTAR</button>
     </div>
 
-    <table>
+    <table id="tradeTable">
         <thead>
-            <tr>
-                <th>Tipo</th>
-                <th>Preço</th>
-                <th>Qtd</th>
-                <th>Total</th>
-                <th>Ação</th>
-            </tr>
+            <tr><th>Data/Hora</th><th>Lado</th><th>Preço</th><th>Qtd</th><th>Lev.</th><th>Ação</th></tr>
         </thead>
-        <tbody id="listaOperacoes"></tbody>
+        <tbody id="tradeLog"></tbody>
     </table>
 </div>
 
 <script>
-    let operacoes = [];
+    // --- CREDENCIAIS ---
+    const SUPABASE_URL = 'https://pmdvckcxwfiwhrhibupo.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_bRa-mZWTaf0g6sNyWL9OmQ_uvo7Ex5H';
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    function adicionarOperacao() {
-        const tipo = document.getElementById('tipoOperacao').value;
-        const preco = parseFloat(document.getElementById('inputPreco').value);
-        const qtd = parseFloat(document.getElementById('inputQtd').value);
+    let currentSymbol = "APTUSDT";
+    let allTrades = [];
+    let chart, candleSeries, entryLine;
 
-        if (isNaN(preco) || isNaN(qtd)) return alert("Preencha os valores corretamente.");
-
-        operacoes.push({ tipo, preco, qtd });
-        atualizarGeral();
-        renderizarTabela();
+    function initCandleChart() {
+        const chartElement = document.getElementById('chart');
         
-        // Limpar inputs
-        document.getElementById('inputPreco').value = '';
-        document.getElementById('inputQtd').value = '';
+        // Se já existir um gráfico (ex: ao mudar par), limpamos o contentor
+        chartElement.innerHTML = '';
+
+        chart = LightweightCharts.createChart(chartElement, {
+            layout: { background: { color: '#000000' }, textColor: '#d1d4dc' },
+            grid: { vertLines: { color: '#111' }, horzLines: { color: '#111' } },
+            priceScale: { borderColor: '#333' },
+            timeScale: { borderColor: '#333', timeVisible: true },
+            autoSize: true
+        });
+
+        candleSeries = chart.addCandlestickSeries({
+            upColor: '#00c853', downColor: '#ff3d00', borderDownColor: '#ff3d00',
+            borderUpColor: '#00c853', wickDownColor: '#ff3d00', wickUpColor: '#00c853'
+        });
+
+        loadHistory();
     }
 
-    function atualizarGeral() {
-        const capTotal = parseFloat(document.getElementById('capTotal').value) || 0;
-        const precoAtual = parseFloat(document.getElementById('precoMercado').value) || 0;
+    async function loadHistory() {
+        try {
+            const response = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${currentSymbol}&interval=15&limit=200`);
+            const data = await response.json();
+            
+            if (data.result && data.result.list && data.result.list.length > 0) {
+                const klines = data.result.list.map(k => ({
+                    time: k[0] / 1000, 
+                    open: parseFloat(k[1]), 
+                    high: parseFloat(k[2]), 
+                    low: parseFloat(k[3]), 
+                    close: parseFloat(k[4])
+                })).reverse();
 
-        let totalQtd = 0;
-        let custoTotalEntradas = 0;
-        let qtdEntradas = 0;
-
-        operacoes.forEach(op => {
-            if (op.tipo === "Compra") {
-                totalQtd += op.qtd;
-                custoTotalEntradas += (op.preco * op.qtd);
-                qtdEntradas += op.qtd;
+                candleSeries.setData(klines);
+                chart.timeScale().fitContent();
             } else {
-                totalQtd -= op.qtd;
+                console.error("Bybit não devolveu Klines. Verifica o par ou a internet.");
+            }
+        } catch (e) { 
+            console.error("Erro ao carregar histórico (Provavelmente CORS):", e); 
+        }
+    }
+
+    function updateEntryLine(price) {
+        if (entryLine) { candleSeries.removePriceLine(entryLine); entryLine = null; }
+        if (price > 0) {
+            entryLine = candleSeries.createPriceLine({
+                price: price, color: '#f3d42f', lineWidth: 2, lineStyle: 2, axisLabelVisible: true, title: 'ENTRY'
+            });
+        }
+    }
+
+    async function loadData() {
+        const { data } = await _supabase.from('trades').select('*').order('created_at', { ascending: true });
+        allTrades = data || [];
+        mudarPar(false);
+    }
+
+    async function fetchPrice() {
+        try {
+            const response = await fetch(`https://api.bybit.com/v5/market/tickers?category=linear&symbol=${currentSymbol}`);
+            const data = await response.json();
+            if (data.result?.list?.length > 0) {
+                const price = parseFloat(data.result.list[0].markPrice);
+                document.getElementById('livePrice').innerText = price.toFixed(4);
+                
+                if(candleSeries) {
+                    candleSeries.update({ time: Math.floor(Date.now() / 1000), close: price });
+                }
+                atualizarPainelPar(price);
+            }
+        } catch (e) {}
+    }
+
+    function atualizarPainelPar(livePrice) {
+        const filtered = allTrades.filter(t => t.par === currentSymbol);
+        let currentQty = 0, totalNominalValue = 0;
+        filtered.forEach(t => {
+            const p = parseFloat(t.preco), q = parseFloat(t.quantidade);
+            if (t.tipo === "Compra") { totalNominalValue += (p * q); currentQty += q; }
+            else { 
+                if (currentQty > 0) {
+                    const avgBefore = totalNominalValue / currentQty;
+                    totalNominalValue -= (avgBefore * q);
+                    currentQty -= q;
+                } else {
+                    totalNominalValue -= (p * q); currentQty -= q;
+                }
             }
         });
 
-        const precoMedio = qtdEntradas > 0 ? custoTotalEntradas / qtdEntradas : 0;
-        const exposicaoNominal = totalQtd * precoAtual;
-        const alavancagem = capTotal > 0 ? exposicaoNominal / capTotal : 0;
-        const pl = precoMedio > 0 ? ((precoAtual / precoMedio) - 1) * 100 : 0;
-
-        // Atualizar UI
-        document.getElementById('labelPrecoMedio').innerText = precoMedio.toFixed(2) + "€";
-        document.getElementById('labelAlavancagem').innerText = alavancagem.toFixed(2) + "x";
+        const equity = 145.68; 
+        const avg = currentQty > 0 ? (totalNominalValue / currentQty) : 0;
+        const usage = (Math.abs(currentQty) * livePrice) / equity;
         
-        const elPL = document.getElementById('labelPL');
-        elPL.innerText = pl.toFixed(2) + "%";
-        elPL.style.color = pl >= 0 ? "var(--success)" : "var(--danger)";
+        let plCash = 0;
+        if (Math.abs(currentQty) > 0) {
+            plCash = (currentQty > 0) ? (livePrice - avg) * currentQty : (avg - livePrice) * Math.abs(currentQty);
+        }
+        const plPerc = (plCash / equity) * 100;
+
+        document.getElementById('avgPrice').innerText = "$" + avg.toFixed(4);
+        document.getElementById('levUsage').innerText = usage.toFixed(2) + "x";
+        document.getElementById('openPLCash').innerText = (plCash >= 0 ? "+" : "") + "$" + plCash.toFixed(2);
+        document.getElementById('openPLPerc').innerText = (plPerc >= 0 ? "+" : "") + plPerc.toFixed(2) + "%";
         
-        if (alavancagem > 3) document.getElementById('labelAlavancagem').style.color = "var(--danger)";
-        else document.getElementById('labelAlavancagem').style.color = "var(--primary)";
+        const color = plCash >= 0 ? "var(--success)" : "var(--danger)";
+        document.getElementById('openPLCash').style.color = color;
+        document.getElementById('openPLPerc').style.color = color;
+
+        updateEntryLine(avg);
     }
 
-    function renderizarTabela() {
-        const tbody = document.getElementById('listaOperacoes');
-        tbody.innerHTML = '';
-
-        operacoes.forEach((op, index) => {
-            const row = `<tr>
-                <td class="${op.tipo === 'Compra' ? 'pos-long' : 'pos-short'}">${op.tipo}</td>
-                <td>${op.preco.toFixed(2)}€</td>
-                <td>${op.qtd}</td>
-                <td>${(op.preco * op.qtd).toFixed(2)}€</td>
-                <td><button onclick="remover(${index})" style="background:var(--danger); padding: 5px 10px;">X</button></td>
-            </tr>`;
-            tbody.innerHTML += row;
-        });
+    function mudarPar(shouldLoadHistory = true) {
+        currentSymbol = document.getElementById('parTicker').value;
+        document.getElementById('displayPar').innerText = currentSymbol;
+        if (shouldLoadHistory) initCandleChart(); 
+        renderTrades();
     }
 
-    function remover(index) {
-        operacoes.splice(index, 1);
-        atualizarGeral();
-        renderizarTabela();
+    function renderTrades() {
+        const log = allTrades.filter(t => t.par === currentSymbol);
+        document.getElementById('tradeLog').innerHTML = log.map(t => `
+            <tr>
+                <td>${new Date(t.created_at).toLocaleTimeString('pt-PT')}</td>
+                <td style="color:${t.tipo==='Compra'?'var(--success)':'var(--danger)'}"><strong>${t.tipo}</strong></td>
+                <td>$${parseFloat(t.preco).toFixed(4)}</td>
+                <td>${t.quantidade}</td>
+                <td>${t.alavancagem_alvo}x</td>
+                <td><button onclick="deleteTrade('${t.id}')" style="background:none;color:red;border:none;cursor:pointer;">×</button></td>
+            </tr>`).join('');
     }
+
+    async function saveTrade() {
+        const p = parseFloat(document.getElementById('tPrice').value);
+        const q = parseFloat(document.getElementById('tQty').value);
+        const lev = parseFloat(document.getElementById('tLev').value) || 0;
+        await _supabase.from('trades').insert([{ par: currentSymbol, tipo: document.getElementById('tType').value, preco: p, quantidade: q, alavancagem_alvo: lev }]);
+        loadData();
+    }
+
+    async function deleteTrade(id) {
+        if(confirm("Eliminar?")) { await _supabase.from('trades').delete().eq('id', id); loadData(); }
+    }
+
+    function sugerirQtd() {
+        const equity = 145.68;
+        const p = parseFloat(document.getElementById('tPrice').value) || 0;
+        const l = parseFloat(document.getElementById('tLev').value) || 0;
+        if (p > 0 && l > 0) document.getElementById('tQty').value = ((equity * l) / p).toFixed(4);
+    }
+
+    // Inicialização Blindada
+    window.addEventListener('load', () => {
+        initCandleChart();
+        loadData();
+        setInterval(fetchPrice, 3000);
+    });
 </script>
-
 </body>
 </html>
