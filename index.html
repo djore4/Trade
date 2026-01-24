@@ -3,83 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Futures Pro | Desktop & Mobile Optimized</title>
+    <title>Futures Pro | Multi-P&L Terminal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
         :root { --primary: #1a1a1a; --accent: #f3d42f; --success: #00c853; --danger: #ff3d00; --bg: #0d0d0d; --text: #e0e0e0; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 5px; margin: 0; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 8px; margin: 0; }
         .container { max-width: 1400px; margin: auto; }
         
         /* Navegação */
-        .asset-nav { display: flex; gap: 5px; margin-bottom: 8px; overflow-x: auto; padding-bottom: 5px; border-bottom: 1px solid #222; scrollbar-width: none; }
-        .nav-btn { background: #1a1a1a; color: #777; border: 1px solid #333; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; white-space: nowrap; }
+        .asset-nav { display: flex; gap: 6px; margin-bottom: 10px; overflow-x: auto; padding-bottom: 5px; border-bottom: 1px solid #222; scrollbar-width: none; }
+        .nav-btn { background: #1a1a1a; color: #777; border: 1px solid #333; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; white-space: nowrap; }
         .nav-btn.active { background: var(--accent); color: #000; }
 
-        /* Dashboard Responsivo */
-        .dashboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
-        .card { background: #161616; padding: 10px 5px; border-radius: 8px; border: 1px solid #222; text-align: center; }
+        /* Dashboard */
+        .dashboard { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px; }
+        @media (min-width: 768px) { .dashboard { grid-template-columns: repeat(4, 1fr); } }
+        .card { background: #161616; padding: 12px; border-radius: 8px; border: 1px solid #222; text-align: center; }
         .card label { color: #666; font-size: 0.6rem; text-transform: uppercase; display: block; margin-bottom: 4px; }
-        
-        /* Ajuste de Tamanho Desktop vs Mobile */
-        .card span { font-size: 1rem; font-weight: bold; } /* Mobile */
-        @media (min-width: 1024px) {
-            .card { padding: 20px 10px; }
-            .card span { font-size: 1.6rem; } 
-            .card label { font-size: 0.75rem; }
-            #globalEquityDisplay { font-size: 1.8rem !important; }
-        }
+        .card span { font-size: 1.1rem; font-weight: bold; }
+        @media (min-width: 1024px) { .card span { font-size: 1.6rem; } }
 
         /* Gráfico */
-        .chart-wrapper { background: #000; border-radius: 8px; border: 1px solid #333; margin-bottom: 8px; }
-        .chart-header { background: #1a1a1a; padding: 6px 10px; display: flex; justify-content: space-between; align-items: center; }
-        .tf-btn { background: #222; color: #fff; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.65rem; cursor: pointer; }
+        .chart-wrapper { background: #000; border-radius: 8px; border: 1px solid #333; margin-bottom: 10px; overflow: hidden; }
+        .chart-header { background: #1a1a1a; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+        .tf-btn { background: #222; color: #fff; border: none; padding: 6px 10px; border-radius: 4px; font-size: 0.7rem; cursor: pointer; }
         .tf-btn.active { background: var(--accent); color: #000; }
         #chart { height: 350px; width: 100%; }
 
-        /* Painel de Trade */
-        .trade-panel { background: #161616; padding: 10px; border-radius: 8px; border: 1px solid #222; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-        @media (max-width: 600px) { .trade-panel { grid-template-columns: repeat(2, 1fr); } }
-        .field { display: flex; flex-direction: column; }
-        .field label { font-size: 0.6rem; color: #888; margin-bottom: 4px; }
-        input, select { background: #111; border: 1px solid #333; color: white; padding: 8px; border-radius: 6px; font-size: 0.9rem; height: 38px; }
-        .exec-btn { background: var(--accent); color: #000; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; height: 38px; align-self: flex-end; }
+        /* Painel de Trade Otimizado para Mobile */
+        .trade-panel { background: #161616; padding: 15px; border-radius: 10px; border: 1px solid #222; display: flex; flex-wrap: wrap; gap: 10px; }
+        .field { flex: 1 1 calc(50% - 10px); display: flex; flex-direction: column; }
+        @media (min-width: 768px) { .field { flex: 1; } }
+        .field label { font-size: 0.65rem; color: #888; margin-bottom: 4px; }
+        input, select { background: #111; border: 1px solid #333; color: white; padding: 12px; border-radius: 6px; font-size: 1rem; height: 48px; width: 100%; }
+        .exec-btn { flex: 1 1 100%; background: var(--accent); color: #000; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; height: 50px; font-size: 1rem; margin-top: 5px; }
+        @media (min-width: 768px) { .exec-btn { flex: 0 0 150px; margin-top: 0; align-self: flex-end; } }
 
         /* Tabela */
-        .table-container { width: 100%; overflow-x: auto; margin-top: 10px; border-radius: 8px; background: #111; }
+        .table-container { width: 100%; overflow-x: auto; margin-top: 15px; border-radius: 8px; background: #111; }
         table { width: 100%; border-collapse: collapse; min-width: 600px; }
-        th { text-align: left; color: #555; padding: 10px; border-bottom: 1px solid #222; font-size: 0.7rem; }
-        td { padding: 10px; border-bottom: 1px solid #161616; font-size: 0.85rem; }
+        th { text-align: left; color: #555; padding: 12px; border-bottom: 1px solid #222; font-size: 0.75rem; }
+        td { padding: 12px; border-bottom: 1px solid #161616; font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="asset-nav" id="assetNav">
-        <button class="nav-btn active" onclick="setMode('OVERVIEW')">VISÃO GERAL</button>
+        <button class="nav-btn active" onclick="setMode('OVERVIEW')">GERAL</button>
     </div>
 
-    <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:8px; padding: 0 5px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding: 0 5px;">
         <span id="displayPar" style="font-size: 1rem; font-weight: bold; color: var(--accent);">VISÃO GERAL</span>
         <div style="text-align: right;">
-            <label style="font-size: 0.6rem; color: #666; display: block;">EQUITY TOTAL</label>
-            <div style="font-size: 1.2rem; font-weight: bold; color: #fff;" id="globalEquityDisplay">$0.00</div>
+            <label style="font-size: 0.6rem; color: #666;">EQUITY TOTAL</label>
+            <div style="font-size: 1.3rem; font-weight: bold; color: #fff;" id="globalEquityDisplay">$0.00</div>
         </div>
     </div>
 
     <div class="dashboard">
         <div class="card"><label>Mark Price</label><span id="v1">---</span></div>
         <div class="card"><label>Entry Price</label><span id="v2">---</span></div>
-        <div class="card"><label id="l3">Alavancagem Real</label><span id="v3">0.00x</span></div>
-        <div class="card"><label id="l4">P&L Aberto</label><span id="v4">$0.00</span></div>
+        <div class="card"><label>Alavancagem Real</label><span id="v3">0.00x</span></div>
+        <div class="card"><label>P&L Aberto</label><span id="v4">$0.00</span></div>
     </div>
 
     <div class="chart-wrapper">
         <div class="chart-header">
-            <span id="chartTitle" style="font-size:0.7rem; color:#888;">PERFORMANCE P&L</span>
+            <span id="chartTitle" style="font-size:0.75rem; color:#888;">MULTI-ASSET P&L OVERLAY</span>
             <div id="tfControls">
-                <button class="tf-btn" onclick="changeTF('1', this)">1m</button>
                 <button class="tf-btn" onclick="changeTF('5', this)">5m</button>
                 <button class="tf-btn active" onclick="changeTF('15', this)">15m</button>
                 <button class="tf-btn" onclick="changeTF('60', this)">1h</button>
@@ -109,13 +103,14 @@
 </div>
 
 <script>
-    // Configurações (Substituir pelos teus dados)
+    // Configurações Supabase (Preencha com seus dados reais)
     const SUPABASE_URL = 'https://pmdvckcxwfiwhrhibupo.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_bRa-mZWTaf0g6sNyWL9OmQ_uvo7Ex5H';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let currentMode = "OVERVIEW", currentSymbol = "BTCUSDT", currentTF = "15";
-    let allTrades = [], activePrices = {}, chart, candleSeries, pnlLine, entryLine;
+    let allTrades = [], activePrices = {}, chart, candleSeries, pnlLineMain, pnlLinesSub = {};
+    const lineColors = ['#ff6b6b', '#4dabf7', '#51cf66', '#fcc419', '#cc5de8', '#ff922b'];
 
     window.onload = async () => {
         initChart();
@@ -132,7 +127,7 @@
             rightPriceScale: { borderVisible: false } 
         });
         candleSeries = chart.addCandlestickSeries({ upColor: '#00c853', downColor: '#ff3d00' });
-        pnlLine = chart.addLineSeries({ color: '#f3d42f', lineWidth: 2 });
+        pnlLineMain = chart.addLineSeries({ color: '#f3d42f', lineWidth: 3, title: 'Total P&L' });
         updateView();
     }
 
@@ -150,67 +145,80 @@
             if (d.result?.list) {
                 d.result.list.forEach(i => { activePrices[i.symbol] = parseFloat(i.markPrice); });
                 calculateMetrics();
-                if (currentMode === "OVERVIEW" && pnlLine) {
-                    const totalPnl = parseFloat(document.getElementById('v4').innerText.replace('$',''));
-                    pnlLine.update({ time: Math.floor(Date.now()/1000), value: totalPnl });
-                }
             }
         } catch(e) {}
     }
 
     function calculateMetrics() {
-        let tPnl = 0, tMarg = 0, count = 0, tNominal = 0;
-        let tickPnl = 0, tickMarg = 0, tickNominal = 0;
-        const s = {};
+        let totalGlobalPL = 0, totalGlobalMargin = 0, totalGlobalNominal = 0, count = 0;
+        let tickerSpecificPL = 0, tickerSpecificMargin = 0, tickerSpecificNominal = 0;
+        const saldos = {};
+        const timeNow = Math.floor(Date.now()/1000);
         
         allTrades.forEach(t => {
-            if(!s[t.par]) s[t.par] = { q:0, cost:0, marg:0 };
+            if(!saldos[t.par]) saldos[t.par] = { q:0, cost:0, margin:0 };
             const tradeNom = t.preco * t.quantidade;
-            const m = tradeNom / (t.alavancagem_alvo || 1);
-            if(t.tipo === "Compra") { s[t.par].q += t.quantidade; s[t.par].cost += tradeNom; s[t.par].marg += m; }
+            const tradeMarg = tradeNom / (t.alavancagem_alvo || 1);
+            if(t.tipo === "Compra") { saldos[t.par].q += t.quantidade; saldos[t.par].cost += tradeNom; saldos[t.par].margin += tradeMarg; }
             else { 
-                const r = t.quantidade / (s[t.par].q || 1);
-                s[t.par].marg -= (s[t.par].marg * r); s[t.par].cost -= (s[t.par].cost * r); s[t.par].q -= t.quantidade; 
+                const r = t.quantidade / (saldos[t.par].q || 1);
+                saldos[t.par].margin -= (saldos[t.par].margin * r);
+                saldos[t.par].cost -= (saldos[t.par].cost * r);
+                saldos[t.par].q -= t.quantidade; 
             }
         });
 
-        Object.keys(s).forEach(tic => {
-            if(Math.abs(s[tic].q) > 0.0001) {
-                const p = activePrices[tic] || 0;
-                const pl = (p - (s[tic].cost/s[tic].q)) * s[tic].q;
-                const nom = p * Math.abs(s[tic].q);
-                
-                tPnl += pl; tMarg += s[tic].marg; tNominal += nom; count++;
-                
-                if(currentMode === "TICKER" && currentSymbol === tic) { 
-                    tickPnl = pl; tickMarg = s[tic].marg; tickNominal = nom;
-                    updateTickerUI(p, s[tic].cost/s[tic].q, pl, s[tic].marg, nom); 
+        Object.keys(saldos).forEach((ticker, idx) => {
+            const s = saldos[ticker];
+            if(Math.abs(s.q) > 0.0001) {
+                const p = activePrices[ticker] || 0;
+                const pl = (p - (s.cost/s.q)) * s.q;
+                const nom = p * Math.abs(s.q);
+                totalGlobalPL += pl; totalGlobalMargin += s.margin; totalGlobalNominal += nom; count++;
+
+                // Gestão de linhas individuais no gráfico geral
+                if(currentMode === "OVERVIEW") {
+                    if(!pnlLinesSub[ticker]) {
+                        pnlLinesSub[ticker] = chart.addLineSeries({ 
+                            color: lineColors[idx % lineColors.length], 
+                            lineWidth: 1, 
+                            lineStyle: 2,
+                            title: ticker 
+                        });
+                    }
+                    pnlLinesSub[ticker].update({ time: timeNow, value: pl });
+                }
+
+                if(currentMode === "TICKER" && currentSymbol === ticker) { 
+                    tickerSpecificPL = pl; tickerSpecificMargin = s.margin; tickerSpecificNominal = nom;
+                    updateTickerUI(p, s.cost/s.q, pl, s.margin, nom); 
                 }
             }
         });
 
         if(currentMode === "OVERVIEW") {
-            const equity = tMarg + tPnl;
-            const levReal = equity > 0 ? (tNominal / equity) : 0;
+            const equity = totalGlobalMargin + totalGlobalPL;
+            const lev = equity > 0 ? (totalGlobalNominal / equity) : 0;
             document.getElementById('globalEquityDisplay').innerText = "$" + equity.toFixed(2);
-            document.getElementById('v3').innerText = levReal.toFixed(2) + "x";
-            document.getElementById('v4').innerText = "$" + tPnl.toFixed(2);
-            document.getElementById('v4').style.color = tPnl >= 0 ? "var(--success)" : "var(--danger)";
+            document.getElementById('v2').innerText = count;
+            document.getElementById('v3').innerText = lev.toFixed(2) + "x";
+            document.getElementById('v4').innerText = "$" + totalGlobalPL.toFixed(2);
+            document.getElementById('v4').style.color = totalGlobalPL >= 0 ? "var(--success)" : "var(--danger)";
+            pnlLineMain.update({ time: timeNow, value: totalGlobalPL });
         } else {
-            const equityTick = tickMarg + tickPnl;
-            document.getElementById('globalEquityDisplay').innerText = "$" + equityTick.toFixed(2);
+            const eqTick = tickerSpecificMargin + tickerSpecificPL;
+            document.getElementById('globalEquityDisplay').innerText = "$" + eqTick.toFixed(2);
         }
     }
 
     function updateTickerUI(p, avg, pl, m, nom) {
-        const equity = m + pl;
-        const levReal = equity > 0 ? (nom / equity) : 0;
+        const eq = m + pl;
+        const lev = eq > 0 ? (nom / eq) : 0;
         document.getElementById('v1').innerText = p.toFixed(4);
         document.getElementById('v2').innerText = avg.toFixed(4);
-        document.getElementById('v3').innerText = levReal.toFixed(2) + "x";
+        document.getElementById('v3').innerText = lev.toFixed(2) + "x";
         document.getElementById('v4').innerText = "$" + pl.toFixed(2);
         document.getElementById('v4').style.color = pl >= 0 ? "var(--success)" : "var(--danger)";
-        
         if(entryLine) candleSeries.removePriceLine(entryLine);
         entryLine = candleSeries.createPriceLine({ price: avg, color: '#555', lineWidth: 1, lineStyle: 2, title: 'ENTRY' });
         candleSeries.update({ time: Math.floor(Date.now()/1000), close: p });
@@ -219,13 +227,18 @@
     function setMode(m, t="") { 
         currentMode = m; if(m === "TICKER") currentSymbol = t; 
         document.getElementById('displayPar').innerText = m === "OVERVIEW" ? "VISÃO GERAL" : currentSymbol;
-        document.getElementById('chartTitle').innerText = m === "OVERVIEW" ? "PERFORMANCE P&L" : "MARKET CANDLES";
+        // Limpar linhas individuais se sair do overview
+        if(m !== "OVERVIEW") { 
+            Object.values(pnlLinesSub).forEach(line => chart.removeSeries(line)); 
+            pnlLinesSub = {}; 
+        }
         updateView(); updateAssetNav(); renderTable(); 
     }
 
     function updateView() {
         const isT = currentMode === "TICKER";
-        candleSeries.applyOptions({ visible: isT }); pnlLine.applyOptions({ visible: !isT });
+        candleSeries.applyOptions({ visible: isT }); 
+        pnlLineMain.applyOptions({ visible: !isT });
         loadHistory();
     }
 
@@ -236,7 +249,7 @@
         if(d.result?.list) {
             const k = d.result.list.map(i => ({ time: i[0]/1000, open: parseFloat(i[1]), high: parseFloat(i[2]), low: parseFloat(i[3]), close: parseFloat(i[4]) })).reverse();
             if(currentMode === "TICKER") candleSeries.setData(k);
-            else pnlLine.setData(k.map(i => ({ time: i.time, value: 0 })));
+            else pnlLineMain.setData(k.map(i => ({ time: i.time, value: 0 })));
             setTimeout(() => chart.timeScale().fitContent(), 50);
         }
     }
@@ -253,7 +266,7 @@
                 <td>${t.preco}</td>
                 <td>${t.alavancagem_alvo}x</td>
                 <td>${t.quantidade}</td>
-                <td><button onclick="deleteTrade('${t.id}')" style="color:red; background:none; border:none; cursor:pointer;">×</button></td>
+                <td><button onclick="deleteTrade('${t.id}')" style="color:red; background:none; border:none; cursor:pointer; font-size:1.1rem;">×</button></td>
             </tr>`).join('');
     }
 
