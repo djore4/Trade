@@ -3,92 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Futures Pro | Synced Equity</title>
+    <title>Futures Pro | Ultra Compact</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
         :root { --primary: #1a1a1a; --accent: #f3d42f; --success: #00c853; --danger: #ff3d00; --bg: #0d0d0d; --text: #e0e0e0; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 10px; margin: 0; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 5px; margin: 0; }
         .container { max-width: 1200px; margin: auto; }
-        .asset-nav { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 10px; border-bottom: 1px solid #333; scrollbar-width: none; }
-        .nav-btn { background: #1a1a1a; color: #777; border: 1px solid #333; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; white-space: nowrap; }
-        .nav-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
-        .nav-btn.overview { border-color: var(--success); color: var(--success); }
-        .nav-btn.overview.active { background: var(--success); color: #000; }
-        .dashboard { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
-        @media (min-width: 768px) { .dashboard { grid-template-columns: repeat(4, 1fr); } }
-        .card { background: #161616; padding: 12px; border-radius: 10px; border: 1px solid #333; text-align: center; }
-        .card label { color: #888; font-size: 0.6rem; text-transform: uppercase; display: block; margin-bottom: 5px; }
-        .card span { font-size: 1rem; font-weight: bold; }
-        .chart-wrapper { background: #000; border-radius: 12px; border: 1px solid #333; margin-bottom: 15px; overflow: hidden; }
-        .chart-header { background: #1a1a1a; padding: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 5px; }
-        .tf-btn { background: #222; color: #fff; border: none; padding: 6px 8px; border-radius: 4px; font-size: 0.65rem; cursor: pointer; }
-        .tf-btn.active { background: var(--accent); color: #000; font-weight: bold; }
-        #chart { height: 350px; width: 100%; }
-        .trade-panel { background: #161616; padding: 15px; border-radius: 10px; border: 1px solid #222; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: end; }
-        input, select { background: #111; border: 1px solid #333; color: white; padding: 10px; border-radius: 6px; font-size: 0.9rem; width: 100%; height: 44px; }
-        .exec-btn { background: var(--accent); color: #000; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; height: 44px; grid-column: span 2; }
-        .table-container { width: 100%; overflow-x: auto; margin-top: 15px; border-radius: 10px; background: #161616; }
-        table { width: 100%; border-collapse: collapse; min-width: 600px; }
-        th { text-align: left; color: #666; padding: 10px; border-bottom: 2px solid #222; font-size: 0.7rem; }
-        td { padding: 10px; border-bottom: 1px solid #1a1a1a; font-size: 0.8rem; }
+        
+        /* Navegação Compacta */
+        .asset-nav { display: flex; gap: 5px; margin-bottom: 8px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
+        .nav-btn { background: #1a1a1a; color: #777; border: 1px solid #333; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; white-space: nowrap; }
+        .nav-btn.active { background: var(--accent); color: #000; }
+
+        /* Dashboard Condensado */
+        .dashboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 8px; }
+        .card { background: #161616; padding: 6px 2px; border-radius: 6px; border: 1px solid #222; text-align: center; }
+        .card label { color: #666; font-size: 0.5rem; text-transform: uppercase; display: block; }
+        .card span { font-size: 0.8rem; font-weight: bold; }
+
+        /* Gráfico */
+        .chart-wrapper { background: #000; border-radius: 8px; border: 1px solid #333; margin-bottom: 8px; }
+        .chart-header { background: #1a1a1a; padding: 4px 8px; display: flex; justify-content: space-between; align-items: center; }
+        .tf-btn { background: #222; color: #fff; border: none; padding: 4px 6px; border-radius: 3px; font-size: 0.6rem; cursor: pointer; }
+        .tf-btn.active { background: var(--accent); color: #000; }
+        #chart { height: 280px; width: 100%; }
+
+        /* Painel de Trade Ultra Compacto */
+        .trade-panel { background: #161616; padding: 8px; border-radius: 8px; border: 1px solid #222; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+        @media (max-width: 600px) { .trade-panel { grid-template-columns: repeat(2, 1fr); } }
+        .field { display: flex; flex-direction: column; }
+        .field label { font-size: 0.55rem; color: #888; margin-bottom: 2px; }
+        input, select { background: #111; border: 1px solid #333; color: white; padding: 5px; border-radius: 4px; font-size: 0.8rem; height: 32px; }
+        .exec-btn { background: var(--accent); color: #000; border: none; border-radius: 4px; font-weight: bold; font-size: 0.75rem; height: 32px; align-self: flex-end; cursor: pointer; }
+
+        /* Tabela */
+        .table-container { width: 100%; overflow-x: auto; margin-top: 8px; border-radius: 6px; background: #111; }
+        table { width: 100%; border-collapse: collapse; min-width: 500px; }
+        th { text-align: left; color: #555; padding: 6px; border-bottom: 1px solid #222; font-size: 0.65rem; }
+        td { padding: 6px; border-bottom: 1px solid #161616; font-size: 0.75rem; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="asset-nav" id="assetNav">
-        <button class="nav-btn overview active" onclick="setMode('OVERVIEW')">GERAL</button>
+        <button class="nav-btn active" onclick="setMode('OVERVIEW')">GERAL</button>
     </div>
 
-    <div class="header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-        <h3 style="margin:0; font-size: 0.85rem;"><span id="displayPar">VISÃO GERAL</span></h3>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; padding: 0 5px;">
+        <span id="displayPar" style="font-size: 0.75rem; font-weight: bold; color: var(--accent);">GERAL</span>
         <div style="text-align: right;">
-            <label id="equityLabel" style="font-size: 0.55rem; color: #666;">EQUITY (MARGIN + P&L)</label>
-            <div style="font-size: 1rem; font-weight: bold; color: var(--accent);" id="globalEquityDisplay">$0.00</div>
+            <div style="font-size: 0.9rem; font-weight: bold; color: #fff;" id="globalEquityDisplay">$0.00</div>
         </div>
     </div>
 
     <div class="dashboard">
-        <div class="card"><label id="l1">Price</label><span id="v1">---</span></div>
-        <div class="card"><label id="l2">Entry</label><span id="v2">---</span></div>
-        <div class="card"><label id="l3">Margem</label><span id="v3">$0.00</span></div>
-        <div class="card"><label id="l4">P&L TOTAL</label><span id="v4">$0.00</span><br><small id="v4perc">0%</small></div>
+        <div class="card"><label>Preço</label><span id="v1">---</span></div>
+        <div class="card"><label>Entry</label><span id="v2">---</span></div>
+        <div class="card"><label>Margem</label><span id="v3">$0</span></div>
+        <div class="card"><label>P&L</label><span id="v4">$0</span></div>
     </div>
 
     <div class="chart-wrapper">
         <div class="chart-header">
-            <span id="chartTitle" style="font-size:0.7rem; font-weight: bold; color: var(--accent);">REAL-TIME P&L</span>
+            <span style="font-size:0.6rem; color:#888;">P&L REAL-TIME</span>
             <div id="tfControls">
                 <button class="tf-btn" onclick="changeTF('1', this)">1m</button>
-                <button class="tf-btn" onclick="changeTF('5', this)">5m</button>
-                <button class="tf-btn active" onclick="changeTF('15', this)">15m</button>
+                <button class="tf-btn" onclick="changeTF('15', this)">15m</button>
                 <button class="tf-btn" onclick="changeTF('60', this)">1h</button>
+                <button class="tf-btn" onclick="changeTF('240', this)">4h</button>
                 <button class="tf-btn" onclick="changeTF('D', this)">1D</button>
+                <button class="tf-btn" onclick="changeTF('W', this)">1W</button>
             </div>
         </div>
         <div id="chart"></div>
     </div>
 
     <div class="trade-panel">
-        <div><label style="font-size:0.6rem; color:#888;">Ticker</label><input type="text" id="parTicker" placeholder="Ex: BTCUSDT"></div>
-        <div><label style="font-size:0.6rem; color:#888;">Lado</label><select id="tType"><option value="Compra">LONG</option><option value="Venda">SHORT</option></select></div>
-        <div><label style="font-size:0.6rem; color:#888;">Preço</label><input type="number" id="tPrice" step="any"></div>
-        <div><label style="font-size:0.6rem; color:#888;">Lev</label><input type="number" id="tLev" value="1.0"></div>
-        <div><label style="font-size:0.6rem; color:#888;">Qtd</label><input type="number" id="tQty" step="any"></div>
+        <div class="field"><label>Ticker</label><input type="text" id="parTicker" placeholder="BTCUSDT"></div>
+        <div class="field"><label>Lado</label><select id="tType"><option value="Compra">LONG</option><option value="Venda">SHORT</option></select></div>
+        <div class="field"><label>Preço</label><input type="number" id="tPrice" step="any"></div>
+        <div class="field"><label>Lev</label><input type="number" id="tLev" value="10"></div>
+        <div class="field"><label>Qtd</label><input type="number" id="tQty" step="any"></div>
         <button class="exec-btn" onclick="saveTrade()">EXECUTAR</button>
     </div>
 
     <div class="table-container">
         <table>
-            <thead><tr><th>Data/Hora</th><th>Par</th><th>Lado</th><th>Preço</th><th>Qtd</th><th>Ação</th></tr></thead>
+            <thead><tr><th>Data/Hora</th><th>Par</th><th>Lado</th><th>Preço</th><th>Lev</th><th>Qtd</th><th>×</th></tr></thead>
             <tbody id="tradeLog"></tbody>
         </table>
     </div>
 </div>
 
 <script>
+    // Configurações Supabase (Substituir pelos teus dados)
     const SUPABASE_URL = 'https://pmdvckcxwfiwhrhibupo.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_bRa-mZWTaf0g6sNyWL9OmQ_uvo7Ex5H';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -103,11 +114,10 @@
     };
 
     function initChart() {
-        const el = document.getElementById('chart');
-        chart = LightweightCharts.createChart(el, { 
-            layout: { background: { color: '#000' }, textColor: '#d1d4dc', fontSize: 10 },
+        chart = LightweightCharts.createChart(document.getElementById('chart'), { 
+            layout: { background: { color: '#000' }, textColor: '#888', fontSize: 10 },
             grid: { vertLines: { color: '#111' }, horzLines: { color: '#111' } },
-            timeScale: { timeVisible: true, borderVisible: false, rightOffset: 2 },
+            timeScale: { timeVisible: true, borderVisible: false },
             rightPriceScale: { borderVisible: false } 
         });
         candleSeries = chart.addCandlestickSeries({ upColor: '#00c853', downColor: '#ff3d00' });
@@ -138,101 +148,84 @@
     }
 
     function calculateMetrics() {
-        let totalGlobalPL = 0, totalGlobalMargin = 0, posCount = 0;
-        let tickerPL = 0, tickerMargin = 0;
-        const saldos = {};
+        let tPnl = 0, tMarg = 0, count = 0, tickPnl = 0, tickMarg = 0;
+        const s = {};
         
         allTrades.forEach(t => {
-            if(!saldos[t.par]) saldos[t.par] = { q:0, cost:0, margin:0 };
-            const tradeNominal = t.preco * t.quantidade;
-            const tradeMargin = tradeNominal / (t.alavancagem_alvo || 1);
-            if(t.tipo === "Compra") { 
-                saldos[t.par].q += t.quantidade; saldos[t.par].cost += tradeNominal; saldos[t.par].margin += tradeMargin; 
-            } else { 
-                const r = t.quantidade / (saldos[t.par].q || 1);
-                saldos[t.par].margin -= (saldos[t.par].margin * r);
-                saldos[t.par].cost -= (saldos[t.par].cost * r);
-                saldos[t.par].q -= t.quantidade; 
+            if(!s[t.par]) s[t.par] = { q:0, cost:0, marg:0 };
+            const nom = t.preco * t.quantidade;
+            const m = nom / (t.alavancagem_alvo || 1);
+            if(t.tipo === "Compra") { s[t.par].q += t.quantidade; s[t.par].cost += nom; s[t.par].marg += m; }
+            else { 
+                const r = t.quantidade / (s[t.par].q || 1);
+                s[t.par].marg -= (s[t.par].marg * r); s[t.par].cost -= (s[t.par].cost * r); s[t.par].q -= t.quantidade; 
             }
         });
 
-        Object.keys(saldos).forEach(ticker => {
-            const s = saldos[ticker];
-            if(Math.abs(s.q) > 0.0001) {
-                const p = activePrices[ticker] || 0;
-                const pl = (p - (s.cost/s.q)) * s.q;
-                totalGlobalPL += pl; totalGlobalMargin += s.margin; posCount++;
-                if(currentMode === "TICKER" && currentSymbol === ticker) { 
-                    tickerPL = pl; tickerMargin = s.margin; 
-                    updateTickerUI(p, s.cost/s.q, pl, s.margin); 
-                }
+        Object.keys(s).forEach(tic => {
+            if(Math.abs(s[tic].q) > 0.0001) {
+                const p = activePrices[tic] || 0;
+                const pl = (p - (s[tic].cost/s[tic].q)) * s[tic].q;
+                tPnl += pl; tMarg += s[tic].marg; count++;
+                if(currentMode === "TICKER" && currentSymbol === tic) { tickPnl = pl; tickMarg = s[tic].marg; updateTickerUI(p, s[tic].cost/s[tic].q, pl, s[tic].marg); }
             }
         });
 
         if(currentMode === "OVERVIEW") {
-            document.getElementById('globalEquityDisplay').innerText = "$" + (totalGlobalMargin + totalGlobalPL).toFixed(2);
-            document.getElementById('v2').innerText = posCount;
-            document.getElementById('v3').innerText = "$" + totalGlobalMargin.toFixed(2);
-            document.getElementById('v4').innerText = (totalGlobalPL >= 0 ? "+" : "") + "$" + totalGlobalPL.toFixed(2);
-            document.getElementById('v4perc').innerText = totalGlobalMargin > 0 ? ((totalGlobalPL/totalGlobalMargin)*100).toFixed(2) + "%" : "0%";
-            document.getElementById('v4').style.color = totalGlobalPL >= 0 ? "var(--success)" : "var(--danger)";
+            document.getElementById('globalEquityDisplay').innerText = "$" + (tMarg + tPnl).toFixed(2);
+            document.getElementById('v3').innerText = "$" + tMarg.toFixed(0);
+            document.getElementById('v4').innerText = "$" + tPnl.toFixed(2);
+            document.getElementById('v4').style.color = tPnl >= 0 ? "var(--success)" : "var(--danger)";
         } else {
-            document.getElementById('globalEquityDisplay').innerText = "$" + (tickerMargin + tickerPL).toFixed(2);
+            document.getElementById('globalEquityDisplay').innerText = "$" + (tickMarg + tickPnl).toFixed(2);
         }
     }
 
     function updateTickerUI(p, avg, pl, m) {
         document.getElementById('v1').innerText = p.toFixed(4);
-        document.getElementById('v2').innerText = "$" + avg.toFixed(4);
-        document.getElementById('v3').innerText = "$" + m.toFixed(2);
-        document.getElementById('v4').innerText = (pl >= 0 ? "+" : "") + "$" + pl.toFixed(2);
+        document.getElementById('v2').innerText = avg.toFixed(4);
+        document.getElementById('v3').innerText = "$" + m.toFixed(0);
+        document.getElementById('v4').innerText = "$" + pl.toFixed(2);
         document.getElementById('v4').style.color = pl >= 0 ? "var(--success)" : "var(--danger)";
         if(entryLine) candleSeries.removePriceLine(entryLine);
-        entryLine = candleSeries.createPriceLine({ price: avg, color: pl>=0?'#00c853':'#ff3d00', lineWidth: 2, title: 'ENTRY' });
+        entryLine = candleSeries.createPriceLine({ price: avg, color: '#555', lineWidth: 1, lineStyle: 2, title: 'ENTRY' });
         candleSeries.update({ time: Math.floor(Date.now()/1000), close: p });
     }
 
-    function setMode(m, t="") { 
-        currentMode = m; if(m === "TICKER") currentSymbol = t;
-        updateView(); updateAssetNav(); renderTable();
-    }
+    function setMode(m, t="") { currentMode = m; if(m === "TICKER") currentSymbol = t; updateView(); updateAssetNav(); renderTable(); }
 
     function updateView() {
         const isT = currentMode === "TICKER";
         document.getElementById('displayPar').innerText = isT ? currentSymbol : "VISÃO GERAL";
-        document.getElementById('equityLabel').innerText = isT ? "EQUITY " + currentSymbol : "EQUITY PORTFOLIO";
-        candleSeries.applyOptions({ visible: isT }); 
-        pnlLine.applyOptions({ visible: !isT });
+        candleSeries.applyOptions({ visible: isT }); pnlLine.applyOptions({ visible: !isT });
         loadHistory();
     }
 
     async function loadHistory() {
         const sym = currentMode === "TICKER" ? currentSymbol : "BTCUSDT";
-        const resp = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${sym}&interval=${currentTF}&limit=150`);
+        const resp = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${sym}&interval=${currentTF}&limit=100`);
         const d = await resp.json();
         if(d.result?.list) {
-            const klines = d.result.list.map(k => ({ time: k[0]/1000, open: parseFloat(k[1]), high: parseFloat(k[2]), low: parseFloat(k[3]), close: parseFloat(k[4]) })).reverse();
-            if(currentMode === "TICKER") {
-                candleSeries.setData(klines);
-            } else {
-                pnlLine.setData(klines.map(k => ({ time: k.time, value: 0 }))); // Inicia linha em 0 para Overview
-            }
-            setTimeout(() => { chart.timeScale().fitContent(); }, 50);
+            const k = d.result.list.map(i => ({ time: i[0]/1000, open: parseFloat(i[1]), high: parseFloat(i[2]), low: parseFloat(i[3]), close: parseFloat(i[4]) })).reverse();
+            if(currentMode === "TICKER") candleSeries.setData(k);
+            else pnlLine.setData(k.map(i => ({ time: i.time, value: 0 })));
+            setTimeout(() => chart.timeScale().fitContent(), 50);
         }
     }
 
     function changeTF(tf, btn) { currentTF = tf; document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); loadHistory(); }
 
     function renderTable() {
-        const filtered = currentMode === "TICKER" ? allTrades.filter(t => t.par === currentSymbol) : allTrades;
-        document.getElementById('tradeLog').innerHTML = filtered.slice().reverse().map(t => `
+        const f = currentMode === "TICKER" ? allTrades.filter(t => t.par === currentSymbol) : allTrades;
+        document.getElementById('tradeLog').innerHTML = f.slice().reverse().map(t => `
             <tr>
                 <td>${new Date(t.created_at).toLocaleString('pt-PT', {year:'numeric', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'})}</td>
                 <td>${t.par}</td>
-                <td style="color:${t.tipo==='Compra'?'#00c853':'#ff3d00'}">${t.tipo}</td>
+                <td style="color:${t.tipo==='Compra'?'#00c853':'#ff3d00'}">${t.tipo === 'Compra' ? 'LONG' : 'SHORT'}</td>
                 <td>${t.preco}</td>
+                <td>${t.alavancagem_alvo}x</td>
                 <td>${t.quantidade}</td>
-                <td><button onclick="deleteTrade('${t.id}')" style="background:none; border:none; color:red; font-size:1.1rem;">×</button></td>
+                <td><button onclick="deleteTrade('${t.id}')" style="color:red; background:none; border:none;">×</button></td>
             </tr>`).join('');
     }
 
@@ -243,8 +236,12 @@
     }
 
     async function deleteTrade(id) { if(confirm("Apagar?")) { await _supabase.from('trades').delete().eq('id', id); loadData(); } }
-    function updateAssetNav() { const nav = document.getElementById('assetNav'); const tickers = [...new Set(allTrades.map(t => t.par))]; nav.innerHTML = `<button class="nav-btn overview ${currentMode==='OVERVIEW'?'active':''}" onclick="setMode('OVERVIEW')">GERAL</button>`; tickers.forEach(t => { nav.innerHTML += `<button class="nav-btn ${currentMode==='TICKER'&&currentSymbol===t?'active':''}" onclick="setMode('TICKER', '${t}')">${t}</button>`; }); }
-    
+    function updateAssetNav() { 
+        const n = document.getElementById('assetNav'); 
+        const tics = [...new Set(allTrades.map(t => t.par))];
+        n.innerHTML = `<button class="nav-btn ${currentMode==='OVERVIEW'?'active':''}" onclick="setMode('OVERVIEW')">GERAL</button>`;
+        tics.forEach(t => { n.innerHTML += `<button class="nav-btn ${currentMode==='TICKER'&&currentSymbol===t?'active':''}" onclick="setMode('TICKER', '${t}')">${t}</button>`; });
+    }
 </script>
 </body>
 </html>
