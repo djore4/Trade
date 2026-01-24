@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>[v2.1.0] Futures Pro Terminal</title>
+    <title>[v2.2.0] Futures Pro Terminal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
@@ -21,7 +21,7 @@
         .card span { font-size: 1rem; font-weight: bold; }
         .chart-wrapper { background: #000; border-radius: 8px; border: 1px solid #333; margin-bottom: 10px; overflow: hidden; }
         .chart-header { background: #1a1a1a; padding: 6px 10px; display: flex; justify-content: space-between; align-items: center; }
-        #chart { height: 380px; width: 100%; }
+        #chart { height: 400px; width: 100%; }
         .trade-panel { background: #161616; padding: 12px; border-radius: 8px; border: 1px solid #222; display: flex; flex-wrap: wrap; gap: 8px; }
         .field { flex: 1 1 calc(50% - 4px); display: flex; flex-direction: column; }
         @media (min-width: 768px) { .field { flex: 1; } }
@@ -43,7 +43,7 @@
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding: 0 5px;">
         <span id="displayPar" style="font-size: 0.9rem; font-weight: bold; color: var(--accent);">VISÃO GERAL</span>
         <div style="text-align: right;">
-            <label style="font-size: 0.55rem; color: #666;">EQUITY TOTAL [v2.1.0]</label>
+            <label style="font-size: 0.55rem; color: #666;">EQUITY TOTAL [v2.2.0]</label>
             <div style="font-size: 1.1rem; font-weight: bold; color: #fff;" id="globalEquityDisplay">$0.00</div>
         </div>
     </div>
@@ -58,8 +58,8 @@
 
     <div class="chart-wrapper">
         <div class="chart-header">
-            <span id="chartTitle" style="font-size:0.7rem; color:#888;">HISTÓRICO P&L (100 pts)</span>
-            <div style="font-size: 0.6rem; color: #444;">SYNC: OK</div>
+            <span id="chartTitle" style="font-size:0.7rem; color:#888;">HISTÓRICO P&L (250 pts)</span>
+            <div style="font-size: 0.6rem; color: #555;">SYNC: REALTIME</div>
         </div>
         <div id="chart"></div>
     </div>
@@ -87,7 +87,7 @@
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let currentMode = "OVERVIEW", currentSymbol = "BTCUSDT", activePrices = {}, allTrades = [];
-    let chart, candleSeries, mainLine, subLines = {}, entryLineMarker;
+    let chart, candleSeries, mainLine, subLines = {}, entryLineMarker, liqLineMarker;
     const colors = ['#f3d42f', '#ff6b6b', '#4dabf7', '#51cf66', '#cc5de8', '#ff922b'];
 
     window.onload = async () => {
@@ -100,7 +100,7 @@
         chart = LightweightCharts.createChart(document.getElementById('chart'), { 
             layout: { background: { color: '#000' }, textColor: '#888', fontSize: 10 },
             grid: { vertLines: { color: '#111' }, horzLines: { color: '#111' } },
-            timeScale: { timeVisible: true, borderVisible: false },
+            timeScale: { timeVisible: true, borderVisible: false, rightOffset: 5 },
             rightPriceScale: { borderVisible: false, autoScale: true }
         });
         candleSeries = chart.addCandlestickSeries({ upColor: '#00c853', downColor: '#ff3d00' });
@@ -120,33 +120,31 @@
         const tickers = [...new Set(allTrades.map(t => t.par))];
         if (tickers.length === 0) return;
 
-        // Limpar linhas para reconstruir sem tracejados
         mainLine.setData([]);
         Object.values(subLines).forEach(l => chart.removeSeries(l));
         subLines = {};
 
-        // Buscar histórico de preços (100 velas de 15m)
         const histData = {};
         for (const t of tickers) {
-            const r = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${t}&interval=15&limit=100`);
+            const r = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${t}&interval=15&limit=250`);
             const j = await r.json();
             if (j.result?.list) histData[t] = j.result.list.map(v => ({ t: parseInt(v[0])/1000, c: parseFloat(v[4]) })).reverse();
         }
 
-        // Calcular P&L para cada ponto no tempo
         const totalPoints = [];
         const tickerPoints = {};
 
-        for (let i = 0; i < 100; i++) {
+        // 250 pontos para preencher o ecrã
+        for (let i = 0; i < 250; i++) {
             let pointTotal = 0;
             let time = 0;
             tickers.forEach((tic, idx) => {
                 const s = getPositionAt(tic);
-                const priceObj = histData[tic] ? histData[tic][i] : null;
-                if (priceObj && s.q !== 0) {
-                    const pl = (priceObj.c - (s.cost/s.q)) * s.q;
+                const pObj = histData[tic] ? histData[tic][i] : null;
+                if (pObj && s.q !== 0) {
+                    const pl = (pObj.c - (s.cost/s.q)) * s.q;
                     pointTotal += pl;
-                    time = priceObj.t;
+                    time = pObj.t;
                     if (!tickerPoints[tic]) tickerPoints[tic] = [];
                     tickerPoints[tic].push({ time: time, value: pl });
                 }
@@ -199,16 +197,21 @@
                 if (currentMode === "TICKER" && currentSymbol === tic) {
                     const avg = s.cost / s.q;
                     const eq = s.margin + pl;
+                    const liq = s.q > 0 ? avg * (1 - (0.8 / (s.cost/s.margin/avg))) : avg * (1 + (0.8 / (Math.abs(s.cost)/s.margin/avg)));
+                    
                     document.getElementById('v1').innerText = p.toFixed(4);
                     document.getElementById('v2').innerText = avg.toFixed(4);
                     document.getElementById('v3').innerText = (Math.abs(p*s.q) / Math.max(1, eq)).toFixed(2) + "x";
                     document.getElementById('v4').innerText = "$" + pl.toFixed(2);
                     document.getElementById('v4').style.color = pl >= 0 ? "var(--success)" : "var(--danger)";
-                    const liq = s.q > 0 ? avg * (1 - (0.8 / (s.cost/s.margin/avg))) : avg * (1 + (0.8 / (Math.abs(s.cost)/s.margin/avg)));
                     document.getElementById('v5').innerText = liq.toFixed(4);
                     
                     if(entryLineMarker) candleSeries.removePriceLine(entryLineMarker);
+                    if(liqLineMarker) candleSeries.removePriceLine(liqLineMarker);
+                    
                     entryLineMarker = candleSeries.createPriceLine({ price: avg, color: '#f3d42f', lineWidth: 2, lineStyle: 2, title: 'ENTRY' });
+                    liqLineMarker = candleSeries.createPriceLine({ price: liq, color: '#ff3d00', lineWidth: 2, lineStyle: 0, title: 'LIQ' });
+                    
                     candleSeries.update({ time: now, close: p });
                     document.getElementById('globalEquityDisplay').innerText = "$" + eq.toFixed(2);
                 }
@@ -236,10 +239,10 @@
         } else {
             Object.values(subLines).forEach(l => chart.removeSeries(l));
             subLines = {};
-            const r = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${t}&interval=15&limit=100`);
+            const r = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${t}&interval=15&limit=250`);
             const j = await r.json();
             if (j.result?.list) candleSeries.setData(j.result.list.map(v => ({ time: parseInt(v[0])/1000, open: parseFloat(v[1]), high: parseFloat(v[2]), low: parseFloat(v[3]), close: parseFloat(v[4]) })).reverse());
-            chart.timeScale().fitContent();
+            setTimeout(() => chart.timeScale().fitContent(), 100);
         }
         updateAssetNav(); renderTable();
     }
