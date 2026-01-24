@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Futures Terminal Pro | Alpha</title>
+    <title>Futures Terminal Pro | Full Control</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
@@ -11,16 +11,25 @@
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 20px; margin: 0; }
         .container { max-width: 1200px; margin: auto; }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 20px; margin-bottom: 20px; }
+        
         .dashboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
         .card { background: #161616; padding: 20px; border-radius: 10px; border: 1px solid #333; text-align: center; }
         .card label { color: #888; font-size: 0.7rem; text-transform: uppercase; display: block; margin-bottom: 8px; }
         .card span { font-size: 1.4rem; font-weight: bold; }
-        #chart { background: #000; border-radius: 12px; border: 1px solid #444; margin-bottom: 20px; height: 450px; width: 100%; overflow: hidden; position: relative; }
+
+        /* Gráfico e Controles */
+        .chart-wrapper { background: #161616; border-radius: 12px; border: 1px solid #444; margin-bottom: 20px; overflow: hidden; }
+        .chart-controls { background: #222; padding: 10px; display: flex; gap: 10px; border-bottom: 1px solid #333; }
+        .chart-controls button { background: #333; color: white; border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; height: auto; }
+        .chart-controls button.active { background: var(--accent); color: black; }
+        #chart { height: 450px; width: 100%; }
+
         .trade-panel { background: #161616; padding: 25px; border-radius: 10px; border: 1px solid #222; display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr auto; gap: 15px; align-items: end; }
         .input-group { display: flex; flex-direction: column; }
         .input-group label { font-size: 0.75rem; color: #888; margin-bottom: 6px; }
         input, select { background: #222; border: 1px solid #444; color: white; padding: 12px; border-radius: 6px; width: 100%; box-sizing: border-box; }
-        button { background: var(--accent); color: black; border: none; padding: 0 25px; border-radius: 6px; font-weight: bold; cursor: pointer; height: 48px; }
+        
+        button.exec-btn { background: var(--accent); color: black; border: none; padding: 0 25px; border-radius: 6px; font-weight: bold; cursor: pointer; height: 48px; }
         table { width: 100%; margin-top: 30px; border-collapse: collapse; }
         th { text-align: left; color: #888; padding: 15px; border-bottom: 2px solid #333; font-size: 0.8rem; }
         td { padding: 15px; border-bottom: 1px solid #1a1a1a; font-size: 0.9rem; }
@@ -38,26 +47,28 @@
     </div>
 
     <div class="dashboard">
-        <div class="card"><label>Price</label><span id="livePrice" style="color:var(--accent)">0.0000</span></div>
-        <div class="card"><label>Entry Price</label><span id="avgPrice">$0.00</span></div>
+        <div class="card"><label>Mark Price</label><span id="livePrice" style="color:var(--accent)">0.0000</span></div>
+        <div class="card"><label>Entry Médio</label><span id="avgPrice">$0.00</span></div>
         <div class="card"><label>Leverage Real</label><span id="levUsage">0.00x</span></div>
-        <div class="card">
-            <label>P&L Aberto</label>
-            <span id="openPLCash">$0.00</span><br>
-            <small id="openPLPerc" style="font-weight: bold; font-size: 0.85rem;">0.00%</small>
-        </div>
+        <div class="card"><label>P&L Aberto</label><span id="openPLCash">$0.00</span><br><small id="openPLPerc">0.00%</small></div>
     </div>
 
-    <div id="chart"></div>
+    <div class="chart-wrapper">
+        <div class="chart-controls" id="tfControls">
+            <button onclick="changeTF('1', this)">1m</button>
+            <button onclick="changeTF('15', this)" class="active">15m</button>
+            <button onclick="changeTF('60', this)">1h</button>
+            <button onclick="changeTF('240', this)">4h</button>
+            <button onclick="changeTF('D', this)">1D</button>
+        </div>
+        <div id="chart"></div>
+    </div>
 
     <div class="trade-panel">
         <div class="input-group">
-            <label>Ticker</label>
-            <select id="parTicker" onchange="mudarPar()">
-                <option value="APTUSDT">APTUSDT</option>
-                <option value="BTCUSDT">BTCUSDT</option>
-                <option value="ETHUSDT">ETHUSDT</option>
-            </select>
+            <label>Ticker (Escreve ou escolhe)</label>
+            <input list="tickersData" id="parTicker" value="APTUSDT" onchange="mudarPar()">
+            <datalist id="tickersData"></datalist>
         </div>
         <div class="input-group">
             <label>Lado</label>
@@ -75,7 +86,7 @@
             <label>Qtd</label>
             <input type="number" id="tQty" step="any">
         </div>
-        <button onclick="saveTrade()">EXECUTAR</button>
+        <button class="exec-btn" onclick="saveTrade()">EXECUTAR</button>
     </div>
 
     <table>
@@ -86,20 +97,15 @@
     </table>
 </div>
 
+
+
 <script>
-    // --- ATENÇÃO: PREENCHE AQUI COM DADOS REAIS ---
-    // Exemplo: 'https://xyz.supabase.co'
     const SUPABASE_URL = 'https://pmdvckcxwfiwhrhibupo.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_bRa-mZWTaf0g6sNyWL9OmQ_uvo7Ex5H';
-
-    let _supabase;
-    try {
-        _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    } catch (e) {
-        console.error("Erro ao configurar Supabase:", e.message);
-    }
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let currentSymbol = "APTUSDT";
+    let currentTF = "15";
     let allTrades = [];
     let chart, candleSeries, entryLine;
 
@@ -113,9 +119,7 @@
         chart = window.LightweightCharts.createChart(chartElement, {
             layout: { background: { type: 'solid', color: '#000000' }, textColor: '#d1d4dc' },
             grid: { vertLines: { color: '#111' }, horzLines: { color: '#111' } },
-            priceScale: { borderColor: '#333' },
-            timeScale: { borderColor: '#333', timeVisible: true },
-            autoSize: true
+            timeScale: { timeVisible: true, secondsVisible: false }
         });
         candleSeries = chart.addCandlestickSeries({
             upColor: '#00c853', downColor: '#ff3d00', borderDownColor: '#ff3d00',
@@ -126,35 +130,38 @@
 
     async function loadHistory() {
         try {
-            const url = `https://api.bybit.com/v5/market/kline?category=linear&symbol=${currentSymbol}&interval=15&limit=200`;
+            const url = `https://api.bybit.com/v5/market/kline?category=linear&symbol=${currentSymbol}&interval=${currentTF}&limit=200`;
             const response = await fetch(url);
             const data = await response.json();
             if (data.result && data.result.list) {
                 const klines = data.result.list.map(k => ({
-                    time: parseInt(k[0]) / 1000, 
-                    open: parseFloat(k[1]), high: parseFloat(k[2]), 
-                    low: parseFloat(k[3]), close: parseFloat(k[4])
+                    time: parseInt(k[0]) / 1000, open: parseFloat(k[1]), high: parseFloat(k[2]), low: parseFloat(k[3]), close: parseFloat(k[4])
                 })).reverse();
                 candleSeries.setData(klines);
                 chart.timeScale().fitContent();
             }
-        } catch (e) { console.error("Falha no gráfico:", e); }
+        } catch (e) { console.error(e); }
     }
 
-    function updateEntryLine(price) {
-        if (entryLine) { candleSeries.removePriceLine(entryLine); entryLine = null; }
-        if (price > 0) {
-            entryLine = candleSeries.createPriceLine({
-                price: price, color: '#f3d42f', lineWidth: 2, lineStyle: 2, axisLabelVisible: true, title: 'ENTRY'
-            });
-        }
+    function changeTF(tf, btn) {
+        currentTF = tf;
+        document.querySelectorAll('#tfControls button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        loadHistory();
     }
 
-    async function loadData() {
-        if (!_supabase) return;
-        const { data } = await _supabase.from('trades').select('*').order('created_at', { ascending: true });
-        allTrades = data || [];
-        mudarPar(false);
+    async function carregarTickersDisponiveis() {
+        const { data } = await _supabase.from('trades').select('par, quantidade, tipo');
+        const saldos = {};
+        data?.forEach(t => {
+            const q = parseFloat(t.quantidade);
+            saldos[t.par] = (saldos[t.par] || 0) + (t.tipo === "Compra" ? q : -q);
+        });
+        const openTickers = Object.keys(saldos).filter(par => Math.abs(saldos[par]) > 0.0001);
+        const datalist = document.getElementById('tickersData');
+        const defaults = ["APTUSDT", "BTCUSDT", "ETHUSDT", "SOLUSDT"];
+        const listaFinal = [...new Set([...openTickers, ...defaults])];
+        datalist.innerHTML = listaFinal.map(t => `<option value="${t}">${openTickers.includes(t) ? t + ' (OPEN)' : t}</option>`).join('');
     }
 
     async function fetchPrice() {
@@ -172,41 +179,38 @@
 
     function atualizarPainelPar(livePrice) {
         const filtered = allTrades.filter(t => t.par === currentSymbol);
-        let currentQty = 0, totalNominalValue = 0;
+        let currentQty = 0, totalNom = 0;
         filtered.forEach(t => {
-            const p = parseFloat(t.preco), q = parseFloat(t.quantidade);
-            if (t.tipo === "Compra") { totalNominalValue += (p * q); currentQty += q; }
-            else { 
-                if (currentQty > 0) {
-                    const avgBefore = totalNominalValue / currentQty;
-                    totalNominalValue -= (avgBefore * q);
-                    currentQty -= q;
-                } else { totalNominalValue -= (p * q); currentQty -= q; }
-            }
+            const p = t.preco, q = t.quantidade;
+            if (t.tipo === "Compra") { totalNom += (p * q); currentQty += q; }
+            else { if (currentQty > 0) totalNom -= (totalNom/currentQty * q); currentQty -= q; }
         });
-
-        const equity = 145.68; 
-        const avg = currentQty > 0 ? (totalNominalValue / currentQty) : 0;
+        const equity = 145.68;
+        const avg = currentQty > 0 ? (totalNom / currentQty) : 0;
         const usage = (Math.abs(currentQty) * livePrice) / equity;
-        const plCash = (currentQty > 0) ? (livePrice - avg) * currentQty : (avg - livePrice) * Math.abs(currentQty);
-        const plPerc = (plCash / equity) * 100;
-
+        const plCash = currentQty > 0 ? (livePrice - avg) * currentQty : (avg - livePrice) * Math.abs(currentQty);
+        
         document.getElementById('avgPrice').innerText = "$" + avg.toFixed(4);
         document.getElementById('levUsage').innerText = usage.toFixed(2) + "x";
         document.getElementById('openPLCash').innerText = (plCash >= 0 ? "+" : "") + "$" + plCash.toFixed(2);
-        document.getElementById('openPLPerc').innerText = (plPerc >= 0 ? "+" : "") + plPerc.toFixed(2) + "%";
+        document.getElementById('openPLPerc').innerText = ((plCash / equity) * 100).toFixed(2) + "%";
+        document.getElementById('openPLCash').style.color = plCash >= 0 ? "var(--success)" : "var(--danger)";
         
-        const color = plCash >= 0 ? "var(--success)" : "var(--danger)";
-        document.getElementById('openPLCash').style.color = color;
-        document.getElementById('openPLPerc').style.color = color;
-
-        updateEntryLine(avg);
+        if (entryLine) candleSeries.removePriceLine(entryLine);
+        if (avg > 0) entryLine = candleSeries.createPriceLine({ price: avg, color: '#f3d42f', lineWidth: 2, lineStyle: 2, title: 'ENTRY' });
     }
 
-    function mudarPar(shouldLoadHistory = true) {
-        currentSymbol = document.getElementById('parTicker').value;
+    function mudarPar() {
+        let val = document.getElementById('parTicker').value.toUpperCase().split(' ')[0];
+        currentSymbol = val;
         document.getElementById('displayPar').innerText = currentSymbol;
-        if (shouldLoadHistory) loadHistory(); 
+        loadHistory();
+        loadData();
+    }
+
+    async function loadData() {
+        const { data } = await _supabase.from('trades').select('*').order('created_at', { ascending: true });
+        allTrades = data || [];
         renderTrades();
     }
 
@@ -215,8 +219,8 @@
         document.getElementById('tradeLog').innerHTML = log.map(t => `
             <tr>
                 <td>${new Date(t.created_at).toLocaleTimeString('pt-PT')}</td>
-                <td style="color:${t.tipo==='Compra'?'var(--success)':'var(--danger)'}"><strong>${t.tipo}</strong></td>
-                <td>$${parseFloat(t.preco).toFixed(4)}</td>
+                <td style="color:${t.tipo==='Compra'?'var(--success)':'var(--danger)'}">${t.tipo}</td>
+                <td>$${t.preco.toFixed(4)}</td>
                 <td>${t.quantidade}</td>
                 <td>${t.alavancagem_alvo}x</td>
                 <td><button onclick="deleteTrade('${t.id}')" style="background:none;color:red;border:none;cursor:pointer;">×</button></td>
@@ -226,14 +230,14 @@
     async function saveTrade() {
         const p = parseFloat(document.getElementById('tPrice').value);
         const q = parseFloat(document.getElementById('tQty').value);
-        const lev = parseFloat(document.getElementById('tLev').value) || 0;
-        if (!p || !q || !_supabase) return;
-        await _supabase.from('trades').insert([{ par: currentSymbol, tipo: document.getElementById('tType').value, preco: p, quantidade: q, alavancagem_alvo: lev }]);
+        const l = parseFloat(document.getElementById('tLev').value) || 0;
+        await _supabase.from('trades').insert([{ par: currentSymbol, tipo: document.getElementById('tType').value, preco: p, quantidade: q, alavancagem_alvo: l }]);
+        carregarTickersDisponiveis();
         loadData();
     }
 
     async function deleteTrade(id) {
-        if(confirm("Eliminar?")) { await _supabase.from('trades').delete().eq('id', id); loadData(); }
+        if(confirm("Eliminar?")) { await _supabase.from('trades').delete().eq(id, id); carregarTickersDisponiveis(); loadData(); }
     }
 
     function sugerirQtd() {
@@ -242,11 +246,7 @@
         if (p > 0 && l > 0) document.getElementById('tQty').value = ((145.68 * l) / p).toFixed(4);
     }
 
-    window.addEventListener('load', () => {
-        initCandleChart();
-        loadData();
-        setInterval(fetchPrice, 3000);
-    });
+    window.onload = () => { initCandleChart(); loadData(); carregarTickersDisponiveis(); setInterval(fetchPrice, 3000); };
 </script>
 </body>
 </html>
