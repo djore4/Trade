@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>[v2.2.4-FIX] Futures Pro Terminal</title>
+    <title>[v2.2.5] Futures Pro Terminal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
@@ -45,13 +45,13 @@
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding: 0 5px;">
         <span id="displayPar" style="font-size: 0.9rem; font-weight: bold; color: var(--accent);">VISÃO GERAL</span>
         <div style="text-align: right;">
-            <label style="font-size: 0.55rem; color: #666;">EQUITY TOTAL [v2.2.4]</label>
+            <label style="font-size: 0.55rem; color: #666;">EQUITY TOTAL [v2.2.5]</label>
             <div style="font-size: 1.1rem; font-weight: bold; color: #fff;" id="globalEquityDisplay">$0.00</div>
         </div>
     </div>
 
     <div class="dashboard">
-        <div class="card"><label>Mark Price</label><span id="v1">---</span></div>
+        <div class="card"><label>Price</label><span id="v1">---</span></div>
         <div class="card"><label>Entry Price</label><span id="v2">---</span></div>
         <div class="card"><label>Lev. Real</label><span id="v3">0.00x</span></div>
         <div class="card"><label>P&L TOTAL</label><span id="v4">$0.00</span></div>
@@ -67,8 +67,9 @@
                 <button class="tf-btn" onclick="changeTF('60', this)">1h</button>
                 <button class="tf-btn" onclick="changeTF('240', this)">4h</button>
                 <button class="tf-btn" onclick="changeTF('D', this)">1D</button>
+                <button class="tf-btn" onclick="changeTF('W', this)">1W</button>
             </div>
-            <span id="chartTitle" style="font-size:0.7rem; color:#888;">TRADING VIEW</span>
+            <span id="chartTitle" style="font-size:0.7rem; color:#888;">P&L SYNCED MONITOR</span>
         </div>
         <div id="chart"></div>
     </div>
@@ -99,6 +100,11 @@
     let chart, candleSeries, mainLine, subLines = {}, entryLineMarker, liqLineMarker;
     const colors = ['#f3d42f', '#ff6b6b', '#4dabf7', '#51cf66', '#cc5de8', '#ff922b'];
 
+    function getTFSeconds() {
+        const map = { "1": 60, "5": 300, "15": 900, "60": 3600, "240": 14400, "D": 86400, "W": 604800 };
+        return map[currentTF] || 900;
+    }
+
     function getPositionAt(ticker) {
         let q = 0, cost = 0, margin = 0;
         allTrades.filter(t => t.par === ticker).forEach(t => {
@@ -127,9 +133,7 @@
             if (j.result?.list) histData[t] = j.result.list.map(v => ({ t: parseInt(v[0])/1000, c: parseFloat(v[4]) })).reverse();
         }
 
-        const totalPoints = [];
-        const tickerPoints = {};
-
+        const totalPoints = [], tickerPoints = {};
         for (let i = 0; i < 250; i++) {
             let pointTotal = 0, time = 0;
             tickers.forEach((tic, idx) => {
@@ -148,7 +152,13 @@
         mainLine.setData(totalPoints);
         tickers.forEach((tic, idx) => {
             if (tickerPoints[tic]) {
-                subLines[tic] = chart.addLineSeries({ color: colors[(idx+1)%colors.length], lineWidth: 1.5, title: tic, priceLineVisible: false, lastValueVisible: false });
+                subLines[tic] = chart.addLineSeries({ 
+                    color: colors[(idx+1)%colors.length], 
+                    lineWidth: 1.5, 
+                    title: tic,
+                    priceLineVisible: false,
+                    lastValueVisible: true // Mostra valor na escala Y
+                });
                 subLines[tic].setData(tickerPoints[tic]);
             }
         });
@@ -156,10 +166,7 @@
     }
 
     async function loadHistory(fit = false) {
-        if(currentMode === "OVERVIEW") {
-            await syncHistoryPL();
-            return;
-        }
+        if(currentMode === "OVERVIEW") { await syncHistoryPL(); return; }
         const resp = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${currentSymbol}&interval=${currentTF}&limit=250`);
         const d = await resp.json();
         if(d.result?.list) {
@@ -171,16 +178,9 @@
 
     function updateView() {
         const isT = currentMode === "TICKER";
-        // Limpeza total antes de alternar
         candleSeries.applyOptions({ visible: isT });
         mainLine.applyOptions({ visible: !isT });
         Object.values(subLines).forEach(l => l.applyOptions({ visible: !isT }));
-
-        if(!isT) {
-            if(entryLineMarker) candleSeries.removePriceLine(entryLineMarker);
-            if(liqLineMarker) candleSeries.removePriceLine(liqLineMarker);
-            entryLineMarker = null; liqLineMarker = null;
-        }
         loadHistory(true);
     }
 
@@ -193,7 +193,6 @@
         });
         candleSeries = chart.addCandlestickSeries({ upColor: '#00c853', downColor: '#ff3d00' });
         mainLine = chart.addLineSeries({ color: colors[0], lineWidth: 3, title: 'TOTAL' });
-        
         await loadData();
         setInterval(refreshPrices, 3000);
     }
@@ -208,7 +207,9 @@
     }
 
     function updateUI() {
-        let gPL = 0, gMarg = 0, gNom = 0, now = Math.floor(Date.now()/1000);
+        let gPL = 0, gMarg = 0, gNom = 0;
+        const interval = getTFSeconds();
+        const alignedTime = Math.floor(Date.now() / 1000 / interval) * interval;
         const tickers = [...new Set(allTrades.map(t => t.par))];
         
         tickers.forEach(tic => {
@@ -216,26 +217,21 @@
             if (Math.abs(s.q) > 0.0001) {
                 const p = activePrices[tic] || 0, pl = (p - (s.cost/s.q)) * s.q;
                 gPL += pl; gMarg += s.margin; gNom += (p * Math.abs(s.q));
-                
-                if (currentMode === "OVERVIEW" && subLines[tic]) subLines[tic].update({ time: now, value: pl });
-                
+                if (currentMode === "OVERVIEW" && subLines[tic]) subLines[tic].update({ time: alignedTime, value: pl });
                 if (currentMode === "TICKER" && currentSymbol === tic) {
                     const avg = s.cost / s.q, eq = s.margin + pl;
                     const liq = s.q > 0 ? avg * (1 - (0.8 / (s.cost/s.margin/avg))) : avg * (1 + (0.8 / (Math.abs(s.cost)/s.margin/avg)));
-                    
                     document.getElementById('v1').innerText = p.toFixed(4);
                     document.getElementById('v2').innerText = avg.toFixed(4);
-                    document.getElementById('v3').innerText = (Math.abs(p*s.q) / Math.max(1, eq)).toFixed(2) + "x";
+                    document.getElementById('v3').innerText = (Math.abs(p*s.q) / Math.max(0.1, eq)).toFixed(2) + "x";
                     document.getElementById('v4').innerText = "$" + pl.toFixed(2);
+                    document.getElementById('v4').style.color = pl >= 0 ? "var(--success)" : "var(--danger)";
                     document.getElementById('v5').innerText = liq.toFixed(4);
-
                     if(!entryLineMarker) entryLineMarker = candleSeries.createPriceLine({ price: avg, color: '#f3d42f', lineWidth: 2, lineStyle: 2, title: 'ENTRY' });
                     else entryLineMarker.applyOptions({ price: avg });
-
                     if(!liqLineMarker) liqLineMarker = candleSeries.createPriceLine({ price: liq, color: '#ff3d00', lineWidth: 2, lineStyle: 0, title: 'LIQ' });
                     else liqLineMarker.applyOptions({ price: liq });
-
-                    candleSeries.update({ time: now, close: p });
+                    candleSeries.update({ time: alignedTime, close: p });
                     document.getElementById('globalEquityDisplay').innerText = "$" + eq.toFixed(2);
                 }
             }
@@ -247,7 +243,7 @@
             document.getElementById('v4').innerText = "$" + gPL.toFixed(2);
             document.getElementById('v4').style.color = gPL >= 0 ? "var(--success)" : "var(--danger)";
             document.getElementById('v3').innerText = (gNom / Math.max(1, totalEq)).toFixed(2) + "x";
-            mainLine.update({ time: now, value: gPL });
+            mainLine.update({ time: alignedTime, value: gPL });
         }
     }
 
