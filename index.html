@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>[v2.18.3] Futures Pro Terminal - Sync Fixed</title>
+    <title>[v2.18.4] Futures Pro Terminal - Sync Active</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
@@ -39,14 +39,11 @@
         
         #overview-container, .ticker-chart-instance { height: 100%; width: 100%; }
         .bottom-legend { display: flex; flex-wrap: wrap; gap: 12px; padding: 15px; background: #111; border: 1px solid var(--border); border-top: none; border-radius: 0 0 10px 10px; margin-bottom: 15px; }
-        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #fff; cursor: pointer; }
-        .legend-item.hidden { opacity: 0.15; text-decoration: line-through; }
 
         .trade-panel { background: #161616; padding: 12px; border-radius: 10px; border: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
         .field { flex: 1 1 calc(33% - 8px); display: flex; flex-direction: column; min-width: 90px; }
-        .field label { font-size: 0.6rem; color: #555; text-transform: uppercase; margin-bottom: 3px; }
         input, select { background: #111; border: 1px solid #333; color: white; padding: 10px; border-radius: 6px; font-size: 0.9rem; }
-        .exec-btn { width: 100%; background: var(--accent); color: #000; font-weight: 900; height: 45px; cursor: pointer; border-radius: 6px; border: none; margin-top: 5px; }
+        .exec-btn { width: 100%; background: var(--accent); color: #000; font-weight: 900; height: 45px; cursor: pointer; border-radius: 6px; border: none; }
 
         .table-section { margin-top: 15px; border-radius: 10px; border: 1px solid var(--border); background: #111; overflow: hidden; }
         .table-container { width: 100%; overflow-x: auto; }
@@ -65,11 +62,11 @@
 
     <div class="header-info">
         <div class="header-block">
-            <label id="mainLabel" style="font-size:0.55rem; color:#666; text-transform:uppercase;">Portfolio Equity</label>
+            <label style="font-size:0.55rem; color:#666; text-transform:uppercase;">Portfolio Equity</label>
             <div class="equity-value" id="dispEquity">SYNC...</div>
         </div>
         <div class="pnl-stack">
-            <label id="pnlLabel" style="font-size:0.55rem; color:#666; text-transform:uppercase;">Active P&L</label>
+            <label style="font-size:0.55rem; color:#666; text-transform:uppercase;">Active P&L</label>
             <div class="pnl-main" id="dispPnlVal">--</div>
             <div class="pnl-perc" id="dispPnlPerc">0.00%</div>
         </div>
@@ -91,7 +88,6 @@
                 <button class="nav-btn" onclick="updateOverview('240', '1', this)">4h</button>
                 <button class="nav-btn active" onclick="updateOverview('1440', '15', this)">1D</button>
                 <button class="nav-btn" onclick="updateOverview('10080', '60', this)">1W</button>
-                <button class="nav-btn" onclick="updateOverview('43200', '240', this)">1M</button>
             </div>
             <div id="chart" style="height:calc(100% - 40px); width:100%;"></div>
         </div>
@@ -121,7 +117,7 @@
 <script>
     // ==========================================
     // CONFIGURAÇÃO DO CHART ID
-    const MY_TV_CHART_ID = "Mv5udZuO"; // INSERE O TEU ID AQUI ENTRE AS ASPAS
+    const MY_TV_CHART_ID = "Mv5udZuO"; 
     // ==========================================
 
     const SUPABASE_URL = 'https://pmdvckcxwfiwhrhibupo.supabase.co';
@@ -141,8 +137,6 @@
         document.getElementById('overview-container').style.display = m === "OVERVIEW" ? "block" : "none";
         document.querySelectorAll('.ticker-chart-instance').forEach(el => el.style.display = 'none');
         document.getElementById('bottomLegend').style.display = m === "OVERVIEW" ? "flex" : "none";
-        document.getElementById('mainLabel').innerText = m === "OVERVIEW" ? "Portfolio Equity" : `${t} Equity`;
-        document.getElementById('pnlLabel').innerText = m === "OVERVIEW" ? "Active P&L" : `${t} Open P&L`;
 
         if (m === "TICKER") {
             const id = `chart-${t}`;
@@ -150,7 +144,6 @@
             if(!tickerDiv) {
                 tickerDiv = document.createElement('div'); tickerDiv.id = id; tickerDiv.className = 'ticker-chart-instance';
                 document.getElementById('mainChartArea').appendChild(tickerDiv);
-                
                 new TradingView.widget({
                     "autosize": true,
                     "symbol": "BINANCE:" + t + ".P",
@@ -164,8 +157,6 @@
                     "save_image": false,
                     "enable_publishing": false,
                     "withdateranges": true,
-                    "details": true,
-                    "hotlist": true,
                     "chart": MY_TV_CHART_ID
                 });
             }
