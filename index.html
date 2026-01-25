@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>[v2.12.4] Futures Pro Terminal</title>
+    <title>[v2.12.5] Futures Pro Terminal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
@@ -16,11 +16,18 @@
         .nav-btn { background: #1a1a1a; color: #777; border: 1px solid #333; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.8rem; white-space: nowrap; }
         .nav-btn.active { background: var(--accent); color: #000; }
 
-        /* Cabeçalho de Performance - FOCO DESKTOP */
-        .header-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 10px; background: #111; border-radius: 10px; border: 1px solid #222; }
-        .header-label { font-size: 0.65rem; color: #666; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 5px; }
-        #globalEquityDisplay { font-size: 1.4rem; font-weight: 900; color: #fff; }
-        #globalPnlWrapper { font-size: 1.2rem; font-weight: bold; }
+        /* Cabeçalho Simplificado e Potente */
+        .header-info { display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 15px; padding: 15px; background: #111; border-radius: 10px; border: 1px solid #222; }
+        .header-label { font-size: 0.7rem; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        #globalEquityDisplay { font-size: 2rem; font-weight: 900; color: #fff; line-height: 1; }
+        #headerPnlPerc { font-size: 1.2rem; font-weight: bold; margin-top: 5px; }
+
+        @media (min-width: 1024px) {
+            .header-info { padding: 30px; flex-direction: row; justify-content: space-between; align-items: center; }
+            #globalEquityDisplay { font-size: 4rem !important; }
+            #headerPnlPerc { font-size: 2.5rem !important; margin-top: 0; }
+            .header-label { font-size: 0.9rem !important; }
+        }
 
         .dashboard { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px; }
         .card { background: #161616; padding: 12px; border-radius: 8px; border: 1px solid #222; text-align: center; }
@@ -30,12 +37,7 @@
         @media (min-width: 1024px) {
             .dashboard { grid-template-columns: repeat(5, 1fr); gap: 15px; }
             .card { padding: 25px 15px; }
-            .card label { font-size: 0.8rem; }
             .card span { font-size: 1.8rem; }
-            #globalEquityDisplay { font-size: 3.2rem !important; }
-            #globalPnlWrapper { font-size: 2.8rem !important; }
-            .header-label { font-size: 0.9rem !important; }
-            .header-info { padding: 25px; }
         }
 
         .chart-wrapper { background: #000; border-radius: 8px; border: 1px solid #333; overflow: hidden; }
@@ -67,24 +69,18 @@
     </div>
 
     <div class="header-info">
-        <div class="equity-group">
-            <label class="header-label" id="eqLabel">Portfolio Equity</label>
-            <span id="globalEquityDisplay">$0.00</span>
+        <div>
+            <label class="header-label">Portfolio Equity</label>
+            <div id="globalEquityDisplay">$0.00</div>
         </div>
-        <div class="pnl-group">
-            <label class="header-label">Open P&L Performance</label>
-            <div id="globalPnlWrapper">
-                <span id="headerPnlVal">$0.00</span>
-                <span id="headerPnlPerc" style="font-size: 0.7em; margin-left: 5px;">(0.00%)</span>
-            </div>
-        </div>
+        <div id="headerPnlPerc" style="color: var(--success);">+0.00%</div>
     </div>
 
     <div class="dashboard">
-        <div class="card"><label>Price</label><span id="v1">---</span></div>
+        <div class="card"><label>Mark Price</label><span id="v1">---</span></div>
         <div class="card"><label>Avg. Entry</label><span id="v2">---</span></div>
         <div class="card"><label>Real Leverage</label><span id="v3">0.00x</span></div>
-        <div class="card"><label>Total P&L (%)</label><span id="v4">$0.00 (0.00%)</span></div>
+        <div class="card"><label>Total P&L</label><span id="v4">$0.00</span></div>
         <div class="card"><label>Liquidation</label><span id="v5" style="color:var(--danger)">---</span></div>
     </div>
 
@@ -99,7 +95,7 @@
                 <button class="tf-btn" onclick="changeTF('D', this)">1D</button>
                 <button class="tf-btn" onclick="changeTF('W', this)">1W</button>
             </div>
-            <span id="displayPar" style="font-size: 0.8rem; font-weight: bold; color: var(--accent);">VISÃO GERAL</span>
+            <span id="displayPar" style="font-size: 0.8rem; font-weight: bold; color: var(--accent);">GERAL</span>
         </div>
         <div id="chart"></div>
     </div>
@@ -131,10 +127,9 @@
     let chart, candleSeries, mainLine, subLines = {}, entryLineMarker, liqLineMarker;
     let seriesVisibility = { "TOTAL": true }; 
     const colors = ['#f3d42f', '#ff6b6b', '#4dabf7', '#51cf66', '#cc5de8', '#ff922b', '#339af0'];
-    const HIST_LIMIT = 150;
+    const HIST_LIMIT = 120;
 
-    const tfMap = { "1": 60, "5": 300, "15": 900, "60": 3600, "240": 14400, "D": 86400, "W": 604800 };
-
+    // --- FUNÇÕES DE SUPORTE ---
     function getPositionAt(ticker) {
         let q = 0, cost = 0, margin = 0;
         allTrades.filter(t => t.par === ticker).forEach(t => {
@@ -186,7 +181,7 @@
         tickers.forEach((tic, idx) => {
             const color = colors[(idx+1)%colors.length];
             if (tickerPoints[tic]) {
-                const s = chart.addLineSeries({ color: color, lineWidth: 1.5, title: tic, priceLineVisible: false });
+                const s = chart.addLineSeries({ color: color, lineWidth: 1.5, title: tic, priceLineVisible: true, priceLineSource: 1, lastValueVisible: true });
                 s.setData(tickerPoints[tic]);
                 s.applyOptions({ visible: seriesVisibility[tic] !== false });
                 subLines[tic] = s;
@@ -209,20 +204,11 @@
         document.getElementById('bottomLegend').appendChild(div);
     }
 
-    async function loadHistory(fit = false) {
-        if(currentMode === "OVERVIEW") { await syncHistoryPL(); return; }
-        const resp = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${currentSymbol}&interval=${currentTF}&limit=${HIST_LIMIT}`);
-        const d = await resp.json();
-        if(d.result?.list) {
-            candleSeries.setData(d.result.list.map(v => ({ time: parseInt(v[0])/1000, open: parseFloat(v[1]), high: parseFloat(v[2]), low: parseFloat(v[3]), close: parseFloat(v[4]) })).reverse());
-            if(fit) setTimeout(() => chart.timeScale().fitContent(), 100);
-        }
-    }
-
     function updateUI() {
-        let gPL = 0, gMarg = 0, gNom = 0;
-        const interval = tfMap[currentTF] || 900;
-        const alignedTime = Math.floor(Date.now()/1000 / interval) * interval;
+        let gPL = 0, gMarg = 0, gNom = 0, now = Math.floor(Date.now()/1000);
+        const map = { "1": 60, "5": 300, "15": 900, "60": 3600, "240": 14400, "D": 86400, "W": 604800 };
+        const interval = map[currentTF] || 900;
+        const alignedTime = Math.floor(now / interval) * interval;
         const tickers = [...new Set(allTrades.map(t => t.par))];
         let tSpecPL = 0, tSpecMarg = 0;
 
@@ -240,7 +226,6 @@
                     document.getElementById('v2').innerText = avg.toFixed(4);
                     document.getElementById('v3').innerText = (Math.abs(p*s.q)/Math.max(0.1,eq)).toFixed(2)+"x";
                     document.getElementById('v4').innerText = `$${pl.toFixed(2)} (${perc.toFixed(2)}%)`;
-                    document.getElementById('v4').style.color = pl >= 0 ? "var(--success)" : "var(--danger)";
                     document.getElementById('v5').innerText = liq.toFixed(4);
                     if(entryLineMarker) entryLineMarker.applyOptions({ price: avg });
                     if(liqLineMarker) liqLineMarker.applyOptions({ price: liq });
@@ -252,16 +237,15 @@
         const activePL = (currentMode === "OVERVIEW") ? gPL : tSpecPL;
         const activeMarg = (currentMode === "OVERVIEW") ? gMarg : tSpecMarg;
         const activePerc = activeMarg > 0 ? (activePL / activeMarg) * 100 : 0;
-        const color = activePL >= 0 ? "var(--success)" : "var(--danger)";
-
+        
         document.getElementById('globalEquityDisplay').innerText = "$" + (activeMarg + activePL).toFixed(2);
-        document.getElementById('headerPnlVal').innerText = (activePL >= 0 ? "+$" : "-$") + Math.abs(activePL).toFixed(2);
-        document.getElementById('headerPnlPerc').innerText = `(${activePerc.toFixed(2)}%)`;
-        document.getElementById('globalPnlWrapper').style.color = color;
+        const headerPnl = document.getElementById('headerPnlPerc');
+        headerPnl.innerText = (activePerc >= 0 ? "+" : "") + activePerc.toFixed(2) + "%";
+        headerPnl.style.color = activePL >= 0 ? "var(--success)" : "var(--danger)";
 
         if (currentMode === "OVERVIEW") {
             document.getElementById('v4').innerText = `$${gPL.toFixed(2)} (${activePerc.toFixed(2)}%)`;
-            document.getElementById('v4').style.color = color;
+            document.getElementById('v4').style.color = activePL >= 0 ? "var(--success)" : "var(--danger)";
             document.getElementById('v3').innerText = (gNom / Math.max(1, activeMarg + activePL)).toFixed(2) + "x";
             mainLine.update({ time: alignedTime, value: gPL });
         }
@@ -275,15 +259,47 @@
             rightPriceScale: { borderVisible: false, autoScale: true }
         });
         candleSeries = chart.addCandlestickSeries({ upColor: '#00c853', downColor: '#ff3d00' });
-        mainLine = chart.addLineSeries({ color: colors[0], lineWidth: 3, title: 'TOTAL', priceLineVisible: true });
+        mainLine = chart.addLineSeries({ color: colors[0], lineWidth: 3, title: 'TOTAL', priceLineVisible: true, priceLineSource: 1 });
         updateView();
     }
 
-    window.onload = async () => { 
-        initChart(); 
+    async function loadData() {
         const { data } = await _supabase.from('trades').select('*').order('created_at', { ascending: true });
         allTrades = data || [];
-        updateAssetNav(); renderTable(); 
+        updateAssetNav(); renderTable(); updateView();
+    }
+
+    function updateView() {
+        const isT = currentMode === "TICKER";
+        candleSeries.applyOptions({ visible: isT });
+        mainLine.applyOptions({ visible: !isT && seriesVisibility["TOTAL"] !== false });
+        if(isT) {
+            if(!entryLineMarker) entryLineMarker = candleSeries.createPriceLine({ price: 0, color: '#f3d42f', lineWidth: 2, lineStyle: 2, title: 'ENTRY' });
+            if(!liqLineMarker) liqLineMarker = candleSeries.createPriceLine({ price: 0, color: '#ff3d00', lineWidth: 2, lineStyle: 0, title: 'LIQ' });
+        }
+        document.getElementById('bottomLegend').style.display = isT ? 'none' : 'flex';
+        loadHistory(true);
+    }
+
+    async function loadHistory(fit = false) {
+        if(currentMode === "OVERVIEW") { await syncHistoryPL(); return; }
+        const resp = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${currentSymbol}&interval=${currentTF}&limit=${HIST_LIMIT}`);
+        const d = await resp.json();
+        if(d.result?.list) {
+            candleSeries.setData(d.result.list.map(v => ({ time: parseInt(v[0])/1000, open: parseFloat(v[1]), high: parseFloat(v[2]), low: parseFloat(v[3]), close: parseFloat(v[4]) })).reverse());
+            if(fit) setTimeout(() => chart.timeScale().fitContent(), 100);
+        }
+    }
+
+    async function changeTF(tf, btn) { currentTF = tf; document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); await loadHistory(true); }
+    async function setMode(m, t="") { currentMode = m; currentSymbol = t; document.getElementById('displayPar').innerText = m === "OVERVIEW" ? "VISÃO GERAL" : t; updateView(); updateAssetNav(); renderTable(); }
+    async function saveTrade() { const tic = document.getElementById('parTicker').value.toUpperCase() || currentSymbol; await _supabase.from('trades').insert([{ par: tic, tipo: document.getElementById('tType').value, preco: parseFloat(document.getElementById('tPrice').value), quantidade: parseFloat(document.getElementById('tQty').value), alavancagem_alvo: parseFloat(document.getElementById('tLev').value) }]); location.reload(); }
+    function renderTable() { const f = currentMode === "TICKER" ? allTrades.filter(t => t.par === currentSymbol) : allTrades; document.getElementById('tradeLog').innerHTML = f.slice().reverse().map(t => `<tr><td>${new Date(t.created_at).toLocaleString()}</td><td>${t.par}</td><td style="color:${t.tipo==='Compra'?'#00c853':'#ff3d00'}">${t.tipo === 'Compra' ? 'LONG' : 'SHORT'}</td><td>${t.preco}</td><td>${t.alavancagem_alvo}x</td><td>${t.quantidade}</td><td><button onclick="deleteTrade('${t.id}')" style="color:red; background:none; border:none; cursor:pointer;">×</button></td></tr>`).join(''); }
+    async function deleteTrade(id) { if(confirm("Apagar?")) { await _supabase.from('trades').delete().eq('id', id); location.reload(); } }
+    function updateAssetNav() { const n = document.getElementById('assetNav'); const tics = [...new Set(allTrades.map(t => t.par))]; n.innerHTML = `<button class="nav-btn ${currentMode==='OVERVIEW'?'active':''}" onclick="setMode('OVERVIEW')">GERAL</button>`; tics.forEach(t => { n.innerHTML += `<button class="nav-btn ${currentMode==='TICKER'&&currentSymbol===t?'active':''}" onclick="setMode('TICKER', '${t}')">${t}</button>`; }); }
+
+    window.onload = async () => { 
+        initChart(); await loadData(); 
         setInterval(async () => {
             const r = await fetch('https://api.bybit.com/v5/market/tickers?category=linear');
             const d = await r.json();
@@ -293,25 +309,6 @@
             }
         }, 3000);
     };
-
-    function updateView() {
-        const isT = currentMode === "TICKER";
-        candleSeries.applyOptions({ visible: isT });
-        mainLine.applyOptions({ visible: !isT });
-        if(isT) {
-            if(!entryLineMarker) entryLineMarker = candleSeries.createPriceLine({ price: 0, color: '#f3d42f', lineWidth: 2, lineStyle: 2, title: 'ENTRY' });
-            if(!liqLineMarker) liqLineMarker = candleSeries.createPriceLine({ price: 0, color: '#ff3d00', lineWidth: 2, lineStyle: 0, title: 'LIQ' });
-        }
-        document.getElementById('bottomLegend').style.display = isT ? 'none' : 'flex';
-        loadHistory(true);
-    }
-
-    async function setMode(m, t="") { currentMode = m; currentSymbol = t; document.getElementById('eqLabel').innerText = m === "OVERVIEW" ? "Portfolio Equity" : `${t} Equity`; document.getElementById('displayPar').innerText = m === "OVERVIEW" ? "VISÃO GERAL" : t; updateView(); updateAssetNav(); renderTable(); }
-    async function changeTF(tf, btn) { currentTF = tf; document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); await loadHistory(true); }
-    async function saveTrade() { const tic = document.getElementById('parTicker').value.toUpperCase() || currentSymbol; await _supabase.from('trades').insert([{ par: tic, tipo: document.getElementById('tType').value, preco: parseFloat(document.getElementById('tPrice').value), quantidade: parseFloat(document.getElementById('tQty').value), alavancagem_alvo: parseFloat(document.getElementById('tLev').value) }]); location.reload(); }
-    function renderTable() { const f = currentMode === "TICKER" ? allTrades.filter(t => t.par === currentSymbol) : allTrades; document.getElementById('tradeLog').innerHTML = f.slice().reverse().map(t => `<tr><td>${new Date(t.created_at).toLocaleString()}</td><td>${t.par}</td><td style="color:${t.tipo==='Compra'?'#00c853':'#ff3d00'}">${t.tipo === 'Compra' ? 'LONG' : 'SHORT'}</td><td>${t.preco}</td><td>${t.alavancagem_alvo}x</td><td>${t.quantidade}</td><td><button onclick="deleteTrade('${t.id}')" style="color:red; background:none; border:none; cursor:pointer;">×</button></td></tr>`).join(''); }
-    async function deleteTrade(id) { if(confirm("Apagar?")) { await _supabase.from('trades').delete().eq('id', id); location.reload(); } }
-    function updateAssetNav() { const n = document.getElementById('assetNav'); const tics = [...new Set(allTrades.map(t => t.par))]; n.innerHTML = `<button class="nav-btn ${currentMode==='OVERVIEW'?'active':''}" onclick="setMode('OVERVIEW')">GERAL</button>`; tics.forEach(t => { n.innerHTML += `<button class="nav-btn ${currentMode==='TICKER'&&currentSymbol===t?'active':''}" onclick="setMode('TICKER', '${t}')">${t}</button>`; }); }
 </script>
 </body>
 </html>
