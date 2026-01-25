@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>[v2.18.8] Futures Pro Terminal - 4H Default & Sync</title>
+    <title>[v2.19.0] Futures Pro Terminal - GitHub Sync Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
@@ -208,9 +208,12 @@
                 "enable_publishing": false, 
                 "withdateranges": true, 
                 "chart": MY_TV_CHART_ID,
-                "drawings_access": {"type": "blackbox", "tools": [{"name": "Regression Trend"}]},
-                "saved_calculations": true,
-                "studies_access": "all"
+                "drawings_access": { "type": "blackbox", "tools": [{ "name": "Regression Trend" }] },
+                "enabled_features": ["study_templates", "use_localstorage_for_settings_adapter"],
+                "snapshot_url": "https://www.tradingview.com/snapshot/",
+                "studies_access": "all",
+                "client_id": "tradingview.com",
+                "user_id": "public_user"
             });
         } else { await updateOverview('240', '1', document.getElementById('btn4h')); }
         updateAssetNav(); renderTable(); updateUI();
