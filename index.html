@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>[v2.13.8] Futures Pro Terminal</title>
+    <title>[v2.13.9] Futures Pro Terminal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
@@ -16,11 +16,11 @@
         .nav-btn { background: #1a1a1a; color: #777; border: 1px solid #333; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.8rem; white-space: nowrap; }
         .nav-btn.active { background: var(--accent); color: #000; }
 
-        /* Cabeçalho Simétrico Magnificado */
+        /* Cabeçalho Custom v2.13.9 */
         .header-info { 
             display: flex; 
             justify-content: space-between; 
-            align-items: center; 
+            align-items: flex-start; 
             margin-bottom: 15px; 
             padding: 15px; 
             background: #111; 
@@ -30,12 +30,13 @@
         .header-block { display: flex; flex-direction: column; }
         .header-block.right { align-items: flex-end; text-align: right; }
         
-        .header-label { font-size: 0.7rem; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
-        .header-value { font-size: 1.8rem; font-weight: 900; color: #fff; line-height: 1; }
+        .header-label { font-size: 0.7rem; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        .header-value { font-size: 1.8rem; font-weight: 900; color: #fff; line-height: 1.1; }
+        .pnl-sub-value { font-size: 1.8rem; font-weight: 900; line-height: 1.1; }
 
         @media (min-width: 1024px) {
             .header-info { padding: 30px 40px; }
-            .header-value { font-size: 4rem !important; }
+            .header-value, .pnl-sub-value { font-size: 4.5rem !important; } /* Tamanhos unificados */
             .header-label { font-size: 0.9rem !important; }
         }
 
@@ -75,7 +76,8 @@
         </div>
         <div class="header-block right">
             <label class="header-label" id="pnlLabel">Portfolio P&L</label>
-            <div class="header-value" id="headerPnlDisplay" style="color: #444;">-- (0.00%)</div>
+            <div class="header-value" id="headerPnlVal">--</div>
+            <div class="pnl-sub-value" id="headerPnlPerc" style="color: #444;">0.00%</div>
         </div>
     </div>
 
@@ -83,7 +85,7 @@
         <div class="card"><label>Price</label><span id="v1">---</span></div>
         <div class="card"><label>Avg. Entry</label><span id="v2">---</span></div>
         <div class="card"><label>Real Leverage</label><span id="v3">---</span></div>
-        <div class="card"><label>P&L (%)</label><span id="v4">---</span></div>
+        <div class="card"><label>Total P&L (%)</label><span id="v4">---</span></div>
         <div class="card"><label>Liquidação</label><span id="v5" style="color:var(--danger)">---</span></div>
     </div>
 
@@ -120,6 +122,7 @@
 </div>
 
 <script>
+    // IDs e Variáveis mantidas da v2.13.8...
     const SUPABASE_URL = 'https://pmdvckcxwfiwhrhibupo.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_bRa-mZWTaf0g6sNyWL9OmQ_uvo7Ex5H';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -167,8 +170,10 @@
                     document.getElementById('mainLabel').innerText = `${tic} Equity`;
                     document.getElementById('pnlLabel').innerText = `${tic} P&L`;
                     document.getElementById('globalEquityDisplay').innerText = "$" + (s.margin + pl).toFixed(2);
-                    document.getElementById('headerPnlDisplay').innerText = `$${pl.toFixed(2)} (${perc.toFixed(2)}%)`;
-                    document.getElementById('headerPnlDisplay').style.color = pl >= 0 ? "var(--success)" : "var(--danger)";
+                    document.getElementById('headerPnlVal').innerText = (pl >= 0 ? "+$" : "-$") + Math.abs(pl).toFixed(2);
+                    document.getElementById('headerPnlPerc').innerText = (perc >= 0 ? "+" : "") + perc.toFixed(2) + "%";
+                    document.getElementById('headerPnlPerc').style.color = pl >= 0 ? "var(--success)" : "var(--danger)";
+                    document.getElementById('headerPnlVal').style.color = pl >= 0 ? "var(--success)" : "var(--danger)";
                     document.getElementById('v1').innerText = p.toFixed(4);
                     document.getElementById('v2').innerText = avg.toFixed(4);
                     document.getElementById('v3').innerText = (Math.abs(p*s.q)/(s.margin+pl)).toFixed(2)+"x";
@@ -186,8 +191,10 @@
             document.getElementById('mainLabel').innerText = "Portfolio Equity";
             document.getElementById('pnlLabel').innerText = "Portfolio P&L";
             document.getElementById('globalEquityDisplay').innerText = "$" + (gMarg + gPL).toFixed(2);
-            document.getElementById('headerPnlDisplay').innerText = `$${gPL.toFixed(2)} (${activePerc.toFixed(2)}%)`;
-            document.getElementById('headerPnlDisplay').style.color = color;
+            document.getElementById('headerPnlVal').innerText = (gPL >= 0 ? "+$" : "-$") + Math.abs(gPL).toFixed(2);
+            document.getElementById('headerPnlPerc').innerText = (activePerc >= 0 ? "+" : "") + activePerc.toFixed(2) + "%";
+            document.getElementById('headerPnlVal').style.color = color;
+            document.getElementById('headerPnlPerc').style.color = color;
             document.getElementById('v1').innerText = "---";
             document.getElementById('v2').innerText = "---";
             document.getElementById('v3').innerText = (gNom / Math.max(1, gMarg + gPL)).toFixed(2) + "x";
