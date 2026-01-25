@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>[v2.13.5] Futures Pro Terminal</title>
+    <title>[v2.13.6] Futures Pro Terminal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
@@ -16,7 +16,6 @@
         .nav-btn { background: #1a1a1a; color: #777; border: 1px solid #333; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.8rem; white-space: nowrap; }
         .nav-btn.active { background: var(--accent); color: #000; }
 
-        /* Cabeçalho Magnificado Desktop */
         .header-info { display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 15px; padding: 15px; background: #111; border-radius: 10px; border: 1px solid #222; }
         .header-label { font-size: 0.7rem; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
         #globalEquityDisplay { font-size: 2rem; font-weight: 900; color: #fff; line-height: 1; }
@@ -41,10 +40,8 @@
         .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #fff; }
         .legend-dot { width: 12px; height: 12px; border-radius: 3px; }
 
-        /* Painel de Trade Restaurado */
         .trade-panel { background: #161616; padding: 15px; border-radius: 10px; border: 1px solid #222; display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
         .field { flex: 1 1 calc(20% - 10px); display: flex; flex-direction: column; min-width: 120px; }
-        @media (max-width: 768px) { .field { flex: 1 1 calc(50% - 10px); } }
         .field label { font-size: 0.65rem; color: #666; text-transform: uppercase; margin-bottom: 5px; }
         input, select { background: #111; border: 1px solid #333; color: white; padding: 12px; border-radius: 6px; font-size: 1rem; }
         .exec-btn { flex: 1 1 100%; background: var(--accent); color: #000; font-weight: 900; height: 50px; cursor: pointer; border-radius: 8px; border: none; text-transform: uppercase; }
@@ -61,7 +58,7 @@
     <div class="asset-nav" id="assetNav"></div>
 
     <div class="header-info">
-        <div><label class="header-label">Portfolio Equity</label><div id="globalEquityDisplay">SYNCING...</div></div>
+        <div><label class="header-label" id="mainLabel">Portfolio Equity</label><div id="globalEquityDisplay">SYNCING...</div></div>
         <div id="headerPnlDisplay" style="color: #444;">-- (0.00%)</div>
     </div>
 
@@ -77,7 +74,6 @@
         <div style="background:#1a1a1a; padding:8px 12px; display:flex; justify-content:space-between; align-items:center;">
             <div id="tfControls">
                 <button class="nav-btn" onclick="changeTF('1')">1m</button>
-                <button class="nav-btn" onclick="changeTF('5')">5m</button>
                 <button class="nav-btn active" id="tf15" onclick="changeTF('15')">15m</button>
                 <button class="nav-btn" onclick="changeTF('60')">1h</button>
                 <button class="nav-btn" onclick="changeTF('D')">1D</button>
@@ -112,16 +108,15 @@
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let currentMode = "OVERVIEW", currentSymbol = "", currentTF = "15", activePrices = {}, allTrades = [];
-    let chart, candleSeries, mainLine, subLines = {}, entryMarker, liqMarker;
+    let chart, candleSeries, mainLine, subLines = {}, entryMarker;
     const colors = ['#f3d42f', '#ff6b6b', '#4dabf7', '#51cf66', '#cc5de8', '#ff922b'];
-    const HIST_LIMIT = 120;
 
     async function fetchPrices() {
         try {
             const r = await fetch('https://api.bybit.com/v5/market/tickers?category=linear');
             const d = await r.json();
             if(d.result?.list) d.result.list.forEach(i => activePrices[i.symbol] = parseFloat(i.markPrice));
-        } catch(e) { console.error("API Error"); }
+        } catch(e) {}
     }
 
     function getPosition(ticker) {
@@ -140,37 +135,43 @@
         let gPL = 0, gMarg = 0, gNom = 0, now = Math.floor(Date.now()/1000);
         const map = { "1": 60, "5": 300, "15": 900, "60": 3600, "D": 86400, "W": 604800 };
         const alignedTime = Math.floor(now / (map[currentTF] || 900)) * (map[currentTF] || 900);
-        
+
         [...new Set(allTrades.map(t => t.par))].forEach(tic => {
             const s = getPosition(tic);
             if (Math.abs(s.q) > 0.0001) {
                 const p = activePrices[tic] || 0, pl = (p - (s.cost/s.q)) * s.q;
                 gPL += pl; gMarg += s.margin; gNom += (p * Math.abs(s.q));
+                
                 if (currentMode === "OVERVIEW" && subLines[tic]) subLines[tic].update({ time: alignedTime, value: pl });
+                
                 if (currentMode === "TICKER" && tic === currentSymbol) {
-                    const avg = s.cost/s.q, eq = s.margin+pl, perc = (pl/s.margin)*100;
+                    const avg = s.cost/s.q, perc = (pl/s.margin)*100;
+                    document.getElementById('mainLabel').innerText = `${tic} Position Equity`;
+                    document.getElementById('globalEquityDisplay').innerText = "$" + (s.margin + pl).toFixed(2);
+                    document.getElementById('headerPnlDisplay').innerText = `$${pl.toFixed(2)} (${perc.toFixed(2)}%)`;
+                    document.getElementById('headerPnlDisplay').style.color = pl >= 0 ? "var(--success)" : "var(--danger)";
                     document.getElementById('v1').innerText = p.toFixed(4);
                     document.getElementById('v2').innerText = avg.toFixed(4);
-                    document.getElementById('v3').innerText = (Math.abs(p*s.q)/Math.max(0.1,eq)).toFixed(2)+"x";
-                    const v4 = document.getElementById('v4');
-                    v4.innerText = `$${pl.toFixed(2)} (${perc.toFixed(2)}%)`;
-                    v4.style.color = pl >= 0 ? "var(--success)" : "var(--danger)";
+                    document.getElementById('v3').innerText = (Math.abs(p*s.q)/(s.margin+pl)).toFixed(2)+"x";
+                    document.getElementById('v4').innerText = `$${pl.toFixed(2)} (${perc.toFixed(2)}%)`;
+                    document.getElementById('v4').style.color = pl >= 0 ? "var(--success)" : "var(--danger)";
                     candleSeries?.update({ time: alignedTime, close: p });
                 }
             }
         });
 
-        const activePerc = gMarg > 0 ? (gPL / gMarg) * 100 : 0;
-        const color = gPL >= 0 ? "var(--success)" : "var(--danger)";
-        document.getElementById('globalEquityDisplay').innerText = "$" + (gMarg + gPL).toFixed(2);
-        document.getElementById('headerPnlDisplay').innerText = `$${gPL.toFixed(2)} (${activePerc.toFixed(2)}%)`;
-        document.getElementById('headerPnlDisplay').style.color = color;
-
         if (currentMode === "OVERVIEW") {
-            const v4 = document.getElementById('v4');
-            v4.innerText = `$${gPL.toFixed(2)} (${activePerc.toFixed(2)}%)`;
-            v4.style.color = color;
+            const activePerc = gMarg > 0 ? (gPL / gMarg) * 100 : 0;
+            const color = gPL >= 0 ? "var(--success)" : "var(--danger)";
+            document.getElementById('mainLabel').innerText = "Portfolio Equity";
+            document.getElementById('globalEquityDisplay').innerText = "$" + (gMarg + gPL).toFixed(2);
+            document.getElementById('headerPnlDisplay').innerText = `$${gPL.toFixed(2)} (${activePerc.toFixed(2)}%)`;
+            document.getElementById('headerPnlDisplay').style.color = color;
+            document.getElementById('v1').innerText = "---";
+            document.getElementById('v2').innerText = "---";
             document.getElementById('v3').innerText = (gNom / Math.max(1, gMarg + gPL)).toFixed(2) + "x";
+            document.getElementById('v4').innerText = `$${gPL.toFixed(2)} (${activePerc.toFixed(2)}%)`;
+            document.getElementById('v4').style.color = color;
             if(mainLine) mainLine.update({ time: alignedTime, value: gPL });
         }
     }
@@ -180,7 +181,7 @@
         document.getElementById('displayPar').innerText = m === "OVERVIEW" ? "GERAL" : t;
         candleSeries.setData([]); mainLine.setData([]); Object.values(subLines).forEach(s => s.setData([]));
         if (m === "OVERVIEW") await syncOverview(); else await syncTicker();
-        updateAssetNav(); renderTable();
+        updateAssetNav(); renderTable(); updateUI();
     }
 
     async function syncOverview() {
@@ -188,12 +189,12 @@
         document.getElementById('bottomLegend').innerHTML = '';
         createLegendItem("TOTAL", colors[0]);
         for (const t of tickers) {
-            const r = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${t}&interval=${currentTF}&limit=${HIST_LIMIT}`);
+            const r = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${t}&interval=${currentTF}&limit=120`);
             const j = await r.json();
             if (j.result?.list) {
                 const data = j.result.list.map(v => ({ t: parseInt(v[0])/1000, c: parseFloat(v[4]) })).reverse();
                 const color = colors[(tickers.indexOf(t)+1)%colors.length];
-                if (!subLines[t]) subLines[t] = chart.addLineSeries({ color: color, lineWidth: 1.5, priceLineVisible: true, priceLineSource: 1, lastValueVisible: true, title: t });
+                if (!subLines[t]) subLines[t] = chart.addLineSeries({ color: color, lineWidth: 1.5, title: t });
                 const pos = getPosition(t);
                 subLines[t].setData(data.map(p => ({ time: p.t, value: (p.c - (pos.cost/pos.q)) * pos.q })));
                 createLegendItem(t, color);
@@ -203,15 +204,14 @@
     }
 
     async function syncTicker() {
-        const resp = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${currentSymbol}&interval=${currentTF}&limit=${HIST_LIMIT}`);
-        const d = await resp.json();
+        const r = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${currentSymbol}&interval=${currentTF}&limit=120`);
+        const d = await r.json();
         if(d.result?.list) {
             candleSeries.setData(d.result.list.map(v => ({ time: parseInt(v[0])/1000, open: parseFloat(v[1]), high: parseFloat(v[2]), low: parseFloat(v[3]), close: parseFloat(v[4]) })).reverse());
             const s = getPosition(currentSymbol);
             if (Math.abs(s.q) > 0.001) {
-                const avg = s.cost/s.q;
                 if(entryMarker) candleSeries.removePriceLine(entryMarker);
-                entryMarker = candleSeries.createPriceLine({ price: avg, color: '#f3d42f', lineWidth: 2, lineStyle: 2, title: 'ENTRY' });
+                entryMarker = candleSeries.createPriceLine({ price: s.cost/s.q, color: '#f3d42f', lineWidth: 2, lineStyle: 2, title: 'ENTRY' });
             }
             chart.timeScale().fitContent();
         }
@@ -227,14 +227,12 @@
     window.onload = async () => {
         chart = LightweightCharts.createChart(document.getElementById('chart'), { 
             layout: { background: { color: '#000' }, textColor: '#888', fontSize: 11 },
-            grid: { vertLines: { color: '#111' }, horzLines: { color: '#111' } },
-            timeScale: { timeVisible: true, borderVisible: false, rightOffset: 15 },
+            timeScale: { timeVisible: true, borderVisible: false },
             rightPriceScale: { borderVisible: false, autoScale: true }
         });
         candleSeries = chart.addCandlestickSeries({ upColor: '#00c853', downColor: '#ff3d00' });
-        mainLine = chart.addLineSeries({ color: colors[0], lineWidth: 3, title: 'TOTAL', priceLineVisible: true, priceLineSource: 1 });
-        
-        await fetchPrices(); 
+        mainLine = chart.addLineSeries({ color: colors[0], lineWidth: 3, title: 'TOTAL' });
+        await fetchPrices();
         const { data } = await _supabase.from('trades').select('*').order('created_at', { ascending: true });
         allTrades = data || [];
         await setMode("OVERVIEW");
@@ -248,43 +246,19 @@
         tics.forEach(t => { n.innerHTML += `<button class="nav-btn ${currentMode==='TICKER'&&currentSymbol===t?'active':''}" onclick="setMode('TICKER', '${t}')">${t}</button>`; });
     }
     
-    async function changeTF(tf) { currentTF = tf; document.querySelectorAll('#tfControls .nav-btn').forEach(b => b.classList.remove('active')); if (currentMode === "OVERVIEW") await syncOverview(); else await syncTicker(); }
-    
-    // FUNÇÕES DE TRADE
     async function saveTrade() {
         const tic = document.getElementById('parTicker').value.toUpperCase();
-        if(!tic) return alert("Ticker vazio");
-        await _supabase.from('trades').insert([{ 
-            par: tic, 
-            tipo: document.getElementById('tType').value, 
-            preco: parseFloat(document.getElementById('tPrice').value), 
-            quantidade: parseFloat(document.getElementById('tQty').value), 
-            alavancagem_alvo: parseFloat(document.getElementById('tLev').value) 
-        }]);
+        await _supabase.from('trades').insert([{ par: tic, tipo: document.getElementById('tType').value, preco: parseFloat(document.getElementById('tPrice').value), quantidade: parseFloat(document.getElementById('tQty').value), alavancagem_alvo: parseFloat(document.getElementById('tLev').value) }]);
         location.reload();
     }
     
     function renderTable() {
         const f = currentMode === "TICKER" ? allTrades.filter(t => t.par === currentSymbol) : allTrades;
-        document.getElementById('tradeLog').innerHTML = f.slice().reverse().map(t => `
-            <tr>
-                <td>${new Date(t.created_at).toLocaleString()}</td>
-                <td>${t.par}</td>
-                <td style="color:${t.tipo==='Compra'?'#00c853':'#ff3d00'}">${t.tipo === 'Compra' ? 'LONG' : 'SHORT'}</td>
-                <td>${t.preco}</td>
-                <td>${t.alavancagem_alvo}x</td>
-                <td>${t.quantidade}</td>
-                <td><button onclick="deleteTrade('${t.id}')" style="color:red; background:none; border:none; cursor:pointer;">×</button></td>
-            </tr>
-        `).join('');
+        document.getElementById('tradeLog').innerHTML = f.slice().reverse().map(t => `<tr><td>${new Date(t.created_at).toLocaleString()}</td><td>${t.par}</td><td style="color:${t.tipo==='Compra'?'#00c853':'#ff3d00'}">${t.tipo === 'Compra' ? 'LONG' : 'SHORT'}</td><td>${t.preco}</td><td>${t.alavancagem_alvo}x</td><td>${t.quantidade}</td><td><button onclick="deleteTrade('${t.id}')" style="color:red; background:none; border:none;">×</button></td></tr>`).join('');
     }
-    
-    async function deleteTrade(id) {
-        if(confirm("Apagar registo?")) {
-            await _supabase.from('trades').delete().eq('id', id);
-            location.reload();
-        }
-    }
+
+    async function deleteTrade(id) { if(confirm("Apagar?")) { await _supabase.from('trades').delete().eq('id', id); location.reload(); } }
+    async function changeTF(tf) { currentTF = tf; if (currentMode === "OVERVIEW") await syncOverview(); else await syncTicker(); }
 </script>
 </body>
 </html>
