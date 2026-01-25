@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>[v2.15.2] Futures Pro Terminal</title>
+    <title>[v2.15.3] Futures Pro Terminal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
@@ -118,7 +118,7 @@
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let currentMode = "OVERVIEW", currentSymbol = "", currentTF = "15", activePrices = {}, allTrades = [];
-    let chart, candleSeries, mainLine, subLines = {};
+    let chart, candleSeries, mainLine, subLines = {}, entryMarker, liqMarker, zeroLine;
     let seriesVisibility = { "TOTAL": true }; 
     const colors = ['#f3d42f', '#ff6b6b', '#4dabf7', '#51cf66', '#cc5de8', '#ff922b'];
 
@@ -193,11 +193,23 @@
         document.getElementById('bottomLegend').style.display = m === "OVERVIEW" ? "flex" : "none";
 
         candleSeries.setData([]); mainLine.setData([]); Object.values(subLines).forEach(s => s.setData([]));
+        
+        // Gestão de Linhas Horizontais (Tracejados)
+        if(zeroLine) mainLine.removePriceLine(zeroLine); zeroLine = null;
+        if(entryMarker) candleSeries.removePriceLine(entryMarker); entryMarker = null;
+        if(liqMarker) candleSeries.removePriceLine(liqMarker); liqMarker = null;
+
+        if (m === "OVERVIEW") {
+            zeroLine = mainLine.createPriceLine({ price: 0, color: '#333', lineWidth: 1, lineStyle: 2, title: '0' });
+            await syncOverview();
+        } else {
+            await syncTicker();
+        }
+
         candleSeries.applyOptions({ visible: m === "TICKER" });
         mainLine.applyOptions({ visible: m === "OVERVIEW" && seriesVisibility["TOTAL"] === true });
         Object.keys(subLines).forEach(key => subLines[key].applyOptions({ visible: m === "OVERVIEW" && seriesVisibility[key] === true }));
         
-        if (m === "OVERVIEW") await syncOverview(); else await syncTicker();
         updateAssetNav(); renderTable(); updateUI();
     }
 
@@ -215,13 +227,12 @@
                 const color = colors[(tickers.indexOf(t)+1)%colors.length];
                 const pos = getPosition(t);
                 if (!subLines[t]) subLines[t] = chart.addLineSeries({ color: color, lineWidth: 1.5, title: '', priceLineVisible: false, lastValueVisible: false });
-                const seriesData = data.map(p => {
+                data.forEach(p => {
                     const pl = (p.c - (pos.cost/pos.q)) * pos.q;
                     if(!compositeData[p.t]) compositeData[p.t] = 0;
                     compositeData[p.t] += pl;
-                    return { time: p.t, value: pl };
                 });
-                subLines[t].setData(seriesData);
+                subLines[t].setData(data.map(p => ({ time: p.t, value: (p.c - (getPosition(t).cost/getPosition(t).q)) * getPosition(t).q })));
                 createLegendItem(t, color);
             }
         }
@@ -231,10 +242,17 @@
     }
 
     async function syncTicker() {
-        const r = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${currentSymbol}&interval=${currentTF}&limit=150`);
+        const r = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${currentSymbol}&interval=${currentTF}&limit=120`);
         const d = await r.json();
         if(d.result?.list) {
             candleSeries.setData(d.result.list.map(v => ({ time: parseInt(v[0])/1000, open: parseFloat(v[1]), high: parseFloat(v[2]), low: parseFloat(v[3]), close: parseFloat(v[4]) })).reverse());
+            const s = getPosition(currentSymbol);
+            if (Math.abs(s.q) > 0.001) {
+                const avg = s.cost/s.q;
+                const liq = avg * (1 - (s.margin / s.cost) + 0.005);
+                entryMarker = candleSeries.createPriceLine({ price: avg, color: '#f3d42f', lineWidth: 2, lineStyle: 2, title: 'ENTRY' });
+                liqMarker = candleSeries.createPriceLine({ price: liq, color: '#ff3d00', lineWidth: 2, lineStyle: 2, title: 'LIQ' });
+            }
             chart.timeScale().fitContent();
         }
     }
@@ -262,7 +280,6 @@
             crosshair: { horzLine: { labelVisible: false }, vertLine: { labelVisible: false } }
         });
 
-        // Etiqueta (Label) lateral ativa em todos os modos
         candleSeries = chart.addCandlestickSeries({ upColor: '#00c853', downColor: '#ff3d00', priceLineVisible: false, lastValueVisible: true });
         mainLine = chart.addLineSeries({ color: '#f3d42f', lineWidth: 4, title: '', priceLineVisible: false, lastValueVisible: true });
         
