@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>[v2.12.1] Futures Pro Terminal</title>
+    <title>[v2.12.2] Futures Pro Terminal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
@@ -14,38 +14,29 @@
         .asset-nav { display: flex; gap: 5px; margin-bottom: 8px; overflow-x: auto; padding-bottom: 5px; border-bottom: 1px solid #222; scrollbar-width: none; }
         .nav-btn { background: #1a1a1a; color: #777; border: 1px solid #333; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.8rem; white-space: nowrap; }
         .nav-btn.active { background: var(--accent); color: #000; }
-        
         .dashboard { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 10px; }
         @media (min-width: 1024px) { .dashboard { grid-template-columns: repeat(5, 1fr); } }
         .card { background: #161616; padding: 10px; border-radius: 8px; border: 1px solid #222; text-align: center; }
         .card label { color: #666; font-size: 0.55rem; text-transform: uppercase; display: block; margin-bottom: 3px; }
         .card span { font-size: 1rem; font-weight: bold; }
-
-        /* Cabeçalho Desktop Expandido */
         #globalEquityDisplay { font-size: 1.2rem; }
         #globalPnlPerc { font-size: 1.1rem; font-weight: bold; margin-left: 10px; }
-        
         @media (min-width: 1024px) {
             #globalEquityDisplay { font-size: 2.2rem !important; }
             #globalPnlPerc { font-size: 1.8rem !important; }
-            .header-info label { font-size: 0.8rem !important; }
         }
-
         .chart-wrapper { background: #000; border-radius: 8px; border: 1px solid #333; margin-bottom: 5px; overflow: hidden; }
         .chart-header { background: #1a1a1a; padding: 6px 10px; display: flex; justify-content: space-between; align-items: center; }
         #chart { height: 400px; width: 100%; }
-
         .bottom-legend { display: flex; flex-wrap: wrap; gap: 10px; padding: 10px; background: #111; border: 1px solid #222; border-radius: 0 0 8px 8px; margin-bottom: 10px; }
         .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; cursor: pointer; color: #fff; padding: 4px 8px; border-radius: 4px; transition: opacity 0.2s; }
         .legend-item.hidden { opacity: 0.3; text-decoration: line-through; }
         .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
-
         .trade-panel { background: #161616; padding: 12px; border-radius: 8px; border: 1px solid #222; display: flex; flex-wrap: wrap; gap: 8px; }
         .field { flex: 1 1 calc(50% - 4px); display: flex; flex-direction: column; }
         @media (min-width: 768px) { .field { flex: 1; } }
         input, select { background: #111; border: 1px solid #333; color: white; padding: 10px; border-radius: 6px; font-size: 0.95rem; }
         .exec-btn { flex: 1 1 100%; background: var(--accent); color: #000; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; height: 45px; }
-
         .table-container { width: 100%; overflow-x: auto; margin-top: 10px; border-radius: 8px; background: #111; }
         table { width: 100%; border-collapse: collapse; min-width: 650px; }
         th { text-align: left; color: #555; padding: 12px; font-size: 0.7rem; border-bottom: 1px solid #222; }
@@ -122,17 +113,7 @@
     const colors = ['#f3d42f', '#ff6b6b', '#4dabf7', '#51cf66', '#cc5de8', '#ff922b', '#339af0'];
     const HIST_LIMIT = 120;
 
-    function initChart() {
-        chart = LightweightCharts.createChart(document.getElementById('chart'), { 
-            layout: { background: { color: '#000' }, textColor: '#888', fontSize: 10 },
-            grid: { vertLines: { color: '#111' }, horzLines: { color: '#111' } },
-            timeScale: { timeVisible: true, borderVisible: false, rightOffset: 18, barSpacing: 10 },
-            rightPriceScale: { borderVisible: false, autoScale: true }
-        });
-        candleSeries = chart.addCandlestickSeries({ upColor: '#00c853', downColor: '#ff3d00' });
-        mainLine = chart.addLineSeries({ color: colors[0], lineWidth: 3, title: 'TOTAL', priceLineVisible: true, priceLineSource: 1 });
-        updateView();
-    }
+    // --- FUNÇÕES DECLARADAS PRIMEIRO PARA EVITAR REFERENCE ERROR ---
 
     function getPositionAt(ticker) {
         let q = 0, cost = 0, margin = 0;
@@ -143,60 +124,6 @@
             else { const r = t.quantidade / (q || 1); margin -= (margin * r); cost -= (cost * r); q -= t.quantidade; }
         });
         return { q, cost, margin };
-    }
-
-    function updateUI() {
-        let gPL = 0, gMarg = 0, gNom = 0, now = Math.floor(Date.now()/1000);
-        const map = { "1": 60, "5": 300, "15": 900, "60": 3600, "240": 14400, "D": 86400, "W": 604800 };
-        const interval = map[currentTF] || 900;
-        const alignedTime = Math.floor(now / interval) * interval;
-        
-        const tickers = [...new Set(allTrades.map(t => t.par))];
-        let tickerSpecificPL = 0, tickerSpecificMarg = 0;
-
-        tickers.forEach(tic => {
-            const s = getPositionAt(tic);
-            if (Math.abs(s.q) > 0.0001) {
-                const p = activePrices[tic] || 0, pl = (p - (s.cost/s.q)) * s.q;
-                gPL += pl; gMarg += s.margin; gNom += (p * Math.abs(s.q));
-                
-                if (currentMode === "OVERVIEW" && subLines[tic]) subLines[tic].update({ time: alignedTime, value: pl });
-                
-                if (currentSymbol === tic) { tickerSpecificPL = pl; tickerSpecificMarg = s.margin; }
-
-                if (currentMode === "TICKER" && currentSymbol === tic) {
-                    const avg = s.cost / s.q, eq = s.margin + pl;
-                    const liq = s.q > 0 ? avg * (1 - (0.8 / (s.cost/s.margin/avg))) : avg * (1 + (0.8 / (Math.abs(s.cost)/s.margin/avg)));
-                    document.getElementById('v1').innerText = p.toFixed(4);
-                    document.getElementById('v2').innerText = avg.toFixed(4);
-                    document.getElementById('v3').innerText = (Math.abs(p*s.q) / Math.max(0.1, eq)).toFixed(2) + "x";
-                    document.getElementById('v4').innerText = "$" + pl.toFixed(2);
-                    document.getElementById('v4').style.color = pl >= 0 ? "var(--success)" : "var(--danger)";
-                    document.getElementById('v5').innerText = liq.toFixed(4);
-                    if(entryLineMarker) entryLineMarker.applyOptions({ price: avg });
-                    if(liqLineMarker) liqLineMarker.applyOptions({ price: liq });
-                    candleSeries.update({ time: alignedTime, close: p });
-                }
-            }
-        });
-
-        // Atualização do Cabeçalho (Sempre mostra % baseado no contexto)
-        const activePL = (currentMode === "OVERVIEW") ? gPL : tickerSpecificPL;
-        const activeMarg = (currentMode === "OVERVIEW") ? gMarg : tickerSpecificMarg;
-        const activeEq = activeMarg + activePL;
-        const activePerc = activeMarg > 0 ? (activePL / activeMarg) * 100 : 0;
-
-        document.getElementById('globalEquityDisplay').innerText = "$" + activeEq.toFixed(2);
-        const pElem = document.getElementById('globalPnlPerc');
-        pElem.innerText = (activePerc >= 0 ? "+" : "") + activePerc.toFixed(2) + "%";
-        pElem.style.color = activePerc >= 0 ? "var(--success)" : "var(--danger)";
-
-        if (currentMode === "OVERVIEW") {
-            document.getElementById('v4').innerText = "$" + gPL.toFixed(2);
-            document.getElementById('v4').style.color = gPL >= 0 ? "var(--success)" : "var(--danger)";
-            document.getElementById('v3').innerText = (gNom / Math.max(1, activeEq)).toFixed(2) + "x";
-            mainLine.update({ time: alignedTime, value: gPL });
-        }
     }
 
     async function syncHistoryPL() {
@@ -232,15 +159,14 @@
             });
             if (time > 0) totalPoints.push({ time: time, value: ptTotal });
         }
-
         mainLine.setData(totalPoints);
         tickers.forEach((tic, idx) => {
             const color = colors[(idx+1)%colors.length];
             if (tickerPoints[tic]) {
-                const series = chart.addLineSeries({ color: color, lineWidth: 1.8, priceLineVisible: true, priceLineSource: 1, priceLineStyle: 2, lastValueVisible: true, title: tic });
-                series.setData(tickerPoints[tic]);
-                series.applyOptions({ visible: seriesVisibility[tic] !== false });
-                subLines[tic] = series;
+                const s = chart.addLineSeries({ color: color, lineWidth: 1.8, priceLineVisible: true, priceLineSource: 1, priceLineStyle: 2, lastValueVisible: true, title: tic });
+                s.setData(tickerPoints[tic]);
+                s.applyOptions({ visible: seriesVisibility[tic] !== false });
+                subLines[tic] = s;
                 createLegendItem(tic, color);
             }
         });
@@ -261,21 +187,6 @@
         container.appendChild(div);
     }
 
-    async function setMode(m, t="") {
-        currentMode = m; currentSymbol = t;
-        document.getElementById('displayPar').innerText = m === "OVERVIEW" ? "VISÃO GERAL" : currentSymbol;
-        const isT = m === "TICKER";
-        candleSeries.applyOptions({ visible: isT });
-        mainLine.applyOptions({ visible: !isT && seriesVisibility["TOTAL"] !== false });
-        if(isT) {
-            if(!entryLineMarker) entryLineMarker = candleSeries.createPriceLine({ price: 0, color: '#f3d42f', lineWidth: 2, lineStyle: 2, title: 'ENTRY' });
-            if(!liqLineMarker) liqLineMarker = candleSeries.createPriceLine({ price: 0, color: '#ff3d00', lineWidth: 2, lineStyle: 0, title: 'LIQ' });
-        }
-        document.getElementById('bottomLegend').style.display = isT ? 'none' : 'flex';
-        await loadHistory(true);
-        updateUI();
-    }
-
     async function loadHistory(fit = false) {
         if(currentMode === "OVERVIEW") { await syncHistoryPL(); return; }
         const resp = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${currentSymbol}&interval=${currentTF}&limit=${HIST_LIMIT}`);
@@ -286,14 +197,102 @@
         }
     }
 
+    function updateView() {
+        const isT = currentMode === "TICKER";
+        candleSeries.applyOptions({ visible: isT });
+        mainLine.applyOptions({ visible: !isT && seriesVisibility["TOTAL"] !== false });
+        if(isT) {
+            if(!entryLineMarker) entryLineMarker = candleSeries.createPriceLine({ price: 0, color: '#f3d42f', lineWidth: 2, lineStyle: 2, title: 'ENTRY' });
+            if(!liqLineMarker) liqLineMarker = candleSeries.createPriceLine({ price: 0, color: '#ff3d00', lineWidth: 2, lineStyle: 0, title: 'LIQ' });
+        }
+        document.getElementById('bottomLegend').style.display = isT ? 'none' : 'flex';
+        loadHistory(true);
+    }
+
+    function updateUI() {
+        let gPL = 0, gMarg = 0, gNom = 0, now = Math.floor(Date.now()/1000);
+        const map = { "1": 60, "5": 300, "15": 900, "60": 3600, "240": 14400, "D": 86400, "W": 604800 };
+        const interval = map[currentTF] || 900;
+        const alignedTime = Math.floor(now / interval) * interval;
+        const tickers = [...new Set(allTrades.map(t => t.par))];
+        let tSpecPL = 0, tSpecMarg = 0;
+
+        tickers.forEach(tic => {
+            const s = getPositionAt(tic);
+            if (Math.abs(s.q) > 0.0001) {
+                const p = activePrices[tic] || 0, pl = (p - (s.cost/s.q)) * s.q;
+                gPL += pl; gMarg += s.margin; gNom += (p * Math.abs(s.q));
+                if (currentMode === "OVERVIEW" && subLines[tic]) subLines[tic].update({ time: alignedTime, value: pl });
+                if (currentSymbol === tic) { tSpecPL = pl; tSpecMarg = s.margin; }
+                if (currentMode === "TICKER" && currentSymbol === tic) {
+                    const avg = s.cost/s.q, eq = s.margin+pl;
+                    const liq = s.q > 0 ? avg*(1-(0.8/(s.cost/s.margin/avg))) : avg*(1+(0.8/(Math.abs(s.cost)/s.margin/avg)));
+                    document.getElementById('v1').innerText = p.toFixed(4);
+                    document.getElementById('v2').innerText = avg.toFixed(4);
+                    document.getElementById('v3').innerText = (Math.abs(p*s.q)/Math.max(0.1,eq)).toFixed(2)+"x";
+                    document.getElementById('v4').innerText = "$"+pl.toFixed(2);
+                    document.getElementById('v5').innerText = liq.toFixed(4);
+                    if(entryLineMarker) entryLineMarker.applyOptions({ price: avg });
+                    if(liqLineMarker) liqLineMarker.applyOptions({ price: liq });
+                    candleSeries.update({ time: alignedTime, close: p });
+                }
+            }
+        });
+
+        const activePL = (currentMode === "OVERVIEW") ? gPL : tSpecPL;
+        const activeMarg = (currentMode === "OVERVIEW") ? gMarg : tSpecMarg;
+        const activeEq = activeMarg + activePL;
+        const activePerc = activeMarg > 0 ? (activePL / activeMarg) * 100 : 0;
+
+        document.getElementById('globalEquityDisplay').innerText = "$" + activeEq.toFixed(2);
+        const pElem = document.getElementById('globalPnlPerc');
+        pElem.innerText = (activePerc >= 0 ? "+" : "") + activePerc.toFixed(2) + "%";
+        pElem.style.color = activePerc >= 0 ? "var(--success)" : "var(--danger)";
+
+        if (currentMode === "OVERVIEW") {
+            document.getElementById('v4').innerText = "$" + gPL.toFixed(2);
+            document.getElementById('v4').style.color = gPL >= 0 ? "var(--success)" : "var(--danger)";
+            document.getElementById('v3').innerText = (gNom / Math.max(1, activeEq)).toFixed(2) + "x";
+            mainLine.update({ time: alignedTime, value: gPL });
+        }
+    }
+
+    function initChart() {
+        chart = LightweightCharts.createChart(document.getElementById('chart'), { 
+            layout: { background: { color: '#000' }, textColor: '#888', fontSize: 10 },
+            grid: { vertLines: { color: '#111' }, horzLines: { color: '#111' } },
+            timeScale: { timeVisible: true, borderVisible: false, rightOffset: 18, barSpacing: 10 },
+            rightPriceScale: { borderVisible: false, autoScale: true }
+        });
+        candleSeries = chart.addCandlestickSeries({ upColor: '#00c853', downColor: '#ff3d00' });
+        mainLine = chart.addLineSeries({ color: colors[0], lineWidth: 3, title: 'TOTAL', priceLineVisible: true, priceLineSource: 1 });
+        updateView();
+    }
+
+    // --- EXECUÇÃO ---
+
+    window.onload = async () => { 
+        initChart(); 
+        const { data } = await _supabase.from('trades').select('*').order('created_at', { ascending: true });
+        allTrades = data || [];
+        updateAssetNav(); renderTable(); updateUI();
+        setInterval(async () => {
+            const r = await fetch('https://api.bybit.com/v5/market/tickers?category=linear');
+            const d = await r.json();
+            if(d.result?.list) {
+                d.result.list.forEach(i => activePrices[i.symbol] = parseFloat(i.markPrice));
+                updateUI();
+            }
+        }, 3000);
+    };
+
+    async function setMode(m, t="") { currentMode = m; currentSymbol = t; document.getElementById('displayPar').innerText = m === "OVERVIEW" ? "VISÃO GERAL" : currentSymbol; updateView(); updateAssetNav(); renderTable(); }
     async function changeTF(tf, btn) { currentTF = tf; document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); await loadHistory(true); }
-    async function loadData() { const { data } = await _supabase.from('trades').select('*').order('created_at', { ascending: true }); allTrades = data || []; updateAssetNav(); renderTable(); updateUI(); }
-    async function saveTrade() { const tic = document.getElementById('parTicker').value.toUpperCase() || currentSymbol; await _supabase.from('trades').insert([{ par: tic, tipo: document.getElementById('tType').value, preco: parseFloat(document.getElementById('tPrice').value), quantidade: parseFloat(document.getElementById('tQty').value), alavancagem_alvo: parseFloat(document.getElementById('tLev').value) }]); await loadData(); }
+    async function saveTrade() { const tic = document.getElementById('parTicker').value.toUpperCase() || currentSymbol; await _supabase.from('trades').insert([{ par: tic, tipo: document.getElementById('tType').value, preco: parseFloat(document.getElementById('tPrice').value), quantidade: parseFloat(document.getElementById('tQty').value), alavancagem_alvo: parseFloat(document.getElementById('tLev').value) }]); location.reload(); }
     function renderTable() { const f = currentMode === "TICKER" ? allTrades.filter(t => t.par === currentSymbol) : allTrades; document.getElementById('tradeLog').innerHTML = f.slice().reverse().map(t => `<tr><td>${new Date(t.created_at).toLocaleString()}</td><td>${t.par}</td><td style="color:${t.tipo==='Compra'?'#00c853':'#ff3d00'}">${t.tipo === 'Compra' ? 'LONG' : 'SHORT'}</td><td>${t.preco}</td><td>${t.alavancagem_alvo}x</td><td>${t.quantidade}</td><td><button onclick="deleteTrade('${t.id}')" style="color:red; background:none; border:none; cursor:pointer;">×</button></td></tr>`).join(''); }
-    async function deleteTrade(id) { if(confirm("Apagar?")) { await _supabase.from('trades').delete().eq('id', id); await loadData(); } }
+    async function deleteTrade(id) { if(confirm("Apagar?")) { await _supabase.from('trades').delete().eq('id', id); location.reload(); } }
     function updateAssetNav() { const n = document.getElementById('assetNav'); const tics = [...new Set(allTrades.map(t => t.par))]; n.innerHTML = `<button class="nav-btn ${currentMode==='OVERVIEW'?'active':''}" onclick="setMode('OVERVIEW')">GERAL</button>`; tics.forEach(t => { n.innerHTML += `<button class="nav-btn ${currentMode==='TICKER'&&currentSymbol===t?'active':''}" onclick="setMode('TICKER', '${t}')">${t}</button>`; }); }
 
-    window.onload = async () => { initChart(); await loadData(); setInterval(async () => { const r = await fetch('https://api.bybit.com/v5/market/tickers?category=linear'); const d = await r.json(); if(d.result?.list) { d.result.list.forEach(i => activePrices[i.symbol] = parseFloat(i.markPrice)); updateUI(); } }, 3000); };
 </script>
 </body>
 </html>
