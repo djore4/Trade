@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>[v2.13.6] Futures Pro Terminal</title>
+    <title>[v2.13.7] Futures Pro Terminal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
@@ -66,7 +66,7 @@
         <div class="card"><label>Price</label><span id="v1">---</span></div>
         <div class="card"><label>Avg. Entry</label><span id="v2">---</span></div>
         <div class="card"><label>Real Leverage</label><span id="v3">---</span></div>
-        <div class="card"><label>Total P&L (%)</label><span id="v4">---</span></div>
+        <div class="card"><label>P&L (%)</label><span id="v4">---</span></div>
         <div class="card"><label>Liquidação</label><span id="v5" style="color:var(--danger)">---</span></div>
     </div>
 
@@ -108,7 +108,7 @@
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let currentMode = "OVERVIEW", currentSymbol = "", currentTF = "15", activePrices = {}, allTrades = [];
-    let chart, candleSeries, mainLine, subLines = {}, entryMarker;
+    let chart, candleSeries, mainLine, subLines = {}, entryMarker, liqMarker;
     const colors = ['#f3d42f', '#ff6b6b', '#4dabf7', '#51cf66', '#cc5de8', '#ff922b'];
 
     async function fetchPrices() {
@@ -145,7 +145,10 @@
                 if (currentMode === "OVERVIEW" && subLines[tic]) subLines[tic].update({ time: alignedTime, value: pl });
                 
                 if (currentMode === "TICKER" && tic === currentSymbol) {
-                    const avg = s.cost/s.q, perc = (pl/s.margin)*100;
+                    const avg = s.cost/s.q, eq = s.margin+pl, perc = (pl/s.margin)*100;
+                    // Cálculo de Liquidação Linear
+                    const liq = s.q > 0 ? avg * (1 - (s.margin / s.cost) + 0.005) : avg * (1 + (s.margin / Math.abs(s.cost)) - 0.005);
+                    
                     document.getElementById('mainLabel').innerText = `${tic} Position Equity`;
                     document.getElementById('globalEquityDisplay').innerText = "$" + (s.margin + pl).toFixed(2);
                     document.getElementById('headerPnlDisplay').innerText = `$${pl.toFixed(2)} (${perc.toFixed(2)}%)`;
@@ -155,6 +158,7 @@
                     document.getElementById('v3').innerText = (Math.abs(p*s.q)/(s.margin+pl)).toFixed(2)+"x";
                     document.getElementById('v4').innerText = `$${pl.toFixed(2)} (${perc.toFixed(2)}%)`;
                     document.getElementById('v4').style.color = pl >= 0 ? "var(--success)" : "var(--danger)";
+                    document.getElementById('v5').innerText = liq.toFixed(4);
                     candleSeries?.update({ time: alignedTime, close: p });
                 }
             }
@@ -172,6 +176,7 @@
             document.getElementById('v3').innerText = (gNom / Math.max(1, gMarg + gPL)).toFixed(2) + "x";
             document.getElementById('v4').innerText = `$${gPL.toFixed(2)} (${activePerc.toFixed(2)}%)`;
             document.getElementById('v4').style.color = color;
+            document.getElementById('v5').innerText = "---";
             if(mainLine) mainLine.update({ time: alignedTime, value: gPL });
         }
     }
@@ -180,6 +185,8 @@
         currentMode = m; currentSymbol = t;
         document.getElementById('displayPar').innerText = m === "OVERVIEW" ? "GERAL" : t;
         candleSeries.setData([]); mainLine.setData([]); Object.values(subLines).forEach(s => s.setData([]));
+        candleSeries.applyOptions({ visible: m === "TICKER" });
+        mainLine.applyOptions({ visible: m === "OVERVIEW" });
         if (m === "OVERVIEW") await syncOverview(); else await syncTicker();
         updateAssetNav(); renderTable(); updateUI();
     }
@@ -210,8 +217,12 @@
             candleSeries.setData(d.result.list.map(v => ({ time: parseInt(v[0])/1000, open: parseFloat(v[1]), high: parseFloat(v[2]), low: parseFloat(v[3]), close: parseFloat(v[4]) })).reverse());
             const s = getPosition(currentSymbol);
             if (Math.abs(s.q) > 0.001) {
+                const avg = s.cost/s.q;
+                const liq = s.q > 0 ? avg * (1 - (s.margin / s.cost) + 0.005) : avg * (1 + (s.margin / Math.abs(s.cost)) - 0.005);
                 if(entryMarker) candleSeries.removePriceLine(entryMarker);
-                entryMarker = candleSeries.createPriceLine({ price: s.cost/s.q, color: '#f3d42f', lineWidth: 2, lineStyle: 2, title: 'ENTRY' });
+                if(liqMarker) candleSeries.removePriceLine(liqMarker);
+                entryMarker = candleSeries.createPriceLine({ price: avg, color: '#f3d42f', lineWidth: 2, lineStyle: 2, title: 'ENTRY' });
+                liqMarker = candleSeries.createPriceLine({ price: liq, color: '#ff3d00', lineWidth: 2, lineStyle: 0, title: 'LIQ' });
             }
             chart.timeScale().fitContent();
         }
@@ -227,6 +238,8 @@
     window.onload = async () => {
         chart = LightweightCharts.createChart(document.getElementById('chart'), { 
             layout: { background: { color: '#000' }, textColor: '#888', fontSize: 11 },
+            // REMOÇÃO DAS LINHAS DE GRELHA
+            grid: { vertLines: { visible: false }, horzLines: { visible: false } },
             timeScale: { timeVisible: true, borderVisible: false },
             rightPriceScale: { borderVisible: false, autoScale: true }
         });
@@ -254,11 +267,11 @@
     
     function renderTable() {
         const f = currentMode === "TICKER" ? allTrades.filter(t => t.par === currentSymbol) : allTrades;
-        document.getElementById('tradeLog').innerHTML = f.slice().reverse().map(t => `<tr><td>${new Date(t.created_at).toLocaleString()}</td><td>${t.par}</td><td style="color:${t.tipo==='Compra'?'#00c853':'#ff3d00'}">${t.tipo === 'Compra' ? 'LONG' : 'SHORT'}</td><td>${t.preco}</td><td>${t.alavancagem_alvo}x</td><td>${t.quantidade}</td><td><button onclick="deleteTrade('${t.id}')" style="color:red; background:none; border:none;">×</button></td></tr>`).join('');
+        document.getElementById('tradeLog').innerHTML = f.slice().reverse().map(t => `<tr><td>${new Date(t.created_at).toLocaleString()}</td><td>${t.par}</td><td style="color:${t.tipo==='Compra'?'#00c853':'#ff3d00'}">${t.tipo === 'Compra' ? 'LONG' : 'SHORT'}</td><td>${t.preco}</td><td>${t.alavancagem_alvo}x</td><td>${t.quantidade}</td><td><button onclick="deleteTrade('${t.id}')" style="color:red; background:none; border:none; cursor:pointer;">×</button></td></tr>`).join('');
     }
 
     async function deleteTrade(id) { if(confirm("Apagar?")) { await _supabase.from('trades').delete().eq('id', id); location.reload(); } }
-    async function changeTF(tf) { currentTF = tf; if (currentMode === "OVERVIEW") await syncOverview(); else await syncTicker(); }
+    async function changeTF(tf) { currentTF = tf; document.querySelectorAll('#tfControls .nav-btn').forEach(b => b.classList.remove('active')); if (currentMode === "OVERVIEW") await syncOverview(); else await syncTicker(); }
 </script>
 </body>
 </html>
