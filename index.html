@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>[v2.15.4] Futures Pro Terminal</title>
+    <title>[v2.15.5] Futures Pro Terminal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
@@ -40,12 +40,13 @@
         .chart-wrapper { background: #000; border-radius: 10px; border: 1px solid #333; overflow: hidden; position: relative; margin-bottom: 10px; }
         #chart { height: 500px; width: 100%; }
 
-        /* Estilo para o Heatmap da Coinglass */
-        #heatmapContainer { display: none; margin-bottom: 15px; border-radius: 10px; overflow: hidden; border: 1px solid #222; background: #000; }
-        #heatmapIframe { width: 100%; height: 600px; border: none; }
+        /* Heatmap Section */
+        #heatmapContainer { display: none; margin-bottom: 15px; border-radius: 10px; overflow: hidden; border: 1px solid #222; background: #000; padding: 10px; }
+        .heatmap-header { color: var(--accent); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 1px; }
+        #heatmapIframe { width: 100%; height: 450px; border: none; }
 
         .bottom-legend { display: flex; flex-wrap: wrap; gap: 12px; padding: 15px; background: #111; border: 1px solid #222; border-top: none; border-radius: 0 0 8px 8px; margin-bottom: 15px; }
-        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #fff; cursor: pointer; user-select: none; }
+        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #fff; cursor: pointer; }
         .legend-item.hidden { opacity: 0.15; text-decoration: line-through; }
         .legend-dot { width: 12px; height: 12px; border-radius: 3px; }
 
@@ -54,9 +55,9 @@
         input, select { background: #111; border: 1px solid #333; color: white; padding: 12px; border-radius: 6px; font-size: 1rem; }
         .exec-btn { flex: 1 1 100%; background: var(--accent); color: #000; font-weight: 900; height: 50px; cursor: pointer; border-radius: 8px; border: none; text-transform: uppercase; }
 
-        .table-container { width: 100%; overflow-x: auto; border-radius: 8px; background: #111; margin-top: 10px; }
+        .table-container { width: 100%; overflow-x: auto; border-radius: 8px; background: #111; margin-top: 10px; border: 1px solid #222; }
         table { width: 100%; border-collapse: collapse; min-width: 700px; }
-        td { padding: 12px; border-bottom: 1px solid #161616; font-size: 0.9rem; }
+        td, th { padding: 12px; text-align: left; border-bottom: 1px solid #161616; font-size: 0.9rem; }
     </style>
 </head>
 <body>
@@ -86,7 +87,7 @@
     </div>
 
     <div class="chart-wrapper">
-        <div style="background:#1a1a1a; padding:8px 12px; display:flex; justify-content:flex-start; align-items:center;">
+        <div style="background:#1a1a1a; padding:8px 12px; display:flex; justify-content:flex-start; align-items:center; border-bottom: 1px solid #222;">
             <div id="tfControls">
                 <button class="nav-btn" onclick="changeTF('1', this)">1m</button>
                 <button class="nav-btn active" onclick="changeTF('15', this)">15m</button>
@@ -99,6 +100,7 @@
     </div>
 
     <div id="heatmapContainer">
+        <div class="heatmap-header" id="heatmapTitle">LIQUIDATION DATA</div>
         <iframe id="heatmapIframe" src=""></iframe>
     </div>
 
@@ -110,12 +112,12 @@
         <div class="field"><label>Preço</label><input type="number" id="tPrice" step="any"></div>
         <div class="field"><label>Lev</label><input type="number" id="tLev" value="10"></div>
         <div class="field"><label>Qtd</label><input type="number" id="tQty" step="any"></div>
-        <button class="exec-btn" onclick="saveTrade()">Executar Ordem</button>
+        <button class="exec-btn" onclick="saveTrade()">Executar Nova Ordem</button>
     </div>
 
     <div class="table-container">
         <table>
-            <thead><tr style="color:#555; font-size:0.75rem; text-align:left;"><th>Data/Hora</th><th>Par</th><th>Lado</th><th>Preço</th><th>Lev</th><th>Qtd</th><th>×</th></tr></thead>
+            <thead><tr style="color:#555; font-size:0.75rem;"><th>Data/Hora</th><th>Par</th><th>Lado</th><th>Preço</th><th>Lev</th><th>Qtd</th><th>×</th></tr></thead>
             <tbody id="tradeLog"></tbody>
         </table>
     </div>
@@ -199,16 +201,17 @@
         document.getElementById('pnlLabel').innerText = m === "OVERVIEW" ? "Portfolio P&L" : `${t} Open P&L`;
         document.getElementById('bottomLegend').style.display = m === "OVERVIEW" ? "flex" : "none";
 
-        // Gestão do Heatmap
+        // Gestão do Heatmap / Liquidações
         const heatmapBox = document.getElementById('heatmapContainer');
         const heatmapIframe = document.getElementById('heatmapIframe');
         if(m === "TICKER") {
             heatmapBox.style.display = "block";
             const coin = t.replace('USDT', '');
-            heatmapIframe.src = `https://www.coinglass.com/pro/i/LiquidationHeatMap?symbol=${coin}`;
+            document.getElementById('heatmapTitle').innerText = `${coin} LIQUIDATION HEATMAP`;
+            // URL corrigida para o widget oficial da Coinglass
+            heatmapIframe.src = `https://www.coinglass.com/LiquidationHistory?symbol=${coin}`;
         } else {
             heatmapBox.style.display = "none";
-            heatmapIframe.src = "";
         }
 
         candleSeries.setData([]); mainLine.setData([]); Object.values(subLines).forEach(s => s.setData([]));
@@ -244,7 +247,7 @@
                     const pl = (p.c - (pos.cost/pos.q)) * pos.q;
                     compositeData[p.t] = (compositeData[p.t] || 0) + pl;
                 });
-                subLines[t].setData(data.map(p => ({ time: p.t, value: (p.c - (pos.cost/pos.q)) * pos.q })));
+                subLines[t].setData(data.map(p => ({ time: p.t, value: (p.c - (getPosition(t).cost/getPosition(t).q)) * getPosition(t).q })));
                 createLegendItem(t, color);
             }
         }
@@ -254,7 +257,7 @@
     }
 
     async function syncTicker() {
-        const r = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${currentSymbol}&interval=${currentTF}&limit=150`);
+        const r = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${currentSymbol}&interval=${currentTF}&limit=120`);
         const d = await r.json();
         if(d.result?.list) {
             candleSeries.setData(d.result.list.map(v => ({ time: parseInt(v[0])/1000, open: parseFloat(v[1]), high: parseFloat(v[2]), low: parseFloat(v[3]), close: parseFloat(v[4]) })).reverse());
