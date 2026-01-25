@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>[v2.13.1] Futures Pro Terminal</title>
+    <title>[v2.13.0] Futures Pro Terminal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
@@ -11,50 +11,67 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 5px; margin: 0; }
         .container { max-width: 1600px; margin: auto; }
+        
         .asset-nav { display: flex; gap: 5px; margin-bottom: 8px; overflow-x: auto; padding-bottom: 5px; border-bottom: 1px solid #222; scrollbar-width: none; }
         .nav-btn { background: #1a1a1a; color: #777; border: 1px solid #333; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.8rem; white-space: nowrap; }
         .nav-btn.active { background: var(--accent); color: #000; }
+
+        /* Cabeçalho Magnificado */
         .header-info { display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 15px; padding: 15px; background: #111; border-radius: 10px; border: 1px solid #222; }
+        .header-label { font-size: 0.7rem; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
         #globalEquityDisplay { font-size: 2rem; font-weight: 900; color: #fff; line-height: 1; }
         #headerPnlPerc { font-size: 1.2rem; font-weight: bold; margin-top: 5px; }
+
         @media (min-width: 1024px) {
             .header-info { padding: 30px; flex-direction: row; justify-content: space-between; align-items: center; }
             #globalEquityDisplay { font-size: 4rem !important; }
             #headerPnlPerc { font-size: 2.5rem !important; margin-top: 0; }
         }
+
         .dashboard { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px; }
         .card { background: #161616; padding: 12px; border-radius: 8px; border: 1px solid #222; text-align: center; }
         .card label { color: #666; font-size: 0.6rem; text-transform: uppercase; margin-bottom: 5px; display: block; }
         .card span { font-size: 1.1rem; font-weight: bold; }
         @media (min-width: 1024px) { .dashboard { grid-template-columns: repeat(5, 1fr); } .card span { font-size: 1.8rem; } }
+
         .chart-wrapper { background: #000; border-radius: 8px; border: 1px solid #333; overflow: hidden; }
         #chart { height: 450px; width: 100%; }
         .bottom-legend { display: flex; flex-wrap: wrap; gap: 12px; padding: 12px; background: #111; border: 1px solid #222; border-radius: 0 0 8px 8px; margin-bottom: 15px; }
-        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; cursor: pointer; color: #fff; }
-        .legend-dot { width: 12px; height: 12px; border-radius: 3px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="asset-nav" id="assetNav"></div>
+
     <div class="header-info">
-        <div><label style="font-size: 0.7rem; color: #666; text-transform: uppercase;">Portfolio Equity</label><div id="globalEquityDisplay">LOADING...</div></div>
-        <div id="headerPnlPerc" style="color: #444;">--%</div>
+        <div>
+            <label class="header-label" id="eqLabel">Portfolio Equity</label>
+            <div id="globalEquityDisplay">$0.00</div>
+        </div>
+        <div id="headerPnlPerc" style="color: var(--success);">+0.00%</div>
     </div>
-    <div class="dashboard"><div class="card"><label>Price</label><span id="v1">---</span></div><div class="card"><label>Avg. Entry</label><span id="v2">---</span></div><div class="card"><label>Real Leverage</label><span id="v3">0.00x</span></div><div class="card"><label>Total P&L</label><span id="v4">---</span></div><div class="card"><label>Liquidação</label><span id="v5" style="color:var(--danger)">---</span></div></div>
+
+    <div class="dashboard">
+        <div class="card"><label>Price</label><span id="v1">---</span></div>
+        <div class="card"><label>Avg. Entry</label><span id="v2">---</span></div>
+        <div class="card"><label>Real Leverage</label><span id="v3">0.00x</span></div>
+        <div class="card"><label>Total P&L</label><span id="v4">$0.00 (0.00%)</span></div>
+        <div class="card"><label>Liquidação</label><span id="v5" style="color:var(--danger)">---</span></div>
+    </div>
+
     <div class="chart-wrapper">
         <div style="background:#1a1a1a; padding:8px 12px; display:flex; justify-content:space-between;">
             <div id="tfControls">
-                <button class="nav-btn" onclick="changeTF('1')">1m</button>
-                <button class="nav-btn" onclick="changeTF('5')">5m</button>
-                <button class="nav-btn active" id="tf15" onclick="changeTF('15')">15m</button>
-                <button class="nav-btn" onclick="changeTF('60')">1h</button>
-                <button class="nav-btn" onclick="changeTF('240')">4h</button>
-                <button class="nav-btn" onclick="changeTF('D')">1D</button>
-                <button class="nav-btn" onclick="changeTF('W')">1W</button>
+                <button class="nav-btn" style="padding:4px 8px;" onclick="changeTF('1')">1m</button>
+                <button class="nav-btn" style="padding:4px 8px;" onclick="changeTF('5')">5m</button>
+                <button class="nav-btn active" style="padding:4px 8px;" id="tf15" onclick="changeTF('15')">15m</button>
+                <button class="nav-btn" style="padding:4px 8px;" onclick="changeTF('60')">1h</button>
+                <button class="nav-btn" style="padding:4px 8px;" onclick="changeTF('240')">4h</button>
+                <button class="nav-btn" style="padding:4px 8px;" onclick="changeTF('D')">1D</button>
+                <button class="nav-btn" style="padding:4px 8px;" onclick="changeTF('W')">1W</button>
             </div>
-            <span id="displayPar" style="font-size: 0.8rem; font-weight: bold; color: var(--accent);">SYNCING...</span>
+            <span id="displayPar" style="font-size: 0.8rem; font-weight: bold; color: var(--accent);">GERAL</span>
         </div>
         <div id="chart"></div>
     </div>
@@ -70,14 +87,7 @@
     let chart, candleSeries, mainLine, subLines = {}, entryMarker, liqMarker;
     let seriesVisibility = { "TOTAL": true }; 
     const colors = ['#f3d42f', '#ff6b6b', '#4dabf7', '#51cf66', '#cc5de8', '#ff922b', '#339af0'];
-
-    async function fetchPrices() {
-        const r = await fetch('https://api.bybit.com/v5/market/tickers?category=linear');
-        const d = await r.json();
-        if(d.result?.list) {
-            d.result.list.forEach(i => activePrices[i.symbol] = parseFloat(i.markPrice));
-        }
-    }
+    const HIST_LIMIT = 120;
 
     function getPositionAt(ticker) {
         let q = 0, cost = 0, margin = 0;
@@ -91,12 +101,11 @@
     }
 
     function updateUI() {
-        if (Object.keys(activePrices).length === 0) return; // Bloqueio de dados nulos
-
         let gPL = 0, gMarg = 0, gNom = 0, now = Math.floor(Date.now()/1000);
         const map = { "1": 60, "5": 300, "15": 900, "60": 3600, "240": 14400, "D": 86400, "W": 604800 };
         const alignedTime = Math.floor(now / (map[currentTF] || 900)) * (map[currentTF] || 900);
         const tickers = [...new Set(allTrades.map(t => t.par))];
+        
         let tSpecPL = 0, tSpecMarg = 0;
 
         tickers.forEach(tic => {
@@ -104,16 +113,20 @@
             if (Math.abs(s.q) > 0.0001) {
                 const p = activePrices[tic] || 0, pl = (p - (s.cost/s.q)) * s.q;
                 gPL += pl; gMarg += s.margin; gNom += (p * Math.abs(s.q));
+                
                 if (currentMode === "OVERVIEW" && subLines[tic]) subLines[tic].update({ time: alignedTime, value: pl });
+                
                 if (tic === currentSymbol) { tSpecPL = pl; tSpecMarg = s.margin; }
+
                 if (currentMode === "TICKER" && currentSymbol === tic) {
                     const avg = s.cost/s.q, eq = s.margin+pl, perc = (pl/s.margin)*100;
                     const liq = s.q > 0 ? avg*(1-(0.8/(s.cost/s.margin/avg))) : avg*(1+(0.8/(Math.abs(s.cost)/s.margin/avg)));
                     document.getElementById('v1').innerText = p.toFixed(4);
                     document.getElementById('v2').innerText = avg.toFixed(4);
                     document.getElementById('v3').innerText = (Math.abs(p*s.q)/Math.max(0.1,eq)).toFixed(2)+"x";
-                    document.getElementById('v4').innerText = `$${pl.toFixed(2)} (${perc.toFixed(2)}%)`;
-                    document.getElementById('v4').style.color = pl >= 0 ? "var(--success)" : "var(--danger)";
+                    const v4 = document.getElementById('v4');
+                    v4.innerText = `$${pl.toFixed(2)} (${perc.toFixed(2)}%)`;
+                    v4.style.color = pl >= 0 ? "var(--success)" : "var(--danger)";
                     document.getElementById('v5').innerText = liq.toFixed(4);
                     if(entryMarker) entryMarker.applyOptions({ price: avg });
                     if(liqMarker) liqMarker.applyOptions({ price: liq });
@@ -124,11 +137,10 @@
 
         const activePL = (currentMode === "OVERVIEW") ? gPL : tSpecPL;
         const activeMarg = (currentMode === "OVERVIEW") ? gMarg : tSpecMarg;
-        const activeEq = activeMarg + activePL;
         const activePerc = activeMarg > 0 ? (activePL / activeMarg) * 100 : 0;
         const color = activePL >= 0 ? "var(--success)" : "var(--danger)";
 
-        document.getElementById('globalEquityDisplay').innerText = "$" + activeEq.toFixed(2);
+        document.getElementById('globalEquityDisplay').innerText = "$" + (activeMarg + activePL).toFixed(2);
         const headerPnl = document.getElementById('headerPnlPerc');
         headerPnl.innerText = (activePerc >= 0 ? "+" : "") + activePerc.toFixed(2) + "%";
         headerPnl.style.color = color;
@@ -137,7 +149,7 @@
             const v4 = document.getElementById('v4');
             v4.innerText = `$${gPL.toFixed(2)} (${activePerc.toFixed(2)}%)`;
             v4.style.color = color;
-            document.getElementById('v3').innerText = (gNom / Math.max(1, activeEq)).toFixed(2) + "x";
+            document.getElementById('v3').innerText = (gNom / Math.max(1, activeMarg + activePL)).toFixed(2) + "x";
             if(mainLine) mainLine.update({ time: alignedTime, value: gPL });
         }
     }
@@ -145,11 +157,20 @@
     async function setMode(m, t="") {
         currentMode = m; currentSymbol = t;
         document.getElementById('displayPar').innerText = m === "OVERVIEW" ? "GERAL" : t;
-        candleSeries.setData([]); mainLine.setData([]);
+        document.getElementById('eqLabel').innerText = m === "OVERVIEW" ? "Portfolio Equity" : `${t} Equity`;
+        
+        // Limpeza Flicker
+        candleSeries.setData([]);
+        mainLine.setData([]);
         Object.values(subLines).forEach(s => s.setData([]));
+        if(entryMarker) { candleSeries.removePriceLine(entryMarker); entryMarker = null; }
+        if(liqMarker) { candleSeries.removePriceLine(liqMarker); liqMarker = null; }
+
         candleSeries.applyOptions({ visible: m === "TICKER" });
         mainLine.applyOptions({ visible: m === "OVERVIEW" && seriesVisibility["TOTAL"] !== false });
+        
         if (m === "OVERVIEW") await syncOverview(); else await syncTicker();
+        updateAssetNav();
         updateUI();
     }
 
@@ -157,31 +178,49 @@
         const tickers = [...new Set(allTrades.map(t => t.par))];
         document.getElementById('bottomLegend').innerHTML = '';
         createLegendItem("TOTAL", colors[0]);
+        const histData = {};
         for (const t of tickers) {
-            const r = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${t}&interval=${currentTF}&limit=120`);
+            const r = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${t}&interval=${currentTF}&limit=${HIST_LIMIT}`);
             const j = await r.json();
-            if (j.result?.list) {
-                const klines = j.result.list.map(v => ({ t: parseInt(v[0])/1000, c: parseFloat(v[4]) })).reverse();
-                const color = colors[(tickers.indexOf(t)+1)%colors.length];
-                if (!subLines[t]) subLines[t] = chart.addLineSeries({ color: color, lineWidth: 1.5, priceLineVisible: true, priceLineSource: 1, lastValueVisible: true, title: t });
-                subLines[t].setData(klines.map(p => { const pos = getPositionAt(t); return { time: p.t, value: (p.c - (pos.cost/pos.q)) * pos.q }; }));
-                subLines[t].applyOptions({ visible: seriesVisibility[t] !== false });
-                createLegendItem(t, color);
-            }
+            if (j.result?.list) histData[t] = j.result.list.map(v => ({ t: parseInt(v[0])/1000, c: parseFloat(v[4]) })).reverse();
         }
+        const totalPoints = [], tickerPointsMap = {};
+        for (let i = 0; i < HIST_LIMIT; i++) {
+            let pTotal = 0, time = 0;
+            tickers.forEach(tic => {
+                const s = getPositionAt(tic);
+                const pObj = histData[tic] ? histData[tic][i] : null;
+                if (pObj && s.q !== 0) {
+                    const pl = (pObj.c - (s.cost/s.q)) * s.q;
+                    pTotal += pl; time = pObj.t;
+                    if (!tickerPointsMap[tic]) tickerPointsMap[tic] = [];
+                    tickerPointsMap[tic].push({ time: time, value: pl });
+                }
+            });
+            if (time > 0) totalPoints.push({ time: time, value: pTotal });
+        }
+        mainLine.setData(totalPoints);
+        tickers.forEach((tic, idx) => {
+            const color = colors[(idx+1)%colors.length];
+            if (!subLines[tic]) subLines[tic] = chart.addLineSeries({ color: color, lineWidth: 1.5, priceLineVisible: true, priceLineSource: 1 });
+            subLines[tic].applyOptions({ visible: seriesVisibility[tic] !== false });
+            if (tickerPointsMap[tic]) subLines[tic].setData(tickerPointsMap[tic]);
+            createLegendItem(tic, color);
+        });
         chart.timeScale().fitContent();
     }
 
     async function syncTicker() {
-        const resp = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${currentSymbol}&interval=${currentTF}&limit=120`);
+        const resp = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${currentSymbol}&interval=${currentTF}&limit=${HIST_LIMIT}`);
         const d = await resp.json();
         if(d.result?.list) {
             candleSeries.setData(d.result.list.map(v => ({ time: parseInt(v[0])/1000, open: parseFloat(v[1]), high: parseFloat(v[2]), low: parseFloat(v[3]), close: parseFloat(v[4]) })).reverse());
             const s = getPositionAt(currentSymbol);
             if (Math.abs(s.q) > 0.001) {
                 const avg = s.cost/s.q;
-                if(entryMarker) candleSeries.removePriceLine(entryMarker);
+                const liq = s.q > 0 ? avg*(1-(0.8/(s.cost/s.margin/avg))) : avg*(1+(0.8/(Math.abs(s.cost)/s.margin/avg)));
                 entryMarker = candleSeries.createPriceLine({ price: avg, color: '#f3d42f', lineWidth: 2, lineStyle: 2, title: 'ENTRY' });
+                liqMarker = candleSeries.createPriceLine({ price: liq, color: '#ff3d00', lineWidth: 2, title: 'LIQ' });
             }
             chart.timeScale().fitContent();
         }
@@ -208,21 +247,20 @@
             rightPriceScale: { borderVisible: false, autoScale: true }
         });
         candleSeries = chart.addCandlestickSeries({ upColor: '#00c853', downColor: '#ff3d00' });
-        mainLine = chart.addLineSeries({ color: colors[0], lineWidth: 3, title: 'TOTAL', priceLineVisible: true, priceLineSource: 1 });
+        mainLine = chart.addLineSeries({ color: colors[0], lineWidth: 3, priceLineVisible: true, priceLineSource: 1 });
         
-        // 1. Handshake inicial de preços
-        await fetchPrices();
-        
-        // 2. Carregar dados do Banco
         const { data } = await _supabase.from('trades').select('*').order('created_at', { ascending: true });
         allTrades = data || [];
-        
-        // 3. Renderizar tudo já com dados reais
+        updateAssetNav();
         await setMode("OVERVIEW");
-        
+
         setInterval(async () => {
-            await fetchPrices();
-            updateUI();
+            const r = await fetch('https://api.bybit.com/v5/market/tickers?category=linear');
+            const d = await r.json();
+            if(d.result?.list) {
+                d.result.list.forEach(i => activePrices[i.symbol] = parseFloat(i.markPrice));
+                updateUI();
+            }
         }, 3000);
     };
 
@@ -230,6 +268,13 @@
         currentTF = tf;
         document.querySelectorAll('#tfControls .nav-btn').forEach(b => b.classList.remove('active'));
         if (currentMode === "OVERVIEW") await syncOverview(); else await syncTicker();
+    }
+
+    function updateAssetNav() {
+        const n = document.getElementById('assetNav');
+        const tics = [...new Set(allTrades.map(t => t.par))];
+        n.innerHTML = `<button class="nav-btn ${currentMode==='OVERVIEW'?'active':''}" onclick="setMode('OVERVIEW')">GERAL</button>`;
+        tics.forEach(t => { n.innerHTML += `<button class="nav-btn ${currentMode==='TICKER'&&currentSymbol===t?'active':''}" onclick="setMode('TICKER', '${t}')">${t}</button>`; });
     }
 </script>
 </body>
