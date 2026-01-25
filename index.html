@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>[v2.13.9] Futures Pro Terminal</title>
+    <title>[v2.14.0] Futures Pro Terminal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
@@ -16,27 +16,34 @@
         .nav-btn { background: #1a1a1a; color: #777; border: 1px solid #333; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.8rem; white-space: nowrap; }
         .nav-btn.active { background: var(--accent); color: #000; }
 
-        /* Cabeçalho Custom v2.13.9 */
+        /* Cabeçalho Calibrado v2.14.0 */
         .header-info { 
             display: flex; 
             justify-content: space-between; 
-            align-items: flex-start; 
+            align-items: stretch; /* Garante que os blocos tenham a mesma altura */
             margin-bottom: 15px; 
             padding: 15px; 
             background: #111; 
             border-radius: 10px; 
             border: 1px solid #222; 
         }
-        .header-block { display: flex; flex-direction: column; }
+        .header-block { display: flex; flex-direction: column; justify-content: center; }
         .header-block.right { align-items: flex-end; text-align: right; }
         
-        .header-label { font-size: 0.7rem; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
-        .header-value { font-size: 1.8rem; font-weight: 900; color: #fff; line-height: 1.1; }
-        .pnl-sub-value { font-size: 1.8rem; font-weight: 900; line-height: 1.1; }
+        .header-label { font-size: 0.7rem; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        
+        /* Valor da Equity (Massivo) */
+        .equity-value { font-size: 2.2rem; font-weight: 900; color: #fff; line-height: 1; }
+        
+        /* Valores de P&L (Metade do tamanho para equilibrar o conjunto) */
+        .pnl-stack { display: flex; flex-direction: column; line-height: 1; }
+        .pnl-main { font-size: 1.1rem; font-weight: 800; margin-bottom: 2px; }
+        .pnl-perc { font-size: 1.1rem; font-weight: 800; }
 
         @media (min-width: 1024px) {
             .header-info { padding: 30px 40px; }
-            .header-value, .pnl-sub-value { font-size: 4.5rem !important; } /* Tamanhos unificados */
+            .equity-value { font-size: 5.5rem !important; } /* Aumentado para destaque total */
+            .pnl-main, .pnl-perc { font-size: 2.6rem !important; } /* Exatamente metade da Equity + ajuste visual */
             .header-label { font-size: 0.9rem !important; }
         }
 
@@ -72,12 +79,14 @@
     <div class="header-info">
         <div class="header-block">
             <label class="header-label" id="mainLabel">Portfolio Equity</label>
-            <div class="header-value" id="globalEquityDisplay">SYNCING...</div>
+            <div class="equity-value" id="globalEquityDisplay">SYNC...</div>
         </div>
         <div class="header-block right">
             <label class="header-label" id="pnlLabel">Portfolio P&L</label>
-            <div class="header-value" id="headerPnlVal">--</div>
-            <div class="pnl-sub-value" id="headerPnlPerc" style="color: #444;">0.00%</div>
+            <div class="pnl-stack">
+                <div class="pnl-main" id="headerPnlVal">--</div>
+                <div class="pnl-perc" id="headerPnlPerc">0.00%</div>
+            </div>
         </div>
     </div>
 
@@ -93,6 +102,7 @@
         <div style="background:#1a1a1a; padding:8px 12px; display:flex; justify-content:space-between; align-items:center;">
             <div id="tfControls">
                 <button class="nav-btn" onclick="changeTF('1')">1m</button>
+                <button class="nav-btn" onclick="changeTF('5')">5m</button>
                 <button class="nav-btn active" id="tf15" onclick="changeTF('15')">15m</button>
                 <button class="nav-btn" onclick="changeTF('60')">1h</button>
                 <button class="nav-btn" onclick="changeTF('D')">1D</button>
@@ -110,7 +120,7 @@
         <div class="field"><label>Preço</label><input type="number" id="tPrice" step="any"></div>
         <div class="field"><label>Lev Alvo</label><input type="number" id="tLev" value="10"></div>
         <div class="field"><label>Qtd</label><input type="number" id="tQty" step="any"></div>
-        <button class="exec-btn" onclick="saveTrade()">Executar Nova Ordem</button>
+        <button class="exec-btn" onclick="saveTrade()">Executar Ordem</button>
     </div>
 
     <div class="table-container">
@@ -122,7 +132,6 @@
 </div>
 
 <script>
-    // IDs e Variáveis mantidas da v2.13.8...
     const SUPABASE_URL = 'https://pmdvckcxwfiwhrhibupo.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_bRa-mZWTaf0g6sNyWL9OmQ_uvo7Ex5H';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -161,24 +170,23 @@
             if (Math.abs(s.q) > 0.0001) {
                 const p = activePrices[tic] || 0, pl = (p - (s.cost/s.q)) * s.q;
                 gPL += pl; gMarg += s.margin; gNom += (p * Math.abs(s.q));
-                
                 if (currentMode === "OVERVIEW" && subLines[tic]) subLines[tic].update({ time: alignedTime, value: pl });
-                
                 if (currentMode === "TICKER" && tic === currentSymbol) {
                     const avg = s.cost/s.q, perc = (pl/s.margin)*100;
                     const liq = s.q > 0 ? avg * (1 - (s.margin / s.cost) + 0.005) : avg * (1 + (s.margin / Math.abs(s.cost)) - 0.005);
                     document.getElementById('mainLabel').innerText = `${tic} Equity`;
-                    document.getElementById('pnlLabel').innerText = `${tic} P&L`;
+                    document.getElementById('pnlLabel').innerText = `${tic} Open P&L`;
                     document.getElementById('globalEquityDisplay').innerText = "$" + (s.margin + pl).toFixed(2);
                     document.getElementById('headerPnlVal').innerText = (pl >= 0 ? "+$" : "-$") + Math.abs(pl).toFixed(2);
                     document.getElementById('headerPnlPerc').innerText = (perc >= 0 ? "+" : "") + perc.toFixed(2) + "%";
-                    document.getElementById('headerPnlPerc').style.color = pl >= 0 ? "var(--success)" : "var(--danger)";
-                    document.getElementById('headerPnlVal').style.color = pl >= 0 ? "var(--success)" : "var(--danger)";
+                    const color = pl >= 0 ? "var(--success)" : "var(--danger)";
+                    document.getElementById('headerPnlVal').style.color = color;
+                    document.getElementById('headerPnlPerc').style.color = color;
                     document.getElementById('v1').innerText = p.toFixed(4);
                     document.getElementById('v2').innerText = avg.toFixed(4);
                     document.getElementById('v3').innerText = (Math.abs(p*s.q)/(s.margin+pl)).toFixed(2)+"x";
                     document.getElementById('v4').innerText = `$${pl.toFixed(2)} (${perc.toFixed(2)}%)`;
-                    document.getElementById('v4').style.color = pl >= 0 ? "var(--success)" : "var(--danger)";
+                    document.getElementById('v4').style.color = color;
                     document.getElementById('v5').innerText = liq.toFixed(4);
                     candleSeries?.update({ time: alignedTime, close: p });
                 }
@@ -282,7 +290,7 @@
         tics.forEach(t => { n.innerHTML += `<button class="nav-btn ${currentMode==='TICKER'&&currentSymbol===t?'active':''}" onclick="setMode('TICKER', '${t}')">${t}</button>`; });
     }
     
-    async function saveTrade() { const tic = document.getElementById('parTicker').value.toUpperCase(); await _supabase.from('trades').insert([{ par: tic, tipo: document.getElementById('tType').value, preco: parseFloat(document.getElementById('tPrice').value), quantidade: parseFloat(document.getElementById('tQty').value), alavancagem_alvo: parseFloat(document.getElementById('tLev').value) }]); location.reload(); }
+    async function saveTrade() { const tic = document.getElementById('parTicker').value.toUpperCase(); if(!tic) return; await _supabase.from('trades').insert([{ par: tic, tipo: document.getElementById('tType').value, preco: parseFloat(document.getElementById('tPrice').value), quantidade: parseFloat(document.getElementById('tQty').value), alavancagem_alvo: parseFloat(document.getElementById('tLev').value) }]); location.reload(); }
     function renderTable() { const f = currentMode === "TICKER" ? allTrades.filter(t => t.par === currentSymbol) : allTrades; document.getElementById('tradeLog').innerHTML = f.slice().reverse().map(t => `<tr><td>${new Date(t.created_at).toLocaleString()}</td><td>${t.par}</td><td style="color:${t.tipo==='Compra'?'#00c853':'#ff3d00'}">${t.tipo === 'Compra' ? 'LONG' : 'SHORT'}</td><td>${t.preco}</td><td>${t.alavancagem_alvo}x</td><td>${t.quantidade}</td><td><button onclick="deleteTrade('${t.id}')" style="color:red; background:none; border:none; cursor:pointer;">×</button></td></tr>`).join(''); }
     async function deleteTrade(id) { if(confirm("Apagar?")) { await _supabase.from('trades').delete().eq('id', id); location.reload(); } }
     async function changeTF(tf) { currentTF = tf; document.querySelectorAll('#tfControls .nav-btn').forEach(b => b.classList.remove('active')); if (currentMode === "OVERVIEW") await syncOverview(); else await syncTicker(); }
