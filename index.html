@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>[v2.11.1] Futures Pro Terminal</title>
+    <title>[v2.12.0] Futures Pro Terminal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
@@ -14,21 +14,38 @@
         .asset-nav { display: flex; gap: 5px; margin-bottom: 8px; overflow-x: auto; padding-bottom: 5px; border-bottom: 1px solid #222; scrollbar-width: none; }
         .nav-btn { background: #1a1a1a; color: #777; border: 1px solid #333; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.8rem; white-space: nowrap; }
         .nav-btn.active { background: var(--accent); color: #000; }
+        
         .dashboard { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 10px; }
         @media (min-width: 1024px) { .dashboard { grid-template-columns: repeat(5, 1fr); } }
         .card { background: #161616; padding: 10px; border-radius: 8px; border: 1px solid #222; text-align: center; }
         .card label { color: #666; font-size: 0.55rem; text-transform: uppercase; display: block; margin-bottom: 3px; }
         .card span { font-size: 0.95rem; font-weight: bold; }
-        .chart-wrapper { background: #000; border-radius: 8px; border: 1px solid #333; margin-bottom: 10px; overflow: hidden; }
+
+        .chart-wrapper { background: #000; border-radius: 8px; border: 1px solid #333; margin-bottom: 5px; overflow: hidden; }
         .chart-header { background: #1a1a1a; padding: 6px 10px; display: flex; justify-content: space-between; align-items: center; }
         .tf-btn { background: #222; color: #fff; border: none; padding: 5px 8px; border-radius: 4px; font-size: 0.65rem; cursor: pointer; }
         .tf-btn.active { background: var(--accent); color: #000; }
         #chart { height: 400px; width: 100%; }
+
+        /* Nova Legenda na Base */
+        .bottom-legend { 
+            display: flex; flex-wrap: wrap; gap: 10px; padding: 10px; 
+            background: #111; border: 1px solid #222; border-radius: 0 0 8px 8px; margin-bottom: 10px;
+        }
+        .legend-item { 
+            display: flex; align-items: center; gap: 6px; font-size: 0.75rem; 
+            cursor: pointer; color: #fff; padding: 4px 8px; border-radius: 4px; 
+            transition: opacity 0.2s; user-select: none;
+        }
+        .legend-item.hidden { opacity: 0.3; text-decoration: line-through; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
         .trade-panel { background: #161616; padding: 12px; border-radius: 8px; border: 1px solid #222; display: flex; flex-wrap: wrap; gap: 8px; }
         .field { flex: 1 1 calc(50% - 4px); display: flex; flex-direction: column; }
         @media (min-width: 768px) { .field { flex: 1; } }
         input, select { background: #111; border: 1px solid #333; color: white; padding: 10px; border-radius: 6px; font-size: 0.95rem; }
         .exec-btn { flex: 1 1 100%; background: var(--accent); color: #000; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; height: 45px; }
+
         .table-container { width: 100%; overflow-x: auto; margin-top: 10px; border-radius: 8px; background: #111; }
         table { width: 100%; border-collapse: collapse; min-width: 650px; }
         th { text-align: left; color: #555; padding: 12px; font-size: 0.7rem; border-bottom: 1px solid #222; }
@@ -45,7 +62,7 @@
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding: 0 5px;">
         <span id="displayPar" style="font-size: 0.9rem; font-weight: bold; color: var(--accent);">VISÃO GERAL</span>
         <div style="text-align: right;">
-            <label style="font-size: 0.55rem; color: #666;">EQUITY TOTAL [v2.11.1]</label>
+            <label style="font-size: 0.55rem; color: #666;">EQUITY TOTAL [v2.12.0]</label>
             <div style="font-size: 1.1rem; font-weight: bold; color: #fff;" id="globalEquityDisplay">$0.00</div>
         </div>
     </div>
@@ -72,9 +89,10 @@
         </div>
         <div id="chart"></div>
     </div>
+    <div class="bottom-legend" id="bottomLegend"></div>
 
     <div class="trade-panel">
-        <div class="field"><label>Ticker</label><input type="text" id="parTicker" placeholder="BTCUSDT"></div>
+        <div class="field"><label>Ticker</label><input type="text" id="parTicker" placeholder="Ex: BTCUSDT"></div>
         <div class="field"><label>Lado</label><select id="tType"><option value="Compra">LONG</option><option value="Venda">SHORT</option></select></div>
         <div class="field"><label>Preço</label><input type="number" id="tPrice" step="any"></div>
         <div class="field"><label>Lev Alvo</label><input type="number" id="tLev" value="10"></div>
@@ -97,7 +115,8 @@
 
     let currentMode = "OVERVIEW", currentSymbol = "BTCUSDT", currentTF = "15", activePrices = {}, allTrades = [];
     let chart, candleSeries, mainLine, subLines = {}, entryLineMarker, liqLineMarker;
-    const colors = ['#f3d42f', '#ff6b6b', '#4dabf7', '#51cf66', '#cc5de8', '#ff922b'];
+    let seriesVisibility = { "TOTAL": true }; 
+    const colors = ['#f3d42f', '#ff6b6b', '#4dabf7', '#51cf66', '#cc5de8', '#ff922b', '#339af0'];
     const HIST_LIMIT = 120;
 
     function initChart() {
@@ -115,9 +134,16 @@
     async function syncHistoryPL() {
         if (currentMode !== "OVERVIEW") return;
         const tickers = [...new Set(allTrades.map(t => t.par))];
+        const legendContainer = document.getElementById('bottomLegend');
+        legendContainer.innerHTML = '';
+
+        // Reset subLines
         mainLine.setData([]);
         Object.values(subLines).forEach(l => chart.removeSeries(l));
         subLines = {};
+
+        // Adicionar Total à Legenda
+        createLegendItem("TOTAL", colors[0]);
 
         if (tickers.length === 0) return;
 
@@ -148,18 +174,53 @@
         tickers.forEach((tic, idx) => {
             const color = colors[(idx+1)%colors.length];
             if (tickerPoints[tic]) {
-                subLines[tic] = chart.addLineSeries({ 
+                const series = chart.addLineSeries({ 
                     color: color, lineWidth: 1.8, 
-                    priceLineVisible: true, 
-                    priceLineSource: 1, // 1 = LastVisible (Só desenha do último ponto para a direita)
-                    priceLineStyle: 2, 
-                    lastValueVisible: true,
-                    title: tic
+                    priceLineVisible: true, priceLineSource: 1, 
+                    priceLineStyle: 2, lastValueVisible: true, title: tic 
                 });
-                subLines[tic].setData(tickerPoints[tic]);
+                series.setData(tickerPoints[tic]);
+                series.applyOptions({ visible: seriesVisibility[tic] !== false });
+                subLines[tic] = series;
+                createLegendItem(tic, color);
             }
         });
         setTimeout(() => chart.timeScale().fitContent(), 100);
+    }
+
+    function createLegendItem(label, color) {
+        const container = document.getElementById('bottomLegend');
+        const isHidden = seriesVisibility[label] === false;
+        
+        const div = document.createElement('div');
+        div.className = `legend-item ${isHidden ? 'hidden' : ''}`;
+        div.innerHTML = `<div class="legend-dot" style="background:${color}"></div>${label}`;
+        div.onclick = () => toggleSeries(label);
+        container.appendChild(div);
+    }
+
+    function toggleSeries(label) {
+        const isCurrentlyVisible = seriesVisibility[label] !== false;
+        const newVisibleState = !isCurrentlyVisible;
+        seriesVisibility[label] = newVisibleState;
+
+        if (label === "TOTAL") {
+            mainLine.applyOptions({ visible: newVisibleState });
+        } else if (subLines[label]) {
+            subLines[label].applyOptions({ visible: newVisibleState });
+        }
+
+        // Re-render legend
+        renderLegend();
+    }
+
+    function renderLegend() {
+        const container = document.getElementById('bottomLegend');
+        container.querySelectorAll('.legend-item').forEach(item => {
+            const label = item.innerText.trim();
+            if (seriesVisibility[label] === false) item.classList.add('hidden');
+            else item.classList.remove('hidden');
+        });
     }
 
     function getPositionAt(ticker) {
@@ -174,7 +235,12 @@
     }
 
     async function loadHistory(fit = false) {
-        if(currentMode === "OVERVIEW") { await syncHistoryPL(); return; }
+        if(currentMode === "OVERVIEW") { 
+            document.getElementById('bottomLegend').style.display = 'flex';
+            await syncHistoryPL(); 
+            return; 
+        }
+        document.getElementById('bottomLegend').style.display = 'none';
         const resp = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${currentSymbol}&interval=${currentTF}&limit=${HIST_LIMIT}`);
         const d = await resp.json();
         if(d.result?.list) {
@@ -187,7 +253,7 @@
     function updateView() {
         const isT = currentMode === "TICKER";
         candleSeries.applyOptions({ visible: isT });
-        mainLine.applyOptions({ visible: !isT, lastValueVisible: !isT, priceLineVisible: !isT });
+        mainLine.applyOptions({ visible: !isT && (seriesVisibility["TOTAL"] !== false) });
         Object.values(subLines).forEach(l => l.applyOptions({ visible: !isT }));
         loadHistory(true);
     }
@@ -208,10 +274,10 @@
     }
 
     function updateUI() {
-        let gPL = 0, gMarg = 0, gNom = 0;
+        let gPL = 0, gMarg = 0, gNom = 0, now = Math.floor(Date.now()/1000);
         const map = { "1": 60, "5": 300, "15": 900, "60": 3600, "240": 14400, "D": 86400, "W": 604800 };
         const interval = map[currentTF] || 900;
-        const alignedTime = Math.floor(Date.now() / 1000 / interval) * interval;
+        const alignedTime = Math.floor(now / interval) * interval;
         const tickers = [...new Set(allTrades.map(t => t.par))];
         
         tickers.forEach(tic => {
@@ -243,7 +309,7 @@
             document.getElementById('globalEquityDisplay').innerText = "$" + totalEq.toFixed(2);
             document.getElementById('v4').innerText = "$" + gPL.toFixed(2);
             document.getElementById('v4').style.color = gPL >= 0 ? "var(--success)" : "var(--danger)";
-            document.getElementById('v3').innerText = (gNom / Math.max(1, totalEq)).toFixed(2) + "x";
+            document.getElementById('v3').innerText = (gNom / Math.max(0.1, totalEq)).toFixed(2) + "x";
             mainLine.update({ time: alignedTime, value: gPL });
         }
     }
