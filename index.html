@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>[v2.19.0] Futures Pro Terminal - GitHub Sync Pro</title>
+    <title>[v2.19.2] Futures Pro Terminal - MobChart Integration</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
@@ -33,11 +33,16 @@
         .nav-btn { background: #1a1a1a; color: #777; border: 1px solid #333; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.8rem; white-space: nowrap; }
         .nav-btn.active { background: var(--accent); color: #000; }
 
-        .chart-wrapper { background: #000; border-radius: 10px; border: 1px solid #333; overflow: hidden; position: relative; height: 53vh; min-height: 350px; }
-        @media (min-width: 1024px) { .chart-wrapper { height: 600px; } }
+        /* Gráfico Principal 53vh */
+        .chart-wrapper { background: #000; border-radius: 10px; border: 1px solid #333; overflow: hidden; position: relative; height: 53vh; min-height: 450px; }
+        @media (min-width: 1024px) { .chart-wrapper { height: 750px; } }
         
-        #overview-container, #ticker-container { height: 100%; width: 100%; }
-        #ticker-container { display: none; }
+        #overview-container, #ticker-layout { height: 100%; width: 100%; }
+        #ticker-layout { display: none; flex-direction: column; }
+        
+        /* Divisão do Ticker: 65% Gráfico / 35% Heatmap */
+        #tv-chart-part { height: 65%; width: 100%; }
+        #liq-heatmap-part { height: 35%; width: 100%; border-top: 2px solid #222; background: #000; overflow: hidden; }
 
         .bottom-legend { display: flex; flex-wrap: wrap; gap: 15px; padding: 12px 15px; background: #111; border: 1px solid var(--border); border-top: none; border-radius: 0 0 10px 10px; }
         .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #fff; cursor: pointer; user-select: none; }
@@ -52,7 +57,6 @@
         .table-section { margin-top: 15px; border-radius: 10px; border: 1px solid var(--border); background: #111; overflow: hidden; }
         .table-controls { padding: 10px 15px; background: #161616; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         .export-btn { background: #333; color: #fff; border: none; padding: 5px 10px; border-radius: 4px; font-size: 0.7rem; cursor: pointer; font-weight: bold; }
-        
         .table-container { width: 100%; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; min-width: 800px; }
         th { text-align: left; padding: 10px 15px; font-size: 0.65rem; color: #555; text-transform: uppercase; border-bottom: 1px solid var(--border); background: #161616; }
@@ -99,7 +103,11 @@
             </div>
             <div id="chart" style="height:calc(100% - 40px); width:100%;"></div>
         </div>
-        <div id="ticker-container"></div>
+
+        <div id="ticker-layout">
+            <div id="tv-chart-part"></div>
+            <div id="liq-heatmap-part"></div>
+        </div>
     </div>
     <div class="bottom-legend" id="bottomLegend"></div>
 
@@ -114,7 +122,7 @@
 
     <div class="table-section">
         <div class="table-controls">
-            <span style="font-size: 0.7rem; font-weight: bold; color: #888; text-transform: uppercase;">Histórico de Transações</span>
+            <span>Histórico de Transações</span>
             <button class="export-btn" onclick="exportToCSV()">DESCARREGAR CSV</button>
         </div>
         <div class="table-container">
@@ -187,35 +195,44 @@
 
     async function setMode(m, t="") {
         currentMode = m; currentSymbol = t;
+        
         document.getElementById('overview-container').style.display = m === "OVERVIEW" ? "block" : "none";
         document.getElementById('bottomLegend').style.display = m === "OVERVIEW" ? "flex" : "none";
-        const tickerContainer = document.getElementById('ticker-container');
-        tickerContainer.style.display = m === "TICKER" ? "block" : "none";
-        tickerContainer.innerHTML = ""; 
+        
+        const tickerLayout = document.getElementById('ticker-layout');
+        tickerLayout.style.display = m === "TICKER" ? "flex" : "none";
 
         if (m === "TICKER") {
+            // Limpa partes anteriores
+            document.getElementById('tv-chart-part').innerHTML = "";
+            document.getElementById('liq-heatmap-part').innerHTML = "";
+
+            // 1. Gráfico TradingView
             new TradingView.widget({
-                "autosize": true, 
-                "symbol": "BINANCE:" + t + ".P", 
-                "interval": "15", 
-                "theme": "dark", 
-                "style": "1", 
-                "locale": "pt", 
-                "container_id": "ticker-container", 
-                "hide_side_toolbar": false, 
-                "allow_symbol_change": true, 
-                "save_image": false, 
-                "enable_publishing": false, 
-                "withdateranges": true, 
-                "chart": MY_TV_CHART_ID,
-                "drawings_access": { "type": "blackbox", "tools": [{ "name": "Regression Trend" }] },
-                "enabled_features": ["study_templates", "use_localstorage_for_settings_adapter"],
-                "snapshot_url": "https://www.tradingview.com/snapshot/",
-                "studies_access": "all",
-                "client_id": "tradingview.com",
-                "user_id": "public_user"
+                "autosize": true,
+                "symbol": "BINANCE:" + t + ".P",
+                "interval": "15",
+                "theme": "dark",
+                "style": "1",
+                "locale": "pt",
+                "container_id": "tv-chart-part",
+                "hide_side_toolbar": false,
+                "allow_symbol_change": true,
+                "save_image": false,
+                "enable_publishing": false,
+                "withdateranges": true,
+                "chart": MY_TV_CHART_ID
             });
+
+            // 2. Heatmap MobChart (Solução 2)
+            // Adaptamos o URL para ser dinâmico com o símbolo
+            document.getElementById('liq-heatmap-part').innerHTML = `
+                <iframe src="https://mobchart.com/v/${t}" 
+                        style="width:100%; height:100%; border:none; background:#000;"
+                        title="Liquidation Heatmap">
+                </iframe>`;
         } else { await updateOverview('240', '1', document.getElementById('btn4h')); }
+        
         updateAssetNav(); renderTable(); updateUI();
     }
 
@@ -245,19 +262,7 @@
         chart.timeScale().fitContent(); 
     }
     
-    function createLegendItem(l, c) {
-        const div = document.createElement('div');
-        if (seriesVisibility[l] === undefined) seriesVisibility[l] = true;
-        div.className = `legend-item ${seriesVisibility[l] ? '' : 'hidden'}`;
-        div.innerHTML = `<div class="legend-color" style="background:${c}"></div><span>${l}</span>`;
-        div.onclick = () => {
-            seriesVisibility[l] = !seriesVisibility[l];
-            if (l === "TOTAL") mainLine.applyOptions({ visible: seriesVisibility[l] });
-            else if (subLines[l]) subLines[l].applyOptions({ visible: seriesVisibility[l] });
-            div.classList.toggle('hidden', !seriesVisibility[l]);
-        };
-        document.getElementById('bottomLegend').appendChild(div);
-    }
+    function createLegendItem(l, c) { const div = document.createElement('div'); if (seriesVisibility[l] === undefined) seriesVisibility[l] = true; div.className = `legend-item ${seriesVisibility[l] ? '' : 'hidden'}`; div.innerHTML = `<div class="legend-color" style="background:${c}"></div><span>${l}</span>`; div.onclick = () => { seriesVisibility[l] = !seriesVisibility[l]; if (l === "TOTAL") mainLine.applyOptions({ visible: seriesVisibility[l] }); else if (subLines[l]) subLines[l].applyOptions({ visible: seriesVisibility[l] }); div.classList.toggle('hidden', !seriesVisibility[l]); }; document.getElementById('bottomLegend').appendChild(div); }
     
     window.onload = async () => { 
         chart = LightweightCharts.createChart(document.getElementById('chart'), { layout: { background: { color: '#000' }, textColor: '#888', fontSize: 11 }, grid: { vertLines: false, horzLines: false }, timeScale: { borderVisible: false, timeVisible: true }, rightPriceScale: { borderVisible: false } }); 
