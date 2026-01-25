@@ -3,44 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>[v2.12.2] Futures Pro Terminal</title>
+    <title>[v2.12.3] Futures Pro Terminal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
         :root { --primary: #1a1a1a; --accent: #f3d42f; --success: #00c853; --danger: #ff3d00; --bg: #0d0d0d; --text: #e0e0e0; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 5px; margin: 0; }
-        .container { max-width: 1400px; margin: auto; }
+        .container { max-width: 1600px; margin: auto; }
+        
+        /* Navegação Superior */
         .asset-nav { display: flex; gap: 5px; margin-bottom: 8px; overflow-x: auto; padding-bottom: 5px; border-bottom: 1px solid #222; scrollbar-width: none; }
         .nav-btn { background: #1a1a1a; color: #777; border: 1px solid #333; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.8rem; white-space: nowrap; }
         .nav-btn.active { background: var(--accent); color: #000; }
-        .dashboard { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 10px; }
-        @media (min-width: 1024px) { .dashboard { grid-template-columns: repeat(5, 1fr); } }
-        .card { background: #161616; padding: 10px; border-radius: 8px; border: 1px solid #222; text-align: center; }
-        .card label { color: #666; font-size: 0.55rem; text-transform: uppercase; display: block; margin-bottom: 3px; }
-        .card span { font-size: 1rem; font-weight: bold; }
-        #globalEquityDisplay { font-size: 1.2rem; }
-        #globalPnlPerc { font-size: 1.1rem; font-weight: bold; margin-left: 10px; }
+
+        /* Cabeçalho de Performance */
+        .header-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 10px; background: #111; border-radius: 10px; border: 1px solid #222; }
+        .equity-group { text-align: left; }
+        .pnl-group { text-align: right; }
+        .header-label { font-size: 0.65rem; color: #666; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 5px; }
+        
+        #globalEquityDisplay { font-size: 1.4rem; font-weight: 900; color: #fff; }
+        #globalPnlWrapper { font-size: 1.2rem; font-weight: bold; }
+
+        /* Dashboard Desktop Magnificado */
+        .dashboard { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px; }
+        .card { background: #161616; padding: 12px; border-radius: 8px; border: 1px solid #222; text-align: center; display: flex; flex-direction: column; justify-content: center; }
+        .card label { color: #666; font-size: 0.6rem; text-transform: uppercase; margin-bottom: 5px; }
+        .card span { font-size: 1.1rem; font-weight: bold; }
+
         @media (min-width: 1024px) {
-            #globalEquityDisplay { font-size: 2.2rem !important; }
-            #globalPnlPerc { font-size: 1.8rem !important; }
+            .dashboard { grid-template-columns: repeat(5, 1fr); gap: 15px; }
+            .card { padding: 25px 15px; }
+            .card label { font-size: 0.8rem; }
+            .card span { font-size: 1.8rem; }
+            
+            #globalEquityDisplay { font-size: 3.2rem !important; }
+            #globalPnlWrapper { font-size: 2.8rem !important; }
+            .header-label { font-size: 0.9rem !important; }
+            .header-info { padding: 25px; }
         }
-        .chart-wrapper { background: #000; border-radius: 8px; border: 1px solid #333; margin-bottom: 5px; overflow: hidden; }
-        .chart-header { background: #1a1a1a; padding: 6px 10px; display: flex; justify-content: space-between; align-items: center; }
-        #chart { height: 400px; width: 100%; }
-        .bottom-legend { display: flex; flex-wrap: wrap; gap: 10px; padding: 10px; background: #111; border: 1px solid #222; border-radius: 0 0 8px 8px; margin-bottom: 10px; }
-        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; cursor: pointer; color: #fff; padding: 4px 8px; border-radius: 4px; transition: opacity 0.2s; }
-        .legend-item.hidden { opacity: 0.3; text-decoration: line-through; }
-        .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
-        .trade-panel { background: #161616; padding: 12px; border-radius: 8px; border: 1px solid #222; display: flex; flex-wrap: wrap; gap: 8px; }
-        .field { flex: 1 1 calc(50% - 4px); display: flex; flex-direction: column; }
-        @media (min-width: 768px) { .field { flex: 1; } }
-        input, select { background: #111; border: 1px solid #333; color: white; padding: 10px; border-radius: 6px; font-size: 0.95rem; }
-        .exec-btn { flex: 1 1 100%; background: var(--accent); color: #000; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; height: 45px; }
-        .table-container { width: 100%; overflow-x: auto; margin-top: 10px; border-radius: 8px; background: #111; }
-        table { width: 100%; border-collapse: collapse; min-width: 650px; }
-        th { text-align: left; color: #555; padding: 12px; font-size: 0.7rem; border-bottom: 1px solid #222; }
-        td { padding: 12px; border-bottom: 1px solid #161616; font-size: 0.85rem; }
+
+        /* Gráfico e Timeframes */
+        .chart-wrapper { background: #000; border-radius: 8px; border: 1px solid #333; overflow: hidden; }
+        .chart-header { background: #1a1a1a; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; }
+        .tf-btn { background: #222; color: #fff; border: none; padding: 6px 10px; border-radius: 4px; font-size: 0.7rem; cursor: pointer; }
+        .tf-btn.active { background: var(--accent); color: #000; }
+        #chart { height: 450px; width: 100%; }
+
+        /* Legenda Interativa */
+        .bottom-legend { display: flex; flex-wrap: wrap; gap: 12px; padding: 12px; background: #111; border: 1px solid #222; border-radius: 0 0 8px 8px; margin-bottom: 15px; }
+        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; cursor: pointer; color: #fff; transition: 0.2s; user-select: none; }
+        .legend-item.hidden { opacity: 0.2; text-decoration: line-through; }
+        .legend-dot { width: 12px; height: 12px; border-radius: 3px; }
+
+        /* Formulário de Execução */
+        .trade-panel { background: #161616; padding: 15px; border-radius: 10px; border: 1px solid #222; display: flex; flex-wrap: wrap; gap: 10px; }
+        .field { flex: 1 1 calc(33% - 10px); display: flex; flex-direction: column; }
+        @media (max-width: 768px) { .field { flex: 1 1 calc(50% - 10px); } }
+        input, select { background: #111; border: 1px solid #333; color: white; padding: 12px; border-radius: 6px; font-size: 1rem; }
+        .exec-btn { flex: 1 1 100%; background: var(--accent); color: #000; border: none; border-radius: 8px; font-weight: 900; cursor: pointer; height: 50px; text-transform: uppercase; }
+
+        /* Tabela */
+        .table-container { width: 100%; overflow-x: auto; margin-top: 15px; border-radius: 8px; background: #111; }
+        table { width: 100%; border-collapse: collapse; min-width: 700px; }
+        th { text-align: left; color: #555; padding: 12px; font-size: 0.75rem; border-bottom: 2px solid #222; }
+        td { padding: 12px; border-bottom: 1px solid #161616; font-size: 0.9rem; }
     </style>
 </head>
 <body>
@@ -50,23 +78,26 @@
         <button class="nav-btn active" onclick="setMode('OVERVIEW')">GERAL</button>
     </div>
 
-    <div class="header-info" style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:12px; padding: 0 5px;">
-        <span id="displayPar" style="font-size: 1rem; font-weight: bold; color: var(--accent);">VISÃO GERAL</span>
-        <div style="text-align: right;">
-            <label style="font-size: 0.6rem; color: #666; display: block; margin-bottom: 2px;">EQUITY & PERFORMANCE</label>
-            <div style="display: flex; align-items: baseline; justify-content: flex-end;">
-                <span id="globalEquityDisplay" style="font-weight: bold; color: #fff;">$0.00</span>
-                <span id="globalPnlPerc" style="color: var(--success);">0.00%</span>
+    <div class="header-info">
+        <div class="equity-group">
+            <label class="header-label" id="eqLabel">Portfolio Equity</label>
+            <span id="globalEquityDisplay">$0.00</span>
+        </div>
+        <div class="pnl-group">
+            <label class="header-label">Open P&L Performance</label>
+            <div id="globalPnlWrapper">
+                <span id="headerPnlVal">$0.00</span>
+                <small id="headerPnlPerc">(0.00%)</small>
             </div>
         </div>
     </div>
 
     <div class="dashboard">
         <div class="card"><label>Price</label><span id="v1">---</span></div>
-        <div class="card"><label>Entry Price</label><span id="v2">---</span></div>
-        <div class="card"><label>Lev. Real</label><span id="v3">0.00x</span></div>
-        <div class="card"><label>P&L TOTAL</label><span id="v4">$0.00</span></div>
-        <div class="card"><label>Liquidação</label><span id="v5" style="color:var(--danger)">---</span></div>
+        <div class="card"><label>Avg. Entry</label><span id="v2">---</span></div>
+        <div class="card"><label>Real Leverage</label><span id="v3">0.00x</span></div>
+        <div class="card"><label>Total P&L</label><span id="v4">$0.00 (0%)</span></div>
+        <div class="card"><label>Liquidation</label><span id="v5" style="color:var(--danger)">---</span></div>
     </div>
 
     <div class="chart-wrapper">
@@ -78,8 +109,8 @@
                 <button class="tf-btn" onclick="changeTF('60', this)">1h</button>
                 <button class="tf-btn" onclick="changeTF('240', this)">4h</button>
                 <button class="tf-btn" onclick="changeTF('D', this)">1D</button>
-                <button class="tf-btn" onclick="changeTF('W', this)">1W</button>
             </div>
+            <span id="displayPar" style="font-size: 0.8rem; font-weight: bold; color: var(--accent);">VISÃO GERAL</span>
         </div>
         <div id="chart"></div>
     </div>
@@ -91,7 +122,7 @@
         <div class="field"><label>Preço</label><input type="number" id="tPrice" step="any"></div>
         <div class="field"><label>Lev Alvo</label><input type="number" id="tLev" value="10"></div>
         <div class="field"><label>Qtd</label><input type="number" id="tQty" step="any"></div>
-        <button class="exec-btn" onclick="saveTrade()">EXECUTAR</button>
+        <button class="exec-btn" onclick="saveTrade()">Executar Ordem</button>
     </div>
 
     <div class="table-container">
@@ -113,8 +144,7 @@
     const colors = ['#f3d42f', '#ff6b6b', '#4dabf7', '#51cf66', '#cc5de8', '#ff922b', '#339af0'];
     const HIST_LIMIT = 120;
 
-    // --- FUNÇÕES DECLARADAS PRIMEIRO PARA EVITAR REFERENCE ERROR ---
-
+    // --- LÓGICA DE CÁLCULO ---
     function getPositionAt(ticker) {
         let q = 0, cost = 0, margin = 0;
         allTrades.filter(t => t.par === ticker).forEach(t => {
@@ -126,55 +156,99 @@
         return { q, cost, margin };
     }
 
+    function updateUI() {
+        let gPL = 0, gMarg = 0, gNom = 0, now = Math.floor(Date.now()/1000);
+        const map = { "1": 60, "5": 300, "15": 900, "60": 3600, "240": 14400, "D": 86400 };
+        const alignedTime = Math.floor(now / (map[currentTF] || 900)) * (map[currentTF] || 900);
+        const tickers = [...new Set(allTrades.map(t => t.par))];
+        let tSpecPL = 0, tSpecMarg = 0;
+
+        tickers.forEach(tic => {
+            const s = getPositionAt(tic);
+            if (Math.abs(s.q) > 0.0001) {
+                const p = activePrices[tic] || 0, pl = (p - (s.cost/s.q)) * s.q;
+                gPL += pl; gMarg += s.margin; gNom += (p * Math.abs(s.q));
+                if (currentMode === "OVERVIEW" && subLines[tic]) subLines[tic].update({ time: alignedTime, value: pl });
+                if (tic === currentSymbol) { tSpecPL = pl; tSpecMarg = s.margin; }
+                if (currentMode === "TICKER" && currentSymbol === tic) {
+                    const avg = s.cost/s.q, eq = s.margin+pl, perc = (pl/s.margin)*100;
+                    const liq = s.q > 0 ? avg*(1-(0.8/(s.cost/s.margin/avg))) : avg*(1+(0.8/(Math.abs(s.cost)/s.margin/avg)));
+                    document.getElementById('v1').innerText = p.toFixed(4);
+                    document.getElementById('v2').innerText = avg.toFixed(4);
+                    document.getElementById('v3').innerText = (Math.abs(p*s.q)/Math.max(0.1,eq)).toFixed(2)+"x";
+                    const v4 = document.getElementById('v4');
+                    v4.innerText = `$${pl.toFixed(2)} (${perc.toFixed(2)}%)`;
+                    v4.style.color = pl >= 0 ? "var(--success)" : "var(--danger)";
+                    document.getElementById('v5').innerText = liq.toFixed(4);
+                    if(entryLineMarker) entryLineMarker.applyOptions({ price: avg });
+                    if(liqLineMarker) liqLineMarker.applyOptions({ price: liq });
+                    candleSeries.update({ time: alignedTime, close: p });
+                }
+            }
+        });
+
+        const activePL = (currentMode === "OVERVIEW") ? gPL : tSpecPL;
+        const activeMarg = (currentMode === "OVERVIEW") ? gMarg : tSpecMarg;
+        const activePerc = activeMarg > 0 ? (activePL / activeMarg) * 100 : 0;
+        const color = activePL >= 0 ? "var(--success)" : "var(--danger)";
+
+        document.getElementById('globalEquityDisplay').innerText = "$" + (activeMarg + activePL).toFixed(2);
+        document.getElementById('headerPnlVal').innerText = (activePL >= 0 ? "+$" : "-$") + Math.abs(activePL).toFixed(2);
+        document.getElementById('headerPnlPerc').innerText = ` (${activePerc.toFixed(2)}%)`;
+        document.getElementById('globalPnlWrapper').style.color = color;
+
+        if (currentMode === "OVERVIEW") {
+            const v4 = document.getElementById('v4');
+            v4.innerText = `$${gPL.toFixed(2)} (${activePerc.toFixed(2)}%)`;
+            v4.style.color = color;
+            document.getElementById('v3').innerText = (gNom / Math.max(1, activeMarg + activePL)).toFixed(2) + "x";
+            mainLine.update({ time: alignedTime, value: gPL });
+        }
+    }
+
+    // --- GESTÃO DE GRÁFICO E DADOS ---
+    function initChart() {
+        chart = LightweightCharts.createChart(document.getElementById('chart'), { 
+            layout: { background: { color: '#000' }, textColor: '#888', fontSize: 11 },
+            grid: { vertLines: { color: '#111' }, horzLines: { color: '#111' } },
+            timeScale: { timeVisible: true, borderVisible: false, rightOffset: 18, barSpacing: 10 },
+            rightPriceScale: { borderVisible: false, autoScale: true }
+        });
+        candleSeries = chart.addCandlestickSeries({ upColor: '#00c853', downColor: '#ff3d00' });
+        mainLine = chart.addLineSeries({ color: colors[0], lineWidth: 3, priceLineVisible: true, priceLineSource: 1 });
+        updateView();
+    }
+
     async function syncHistoryPL() {
         if (currentMode !== "OVERVIEW") return;
         const tickers = [...new Set(allTrades.map(t => t.par))];
-        const legendContainer = document.getElementById('bottomLegend');
-        legendContainer.innerHTML = '';
-        mainLine.setData([]);
-        Object.values(subLines).forEach(l => chart.removeSeries(l));
-        subLines = {};
+        const leg = document.getElementById('bottomLegend');
+        leg.innerHTML = ''; mainLine.setData([]); 
+        Object.values(subLines).forEach(l => chart.removeSeries(l)); subLines = {};
+        
         createLegendItem("TOTAL", colors[0]);
         if (tickers.length === 0) return;
 
-        const histData = {};
         for (const t of tickers) {
             const r = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${t}&interval=${currentTF}&limit=${HIST_LIMIT}`);
             const j = await r.json();
-            if (j.result?.list) histData[t] = j.result.list.map(v => ({ t: parseInt(v[0])/1000, c: parseFloat(v[4]) })).reverse();
-        }
-
-        const totalPoints = [], tickerPoints = {};
-        for (let i = 0; i < HIST_LIMIT; i++) {
-            let ptTotal = 0, time = 0;
-            tickers.forEach((tic) => {
-                const s = getPositionAt(tic);
-                const pObj = histData[tic] ? histData[tic][i] : null;
-                if (pObj && s.q !== 0) {
-                    const pl = (pObj.c - (s.cost/s.q)) * s.q;
-                    ptTotal += pl; time = pObj.t;
-                    if (!tickerPoints[tic]) tickerPoints[tic] = [];
-                    tickerPoints[tic].push({ time: time, value: pl });
-                }
-            });
-            if (time > 0) totalPoints.push({ time: time, value: ptTotal });
-        }
-        mainLine.setData(totalPoints);
-        tickers.forEach((tic, idx) => {
-            const color = colors[(idx+1)%colors.length];
-            if (tickerPoints[tic]) {
-                const s = chart.addLineSeries({ color: color, lineWidth: 1.8, priceLineVisible: true, priceLineSource: 1, priceLineStyle: 2, lastValueVisible: true, title: tic });
-                s.setData(tickerPoints[tic]);
-                s.applyOptions({ visible: seriesVisibility[tic] !== false });
-                subLines[tic] = s;
-                createLegendItem(tic, color);
+            if (j.result?.list) {
+                const klines = j.result.list.map(v => ({ t: parseInt(v[0])/1000, c: parseFloat(v[4]) })).reverse();
+                const color = colors[(tickers.indexOf(t)+1)%colors.length];
+                const s = chart.addLineSeries({ color: color, lineWidth: 1.8, priceLineVisible: true, priceLineSource: 1, lastValueVisible: true, title: t });
+                s.setData(klines.map(p => {
+                    const pos = getPositionAt(t);
+                    return { time: p.t, value: (p.c - (pos.cost/pos.q)) * pos.q };
+                }));
+                s.applyOptions({ visible: seriesVisibility[t] !== false });
+                subLines[t] = s;
+                createLegendItem(t, color);
             }
-        });
+        }
         setTimeout(() => chart.timeScale().fitContent(), 100);
     }
 
     function createLegendItem(label, color) {
-        const container = document.getElementById('bottomLegend');
         const div = document.createElement('div');
         div.className = `legend-item ${seriesVisibility[label] === false ? 'hidden' : ''}`;
         div.innerHTML = `<div class="legend-dot" style="background:${color}"></div>${label}`;
@@ -184,7 +258,7 @@
             else if (subLines[label]) subLines[label].applyOptions({ visible: seriesVisibility[label] });
             div.classList.toggle('hidden');
         };
-        container.appendChild(div);
+        document.getElementById('bottomLegend').appendChild(div);
     }
 
     async function loadHistory(fit = false) {
@@ -209,73 +283,11 @@
         loadHistory(true);
     }
 
-    function updateUI() {
-        let gPL = 0, gMarg = 0, gNom = 0, now = Math.floor(Date.now()/1000);
-        const map = { "1": 60, "5": 300, "15": 900, "60": 3600, "240": 14400, "D": 86400, "W": 604800 };
-        const interval = map[currentTF] || 900;
-        const alignedTime = Math.floor(now / interval) * interval;
-        const tickers = [...new Set(allTrades.map(t => t.par))];
-        let tSpecPL = 0, tSpecMarg = 0;
-
-        tickers.forEach(tic => {
-            const s = getPositionAt(tic);
-            if (Math.abs(s.q) > 0.0001) {
-                const p = activePrices[tic] || 0, pl = (p - (s.cost/s.q)) * s.q;
-                gPL += pl; gMarg += s.margin; gNom += (p * Math.abs(s.q));
-                if (currentMode === "OVERVIEW" && subLines[tic]) subLines[tic].update({ time: alignedTime, value: pl });
-                if (currentSymbol === tic) { tSpecPL = pl; tSpecMarg = s.margin; }
-                if (currentMode === "TICKER" && currentSymbol === tic) {
-                    const avg = s.cost/s.q, eq = s.margin+pl;
-                    const liq = s.q > 0 ? avg*(1-(0.8/(s.cost/s.margin/avg))) : avg*(1+(0.8/(Math.abs(s.cost)/s.margin/avg)));
-                    document.getElementById('v1').innerText = p.toFixed(4);
-                    document.getElementById('v2').innerText = avg.toFixed(4);
-                    document.getElementById('v3').innerText = (Math.abs(p*s.q)/Math.max(0.1,eq)).toFixed(2)+"x";
-                    document.getElementById('v4').innerText = "$"+pl.toFixed(2);
-                    document.getElementById('v5').innerText = liq.toFixed(4);
-                    if(entryLineMarker) entryLineMarker.applyOptions({ price: avg });
-                    if(liqLineMarker) liqLineMarker.applyOptions({ price: liq });
-                    candleSeries.update({ time: alignedTime, close: p });
-                }
-            }
-        });
-
-        const activePL = (currentMode === "OVERVIEW") ? gPL : tSpecPL;
-        const activeMarg = (currentMode === "OVERVIEW") ? gMarg : tSpecMarg;
-        const activeEq = activeMarg + activePL;
-        const activePerc = activeMarg > 0 ? (activePL / activeMarg) * 100 : 0;
-
-        document.getElementById('globalEquityDisplay').innerText = "$" + activeEq.toFixed(2);
-        const pElem = document.getElementById('globalPnlPerc');
-        pElem.innerText = (activePerc >= 0 ? "+" : "") + activePerc.toFixed(2) + "%";
-        pElem.style.color = activePerc >= 0 ? "var(--success)" : "var(--danger)";
-
-        if (currentMode === "OVERVIEW") {
-            document.getElementById('v4').innerText = "$" + gPL.toFixed(2);
-            document.getElementById('v4').style.color = gPL >= 0 ? "var(--success)" : "var(--danger)";
-            document.getElementById('v3').innerText = (gNom / Math.max(1, activeEq)).toFixed(2) + "x";
-            mainLine.update({ time: alignedTime, value: gPL });
-        }
-    }
-
-    function initChart() {
-        chart = LightweightCharts.createChart(document.getElementById('chart'), { 
-            layout: { background: { color: '#000' }, textColor: '#888', fontSize: 10 },
-            grid: { vertLines: { color: '#111' }, horzLines: { color: '#111' } },
-            timeScale: { timeVisible: true, borderVisible: false, rightOffset: 18, barSpacing: 10 },
-            rightPriceScale: { borderVisible: false, autoScale: true }
-        });
-        candleSeries = chart.addCandlestickSeries({ upColor: '#00c853', downColor: '#ff3d00' });
-        mainLine = chart.addLineSeries({ color: colors[0], lineWidth: 3, title: 'TOTAL', priceLineVisible: true, priceLineSource: 1 });
-        updateView();
-    }
-
-    // --- EXECUÇÃO ---
-
     window.onload = async () => { 
         initChart(); 
         const { data } = await _supabase.from('trades').select('*').order('created_at', { ascending: true });
         allTrades = data || [];
-        updateAssetNav(); renderTable(); updateUI();
+        updateAssetNav(); renderTable(); 
         setInterval(async () => {
             const r = await fetch('https://api.bybit.com/v5/market/tickers?category=linear');
             const d = await r.json();
@@ -286,13 +298,12 @@
         }, 3000);
     };
 
-    async function setMode(m, t="") { currentMode = m; currentSymbol = t; document.getElementById('displayPar').innerText = m === "OVERVIEW" ? "VISÃO GERAL" : currentSymbol; updateView(); updateAssetNav(); renderTable(); }
+    async function setMode(m, t="") { currentMode = m; currentSymbol = t; document.getElementById('eqLabel').innerText = m === "OVERVIEW" ? "Portfolio Equity" : `${t} Equity`; updateView(); updateAssetNav(); renderTable(); }
     async function changeTF(tf, btn) { currentTF = tf; document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); await loadHistory(true); }
     async function saveTrade() { const tic = document.getElementById('parTicker').value.toUpperCase() || currentSymbol; await _supabase.from('trades').insert([{ par: tic, tipo: document.getElementById('tType').value, preco: parseFloat(document.getElementById('tPrice').value), quantidade: parseFloat(document.getElementById('tQty').value), alavancagem_alvo: parseFloat(document.getElementById('tLev').value) }]); location.reload(); }
     function renderTable() { const f = currentMode === "TICKER" ? allTrades.filter(t => t.par === currentSymbol) : allTrades; document.getElementById('tradeLog').innerHTML = f.slice().reverse().map(t => `<tr><td>${new Date(t.created_at).toLocaleString()}</td><td>${t.par}</td><td style="color:${t.tipo==='Compra'?'#00c853':'#ff3d00'}">${t.tipo === 'Compra' ? 'LONG' : 'SHORT'}</td><td>${t.preco}</td><td>${t.alavancagem_alvo}x</td><td>${t.quantidade}</td><td><button onclick="deleteTrade('${t.id}')" style="color:red; background:none; border:none; cursor:pointer;">×</button></td></tr>`).join(''); }
     async function deleteTrade(id) { if(confirm("Apagar?")) { await _supabase.from('trades').delete().eq('id', id); location.reload(); } }
     function updateAssetNav() { const n = document.getElementById('assetNav'); const tics = [...new Set(allTrades.map(t => t.par))]; n.innerHTML = `<button class="nav-btn ${currentMode==='OVERVIEW'?'active':''}" onclick="setMode('OVERVIEW')">GERAL</button>`; tics.forEach(t => { n.innerHTML += `<button class="nav-btn ${currentMode==='TICKER'&&currentSymbol===t?'active':''}" onclick="setMode('TICKER', '${t}')">${t}</button>`; }); }
-
 </script>
 </body>
 </html>
