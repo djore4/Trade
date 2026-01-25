@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>[v2.2.9] Futures Pro Terminal</title>
+    <title>[v2.2.10] Futures Pro Terminal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
@@ -45,13 +45,13 @@
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding: 0 5px;">
         <span id="displayPar" style="font-size: 0.9rem; font-weight: bold; color: var(--accent);">VISÃO GERAL</span>
         <div style="text-align: right;">
-            <label style="font-size: 0.55rem; color: #666;">EQUITY TOTAL [v2.2.9]</label>
+            <label style="font-size: 0.55rem; color: #666;">EQUITY TOTAL [v2.10.0]</label>
             <div style="font-size: 1.1rem; font-weight: bold; color: #fff;" id="globalEquityDisplay">$0.00</div>
         </div>
     </div>
 
     <div class="dashboard">
-        <div class="card"><label>Price</label><span id="v1">---</span></div>
+        <div class="card"><label>Mark Price</label><span id="v1">---</span></div>
         <div class="card"><label>Entry Price</label><span id="v2">---</span></div>
         <div class="card"><label>Lev. Real</label><span id="v3">0.00x</span></div>
         <div class="card"><label>P&L TOTAL</label><span id="v4">$0.00</span></div>
@@ -74,7 +74,7 @@
     </div>
 
     <div class="trade-panel">
-        <div class="field"><label>Ticker</label><input type="text" id="parTicker" placeholder="BTCUSDT"></div>
+        <div class="field"><label>Ticker</label><input type="text" id="parTicker" placeholder="Ex: BTCUSDT"></div>
         <div class="field"><label>Lado</label><select id="tType"><option value="Compra">LONG</option><option value="Venda">SHORT</option></select></div>
         <div class="field"><label>Preço</label><input type="number" id="tPrice" step="any"></div>
         <div class="field"><label>Lev Alvo</label><input type="number" id="tLev" value="10"></div>
@@ -97,7 +97,7 @@
 
     let currentMode = "OVERVIEW", currentSymbol = "BTCUSDT", currentTF = "15", activePrices = {}, allTrades = [];
     let chart, candleSeries, mainLine, subLines = {}, entryLineMarker, liqLineMarker;
-    const colors = ['#f3d42f', '#ff6b6b', '#4dabf7', '#51cf66', '#cc5de8', '#ff922b', '#339af0'];
+    const colors = ['#f3d42f', '#ff6b6b', '#4dabf7', '#51cf66', '#cc5de8', '#ff922b'];
     const HIST_LIMIT = 120;
 
     function initChart() {
@@ -118,7 +118,6 @@
         mainLine.setData([]);
         Object.values(subLines).forEach(l => chart.removeSeries(l));
         subLines = {};
-
         if (tickers.length === 0) return;
 
         const histData = {};
@@ -150,8 +149,9 @@
             if (tickerPoints[tic]) {
                 subLines[tic] = chart.addLineSeries({ 
                     color: color, lineWidth: 1.8, 
-                    priceLineVisible: true, // Tracejado horizontal reativado
-                    priceLineStyle: 2, // Estilo tracejado fino
+                    priceLineVisible: true, 
+                    priceLineSource: 1, // 1 = LastVisible (Corta o histórico e projeta para a direita)
+                    priceLineStyle: 2, 
                     lastValueVisible: true,
                     title: tic
                 });
