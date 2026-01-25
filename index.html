@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>[v2.14.3] Futures Pro Terminal</title>
+    <title>[v2.14.4] Futures Pro Terminal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
@@ -16,6 +16,7 @@
         .nav-btn { background: #1a1a1a; color: #777; border: 1px solid #333; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.8rem; white-space: nowrap; }
         .nav-btn.active { background: var(--accent); color: #000; }
 
+        /* Cabeçalho Magnificado */
         .header-info { display: flex; justify-content: space-between; align-items: stretch; margin-bottom: 15px; padding: 15px; background: #111; border-radius: 10px; border: 1px solid #222; }
         .header-block { display: flex; flex-direction: column; justify-content: center; }
         .header-block.right { align-items: flex-end; text-align: right; }
@@ -30,11 +31,12 @@
             .pnl-main, .pnl-perc { font-size: 2.6rem !important; }
         }
 
+        /* Dashboard Otimizado */
         .dashboard { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px; }
         .card { background: #161616; padding: 12px; border-radius: 8px; border: 1px solid #222; text-align: center; }
         .card label { color: #666; font-size: 0.6rem; text-transform: uppercase; margin-bottom: 5px; display: block; }
         .card span { font-size: 1.1rem; font-weight: bold; }
-        @media (min-width: 1024px) { .dashboard { grid-template-columns: repeat(5, 1fr); } .card span { font-size: 1.8rem; } }
+        @media (min-width: 1024px) { .dashboard { grid-template-columns: repeat(4, 1fr); } .card span { font-size: 1.8rem; } }
 
         .chart-wrapper { background: #000; border-radius: 8px; border: 1px solid #333; overflow: hidden; position: relative; }
         #chart { height: 500px; width: 100%; }
@@ -51,7 +53,6 @@
 
         .table-container { width: 100%; overflow-x: auto; border-radius: 8px; background: #111; margin-top: 10px; }
         table { width: 100%; border-collapse: collapse; min-width: 700px; }
-        th { text-align: left; color: #555; padding: 12px; font-size: 0.75rem; border-bottom: 2px solid #222; }
         td { padding: 12px; border-bottom: 1px solid #161616; font-size: 0.9rem; }
     </style>
 </head>
@@ -78,7 +79,6 @@
         <div class="card"><label>Price</label><span id="v1">---</span></div>
         <div class="card"><label>Avg. Entry</label><span id="v2">---</span></div>
         <div class="card"><label>Real Leverage</label><span id="v3">---</span></div>
-        <div class="card"><label>Total P&L (%)</label><span id="v4">---</span></div>
         <div class="card"><label>Liquidação</label><span id="v5" style="color:var(--danger)">---</span></div>
     </div>
 
@@ -157,8 +157,9 @@
                 gPL += pl; gMarg += s.margin; gNom += (p * Math.abs(s.q));
                 if (currentMode === "OVERVIEW" && subLines[tic]) subLines[tic].update({ time: alignedTime, value: pl });
                 if (currentMode === "TICKER" && tic === currentSymbol) {
-                    const avg = s.cost/s.q, perc = (pl/s.margin)*100;
-                    document.getElementById('globalEquityDisplay').innerText = "$" + (s.margin + pl).toFixed(2);
+                    const avg = s.cost/s.q, eq = s.margin+pl, perc = (pl/s.margin)*100;
+                    const liq = s.q > 0 ? avg * (1 - (s.margin / s.cost) + 0.005) : avg * (1 + (s.margin / Math.abs(s.cost)) - 0.005);
+                    document.getElementById('globalEquityDisplay').innerText = "$" + eq.toFixed(2);
                     document.getElementById('headerPnlVal').innerText = (pl >= 0 ? "+$" : "-$") + Math.abs(pl).toFixed(2);
                     document.getElementById('headerPnlPerc').innerText = (perc >= 0 ? "+" : "") + perc.toFixed(2) + "%";
                     const color = pl >= 0 ? "#00c853" : "#ff3d00";
@@ -166,9 +167,8 @@
                     document.getElementById('headerPnlPerc').style.color = color;
                     document.getElementById('v1').innerText = p.toFixed(4);
                     document.getElementById('v2').innerText = avg.toFixed(4);
-                    document.getElementById('v3').innerText = (Math.abs(p*s.q)/(s.margin+pl)).toFixed(2)+"x";
-                    document.getElementById('v4').innerText = `$${pl.toFixed(2)} (${perc.toFixed(2)}%)`;
-                    document.getElementById('v4').style.color = color;
+                    document.getElementById('v3').innerText = (Math.abs(p*s.q)/eq).toFixed(2)+"x";
+                    document.getElementById('v5').innerText = liq.toFixed(4);
                     candleSeries?.update({ time: alignedTime, close: p });
                 }
             }
@@ -184,8 +184,7 @@
             document.getElementById('headerPnlPerc').style.color = color;
             document.getElementById('v1').innerText = "---"; document.getElementById('v2').innerText = "---";
             document.getElementById('v3').innerText = (gNom / Math.max(1, gMarg + gPL)).toFixed(2) + "x";
-            document.getElementById('v4').innerText = `$${gPL.toFixed(2)} (${activePerc.toFixed(2)}%)`;
-            document.getElementById('v4').style.color = color;
+            document.getElementById('v5').innerText = "---";
             if(mainLine) mainLine.update({ time: alignedTime, value: gPL });
         }
     }
@@ -195,17 +194,12 @@
         document.getElementById('displayPar').innerText = m === "OVERVIEW" ? "GERAL" : t;
         document.getElementById('mainLabel').innerText = m === "OVERVIEW" ? "Portfolio Equity" : `${t} Equity`;
         document.getElementById('pnlLabel').innerText = m === "OVERVIEW" ? "Portfolio P&L" : `${t} Open P&L`;
-        
-        // Esconder legenda se não estiver em OVERVIEW
         document.getElementById('bottomLegend').style.display = m === "OVERVIEW" ? "flex" : "none";
 
         candleSeries.setData([]); mainLine.setData([]); Object.values(subLines).forEach(s => s.setData([]));
         candleSeries.applyOptions({ visible: m === "TICKER" });
         mainLine.applyOptions({ visible: m === "OVERVIEW" && seriesVisibility["TOTAL"] !== false });
-        
-        Object.keys(subLines).forEach(key => {
-            subLines[key].applyOptions({ visible: m === "OVERVIEW" && seriesVisibility[key] !== false });
-        });
+        Object.keys(subLines).forEach(key => subLines[key].applyOptions({ visible: m === "OVERVIEW" && seriesVisibility[key] !== false }));
         
         if (m === "OVERVIEW") await syncOverview(); else await syncTicker();
         updateAssetNav(); renderTable(); updateUI();
@@ -215,7 +209,6 @@
         const tickers = [...new Set(allTrades.map(t => t.par))];
         document.getElementById('bottomLegend').innerHTML = '';
         createLegendItem("TOTAL", "#f3d42f");
-        
         let compositeData = {};
 
         for (const t of tickers) {
@@ -225,30 +218,19 @@
                 const data = j.result.list.map(v => ({ t: parseInt(v[0])/1000, c: parseFloat(v[4]) })).reverse();
                 const color = colors[(tickers.indexOf(t)+1)%colors.length];
                 const pos = getPosition(t);
-                
                 if (!subLines[t]) subLines[t] = chart.addLineSeries({ color: color, lineWidth: 1.5, priceLineVisible: false });
-                
                 const seriesData = data.map(p => {
                     const pl = (p.c - (pos.cost/pos.q)) * pos.q;
                     if(!compositeData[p.t]) compositeData[p.t] = 0;
                     compositeData[p.t] += pl;
                     return { time: p.t, value: pl };
                 });
-                
                 subLines[t].setData(seriesData);
                 createLegendItem(t, color);
             }
         }
-        
-        // Gerar Linha TOTAL
-        const totalLineData = Object.keys(compositeData).sort().map(time => ({
-            time: parseInt(time),
-            value: compositeData[time]
-        }));
-        
-        if(totalLineData.length > 0) {
-            mainLine.setData(totalLineData);
-        }
+        const totalLineData = Object.keys(compositeData).sort().map(time => ({ time: parseInt(time), value: compositeData[time] }));
+        if(totalLineData.length > 0) mainLine.setData(totalLineData);
         chart.timeScale().fitContent();
     }
 
@@ -260,8 +242,11 @@
             const s = getPosition(currentSymbol);
             if (Math.abs(s.q) > 0.001) {
                 const avg = s.cost/s.q;
+                const liq = avg * (1 - (s.margin / s.cost) + 0.005);
                 if(entryMarker) candleSeries.removePriceLine(entryMarker);
+                if(liqMarker) candleSeries.removePriceLine(liqMarker);
                 entryMarker = candleSeries.createPriceLine({ price: avg, color: '#f3d42f', lineWidth: 2, lineStyle: 2, title: 'ENTRY' });
+                liqMarker = candleSeries.createPriceLine({ price: liq, color: '#ff3d00', lineWidth: 2, lineStyle: 0, title: 'LIQ' });
             }
             chart.timeScale().fitContent();
         }
@@ -272,7 +257,7 @@
         div.className = `legend-item ${seriesVisibility[l] === false ? 'hidden' : ''}`;
         div.innerHTML = `<div class="legend-dot" style="background:${c}"></div>${l}`;
         div.onclick = () => {
-            seriesVisibility[l] = seriesVisibility[l] === false;
+            seriesVisibility[l] = !seriesVisibility[l];
             if (l === "TOTAL") mainLine.applyOptions({ visible: seriesVisibility[l] });
             else if (subLines[l]) subLines[l].applyOptions({ visible: seriesVisibility[l] });
             div.classList.toggle('hidden');
