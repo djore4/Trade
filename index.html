@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>[v2.15.0] Futures Pro Terminal</title>
+    <title>[v2.15.2] Futures Pro Terminal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
@@ -16,7 +16,6 @@
         .nav-btn { background: #1a1a1a; color: #777; border: 1px solid #333; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.8rem; white-space: nowrap; }
         .nav-btn.active { background: var(--accent); color: #000; }
 
-        /* Cabeçalho Magnificado */
         .header-info { display: flex; justify-content: space-between; align-items: stretch; margin-bottom: 15px; padding: 15px; background: #111; border-radius: 10px; border: 1px solid #222; }
         .header-block { display: flex; flex-direction: column; justify-content: center; }
         .header-block.right { align-items: flex-end; text-align: right; }
@@ -27,8 +26,8 @@
 
         @media (min-width: 1024px) {
             .header-info { padding: 30px 40px; }
-            .equity-value { font-size: 5.5rem !important; }
-            .pnl-main, .pnl-perc { font-size: 2.6rem !important; }
+            .equity-value { font-size: 4.5rem !important; }
+            .pnl-main, .pnl-perc { font-size: 2.3rem !important; }
         }
 
         .dashboard { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px; }
@@ -91,7 +90,7 @@
                 <button class="nav-btn" onclick="changeTF('D', this)">1D</button>
                 <button class="nav-btn" onclick="changeTF('W', this)">1W</button>
             </div>
-            </div>
+        </div>
         <div id="chart"></div>
     </div>
     <div class="bottom-legend" id="bottomLegend"></div>
@@ -119,7 +118,7 @@
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let currentMode = "OVERVIEW", currentSymbol = "", currentTF = "15", activePrices = {}, allTrades = [];
-    let chart, candleSeries, mainLine, subLines = {}, entryMarker, liqMarker;
+    let chart, candleSeries, mainLine, subLines = {};
     let seriesVisibility = { "TOTAL": true }; 
     const colors = ['#f3d42f', '#ff6b6b', '#4dabf7', '#51cf66', '#cc5de8', '#ff922b'];
 
@@ -209,13 +208,13 @@
         let compositeData = {};
 
         for (const t of tickers) {
-            const r = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${t}&interval=${currentTF}&limit=120`);
+            const r = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${t}&interval=${currentTF}&limit=150`);
             const j = await r.json();
             if (j.result?.list) {
                 const data = j.result.list.map(v => ({ t: parseInt(v[0])/1000, c: parseFloat(v[4]) })).reverse();
                 const color = colors[(tickers.indexOf(t)+1)%colors.length];
                 const pos = getPosition(t);
-                if (!subLines[t]) subLines[t] = chart.addLineSeries({ color: color, lineWidth: 1.5, title: '' }); // Título removido do gráfico
+                if (!subLines[t]) subLines[t] = chart.addLineSeries({ color: color, lineWidth: 1.5, title: '', priceLineVisible: false, lastValueVisible: false });
                 const seriesData = data.map(p => {
                     const pl = (p.c - (pos.cost/pos.q)) * pos.q;
                     if(!compositeData[p.t]) compositeData[p.t] = 0;
@@ -232,32 +231,21 @@
     }
 
     async function syncTicker() {
-        const r = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${currentSymbol}&interval=${currentTF}&limit=120`);
+        const r = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${currentSymbol}&interval=${currentTF}&limit=150`);
         const d = await r.json();
         if(d.result?.list) {
             candleSeries.setData(d.result.list.map(v => ({ time: parseInt(v[0])/1000, open: parseFloat(v[1]), high: parseFloat(v[2]), low: parseFloat(v[3]), close: parseFloat(v[4]) })).reverse());
-            const s = getPosition(currentSymbol);
-            if (Math.abs(s.q) > 0.001) {
-                const avg = s.cost/s.q;
-                const liq = avg * (1 - (s.margin / s.cost) + 0.005);
-                if(entryMarker) candleSeries.removePriceLine(entryMarker);
-                if(liqMarker) candleSeries.removePriceLine(liqMarker);
-                entryMarker = candleSeries.createPriceLine({ price: avg, color: '#f3d42f', lineWidth: 2, lineStyle: 2, title: 'ENTRY' });
-                liqMarker = candleSeries.createPriceLine({ price: liq, color: '#ff3d00', lineWidth: 2, lineStyle: 0, title: 'LIQ' });
-            }
             chart.timeScale().fitContent();
         }
     }
 
     function createLegendItem(l, c) {
         const div = document.createElement('div');
-        // Inicializar visibilidade se não existir
         if (seriesVisibility[l] === undefined) seriesVisibility[l] = true;
-        
         div.className = `legend-item ${seriesVisibility[l] ? '' : 'hidden'}`;
         div.innerHTML = `<div class="legend-dot" style="background:${c}"></div>${l}`;
         div.onclick = () => {
-            seriesVisibility[l] = !seriesVisibility[l]; // Inverter estado
+            seriesVisibility[l] = !seriesVisibility[l];
             if (l === "TOTAL") mainLine.applyOptions({ visible: seriesVisibility[l] });
             else if (subLines[l]) subLines[l].applyOptions({ visible: seriesVisibility[l] });
             div.classList.toggle('hidden', !seriesVisibility[l]);
@@ -270,11 +258,13 @@
             layout: { background: { color: '#000' }, textColor: '#888', fontSize: 11 },
             grid: { vertLines: { visible: false }, horzLines: { visible: false } },
             timeScale: { timeVisible: true, borderVisible: false },
-            rightPriceScale: { borderVisible: false, autoScale: true }
+            rightPriceScale: { borderVisible: false, autoScale: true },
+            crosshair: { horzLine: { labelVisible: false }, vertLine: { labelVisible: false } }
         });
-        candleSeries = chart.addCandlestickSeries({ upColor: '#00c853', downColor: '#ff3d00' });
-        // Linha TOTAL sem título interno para limpar o descritivo do gráfico
-        mainLine = chart.addLineSeries({ color: '#f3d42f', lineWidth: 4, title: '', priceLineVisible: true, priceLineSource: 1 });
+
+        // Etiqueta (Label) lateral ativa em todos os modos
+        candleSeries = chart.addCandlestickSeries({ upColor: '#00c853', downColor: '#ff3d00', priceLineVisible: false, lastValueVisible: true });
+        mainLine = chart.addLineSeries({ color: '#f3d42f', lineWidth: 4, title: '', priceLineVisible: false, lastValueVisible: true });
         
         await fetchPrices();
         const { data } = await _supabase.from('trades').select('*').order('created_at', { ascending: true });
