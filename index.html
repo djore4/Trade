@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>[v2.2.8] Futures Pro Terminal</title>
+    <title>[v2.2.9] Futures Pro Terminal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
@@ -45,7 +45,7 @@
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding: 0 5px;">
         <span id="displayPar" style="font-size: 0.9rem; font-weight: bold; color: var(--accent);">VISÃO GERAL</span>
         <div style="text-align: right;">
-            <label style="font-size: 0.55rem; color: #666;">EQUITY TOTAL [v2.2.8]</label>
+            <label style="font-size: 0.55rem; color: #666;">EQUITY TOTAL [v2.2.9]</label>
             <div style="font-size: 1.1rem; font-weight: bold; color: #fff;" id="globalEquityDisplay">$0.00</div>
         </div>
     </div>
@@ -104,11 +104,7 @@
         chart = LightweightCharts.createChart(document.getElementById('chart'), { 
             layout: { background: { color: '#000' }, textColor: '#888', fontSize: 10 },
             grid: { vertLines: { color: '#111' }, horzLines: { color: '#111' } },
-            timeScale: { 
-                timeVisible: true, borderVisible: false, 
-                rightOffset: 18, // Espaço maior para as labels à direita
-                barSpacing: 10
-            },
+            timeScale: { timeVisible: true, borderVisible: false, rightOffset: 18, barSpacing: 10 },
             rightPriceScale: { borderVisible: false, autoScale: true }
         });
         candleSeries = chart.addCandlestickSeries({ upColor: '#00c853', downColor: '#ff3d00' });
@@ -119,7 +115,6 @@
     async function syncHistoryPL() {
         if (currentMode !== "OVERVIEW") return;
         const tickers = [...new Set(allTrades.map(t => t.par))];
-        
         mainLine.setData([]);
         Object.values(subLines).forEach(l => chart.removeSeries(l));
         subLines = {};
@@ -155,9 +150,10 @@
             if (tickerPoints[tic]) {
                 subLines[tic] = chart.addLineSeries({ 
                     color: color, lineWidth: 1.8, 
-                    priceLineVisible: false, 
-                    lastValueVisible: true, // Label à direita reativada
-                    title: tic // Nome do ticker aparece na label
+                    priceLineVisible: true, // Tracejado horizontal reativado
+                    priceLineStyle: 2, // Estilo tracejado fino
+                    lastValueVisible: true,
+                    title: tic
                 });
                 subLines[tic].setData(tickerPoints[tic]);
             }
@@ -190,7 +186,7 @@
     function updateView() {
         const isT = currentMode === "TICKER";
         candleSeries.applyOptions({ visible: isT });
-        mainLine.applyOptions({ visible: !isT, lastValueVisible: !isT });
+        mainLine.applyOptions({ visible: !isT, lastValueVisible: !isT, priceLineVisible: !isT });
         Object.values(subLines).forEach(l => l.applyOptions({ visible: !isT }));
         loadHistory(true);
     }
