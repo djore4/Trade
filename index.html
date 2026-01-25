@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>[v2.15.5] Futures Pro Terminal</title>
+    <title>[v2.15.7] Futures Pro Terminal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
@@ -37,19 +37,18 @@
         .nav-btn { background: #1a1a1a; color: #777; border: 1px solid #333; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.8rem; white-space: nowrap; }
         .nav-btn.active { background: var(--accent); color: #000; }
 
-        .chart-wrapper { background: #000; border-radius: 10px; border: 1px solid #333; overflow: hidden; position: relative; margin-bottom: 10px; }
+        .chart-wrapper { background: #000; border-radius: 10px; border: 1px solid #333; overflow: hidden; position: relative; margin-bottom: 15px; }
         #chart { height: 500px; width: 100%; }
 
-        /* Heatmap Section */
-        #heatmapContainer { display: none; margin-bottom: 15px; border-radius: 10px; overflow: hidden; border: 1px solid #222; background: #000; padding: 10px; }
-        .heatmap-header { color: var(--accent); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 1px; }
-        #heatmapIframe { width: 100%; height: 450px; border: none; }
+        /* Contentor de Liquidez Alternativo v2.15.7 */
+        #liqContainer { display: none; margin-bottom: 15px; border-radius: 10px; overflow: hidden; border: 1px solid #222; background: #000; }
+        .liq-header { background: #1a1a1a; padding: 10px 15px; color: var(--accent); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; border-bottom: 1px solid #222; }
+        #liqIframe { width: 100%; height: 500px; border: none; }
 
-        .bottom-legend { display: flex; flex-wrap: wrap; gap: 12px; padding: 15px; background: #111; border: 1px solid #222; border-top: none; border-radius: 0 0 8px 8px; margin-bottom: 15px; }
+        .bottom-legend { display: flex; flex-wrap: wrap; gap: 12px; padding: 15px; background: #111; border: 1px solid #222; border-radius: 10px; margin-bottom: 15px; }
         .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #fff; cursor: pointer; }
         .legend-item.hidden { opacity: 0.15; text-decoration: line-through; }
-        .legend-dot { width: 12px; height: 12px; border-radius: 3px; }
-
+        
         .trade-panel { background: #161616; padding: 15px; border-radius: 10px; border: 1px solid #222; display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
         .field { flex: 1 1 calc(20% - 10px); display: flex; flex-direction: column; min-width: 120px; }
         input, select { background: #111; border: 1px solid #333; color: white; padding: 12px; border-radius: 6px; font-size: 1rem; }
@@ -99,9 +98,9 @@
         <div id="chart"></div>
     </div>
 
-    <div id="heatmapContainer">
-        <div class="heatmap-header" id="heatmapTitle">LIQUIDATION DATA</div>
-        <iframe id="heatmapIframe" src=""></iframe>
+    <div id="liqContainer">
+        <div class="liq-header" id="liqTitle">LIQUIDITY ORDERFLOW</div>
+        <iframe id="liqIframe" src=""></iframe>
     </div>
 
     <div class="bottom-legend" id="bottomLegend"></div>
@@ -169,7 +168,7 @@
                     const liq = s.q > 0 ? avg * (1 - (s.margin / s.cost) + 0.005) : avg * (1 + (s.margin / Math.abs(s.cost)) - 0.005);
                     document.getElementById('globalEquityDisplay').innerText = "$" + eq.toFixed(2);
                     document.getElementById('headerPnlVal').innerText = (pl >= 0 ? "+$" : "-$") + Math.abs(pl).toFixed(2);
-                    document.getElementById('headerPnlPerc').innerText = ( (pl/s.margin)*100 >= 0 ? "+" : "") + ((pl/s.margin)*100).toFixed(2) + "%";
+                    document.getElementById('headerPnlPerc').innerText = ((pl/s.margin)*100 >= 0 ? "+" : "") + ((pl/s.margin)*100).toFixed(2) + "%";
                     const color = pl >= 0 ? "#00c853" : "#ff3d00";
                     document.getElementById('headerPnlVal').style.color = color;
                     document.getElementById('headerPnlPerc').style.color = color;
@@ -201,17 +200,17 @@
         document.getElementById('pnlLabel').innerText = m === "OVERVIEW" ? "Portfolio P&L" : `${t} Open P&L`;
         document.getElementById('bottomLegend').style.display = m === "OVERVIEW" ? "flex" : "none";
 
-        // Gestão do Heatmap / Liquidações
-        const heatmapBox = document.getElementById('heatmapContainer');
-        const heatmapIframe = document.getElementById('heatmapIframe');
+        // Gestão da ferramenta de Liquidez Alternativa
+        const liqBox = document.getElementById('liqContainer');
+        const liqIframe = document.getElementById('liqIframe');
         if(m === "TICKER") {
-            heatmapBox.style.display = "block";
+            liqBox.style.display = "block";
             const coin = t.replace('USDT', '');
-            document.getElementById('heatmapTitle').innerText = `${coin} LIQUIDATION HEATMAP`;
-            // URL corrigida para o widget oficial da Coinglass
-            heatmapIframe.src = `https://www.coinglass.com/LiquidationHistory?symbol=${coin}`;
+            document.getElementById('liqTitle').innerText = `${coin} LIQUIDITY ANALYSIS`;
+            // Usando TradingView Technical Analysis/Orderbook Widget adaptado para liquidez
+            liqIframe.src = `https://s.tradingview.com/widgetembed/?frameElementId=tradingview_76231&symbol=BINANCE:${coin}USDT.P&interval=D&hidesidetoolbar=1&hidetoptoolbar=1&symboledit=1&saveimage=1&toolbarbg=f1f3f6&studies=[]&theme=dark&style=1&timezone=Etc%2FUTC&studies_overrides={}&overrides={}&enabled_features=[]&disabled_features=[]&locale=pt`;
         } else {
-            heatmapBox.style.display = "none";
+            liqBox.style.display = "none";
         }
 
         candleSeries.setData([]); mainLine.setData([]); Object.values(subLines).forEach(s => s.setData([]));
@@ -257,7 +256,7 @@
     }
 
     async function syncTicker() {
-        const r = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${currentSymbol}&interval=${currentTF}&limit=120`);
+        const r = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${currentSymbol}&interval=${currentTF}&limit=150`);
         const d = await r.json();
         if(d.result?.list) {
             candleSeries.setData(d.result.list.map(v => ({ time: parseInt(v[0])/1000, open: parseFloat(v[1]), high: parseFloat(v[2]), low: parseFloat(v[3]), close: parseFloat(v[4]) })).reverse());
