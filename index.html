@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>[v2.12.9] Futures Pro Terminal</title>
+    <title>[v2.13.0] Futures Pro Terminal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
@@ -11,48 +11,58 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 5px; margin: 0; }
         .container { max-width: 1600px; margin: auto; }
+        
         .asset-nav { display: flex; gap: 5px; margin-bottom: 8px; overflow-x: auto; padding-bottom: 5px; border-bottom: 1px solid #222; scrollbar-width: none; }
         .nav-btn { background: #1a1a1a; color: #777; border: 1px solid #333; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.8rem; white-space: nowrap; }
         .nav-btn.active { background: var(--accent); color: #000; }
-        .header-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 15px; background: #111; border-radius: 10px; border: 1px solid #222; }
-        #globalEquityDisplay { font-size: 1.8rem; font-weight: 900; color: #fff; }
-        #headerPnlPerc { font-size: 1.2rem; font-weight: bold; }
-        @media (min-width: 1024px) { #globalEquityDisplay { font-size: 4rem !important; } #headerPnlPerc { font-size: 2.8rem !important; } }
+
+        /* Cabeçalho Magnificado */
+        .header-info { display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 15px; padding: 15px; background: #111; border-radius: 10px; border: 1px solid #222; }
+        .header-label { font-size: 0.7rem; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        #globalEquityDisplay { font-size: 2rem; font-weight: 900; color: #fff; line-height: 1; }
+        #headerPnlPerc { font-size: 1.2rem; font-weight: bold; margin-top: 5px; }
+
+        @media (min-width: 1024px) {
+            .header-info { padding: 30px; flex-direction: row; justify-content: space-between; align-items: center; }
+            #globalEquityDisplay { font-size: 4rem !important; }
+            #headerPnlPerc { font-size: 2.5rem !important; margin-top: 0; }
+        }
+
         .dashboard { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px; }
         .card { background: #161616; padding: 12px; border-radius: 8px; border: 1px solid #222; text-align: center; }
-        .card label { color: #666; font-size: 0.6rem; text-transform: uppercase; display: block; margin-bottom: 5px; }
+        .card label { color: #666; font-size: 0.6rem; text-transform: uppercase; margin-bottom: 5px; display: block; }
         .card span { font-size: 1.1rem; font-weight: bold; }
         @media (min-width: 1024px) { .dashboard { grid-template-columns: repeat(5, 1fr); } .card span { font-size: 1.8rem; } }
+
         .chart-wrapper { background: #000; border-radius: 8px; border: 1px solid #333; overflow: hidden; }
         #chart { height: 450px; width: 100%; }
         .bottom-legend { display: flex; flex-wrap: wrap; gap: 12px; padding: 12px; background: #111; border: 1px solid #222; border-radius: 0 0 8px 8px; margin-bottom: 15px; }
-        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; cursor: pointer; color: #fff; }
-        .legend-item.hidden { opacity: 0.2; text-decoration: line-through; }
-        .legend-dot { width: 12px; height: 12px; border-radius: 3px; }
-        .trade-panel { background: #161616; padding: 15px; border-radius: 10px; border: 1px solid #222; display: flex; flex-wrap: wrap; gap: 10px; }
-        .field { flex: 1 1 calc(33% - 10px); display: flex; flex-direction: column; }
-        input, select { background: #111; border: 1px solid #333; color: white; padding: 12px; border-radius: 6px; }
-        .exec-btn { flex: 1 1 100%; background: var(--accent); font-weight: 900; height: 50px; cursor: pointer; border-radius: 8px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="asset-nav" id="assetNav"></div>
+
     <div class="header-info">
-        <div><label style="font-size:0.7rem; color:#666; text-transform:uppercase;">Equity</label><div id="globalEquityDisplay">$0.00</div></div>
-        <div id="headerPnlPerc">+0.00%</div>
+        <div>
+            <label class="header-label" id="eqLabel">Portfolio Equity</label>
+            <div id="globalEquityDisplay">$0.00</div>
+        </div>
+        <div id="headerPnlPerc" style="color: var(--success);">+0.00%</div>
     </div>
-    <div class="dashboard" id="dash">
+
+    <div class="dashboard">
         <div class="card"><label>Price</label><span id="v1">---</span></div>
         <div class="card"><label>Avg. Entry</label><span id="v2">---</span></div>
-        <div class="card"><label>Lev. Real</label><span id="v3">0.00x</span></div>
-        <div class="card"><label>P&L (%)</label><span id="v4">$0.00</span></div>
-        <div class="card"><label>Liquidação</label><span id="v5">---</span></div>
+        <div class="card"><label>Real Leverage</label><span id="v3">0.00x</span></div>
+        <div class="card"><label>Total P&L</label><span id="v4">$0.00 (0.00%)</span></div>
+        <div class="card"><label>Liquidação</label><span id="v5" style="color:var(--danger)">---</span></div>
     </div>
+
     <div class="chart-wrapper">
         <div style="background:#1a1a1a; padding:8px 12px; display:flex; justify-content:space-between;">
-            <div id="tfs">
+            <div id="tfControls">
                 <button class="nav-btn" style="padding:4px 8px;" onclick="changeTF('1')">1m</button>
                 <button class="nav-btn" style="padding:4px 8px;" onclick="changeTF('5')">5m</button>
                 <button class="nav-btn active" style="padding:4px 8px;" id="tf15" onclick="changeTF('15')">15m</button>
@@ -61,12 +71,12 @@
                 <button class="nav-btn" style="padding:4px 8px;" onclick="changeTF('D')">1D</button>
                 <button class="nav-btn" style="padding:4px 8px;" onclick="changeTF('W')">1W</button>
             </div>
-            <span id="curLabel" style="color:var(--accent); font-weight:bold;">GERAL</span>
+            <span id="displayPar" style="font-size: 0.8rem; font-weight: bold; color: var(--accent);">GERAL</span>
         </div>
         <div id="chart"></div>
     </div>
     <div class="bottom-legend" id="bottomLegend"></div>
-    </div>
+</div>
 
 <script>
     const SUPABASE_URL = 'https://pmdvckcxwfiwhrhibupo.supabase.co';
@@ -77,71 +87,105 @@
     let chart, candleSeries, mainLine, subLines = {}, entryMarker, liqMarker;
     let seriesVisibility = { "TOTAL": true }; 
     const colors = ['#f3d42f', '#ff6b6b', '#4dabf7', '#51cf66', '#cc5de8', '#ff922b', '#339af0'];
+    const HIST_LIMIT = 120;
 
-    function initChart() {
-        chart = LightweightCharts.createChart(document.getElementById('chart'), { 
-            layout: { background: { color: '#000' }, textColor: '#888', fontSize: 11 },
-            grid: { vertLines: { color: '#111' }, horzLines: { color: '#111' } },
-            timeScale: { timeVisible: true, borderVisible: false, rightOffset: 15 },
-            rightPriceScale: { borderVisible: false, autoScale: true }
+    function getPositionAt(ticker) {
+        let q = 0, cost = 0, margin = 0;
+        allTrades.filter(t => t.par === ticker).forEach(t => {
+            const nom = t.preco * t.quantidade;
+            const m = nom / (t.alavancagem_alvo || 1);
+            if (t.tipo === "Compra") { q += t.quantidade; cost += nom; margin += m; }
+            else { const r = t.quantidade / (q || 1); margin -= (margin * r); cost -= (cost * r); q -= t.quantidade; }
         });
-        candleSeries = chart.addCandlestickSeries({ upColor: '#00c853', downColor: '#ff3d00' });
-        mainLine = chart.addLineSeries({ color: colors[0], lineWidth: 3, priceLineVisible: true, priceLineSource: 1 });
+        return { q, cost, margin };
+    }
+
+    function updateUI() {
+        let gPL = 0, gMarg = 0, gNom = 0, now = Math.floor(Date.now()/1000);
+        const map = { "1": 60, "5": 300, "15": 900, "60": 3600, "240": 14400, "D": 86400, "W": 604800 };
+        const alignedTime = Math.floor(now / (map[currentTF] || 900)) * (map[currentTF] || 900);
+        const tickers = [...new Set(allTrades.map(t => t.par))];
+        
+        let tSpecPL = 0, tSpecMarg = 0;
+
+        tickers.forEach(tic => {
+            const s = getPositionAt(tic);
+            if (Math.abs(s.q) > 0.0001) {
+                const p = activePrices[tic] || 0, pl = (p - (s.cost/s.q)) * s.q;
+                gPL += pl; gMarg += s.margin; gNom += (p * Math.abs(s.q));
+                
+                if (currentMode === "OVERVIEW" && subLines[tic]) subLines[tic].update({ time: alignedTime, value: pl });
+                
+                if (tic === currentSymbol) { tSpecPL = pl; tSpecMarg = s.margin; }
+
+                if (currentMode === "TICKER" && currentSymbol === tic) {
+                    const avg = s.cost/s.q, eq = s.margin+pl, perc = (pl/s.margin)*100;
+                    const liq = s.q > 0 ? avg*(1-(0.8/(s.cost/s.margin/avg))) : avg*(1+(0.8/(Math.abs(s.cost)/s.margin/avg)));
+                    document.getElementById('v1').innerText = p.toFixed(4);
+                    document.getElementById('v2').innerText = avg.toFixed(4);
+                    document.getElementById('v3').innerText = (Math.abs(p*s.q)/Math.max(0.1,eq)).toFixed(2)+"x";
+                    const v4 = document.getElementById('v4');
+                    v4.innerText = `$${pl.toFixed(2)} (${perc.toFixed(2)}%)`;
+                    v4.style.color = pl >= 0 ? "var(--success)" : "var(--danger)";
+                    document.getElementById('v5').innerText = liq.toFixed(4);
+                    if(entryMarker) entryMarker.applyOptions({ price: avg });
+                    if(liqMarker) liqMarker.applyOptions({ price: liq });
+                    candleSeries?.update({ time: alignedTime, close: p });
+                }
+            }
+        });
+
+        const activePL = (currentMode === "OVERVIEW") ? gPL : tSpecPL;
+        const activeMarg = (currentMode === "OVERVIEW") ? gMarg : tSpecMarg;
+        const activePerc = activeMarg > 0 ? (activePL / activeMarg) * 100 : 0;
+        const color = activePL >= 0 ? "var(--success)" : "var(--danger)";
+
+        document.getElementById('globalEquityDisplay').innerText = "$" + (activeMarg + activePL).toFixed(2);
+        const headerPnl = document.getElementById('headerPnlPerc');
+        headerPnl.innerText = (activePerc >= 0 ? "+" : "") + activePerc.toFixed(2) + "%";
+        headerPnl.style.color = color;
+
+        if (currentMode === "OVERVIEW") {
+            const v4 = document.getElementById('v4');
+            v4.innerText = `$${gPL.toFixed(2)} (${activePerc.toFixed(2)}%)`;
+            v4.style.color = color;
+            document.getElementById('v3').innerText = (gNom / Math.max(1, activeMarg + activePL)).toFixed(2) + "x";
+            if(mainLine) mainLine.update({ time: alignedTime, value: gPL });
+        }
     }
 
     async function setMode(m, t="") {
         currentMode = m; currentSymbol = t;
-        document.getElementById('curLabel').innerText = m === "OVERVIEW" ? "GERAL" : t;
+        document.getElementById('displayPar').innerText = m === "OVERVIEW" ? "GERAL" : t;
+        document.getElementById('eqLabel').innerText = m === "OVERVIEW" ? "Portfolio Equity" : `${t} Equity`;
         
-        // --- LIMPEZA IMEDIATA PARA EVITAR FLICKER ---
+        // Limpeza Flicker
         candleSeries.setData([]);
         mainLine.setData([]);
         Object.values(subLines).forEach(s => s.setData([]));
         if(entryMarker) { candleSeries.removePriceLine(entryMarker); entryMarker = null; }
         if(liqMarker) { candleSeries.removePriceLine(liqMarker); liqMarker = null; }
-        
-        // Alternar visibilidade
+
         candleSeries.applyOptions({ visible: m === "TICKER" });
         mainLine.applyOptions({ visible: m === "OVERVIEW" && seriesVisibility["TOTAL"] !== false });
         
-        document.getElementById('bottomLegend').style.display = m === "OVERVIEW" ? "flex" : "none";
-        
         if (m === "OVERVIEW") await syncOverview(); else await syncTicker();
         updateAssetNav();
-    }
-
-    async function syncTicker() {
-        const resp = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${currentSymbol}&interval=${currentTF}&limit=120`);
-        const d = await resp.json();
-        if(d.result?.list) {
-            const k = d.result.list.map(v => ({ time: parseInt(v[0])/1000, open: parseFloat(v[1]), high: parseFloat(v[2]), low: parseFloat(v[3]), close: parseFloat(v[4]) })).reverse();
-            candleSeries.setData(k);
-            
-            const s = getPositionAt(currentSymbol);
-            if (Math.abs(s.q) > 0.001) {
-                const avg = s.cost/s.q;
-                const liq = s.q > 0 ? avg*(1-(0.8/(s.cost/s.margin/avg))) : avg*(1+(0.8/(Math.abs(s.cost)/s.margin/avg)));
-                entryMarker = candleSeries.createPriceLine({ price: avg, color: '#f3d42f', lineWidth: 2, lineStyle: 2, title: 'ENTRY' });
-                liqMarker = candleSeries.createPriceLine({ price: liq, color: '#ff3d00', lineWidth: 2, title: 'LIQ' });
-            }
-            chart.timeScale().fitContent();
-        }
+        updateUI();
     }
 
     async function syncOverview() {
         const tickers = [...new Set(allTrades.map(t => t.par))];
         document.getElementById('bottomLegend').innerHTML = '';
         createLegendItem("TOTAL", colors[0]);
-
         const histData = {};
         for (const t of tickers) {
-            const r = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${t}&interval=${currentTF}&limit=120`);
+            const r = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${t}&interval=${currentTF}&limit=${HIST_LIMIT}`);
             const j = await r.json();
             if (j.result?.list) histData[t] = j.result.list.map(v => ({ t: parseInt(v[0])/1000, c: parseFloat(v[4]) })).reverse();
         }
-
         const totalPoints = [], tickerPointsMap = {};
-        for (let i = 0; i < 120; i++) {
+        for (let i = 0; i < HIST_LIMIT; i++) {
             let pTotal = 0, time = 0;
             tickers.forEach(tic => {
                 const s = getPositionAt(tic);
@@ -166,6 +210,22 @@
         chart.timeScale().fitContent();
     }
 
+    async function syncTicker() {
+        const resp = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${currentSymbol}&interval=${currentTF}&limit=${HIST_LIMIT}`);
+        const d = await resp.json();
+        if(d.result?.list) {
+            candleSeries.setData(d.result.list.map(v => ({ time: parseInt(v[0])/1000, open: parseFloat(v[1]), high: parseFloat(v[2]), low: parseFloat(v[3]), close: parseFloat(v[4]) })).reverse());
+            const s = getPositionAt(currentSymbol);
+            if (Math.abs(s.q) > 0.001) {
+                const avg = s.cost/s.q;
+                const liq = s.q > 0 ? avg*(1-(0.8/(s.cost/s.margin/avg))) : avg*(1+(0.8/(Math.abs(s.cost)/s.margin/avg)));
+                entryMarker = candleSeries.createPriceLine({ price: avg, color: '#f3d42f', lineWidth: 2, lineStyle: 2, title: 'ENTRY' });
+                liqMarker = candleSeries.createPriceLine({ price: liq, color: '#ff3d00', lineWidth: 2, title: 'LIQ' });
+            }
+            chart.timeScale().fitContent();
+        }
+    }
+
     function createLegendItem(label, color) {
         const div = document.createElement('div');
         div.className = `legend-item ${seriesVisibility[label] === false ? 'hidden' : ''}`;
@@ -179,39 +239,21 @@
         document.getElementById('bottomLegend').appendChild(div);
     }
 
-    function getPositionAt(ticker) {
-        let q = 0, cost = 0, margin = 0;
-        allTrades.filter(t => t.par === ticker).forEach(t => {
-            const nom = t.preco * t.quantidade;
-            const m = nom / (t.alavancagem_alvo || 1);
-            if (t.tipo === "Compra") { q += t.quantidade; cost += nom; margin += m; }
-            else { const r = t.quantidade / (q || 1); margin -= (margin * r); cost -= (cost * r); q -= t.quantidade; }
-        });
-        return { q, cost, margin };
-    }
-
-    async function changeTF(tf) {
-        currentTF = tf;
-        document.querySelectorAll('#tfs .nav-btn').forEach(b => b.classList.remove('active'));
-        if (currentMode === "OVERVIEW") await syncOverview(); else await syncTicker();
-    }
-
-    function updateUI() {
-        let gPL = 0, gMarg = 0, now = Math.floor(Date.now()/1000);
-        const interval = { "1": 60, "5": 300, "15": 900, "60": 3600, "240": 14400, "D": 86400, "W": 604800 }[currentTF] || 900;
-        const alignedTime = Math.floor(now / interval) * interval;
-        
-        allTrades.forEach(t => { /* logica de calculo igual... */ });
-        // Atualiza cabeçalho com Equity e % colada ao valor
-        // ... (resto da lógica igual à v2.12.8)
-    }
-
     window.onload = async () => {
-        initChart();
+        chart = LightweightCharts.createChart(document.getElementById('chart'), { 
+            layout: { background: { color: '#000' }, textColor: '#888', fontSize: 11 },
+            grid: { vertLines: { color: '#111' }, horzLines: { color: '#111' } },
+            timeScale: { timeVisible: true, borderVisible: false, rightOffset: 15 },
+            rightPriceScale: { borderVisible: false, autoScale: true }
+        });
+        candleSeries = chart.addCandlestickSeries({ upColor: '#00c853', downColor: '#ff3d00' });
+        mainLine = chart.addLineSeries({ color: colors[0], lineWidth: 3, priceLineVisible: true, priceLineSource: 1 });
+        
         const { data } = await _supabase.from('trades').select('*').order('created_at', { ascending: true });
         allTrades = data || [];
         updateAssetNav();
         await setMode("OVERVIEW");
+
         setInterval(async () => {
             const r = await fetch('https://api.bybit.com/v5/market/tickers?category=linear');
             const d = await r.json();
@@ -221,6 +263,12 @@
             }
         }, 3000);
     };
+
+    async function changeTF(tf) {
+        currentTF = tf;
+        document.querySelectorAll('#tfControls .nav-btn').forEach(b => b.classList.remove('active'));
+        if (currentMode === "OVERVIEW") await syncOverview(); else await syncTicker();
+    }
 
     function updateAssetNav() {
         const n = document.getElementById('assetNav');
