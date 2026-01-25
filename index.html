@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>[v2.13.7] Futures Pro Terminal</title>
+    <title>[v2.13.8] Futures Pro Terminal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
@@ -16,15 +16,26 @@
         .nav-btn { background: #1a1a1a; color: #777; border: 1px solid #333; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.8rem; white-space: nowrap; }
         .nav-btn.active { background: var(--accent); color: #000; }
 
-        .header-info { display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 15px; padding: 15px; background: #111; border-radius: 10px; border: 1px solid #222; }
+        /* Cabeçalho Simétrico Magnificado */
+        .header-info { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 15px; 
+            padding: 15px; 
+            background: #111; 
+            border-radius: 10px; 
+            border: 1px solid #222; 
+        }
+        .header-block { display: flex; flex-direction: column; }
+        .header-block.right { align-items: flex-end; text-align: right; }
+        
         .header-label { font-size: 0.7rem; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
-        #globalEquityDisplay { font-size: 2rem; font-weight: 900; color: #fff; line-height: 1; }
-        #headerPnlDisplay { font-size: 1.2rem; font-weight: bold; margin-top: 5px; }
+        .header-value { font-size: 1.8rem; font-weight: 900; color: #fff; line-height: 1; }
 
         @media (min-width: 1024px) {
-            .header-info { padding: 30px; flex-direction: row; justify-content: space-between; align-items: center; }
-            #globalEquityDisplay { font-size: 4.5rem !important; }
-            #headerPnlDisplay { font-size: 3rem !important; margin-top: 0; }
+            .header-info { padding: 30px 40px; }
+            .header-value { font-size: 4rem !important; }
             .header-label { font-size: 0.9rem !important; }
         }
 
@@ -58,8 +69,14 @@
     <div class="asset-nav" id="assetNav"></div>
 
     <div class="header-info">
-        <div><label class="header-label" id="mainLabel">Portfolio Equity</label><div id="globalEquityDisplay">SYNCING...</div></div>
-        <div id="headerPnlDisplay" style="color: #444;">-- (0.00%)</div>
+        <div class="header-block">
+            <label class="header-label" id="mainLabel">Portfolio Equity</label>
+            <div class="header-value" id="globalEquityDisplay">SYNCING...</div>
+        </div>
+        <div class="header-block right">
+            <label class="header-label" id="pnlLabel">Portfolio P&L</label>
+            <div class="header-value" id="headerPnlDisplay" style="color: #444;">-- (0.00%)</div>
+        </div>
     </div>
 
     <div class="dashboard">
@@ -145,11 +162,10 @@
                 if (currentMode === "OVERVIEW" && subLines[tic]) subLines[tic].update({ time: alignedTime, value: pl });
                 
                 if (currentMode === "TICKER" && tic === currentSymbol) {
-                    const avg = s.cost/s.q, eq = s.margin+pl, perc = (pl/s.margin)*100;
-                    // Cálculo de Liquidação Linear
+                    const avg = s.cost/s.q, perc = (pl/s.margin)*100;
                     const liq = s.q > 0 ? avg * (1 - (s.margin / s.cost) + 0.005) : avg * (1 + (s.margin / Math.abs(s.cost)) - 0.005);
-                    
-                    document.getElementById('mainLabel').innerText = `${tic} Position Equity`;
+                    document.getElementById('mainLabel').innerText = `${tic} Equity`;
+                    document.getElementById('pnlLabel').innerText = `${tic} P&L`;
                     document.getElementById('globalEquityDisplay').innerText = "$" + (s.margin + pl).toFixed(2);
                     document.getElementById('headerPnlDisplay').innerText = `$${pl.toFixed(2)} (${perc.toFixed(2)}%)`;
                     document.getElementById('headerPnlDisplay').style.color = pl >= 0 ? "var(--success)" : "var(--danger)";
@@ -168,6 +184,7 @@
             const activePerc = gMarg > 0 ? (gPL / gMarg) * 100 : 0;
             const color = gPL >= 0 ? "var(--success)" : "var(--danger)";
             document.getElementById('mainLabel').innerText = "Portfolio Equity";
+            document.getElementById('pnlLabel').innerText = "Portfolio P&L";
             document.getElementById('globalEquityDisplay').innerText = "$" + (gMarg + gPL).toFixed(2);
             document.getElementById('headerPnlDisplay').innerText = `$${gPL.toFixed(2)} (${activePerc.toFixed(2)}%)`;
             document.getElementById('headerPnlDisplay').style.color = color;
@@ -201,7 +218,7 @@
             if (j.result?.list) {
                 const data = j.result.list.map(v => ({ t: parseInt(v[0])/1000, c: parseFloat(v[4]) })).reverse();
                 const color = colors[(tickers.indexOf(t)+1)%colors.length];
-                if (!subLines[t]) subLines[t] = chart.addLineSeries({ color: color, lineWidth: 1.5, title: t });
+                if (!subLines[t]) subLines[t] = chart.addLineSeries({ color: color, lineWidth: 1.5, priceLineVisible: true, priceLineSource: 1 });
                 const pos = getPosition(t);
                 subLines[t].setData(data.map(p => ({ time: p.t, value: (p.c - (pos.cost/pos.q)) * pos.q })));
                 createLegendItem(t, color);
@@ -238,13 +255,12 @@
     window.onload = async () => {
         chart = LightweightCharts.createChart(document.getElementById('chart'), { 
             layout: { background: { color: '#000' }, textColor: '#888', fontSize: 11 },
-            // REMOÇÃO DAS LINHAS DE GRELHA
             grid: { vertLines: { visible: false }, horzLines: { visible: false } },
             timeScale: { timeVisible: true, borderVisible: false },
             rightPriceScale: { borderVisible: false, autoScale: true }
         });
         candleSeries = chart.addCandlestickSeries({ upColor: '#00c853', downColor: '#ff3d00' });
-        mainLine = chart.addLineSeries({ color: colors[0], lineWidth: 3, title: 'TOTAL' });
+        mainLine = chart.addLineSeries({ color: colors[0], lineWidth: 3, title: 'TOTAL', priceLineVisible: true, priceLineSource: 1 });
         await fetchPrices();
         const { data } = await _supabase.from('trades').select('*').order('created_at', { ascending: true });
         allTrades = data || [];
@@ -259,17 +275,8 @@
         tics.forEach(t => { n.innerHTML += `<button class="nav-btn ${currentMode==='TICKER'&&currentSymbol===t?'active':''}" onclick="setMode('TICKER', '${t}')">${t}</button>`; });
     }
     
-    async function saveTrade() {
-        const tic = document.getElementById('parTicker').value.toUpperCase();
-        await _supabase.from('trades').insert([{ par: tic, tipo: document.getElementById('tType').value, preco: parseFloat(document.getElementById('tPrice').value), quantidade: parseFloat(document.getElementById('tQty').value), alavancagem_alvo: parseFloat(document.getElementById('tLev').value) }]);
-        location.reload();
-    }
-    
-    function renderTable() {
-        const f = currentMode === "TICKER" ? allTrades.filter(t => t.par === currentSymbol) : allTrades;
-        document.getElementById('tradeLog').innerHTML = f.slice().reverse().map(t => `<tr><td>${new Date(t.created_at).toLocaleString()}</td><td>${t.par}</td><td style="color:${t.tipo==='Compra'?'#00c853':'#ff3d00'}">${t.tipo === 'Compra' ? 'LONG' : 'SHORT'}</td><td>${t.preco}</td><td>${t.alavancagem_alvo}x</td><td>${t.quantidade}</td><td><button onclick="deleteTrade('${t.id}')" style="color:red; background:none; border:none; cursor:pointer;">×</button></td></tr>`).join('');
-    }
-
+    async function saveTrade() { const tic = document.getElementById('parTicker').value.toUpperCase(); await _supabase.from('trades').insert([{ par: tic, tipo: document.getElementById('tType').value, preco: parseFloat(document.getElementById('tPrice').value), quantidade: parseFloat(document.getElementById('tQty').value), alavancagem_alvo: parseFloat(document.getElementById('tLev').value) }]); location.reload(); }
+    function renderTable() { const f = currentMode === "TICKER" ? allTrades.filter(t => t.par === currentSymbol) : allTrades; document.getElementById('tradeLog').innerHTML = f.slice().reverse().map(t => `<tr><td>${new Date(t.created_at).toLocaleString()}</td><td>${t.par}</td><td style="color:${t.tipo==='Compra'?'#00c853':'#ff3d00'}">${t.tipo === 'Compra' ? 'LONG' : 'SHORT'}</td><td>${t.preco}</td><td>${t.alavancagem_alvo}x</td><td>${t.quantidade}</td><td><button onclick="deleteTrade('${t.id}')" style="color:red; background:none; border:none; cursor:pointer;">×</button></td></tr>`).join(''); }
     async function deleteTrade(id) { if(confirm("Apagar?")) { await _supabase.from('trades').delete().eq('id', id); location.reload(); } }
     async function changeTF(tf) { currentTF = tf; document.querySelectorAll('#tfControls .nav-btn').forEach(b => b.classList.remove('active')); if (currentMode === "OVERVIEW") await syncOverview(); else await syncTicker(); }
 </script>
