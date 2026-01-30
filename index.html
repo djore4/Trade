@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>[v2.22.2] Futures Pro Terminal - Sync Analytics</title>
+    <title>[v2.22.3] Futures Pro Terminal - TV Drawing Sync</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
@@ -12,14 +12,12 @@
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 8px; margin: 0; }
         .container { max-width: 1600px; margin: auto; }
         
-        /* Cabeçalho com Labels */
         .header-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 15px 20px; background: #111; border-radius: 12px; border: 1px solid var(--border); }
         .header-label { font-size: 0.55rem; color: #555; text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 4px; letter-spacing: 0.5px; }
         .equity-value { font-size: 1.8rem; font-weight: 900; color: #fff; letter-spacing: -1px; line-height: 1; }
         .pnl-stack { text-align: right; }
         .pnl-main { font-size: 1.3rem; font-weight: 800; line-height: 1; }
 
-        /* Dashboard 1 linha */
         .dashboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 10px; }
         .card { background: #121212; padding: 10px; border-radius: 10px; border: 1px solid var(--border); text-align: center; }
         .card label { color: #555; font-size: 0.5rem; text-transform: uppercase; font-weight: 800; display: block; }
@@ -29,11 +27,8 @@
         .nav-btn { background: #151515; color: #666; border: 1px solid #222; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.75rem; white-space: nowrap; transition: 0.2s; }
         .nav-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
 
-        /* Grelha 80/20 */
         .overview-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
-        @media (min-width: 1024px) { 
-            .overview-grid { grid-template-columns: 8fr 2fr; height: 500px; } 
-        }
+        @media (min-width: 1024px) { .overview-grid { grid-template-columns: 8fr 2fr; height: 500px; } }
         
         .chart-card { background: #111; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
         .chart-header { background: #161616; padding: 8px 12px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
@@ -107,7 +102,6 @@
                     <div id="barControls" style="display:flex; gap:4px;">
                         <button id="bar1d" class="nav-btn active" onclick="updateBarChart('D', this)">1D</button>
                         <button class="nav-btn" onclick="updateBarChart('W', this)">1W</button>
-                        <button class="nav-btn" onclick="updateBarChart('M', this)">1M</button>
                     </div>
                 </div>
                 <div id="bar-chart" class="chart-container"></div>
@@ -185,7 +179,6 @@
     async function setMode(m, t="") {
         currentMode = m; currentSymbol = t;
         document.getElementById('overview-container').style.display = m === "OVERVIEW" ? "block" : "none";
-        document.getElementById('bottomLegend').style.display = m === "OVERVIEW" ? "flex" : "none";
         document.getElementById('mainDashboard').style.display = m === "OVERVIEW" ? "none" : "grid"; 
         const tickerContainer = document.getElementById('ticker-container');
         tickerContainer.style.display = m === "TICKER" ? "block" : "none";
@@ -193,9 +186,27 @@
 
         if (m === "TICKER") {
             new TradingView.widget({
-                "autosize": true, "symbol": "BINANCE:" + t + ".P", "interval": "15", "theme": "dark", "style": "1", "locale": "pt", 
-                "container_id": "ticker-container", "hide_side_toolbar": false, "allow_symbol_change": true, 
-                "withdateranges": true, "chart": MY_TV_CHART_ID, "enabled_features": ["header_widget"]
+                "autosize": true,
+                "symbol": "BINANCE:" + t + ".P",
+                "interval": "15",
+                "theme": "dark",
+                "style": "1",
+                "locale": "pt",
+                "container_id": "ticker-container",
+                "hide_side_toolbar": false,
+                "allow_symbol_change": true,
+                "save_image": true,
+                "enable_publishing": true,
+                "withdateranges": true,
+                "chart": MY_TV_CHART_ID,
+                "enabled_features": [
+                    "header_widget",
+                    "use_localstorage_for_settings_adapter",
+                    "header_saveload",
+                    "study_templates"
+                ],
+                "client_id": "tradingview.com",
+                "user_id": "public_user"
             });
         } else { 
             await updateOverview('5', document.getElementById('btn5m')); 
@@ -247,7 +258,6 @@
         const minDate = allTrades.length > 0 ? Math.min(...allTrades.map(t => new Date(t.created_at).getTime())) / 1000 : 0;
         if(barSeries) barChart.removeSeries(barSeries);
         barSeries = barChart.addHistogramSeries({ priceFormat: { type: 'volume' }, priceLineVisible: false });
-
         const tickers = [...new Set(allTrades.map(t => t.par))];
         let aggregatedData = {};
         for (const t of tickers) {
@@ -257,17 +267,12 @@
                 const pos = getPosition(t);
                 j.result.list.forEach(v => {
                     const time = parseInt(v[0])/1000;
-                    // Lógica Start Date: se for anterior à primeira trade, mudança é 0
                     const change = time >= minDate ? (parseFloat(v[4]) - parseFloat(v[1])) * pos.q : 0;
                     aggregatedData[time] = (aggregatedData[time] || 0) + change;
                 });
             }
         }
-        const finalBars = Object.keys(aggregatedData).sort().map(time => ({ 
-            time: parseInt(time), 
-            value: aggregatedData[time], 
-            color: aggregatedData[time] >= 0 ? '#00c853bb' : '#ff3d00bb' 
-        }));
+        const finalBars = Object.keys(aggregatedData).sort().map(time => ({ time: parseInt(time), value: aggregatedData[time], color: aggregatedData[time] >= 0 ? '#00c853bb' : '#ff3d00bb' }));
         barSeries.setData(finalBars.slice(-10));
         barChart.timeScale().fitContent();
     }
@@ -287,23 +292,10 @@
     }
     
     window.onload = async () => { 
-        chart = LightweightCharts.createChart(document.getElementById('chart'), { 
-            layout: { background: { color: 'transparent' }, textColor: '#444', fontSize: 10 }, 
-            grid: { vertLines: false, horzLines: false }, 
-            rightPriceScale: { borderVisible: false }, 
-            timeScale: { borderVisible: false } 
-        }); 
-        barChart = LightweightCharts.createChart(document.getElementById('bar-chart'), { 
-            layout: { background: { color: 'transparent' }, textColor: '#444', fontSize: 10 }, 
-            grid: { vertLines: false, horzLines: false }, 
-            rightPriceScale: { borderVisible: false }, 
-            timeScale: { borderVisible: false } 
-        });
-        await fetchPrices(); 
-        const { data } = await _supabase.from('trades').select('*').order('created_at', { ascending: true }); 
-        allTrades = data || []; 
-        updateAssetNav(); renderTable(); await setMode("OVERVIEW"); 
-        setInterval(async () => { await fetchPrices(); updateUI(); }, 5000); 
+        chart = LightweightCharts.createChart(document.getElementById('chart'), { layout: { background: { color: 'transparent' }, textColor: '#444', fontSize: 10 }, grid: { vertLines: false, horzLines: false }, rightPriceScale: { borderVisible: false }, timeScale: { borderVisible: false } }); 
+        barChart = LightweightCharts.createChart(document.getElementById('bar-chart'), { layout: { background: { color: 'transparent' }, textColor: '#444', fontSize: 10 }, grid: { vertLines: false, horzLines: false }, rightPriceScale: { borderVisible: false }, timeScale: { borderVisible: false } });
+        await fetchPrices(); const { data } = await _supabase.from('trades').select('*').order('created_at', { ascending: true }); allTrades = data || []; 
+        updateAssetNav(); renderTable(); await setMode("OVERVIEW"); setInterval(async () => { await fetchPrices(); updateUI(); }, 5000); 
     };
 
     function updateAssetNav() { const n = document.getElementById('assetNav'); const tics = [...new Set(allTrades.map(t => t.par))]; n.innerHTML = `<button class="nav-btn ${currentMode==='OVERVIEW'?'active':''}" onclick="setMode('OVERVIEW')">GERAL</button>`; tics.forEach(t => { n.innerHTML += `<button class="nav-btn ${currentMode==='TICKER'&&currentSymbol===t?'active':''}" onclick="setMode('TICKER', '${t}')">${t}</button>`; }); }
