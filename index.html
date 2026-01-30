@@ -3,19 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>[v2.21.1] Futures Pro Terminal - Pro Analytics</title>
+    <title>[v2.22.0] Futures Pro Terminal - Precision Layout</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
         :root { --primary: #1a1a1a; --accent: #f3d42f; --success: #00c853; --danger: #ff3d00; --bg: #080808; --text: #e0e0e0; --border: #1a1a1a; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 8px; margin: 0; }
-        .container { max-width: 1400px; margin: auto; }
+        .container { max-width: 1600px; margin: auto; }
         
+        /* Cabeçalho com Labels Restaurados */
         .header-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 15px 20px; background: #111; border-radius: 12px; border: 1px solid var(--border); }
-        .equity-value { font-size: 1.8rem; font-weight: 900; color: #fff; letter-spacing: -1px; }
+        .header-label { font-size: 0.55rem; color: #555; text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 4px; letter-spacing: 0.5px; }
+        .equity-value { font-size: 1.8rem; font-weight: 900; color: #fff; letter-spacing: -1px; line-height: 1; }
         .pnl-stack { text-align: right; }
-        .pnl-main { font-size: 1.2rem; font-weight: 800; }
+        .pnl-main { font-size: 1.3rem; font-weight: 800; line-height: 1; }
 
         .dashboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 10px; }
         .card { background: #121212; padding: 10px; border-radius: 10px; border: 1px solid var(--border); text-align: center; }
@@ -26,27 +28,27 @@
         .nav-btn { background: #151515; color: #666; border: 1px solid #222; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.75rem; white-space: nowrap; transition: 0.2s; }
         .nav-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
 
-        /* Grelha de Gráficos Otimizada */
+        /* Grelha 80/20 Otimizada */
         .overview-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
         @media (min-width: 1024px) { 
-            .overview-grid { grid-template-columns: 1fr 1fr; height: 500px; } 
+            .overview-grid { grid-template-columns: 8fr 2fr; height: 500px; } 
         }
         
         .chart-card { background: #111; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
         .chart-header { background: #161616; padding: 8px 12px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
-        .chart-header h3 { margin: 0; font-size: 0.65rem; text-transform: uppercase; color: #666; letter-spacing: 1px; }
+        .chart-header h3 { margin: 0; font-size: 0.6rem; text-transform: uppercase; color: #555; letter-spacing: 1px; }
         .chart-container { flex: 1; min-height: 350px; width: 100%; }
 
         #ticker-container { height: 650px; width: 100%; display: none; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
 
-        .bottom-legend { display: flex; flex-wrap: wrap; gap: 12px; padding: 15px; background: #111; border: 1px solid var(--border); border-top: none; border-radius: 0 0 12px 12px; margin-top: -10px; margin-bottom: 15px; }
-        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #999; cursor: pointer; padding: 4px 8px; border-radius: 6px; background: #181818; }
+        .bottom-legend { display: flex; flex-wrap: wrap; gap: 10px; padding: 12px; background: #111; border: 1px solid var(--border); border-top: none; border-radius: 0 0 12px 12px; margin-top: -10px; margin-bottom: 15px; }
+        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.7rem; color: #888; cursor: pointer; padding: 4px 10px; border-radius: 6px; background: #181818; border: 1px solid #222; }
         .legend-color { width: 8px; height: 8px; border-radius: 50%; }
-        .legend-item.hidden { opacity: 0.3; }
+        .legend-item.hidden { opacity: 0.2; }
 
         .trade-panel { background: #111; padding: 15px; border-radius: 12px; border: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; position: relative; }
         .editing-notice { position: absolute; top: -10px; right: 20px; background: var(--accent); color: #000; font-size: 0.6rem; padding: 3px 10px; border-radius: 5px; font-weight: 900; }
-        .field { flex: 1 1 calc(20% - 10px); min-width: 100px; }
+        .field { flex: 1 1 calc(18% - 10px); min-width: 100px; }
         .field label { font-size: 0.55rem; color: #555; text-transform: uppercase; display: block; margin-bottom: 4px; font-weight: 800; }
         input, select { background: #080808; border: 1px solid #222; color: white; padding: 10px; border-radius: 8px; font-size: 0.85rem; width: 100%; }
         .exec-btn { background: var(--accent); color: #000; font-weight: 900; padding: 12px 24px; border-radius: 8px; border: none; cursor: pointer; }
@@ -55,6 +57,8 @@
         table { width: 100%; border-collapse: collapse; }
         th { text-align: left; padding: 12px 15px; font-size: 0.65rem; color: #555; text-transform: uppercase; background: #161616; }
         td { padding: 14px 15px; border-bottom: 1px solid #181818; font-size: 0.8rem; font-family: 'Roboto Mono', monospace; }
+        .badge-long { color: var(--success); font-weight: bold; }
+        .badge-short { color: var(--danger); font-weight: bold; }
     </style>
 </head>
 <body>
@@ -64,19 +68,21 @@
     
     <div class="header-info">
         <div class="header-block">
+            <span class="header-label">Portfolio Equity</span>
             <div class="equity-value" id="dispEquity">SYNC...</div>
         </div>
         <div class="pnl-stack">
+            <span class="header-label">Active P&L</span>
             <div class="pnl-main" id="dispPnlVal">--</div>
-            <div id="dispPnlPerc" style="font-size: 0.8rem; font-weight: bold;">0.00%</div>
+            <div id="dispPnlPerc" style="font-size: 0.8rem; font-weight: bold; margin-top: 2px;">0.00%</div>
         </div>
     </div>
 
     <div class="dashboard" id="mainDashboard" style="display:none;">
         <div class="card"><label>Price</label><span id="v1">---</span></div>
         <div class="card"><label>Entry</label><span id="v2">---</span></div>
-        <div class="card"><label>Lev</label><span id="v3">---</span></div>
-        <div class="card"><label>Liq</label><span id="v5" style="color:var(--danger)">---</span></div>
+        <div class="card"><label>Leverage</label><span id="v3">---</span></div>
+        <div class="card"><label>Liquidation</label><span id="v5" style="color:var(--danger)">---</span></div>
     </div>
 
     <div id="overview-container">
@@ -84,7 +90,7 @@
             <div class="chart-card">
                 <div class="chart-header">
                     <h3>Performance Curve</h3>
-                    <div class="sub-nav" id="lineControls">
+                    <div id="lineControls" style="display:flex; gap:4px;">
                         <button id="btn5m" class="nav-btn active" onclick="updateOverview('5', this)">5m</button>
                         <button class="nav-btn" onclick="updateOverview('60', this)">1h</button>
                         <button class="nav-btn" onclick="updateOverview('240', this)">4h</button>
@@ -95,11 +101,10 @@
             </div>
             <div class="chart-card">
                 <div class="chart-header">
-                    <h3>P&L History (Last 10)</h3>
-                    <div class="sub-nav" id="barControls">
+                    <h3>P&L Periodic</h3>
+                    <div id="barControls" style="display:flex; gap:4px;">
                         <button id="bar1d" class="nav-btn active" onclick="updateBarChart('D', this)">1D</button>
                         <button class="nav-btn" onclick="updateBarChart('W', this)">1W</button>
-                        <button class="nav-btn" onclick="updateBarChart('M', this)">1M</button>
                     </div>
                 </div>
                 <div id="bar-chart" class="chart-container"></div>
@@ -120,7 +125,7 @@
         <div class="field"><label>Qty</label><input type="number" id="tQty" step="any"></div>
         <div style="display:flex; gap:8px; align-items: flex-end;">
             <button class="exec-btn" id="execBtn" onclick="saveTrade()">EXECUTE</button>
-            <button class="nav-btn" id="resetBtn" onclick="resetForm()" style="display:none;">CANCEL</button>
+            <button class="nav-btn" id="resetBtn" onclick="resetForm()" style="display:none; background:#333;">CANCEL</button>
         </div>
     </div>
 
@@ -136,7 +141,7 @@
     const SUPABASE_KEY = 'sb_publishable_bRa-mZWTaf0g6sNyWL9OmQ_uvo7Ex5H';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    let currentMode = "OVERVIEW", activePrices = {}, allTrades = [];
+    let currentMode = "OVERVIEW", currentSymbol = "", activePrices = {}, allTrades = [];
     let chart, barChart, mainLine, zeroLine, barSeries, subLines = {}, seriesVisibility = { "TOTAL": true };
     const colors = ['#f3d42f', '#ff6b6b', '#4dabf7', '#51cf66', '#cc5de8', '#ff922b'];
 
@@ -235,13 +240,10 @@
 
     async function updateBarChart(interval, btn) {
         if(btn) { document.querySelectorAll('#barControls .nav-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); }
-        const minDate = allTrades.length > 0 ? Math.min(...allTrades.map(t => new Date(t.created_at).getTime())) / 1000 : 0;
         if(barSeries) barChart.removeSeries(barSeries);
         barSeries = barChart.addHistogramSeries({ priceFormat: { type: 'volume' }, priceLineVisible: false });
-
         const tickers = [...new Set(allTrades.map(t => t.par))];
         let aggregatedData = {};
-
         for (const t of tickers) {
             const r = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${t}&interval=${interval}&limit=15`);
             const j = await r.json();
@@ -249,10 +251,8 @@
                 const pos = getPosition(t);
                 j.result.list.forEach(v => {
                     const time = parseInt(v[0])/1000;
-                    if (time >= minDate - 86400) {
-                        const change = (parseFloat(v[4]) - parseFloat(v[1])) * pos.q;
-                        aggregatedData[time] = (aggregatedData[time] || 0) + change;
-                    }
+                    const change = (parseFloat(v[4]) - parseFloat(v[1])) * pos.q;
+                    aggregatedData[time] = (aggregatedData[time] || 0) + change;
                 });
             }
         }
