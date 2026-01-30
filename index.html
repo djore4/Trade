@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>[v2.22.5] Futures Pro Terminal - Bybit Focus</title>
+    <title>[v2.22.6] Futures Pro Terminal - TV Header & Sync Fix</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
@@ -43,7 +43,6 @@
         .legend-item.hidden { opacity: 0.2; }
 
         .trade-panel { background: #111; padding: 15px; border-radius: 12px; border: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; position: relative; }
-        .editing-notice { position: absolute; top: -10px; right: 20px; background: var(--accent); color: #000; font-size: 0.6rem; padding: 3px 10px; border-radius: 5px; font-weight: 900; }
         .field { flex: 1 1 calc(18% - 10px); min-width: 100px; }
         .field label { font-size: 0.55rem; color: #555; text-transform: uppercase; display: block; margin-bottom: 4px; font-weight: 800; }
         input, select { background: #080808; border: 1px solid #222; color: white; padding: 10px; border-radius: 8px; font-size: 0.85rem; width: 100%; }
@@ -61,49 +60,20 @@
 
 <div class="container">
     <div class="asset-nav" id="assetNav"></div>
-    
     <div class="header-info">
-        <div class="header-block">
-            <span class="header-label">Portfolio Equity</span>
-            <div class="equity-value" id="dispEquity">SYNC...</div>
-        </div>
-        <div class="pnl-stack">
-            <span class="header-label">Active P&L</span>
-            <div class="pnl-main" id="dispPnlVal">--</div>
-            <div id="dispPnlPerc" style="font-size: 0.8rem; font-weight: bold; margin-top: 2px;">0.00%</div>
-        </div>
+        <div class="header-block"><span class="header-label">Portfolio Equity</span><div class="equity-value" id="dispEquity">SYNC...</div></div>
+        <div class="pnl-stack"><span class="header-label">Active P&L</span><div class="pnl-main" id="dispPnlVal">--</div><div id="dispPnlPerc" style="font-size: 0.8rem; font-weight: bold; margin-top: 2px;">0.00%</div></div>
     </div>
-
-    <div class="dashboard" id="mainDashboard" style="display:none;">
-        <div class="card"><label>Price</label><span id="v1">---</span></div>
-        <div class="card"><label>Entry</label><span id="v2">---</span></div>
-        <div class="card"><label>Leverage</label><span id="v3">---</span></div>
-        <div class="card"><label>Liquidation</label><span id="v5" style="color:var(--danger)">---</span></div>
-    </div>
+    <div class="dashboard" id="mainDashboard" style="display:none;"><div class="card"><label>Price</label><span id="v1">---</span></div><div class="card"><label>Entry</label><span id="v2">---</span></div><div class="card"><label>Leverage</label><span id="v3">---</span></div><div class="card"><label>Liquidation</label><span id="v5" style="color:var(--danger)">---</span></div></div>
 
     <div id="overview-container">
         <div class="overview-grid">
             <div class="chart-card">
-                <div class="chart-header">
-                    <h3>Performance Curve</h3>
-                    <div id="lineControls" style="display:flex; gap:4px;">
-                        <button id="btn5m" class="nav-btn active" onclick="updateOverview('5', this)">5m</button>
-                        <button class="nav-btn" onclick="updateOverview('15', this)">15m</button>
-                        <button class="nav-btn" onclick="updateOverview('60', this)">1h</button>
-                        <button class="nav-btn" onclick="updateOverview('240', this)">4h</button>
-                        <button class="nav-btn" onclick="updateOverview('D', this)">1D</button>
-                    </div>
-                </div>
+                <div class="chart-header"><h3>Performance Curve</h3><div id="lineControls" style="display:flex; gap:4px;"><button id="btn5m" class="nav-btn active" onclick="updateOverview('5', this)">5m</button><button class="nav-btn" onclick="updateOverview('15', this)">15m</button><button class="nav-btn" onclick="updateOverview('60', this)">1h</button><button class="nav-btn" onclick="updateOverview('240', this)">4h</button><button class="nav-btn" onclick="updateOverview('D', this)">1D</button></div></div>
                 <div id="chart" class="chart-container"></div>
             </div>
             <div class="chart-card">
-                <div class="chart-header">
-                    <h3>P&L Periodic</h3>
-                    <div id="barControls" style="display:flex; gap:4px;">
-                        <button id="bar1d" class="nav-btn active" onclick="updateBarChart('D', this)">1D</button>
-                        <button class="nav-btn" onclick="updateBarChart('W', this)">1W</button>
-                    </div>
-                </div>
+                <div class="chart-header"><h3>P&L Periodic</h3><div id="barControls" style="display:flex; gap:4px;"><button id="bar1d" class="nav-btn active" onclick="updateBarChart('D', this)">1D</button><button class="nav-btn" onclick="updateBarChart('W', this)">1W</button></div></div>
                 <div id="bar-chart" class="chart-container"></div>
             </div>
         </div>
@@ -113,22 +83,16 @@
     <div id="ticker-container"></div>
 
     <div class="trade-panel" id="tradePanel">
-        <div class="editing-notice" id="editLabel" style="display:none;">EDITING TRADE</div>
+        <div id="editLabel" style="display:none; position:absolute; top:-10px; right:20px; background:var(--accent); color:000; font-size:0.6rem; padding:3px 10px; border-radius:5px; font-weight:900;">EDITING</div>
         <input type="hidden" id="editId">
         <div class="field"><label>Ticker</label><input type="text" id="parTicker" placeholder="BTCUSDT"></div>
         <div class="field"><label>Side</label><select id="tType"><option value="Compra">LONG</option><option value="Venda">SHORT</option></select></div>
         <div class="field"><label>Price</label><input type="number" id="tPrice" step="any"></div>
         <div class="field"><label>Leverage</label><input type="number" id="tLev" value="10"></div>
         <div class="field"><label>Qty</label><input type="number" id="tQty" step="any"></div>
-        <div style="display:flex; gap:8px; align-items: flex-end;">
-            <button class="exec-btn" id="execBtn" onclick="saveTrade()">EXECUTE</button>
-            <button class="nav-btn" id="resetBtn" onclick="resetForm()" style="display:none; background:#333;">CANCEL</button>
-        </div>
+        <div style="display:flex; gap:8px; align-items: flex-end;"><button class="exec-btn" id="execBtn" onclick="saveTrade()">EXECUTE</button><button class="nav-btn" id="resetBtn" onclick="resetForm()" style="display:none; background:#333;">CANCEL</button></div>
     </div>
-
-    <div class="table-section">
-        <div class="table-container"><table><tbody id="tradeLog"></tbody></table></div>
-    </div>
+    <div class="table-section"><div class="table-container"><table><tbody id="tradeLog"></tbody></table></div></div>
 </div>
 
 <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
@@ -185,26 +149,28 @@
         tickerContainer.innerHTML = ""; 
 
         if (m === "TICKER") {
-            // ALTERAÇÃO PARA BYBIT:
             new TradingView.widget({
-                "autosize": true, 
-                "symbol": "BYBIT:" + t + ".P", 
-                "interval": "15", 
-                "theme": "dark", 
-                "style": "1", 
-                "locale": "pt", 
-                "container_id": "ticker-container", 
-                "hide_side_toolbar": false, 
-                "allow_symbol_change": true, 
-                "save_image": true, 
-                "enable_publishing": true, 
-                "withdateranges": true, 
+                "autosize": true,
+                "symbol": "BYBIT:" + t + ".P",
+                "interval": "15",
+                "theme": "dark",
+                "style": "1",
+                "locale": "pt",
+                "container_id": "ticker-container",
+                "hide_side_toolbar": false,
+                "allow_symbol_change": true,
+                "save_image": true,
+                "enable_publishing": true,
+                "withdateranges": true,
                 "chart": MY_TV_CHART_ID,
-                "enabled_features": ["header_widget", "use_localstorage_for_settings_adapter", "header_saveload"],
+                "enabled_features": ["header_widget", "use_localstorage_for_settings_adapter", "header_saveload", "study_templates"],
                 "client_id": "tradingview.com",
                 "user_id": "public_user"
             });
-        } else { await updateOverview('5', document.getElementById('btn5m')); await updateBarChart('D', document.getElementById('bar1d')); }
+        } else { 
+            await updateOverview('5', document.getElementById('btn5m')); 
+            await updateBarChart('D', document.getElementById('bar1d'));
+        }
         updateAssetNav(); renderTable(); updateUI();
     }
 
@@ -228,9 +194,13 @@
                 const pos = getPosition(t); const color = colors[(tickers.indexOf(t)+1)%colors.length]; 
                 const series = chart.addLineSeries({ color, lineWidth: 1.2, priceLineVisible: false, lastValueVisible: true }); 
                 subLines[t] = series; 
-                data.forEach(p => { const val = p.t >= minDate ? (p.c - (pos.cost/pos.q)) * pos.q : 0; composite[p.t] = (composite[p.t] || 0) + val; });
+                data.forEach(p => {
+                    const val = p.t >= minDate ? (p.c - (pos.cost/pos.q)) * pos.q : 0;
+                    composite[p.t] = (composite[p.t] || 0) + val;
+                });
                 series.setData(data.map(p => ({ time: p.t, value: p.t >= minDate ? (p.c - (pos.cost/pos.q)) * pos.q : 0 })));
-                series.applyOptions({ visible: seriesVisibility[t] !== false }); createLegendItem(t, color); 
+                series.applyOptions({ visible: seriesVisibility[t] !== false });
+                createLegendItem(t, color); 
             } 
         } 
         const totalData = Object.keys(composite).sort().map(time => ({ time: parseInt(time), value: composite[time] }));
@@ -251,7 +221,11 @@
             const j = await r.json();
             if (j.result?.list) {
                 const pos = getPosition(t);
-                j.result.list.forEach(v => { const time = parseInt(v[0])/1000; const change = time >= minDate ? (parseFloat(v[4]) - parseFloat(v[1])) * pos.q : 0; aggregatedData[time] = (aggregatedData[time] || 0) + change; });
+                j.result.list.forEach(v => {
+                    const time = parseInt(v[0])/1000;
+                    const change = time >= minDate ? (parseFloat(v[4]) - parseFloat(v[1])) * pos.q : 0;
+                    aggregatedData[time] = (aggregatedData[time] || 0) + change;
+                });
             }
         }
         const finalBars = Object.keys(aggregatedData).sort().map(time => ({ time: parseInt(time), value: aggregatedData[time], color: aggregatedData[time] >= 0 ? '#00c853bb' : '#ff3d00bb' }));
@@ -259,15 +233,35 @@
         barChart.timeScale().fitContent();
     }
     
-    function createLegendItem(l, c) { if (seriesVisibility[l] === undefined) seriesVisibility[l] = true; const div = document.createElement('div'); div.className = `legend-item ${seriesVisibility[l] ? '' : 'hidden'}`; div.innerHTML = `<div class="legend-color" style="background:${c}"></div><span>${l}</span>`; div.onclick = () => { seriesVisibility[l] = !seriesVisibility[l]; if (l === "TOTAL") mainLine.applyOptions({ visible: seriesVisibility[l] }); else if (subLines[l]) subLines[l].applyOptions({ visible: seriesVisibility[l] }); div.classList.toggle('hidden', !seriesVisibility[l]); }; document.getElementById('bottomLegend').appendChild(div); }
-    window.onload = async () => { chart = LightweightCharts.createChart(document.getElementById('chart'), { layout: { background: { color: 'transparent' }, textColor: '#444', fontSize: 10 }, grid: { vertLines: false, horzLines: false }, rightPriceScale: { borderVisible: false }, timeScale: { borderVisible: false } }); barChart = LightweightCharts.createChart(document.getElementById('bar-chart'), { layout: { background: { color: 'transparent' }, textColor: '#444', fontSize: 10 }, grid: { vertLines: false, horzLines: false }, rightPriceScale: { borderVisible: false }, timeScale: { borderVisible: false } }); await fetchPrices(); const { data } = await _supabase.from('trades').select('*').order('created_at', { ascending: true }); allTrades = data || []; updateAssetNav(); renderTable(); await setMode("OVERVIEW"); setInterval(async () => { await fetchPrices(); updateUI(); }, 5000); };
+    function createLegendItem(l, c) {
+        if (seriesVisibility[l] === undefined) seriesVisibility[l] = true;
+        const div = document.createElement('div');
+        div.className = `legend-item ${seriesVisibility[l] ? '' : 'hidden'}`;
+        div.innerHTML = `<div class="legend-color" style="background:${c}"></div><span>${l}</span>`;
+        div.onclick = () => {
+            seriesVisibility[l] = !seriesVisibility[l];
+            if (l === "TOTAL") mainLine.applyOptions({ visible: seriesVisibility[l] });
+            else if (subLines[l]) subLines[l].applyOptions({ visible: seriesVisibility[l] });
+            div.classList.toggle('hidden', !seriesVisibility[l]);
+        };
+        document.getElementById('bottomLegend').appendChild(div);
+    }
+    
+    window.onload = async () => { 
+        chart = LightweightCharts.createChart(document.getElementById('chart'), { layout: { background: { color: 'transparent' }, textColor: '#444', fontSize: 10 }, grid: { vertLines: false, horzLines: false }, rightPriceScale: { borderVisible: false }, timeScale: { borderVisible: false } }); 
+        barChart = LightweightCharts.createChart(document.getElementById('bar-chart'), { layout: { background: { color: 'transparent' }, textColor: '#444', fontSize: 10 }, grid: { vertLines: false, horzLines: false }, rightPriceScale: { borderVisible: false }, timeScale: { borderVisible: false } });
+        await fetchPrices(); 
+        const { data } = await _supabase.from('trades').select('*').order('created_at', { ascending: true }); 
+        allTrades = data || []; 
+        updateAssetNav(); renderTable(); await setMode("OVERVIEW"); 
+        setInterval(async () => { await fetchPrices(); updateUI(); }, 5000); 
+    };
+
     function updateAssetNav() { const n = document.getElementById('assetNav'); const tics = [...new Set(allTrades.map(t => t.par))]; n.innerHTML = `<button class="nav-btn ${currentMode==='OVERVIEW'?'active':''}" onclick="setMode('OVERVIEW')">GERAL</button>`; tics.forEach(t => { n.innerHTML += `<button class="nav-btn ${currentMode==='TICKER'&&currentSymbol===t?'active':''}" onclick="setMode('TICKER', '${t}')">${t}</button>`; }); }
     async function saveTrade() { const id = document.getElementById('editId').value; const p = { par: document.getElementById('parTicker').value.toUpperCase(), tipo: document.getElementById('tType').value, preco: parseFloat(document.getElementById('tPrice').value), quantidade: parseFloat(document.getElementById('tQty').value), alavancagem_alvo: parseFloat(document.getElementById('tLev').value) }; if(id) await _supabase.from('trades').update(p).eq('id', id); else await _supabase.from('trades').insert([p]); location.reload(); }
     function editTrade(id) { const t = allTrades.find(x => x.id == id); document.getElementById('editId').value = t.id; document.getElementById('parTicker').value = t.par; document.getElementById('tType').value = t.tipo; document.getElementById('tPrice').value = t.preco; document.getElementById('tLev').value = t.alavancagem_alvo; document.getElementById('tQty').value = t.quantidade; document.getElementById('execBtn').innerText = "UPDATE"; document.getElementById('editLabel').style.display = "block"; document.getElementById('resetBtn').style.display = "block"; document.getElementById('tradePanel').scrollIntoView({ behavior: 'smooth' }); }
     function resetForm() { document.getElementById('editId').value = ""; document.getElementById('parTicker').value = ""; document.getElementById('tPrice').value = ""; document.getElementById('tQty').value = ""; document.getElementById('execBtn').innerText = "EXECUTE"; document.getElementById('editLabel').style.display = "none"; document.getElementById('resetBtn').style.display = "none"; }
     function renderTable() { const f = currentMode === "TICKER" ? allTrades.filter(t => t.par === currentSymbol) : allTrades; document.getElementById('tradeLog').innerHTML = f.slice().reverse().map(t => `<tr><td>${new Date(t.created_at).toLocaleDateString()}</td><td style="color:#fff;font-weight:700">${t.par}</td><td><span class="${t.tipo==='Compra'?'badge-long':'badge-short'}">${t.tipo==='Compra'?'LONG':'SHORT'}</span></td><td>${t.preco}</td><td>${t.quantidade}</td><td>$${(t.preco*t.quantidade).toFixed(2)}</td><td>${t.alavancagem_alvo}x</td><td class="action-btns"><button onclick="editTrade('${t.id}')">📝</button><button onclick="deleteTrade('${t.id}')">🗑️</button></td></tr>`).join(''); }
-    function exportToCSV() { let csv = "Ativo,Lado,Preco,Qtd,USD\n"; allTrades.forEach(t => { csv += `${t.par},${t.tipo},${t.preco},${t.quantidade},${t.preco*t.quantidade}\n`; }); const blob = new Blob([csv], { type: 'text/csv' }); const url = window.URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'trades.csv'; a.click(); }
-    async function deleteTrade(id) { if(confirm("Delete?")) { await _supabase.from('trades').delete().eq('id', id); location.reload(); } }
 </script>
 </body>
 </html>
