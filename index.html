@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>[v2.22.8] Futures Pro Terminal - RSI Auto-Load</title>
+    <title>[v2.22.9] Futures Pro Terminal - TV Reset</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
@@ -43,7 +43,6 @@
         .legend-item.hidden { opacity: 0.2; }
 
         .trade-panel { background: #111; padding: 15px; border-radius: 12px; border: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; position: relative; }
-        .editing-notice { position: absolute; top: -10px; right: 20px; background: var(--accent); color: #000; font-size: 0.6rem; padding: 3px 10px; border-radius: 5px; font-weight: 900; }
         .field { flex: 1 1 calc(18% - 10px); min-width: 100px; }
         .field label { font-size: 0.55rem; color: #555; text-transform: uppercase; display: block; margin-bottom: 4px; font-weight: 800; }
         input, select { background: #080808; border: 1px solid #222; color: white; padding: 10px; border-radius: 8px; font-size: 0.85rem; width: 100%; }
@@ -53,18 +52,18 @@
         table { width: 100%; border-collapse: collapse; }
         th { text-align: left; padding: 12px 15px; font-size: 0.65rem; color: #555; text-transform: uppercase; background: #161616; }
         td { padding: 14px 15px; border-bottom: 1px solid #181818; font-size: 0.8rem; font-family: 'Roboto Mono', monospace; }
-        .badge-long { color: var(--success); font-weight: bold; }
-        .badge-short { color: var(--danger); font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="asset-nav" id="assetNav"></div>
+    
     <div class="header-info">
         <div class="header-block"><span class="header-label">Portfolio Equity</span><div class="equity-value" id="dispEquity">SYNC...</div></div>
         <div class="pnl-stack"><span class="header-label">Active P&L</span><div class="pnl-main" id="dispPnlVal">--</div><div id="dispPnlPerc" style="font-size: 0.8rem; font-weight: bold; margin-top: 2px;">0.00%</div></div>
     </div>
+
     <div class="dashboard" id="mainDashboard" style="display:none;"><div class="card"><label>Price</label><span id="v1">---</span></div><div class="card"><label>Entry</label><span id="v2">---</span></div><div class="card"><label>Leverage</label><span id="v3">---</span></div><div class="card"><label>Liquidation</label><span id="v5" style="color:var(--danger)">---</span></div></div>
 
     <div id="overview-container">
@@ -158,84 +157,22 @@
                 "style": "1",
                 "locale": "pt",
                 "container_id": "ticker-container",
-                "hide_side_toolbar": false,
+                "toolbar_bg": "#080808",
+                "enable_publishing": false,
+                "hide_side_toolbar": false, // Obrigatório para o header aparecer em alguns casos
                 "allow_symbol_change": true,
-                "save_image": true,
-                "enable_publishing": true,
+                "save_image": false,
                 "withdateranges": true,
-                "chart": MY_TV_CHART_ID,
-                "studies": [
-                    "Volume@tv-basicstudies",
-                    "RSI@tv-basicstudies",
-                    "EMA@tv-basicstudies"
-                ],
-                "enabled_features": [
-                    "header_widget",
-                    "header_resolutions",
-                    "header_settings",
-                    "header_indicators",
-                    "header_fullscreen_button",
-                    "use_localstorage_for_settings_adapter",
-                    "header_saveload"
-                ],
-                "client_id": "tradingview.com",
-                "user_id": "public_user"
+                "chart": MY_TV_CHART_ID, // O TEU ID PERSONALIZADO
+                "enabled_features": ["header_widget", "header_resolutions", "header_settings", "header_indicators", "header_compare", "header_undo_redo", "header_screenshot", "header_fullscreen_button"]
             });
         } else { await updateOverview('5', document.getElementById('btn5m')); await updateBarChart('D', document.getElementById('bar1d')); }
         updateAssetNav(); renderTable(); updateUI();
     }
 
-    async function updateOverview(interval, btn) { 
-        if(btn) { document.querySelectorAll('#lineControls .nav-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); } 
-        const minDate = allTrades.length > 0 ? Math.min(...allTrades.map(t => new Date(t.created_at).getTime())) / 1000 : 0;
-        const tickers = [...new Set(allTrades.map(t => t.par))]; 
-        document.getElementById('bottomLegend').innerHTML = ''; 
-        if(mainLine) chart.removeSeries(mainLine); if(zeroLine) chart.removeSeries(zeroLine);
-        Object.values(subLines).forEach(s => chart.removeSeries(s)); subLines = {};
-        zeroLine = chart.addLineSeries({ color: '#222', lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
-        zeroLine.setData([{ time: 0, value: 0 }, { time: 2147483647, value: 0 }]);
-        mainLine = chart.addLineSeries({ color: '#f3d42f', lineWidth: 3, priceLineVisible: false, lastValueVisible: true });
-        createLegendItem("TOTAL", "#f3d42f");
-        let composite = {};
-        for (const t of tickers) { 
-            const r = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${t}&interval=${interval}&limit=300`); 
-            const j = await r.json(); 
-            if (j.result?.list) {
-                const data = j.result.list.map(v => ({ t: parseInt(v[0])/1000, c: parseFloat(v[4]) })).reverse(); 
-                const pos = getPosition(t); const color = colors[(tickers.indexOf(t)+1)%colors.length]; 
-                const series = chart.addLineSeries({ color, lineWidth: 1.2, priceLineVisible: false, lastValueVisible: true }); 
-                subLines[t] = series; 
-                data.forEach(p => { const val = p.t >= minDate ? (p.c - (pos.cost/pos.q)) * pos.q : 0; composite[p.t] = (composite[p.t] || 0) + val; });
-                series.setData(data.map(p => ({ time: p.t, value: p.t >= minDate ? (p.c - (pos.cost/pos.q)) * pos.q : 0 })));
-                series.applyOptions({ visible: seriesVisibility[t] !== false }); createLegendItem(t, color); 
-            } 
-        } 
-        const totalData = Object.keys(composite).sort().map(time => ({ time: parseInt(time), value: composite[time] }));
-        if(totalData.length > 0) mainLine.setData(totalData);
-        mainLine.applyOptions({ visible: seriesVisibility["TOTAL"] !== false });
-        chart.timeScale().fitContent(); 
-    }
-
-    async function updateBarChart(interval, btn) {
-        if(btn) { document.querySelectorAll('#barControls .nav-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); }
-        const minDate = allTrades.length > 0 ? Math.min(...allTrades.map(t => new Date(t.created_at).getTime())) / 1000 : 0;
-        if(barSeries) barChart.removeSeries(barSeries);
-        barSeries = barChart.addHistogramSeries({ priceFormat: { type: 'volume' }, priceLineVisible: false });
-        const tickers = [...new Set(allTrades.map(t => t.par))];
-        let aggregatedData = {};
-        for (const t of tickers) {
-            const r = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${t}&interval=${interval}&limit=30`);
-            const j = await r.json();
-            if (j.result?.list) {
-                const pos = getPosition(t);
-                j.result.list.forEach(v => { const time = parseInt(v[0])/1000; const change = time >= minDate ? (parseFloat(v[4]) - parseFloat(v[1])) * pos.q : 0; aggregatedData[time] = (aggregatedData[time] || 0) + change; });
-            }
-        }
-        const finalBars = Object.keys(aggregatedData).sort().map(time => ({ time: parseInt(time), value: aggregatedData[time], color: aggregatedData[time] >= 0 ? '#00c853bb' : '#ff3d00bb' }));
-        barSeries.setData(finalBars.slice(-10));
-        barChart.timeScale().fitContent();
-    }
-    
+    // --- Resto da lógica de gráficos Lightweight Charts (Curva e Barras) mantida ---
+    async function updateOverview(interval, btn) { if(btn) { document.querySelectorAll('#lineControls .nav-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); } const minDate = allTrades.length > 0 ? Math.min(...allTrades.map(t => new Date(t.created_at).getTime())) / 1000 : 0; const tickers = [...new Set(allTrades.map(t => t.par))]; document.getElementById('bottomLegend').innerHTML = ''; if(mainLine) chart.removeSeries(mainLine); if(zeroLine) chart.removeSeries(zeroLine); Object.values(subLines).forEach(s => chart.removeSeries(s)); subLines = {}; zeroLine = chart.addLineSeries({ color: '#222', lineWidth: 1, priceLineVisible: false, lastValueVisible: false }); zeroLine.setData([{ time: 0, value: 0 }, { time: 2147483647, value: 0 }]); mainLine = chart.addLineSeries({ color: '#f3d42f', lineWidth: 3, priceLineVisible: false, lastValueVisible: true }); createLegendItem("TOTAL", "#f3d42f"); let composite = {}; for (const t of tickers) { const r = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${t}&interval=${interval}&limit=300`); const j = await r.json(); if (j.result?.list) { const data = j.result.list.map(v => ({ t: parseInt(v[0])/1000, c: parseFloat(v[4]) })).reverse(); const pos = getPosition(t); const color = colors[(tickers.indexOf(t)+1)%colors.length]; const series = chart.addLineSeries({ color, lineWidth: 1.2, priceLineVisible: false, lastValueVisible: true }); subLines[t] = series; data.forEach(p => { const val = p.t >= minDate ? (p.c - (pos.cost/pos.q)) * pos.q : 0; composite[p.t] = (composite[p.t] || 0) + val; }); series.setData(data.map(p => ({ time: p.t, value: p.t >= minDate ? (p.c - (pos.cost/pos.q)) * pos.q : 0 }))); series.applyOptions({ visible: seriesVisibility[t] !== false }); createLegendItem(t, color); } } const totalData = Object.keys(composite).sort().map(time => ({ time: parseInt(time), value: composite[time] })); if(totalData.length > 0) mainLine.setData(totalData); mainLine.applyOptions({ visible: seriesVisibility["TOTAL"] !== false }); chart.timeScale().fitContent(); }
+    async function updateBarChart(interval, btn) { if(btn) { document.querySelectorAll('#barControls .nav-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); } const minDate = allTrades.length > 0 ? Math.min(...allTrades.map(t => new Date(t.created_at).getTime())) / 1000 : 0; if(barSeries) barChart.removeSeries(barSeries); barSeries = barChart.addHistogramSeries({ priceFormat: { type: 'volume' }, priceLineVisible: false }); const tickers = [...new Set(allTrades.map(t => t.par))]; let aggregatedData = {}; for (const t of tickers) { const r = await fetch(`https://api.bybit.com/v5/market/kline?category=linear&symbol=${t}&interval=${interval}&limit=30`); const j = await r.json(); if (j.result?.list) { const pos = getPosition(t); j.result.list.forEach(v => { const time = parseInt(v[0])/1000; const change = time >= minDate ? (parseFloat(v[4]) - parseFloat(v[1])) * pos.q : 0; aggregatedData[time] = (aggregatedData[time] || 0) + change; }); } } const finalBars = Object.keys(aggregatedData).sort().map(time => ({ time: parseInt(time), value: aggregatedData[time], color: aggregatedData[time] >= 0 ? '#00c853bb' : '#ff3d00bb' })); barSeries.setData(finalBars.slice(-10)); barChart.timeScale().fitContent(); }
     function createLegendItem(l, c) { if (seriesVisibility[l] === undefined) seriesVisibility[l] = true; const div = document.createElement('div'); div.className = `legend-item ${seriesVisibility[l] ? '' : 'hidden'}`; div.innerHTML = `<div class="legend-color" style="background:${c}"></div><span>${l}</span>`; div.onclick = () => { seriesVisibility[l] = !seriesVisibility[l]; if (l === "TOTAL") mainLine.applyOptions({ visible: seriesVisibility[l] }); else if (subLines[l]) subLines[l].applyOptions({ visible: seriesVisibility[l] }); div.classList.toggle('hidden', !seriesVisibility[l]); }; document.getElementById('bottomLegend').appendChild(div); }
     window.onload = async () => { chart = LightweightCharts.createChart(document.getElementById('chart'), { layout: { background: { color: 'transparent' }, textColor: '#444', fontSize: 10 }, grid: { vertLines: false, horzLines: false }, rightPriceScale: { borderVisible: false }, timeScale: { borderVisible: false } }); barChart = LightweightCharts.createChart(document.getElementById('bar-chart'), { layout: { background: { color: 'transparent' }, textColor: '#444', fontSize: 10 }, grid: { vertLines: false, horzLines: false }, rightPriceScale: { borderVisible: false }, timeScale: { borderVisible: false } }); await fetchPrices(); const { data } = await _supabase.from('trades').select('*').order('created_at', { ascending: true }); allTrades = data || []; updateAssetNav(); renderTable(); await setMode("OVERVIEW"); setInterval(async () => { await fetchPrices(); updateUI(); }, 5000); };
     function updateAssetNav() { const n = document.getElementById('assetNav'); const tics = [...new Set(allTrades.map(t => t.par))]; n.innerHTML = `<button class="nav-btn ${currentMode==='OVERVIEW'?'active':''}" onclick="setMode('OVERVIEW')">GERAL</button>`; tics.forEach(t => { n.innerHTML += `<button class="nav-btn ${currentMode==='TICKER'&&currentSymbol===t?'active':''}" onclick="setMode('TICKER', '${t}')">${t}</button>`; }); }
