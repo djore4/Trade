@@ -2,101 +2,122 @@
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
-    <title>FleetWise Portfolio Dashboard</title>
+    <title>FleetWise Supabase Dashboard - Margem USDT</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { background-color: #131722; color: #d1d4dc; font-family: sans-serif; display: flex; justify-content: center; padding: 20px; }
-        .container { width: 100%; max-width: 900px; background: #1e222d; padding: 20px; border-radius: 8px; border: 1px solid #363c4e; }
-        .header { display: flex; justify-content: space-between; margin-bottom: 30px; border-bottom: 1px solid #363c4e; padding-bottom: 20px; }
-        .stat-box { display: flex; flex-direction: column; }
-        .stat-label { font-size: 12px; color: #787b86; text-transform: uppercase; }
-        .stat-value { font-size: 24px; font-weight: bold; margin-top: 5px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th { text-align: left; color: #787b86; font-size: 12px; padding: 10px; border-bottom: 1px solid #363c4e; }
-        td { padding: 15px 10px; border-bottom: 1px solid #2a2e39; }
-        .up { color: #089981; }
-        .down { color: #f23645; }
-        .avg { color: #ff9800; }
-        .liq-alert { background-color: rgba(242, 54, 69, 0.2); border-radius: 4px; padding: 2px 5px; }
+        body { background-color: #131722; color: #d1d4dc; font-family: sans-serif; padding: 20px; }
+        .container { max-width: 1100px; margin: auto; background: #1e222d; padding: 25px; border-radius: 12px; border: 1px solid #363c4e; }
+        .form-group { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: flex-end; }
+        .input-box { display: flex; flex-direction: column; flex: 1; min-width: 150px; }
+        label { font-size: 12px; color: #787b86; margin-bottom: 5px; }
+        input { background: #2a2e39; border: 1px solid #363c4e; color: white; padding: 10px; border-radius: 4px; }
+        button { background: #2962ff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; height: 38px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { text-align: left; color: #787b86; padding: 12px; border-bottom: 2px solid #363c4e; font-size: 13px; }
+        td { padding: 12px; border-bottom: 1px solid #2a2e39; }
+        .liq-price { color: #f23645; font-weight: bold; }
+        .token-qty { font-size: 11px; color: #787b86; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header">
-        <div class="stat-box">
-            <span class="stat-label">Market Value Total</span>
-            <span class="stat-value" id="total-mkt">$0.00</span>
+    <h2>Registo de Trades (Entrada por Margem $)</h2>
+    
+    <div class="form-group">
+        <div class="input-box">
+            <label>Ticker</label>
+            <input type="text" id="symbol" placeholder="Ex: APTUSDT">
         </div>
-        <div class="stat-box">
-            <span class="stat-label">Total P/L</span>
-            <span class="stat-value" id="total-pnl">$0.00 (0%)</span>
+        <div class="input-box">
+            <label>Preço de Entrada</label>
+            <input type="number" id="avg_price" step="0.0001" placeholder="0.0000">
         </div>
+        <div class="input-box">
+            <label>Margem Adicionada ($)</label>
+            <input type="number" id="margin_usdt" step="0.01" placeholder="Ex: 1135.00">
+        </div>
+        <div class="input-box">
+            <label>Alavancagem (x)</label>
+            <input type="number" id="leverage" step="0.1" placeholder="Ex: 2.5">
+        </div>
+        <button onclick="saveTrade()">Registar Trade</button>
     </div>
 
     <table>
         <thead>
             <tr>
-                <th>SYMBOL</th>
-                <th>AVG PRICE</th>
-                <th>MARKET VALUE</th>
-                <th>NET P/L %</th>
-                <th>NET P/L</th>
-                <th>LIQUIDATION</th>
+                <th>Ativo</th>
+                <th>Preço Médio</th>
+                <th>Margem ($)</th>
+                <th>Leverage</th>
+                <th>Exposição (Tokens)</th>
+                <th>Liquidação (Est.)</th>
+                <th>Ações</th>
             </tr>
         </thead>
-        <tbody id="portfolio-body">
-            </tbody>
+        <tbody id="trade-list"></tbody>
     </table>
 </div>
 
 <script>
-    // DADOS DOS TEUS TRADES (Podes editar estes valores)
-    const portfolio = [
-        { symbol: "DOTUSDT", avg: 1.484, qty: 3121.68, current: 7.25, lev: 1.0 },
-        { symbol: "APTUSDT", avg: 1.2558, qty: 3313.46, current: 8.40, lev: 2.5 }
-    ];
+    // CREDENCIAIS DO SUPABASE
+    const SUPABASE_URL = 'https://TEU_PROJECTO.supabase.co';
+    const SUPABASE_KEY = 'TUA_ANON_KEY';
+    const supabase = lib.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    function updateDashboard() {
-        let totalMkt = 0;
-        let totalCost = 0;
-        let totalPnl = 0;
-        const body = document.getElementById('portfolio-body');
-        body.innerHTML = '';
+    async function loadTrades() {
+        const { data, error } = await supabase.from('trades').select('*');
+        if (error) return console.error(error);
+        
+        const list = document.getElementById('trade-list');
+        list.innerHTML = '';
+        data.forEach(t => {
+            // Cálculo da Liquidação (Long padrão)
+            const liq = t.avg_price * (1 - (0.94 / t.leverage));
+            // Cálculo da Quantidade de Tokens baseado na margem e leverage
+            const tokens = (t.margin_usdt * t.leverage) / t.avg_price;
 
-        portfolio.forEach(item => {
-            const mktVal = item.qty * item.current;
-            const costVal = item.qty * item.avg;
-            const pnl = mktVal - costVal;
-            const pnlPerc = (pnl / costVal) * 100;
-            const liqPrice = item.avg * (1 - (0.94 / item.lev));
-            
-            totalMkt += mktVal;
-            totalCost += costVal;
-            totalPnl += pnl;
-
-            // Alerta de Liquidação (se preço estiver a menos de 10% da liq)
-            const isRisk = (item.current - liqPrice) / item.current < 0.10;
-
-            body.innerHTML += `
+            list.innerHTML += `
                 <tr>
-                    <td><b>${item.symbol}</b></td>
-                    <td class="avg">${item.avg.toFixed(4)}</td>
-                    <td>$${mktVal.toLocaleString()}</td>
-                    <td class="${pnlPerc >= 0 ? 'up' : 'down'}">${pnlPerc.toFixed(2)}%</td>
-                    <td class="${pnl >= 0 ? 'up' : 'down'}">$${pnl.toLocaleString()}</td>
-                    <td class="${isRisk ? 'liq-alert down' : ''}">${liqPrice.toFixed(4)}</td>
-                </tr>
-            `;
+                    <td><b>${t.symbol}</b></td>
+                    <td>${t.avg_price.toFixed(4)}</td>
+                    <td>$${t.margin_usdt.toLocaleString()}</td>
+                    <td>${t.leverage}x</td>
+                    <td class="token-qty">${tokens.toFixed(2)} tokens</td>
+                    <td class="liq-price">${liq.toFixed(4)}</td>
+                    <td><button style="background:#f23645" onclick="deleteTrade('${t.id}')">Remover</button></td>
+                </tr>`;
         });
-
-        const totalPnlPerc = (totalPnl / totalCost) * 100;
-        document.getElementById('total-mkt').innerText = `$${totalMkt.toLocaleString()}`;
-        document.getElementById('total-pnl').innerText = `$${totalPnl.toLocaleString()} (${totalPnlPerc.toFixed(2)}%)`;
-        document.getElementById('total-pnl').className = `stat-value ${totalPnl >= 0 ? 'up' : 'down'}`;
     }
 
-    updateDashboard();
-</script>
+    async function saveTrade() {
+        const trade = {
+            symbol: document.getElementById('symbol').value.toUpperCase(),
+            avg_price: parseFloat(document.getElementById('avg_price').value),
+            margin_usdt: parseFloat(document.getElementById('margin_usdt').value),
+            leverage: parseFloat(document.getElementById('leverage').value)
+        };
+        
+        const { error } = await supabase.from('trades').insert([trade]);
+        if (error) alert("Erro ao guardar: " + error.message);
+        
+        loadTrades();
+        // Limpar campos
+        document.getElementById('symbol').value = '';
+        document.getElementById('avg_price').value = '';
+        document.getElementById('margin_usdt').value = '';
+        document.getElementById('leverage').value = '';
+    }
 
+    async function deleteTrade(id) {
+        if(confirm("Desejas remover este trade?")) {
+            await supabase.from('trades').delete().eq('id', id);
+            loadTrades();
+        }
+    }
+
+    loadTrades();
+</script>
 </body>
 </html>
