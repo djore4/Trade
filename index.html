@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crypto Command Center v3.3</title>
+    <title>Crypto Command Center v3.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0b0e11; color: #eaecef; font-family: 'Inter', sans-serif; }
@@ -17,7 +17,7 @@
         .progress-bg { background-color: #2b3139; height: 4px; border-radius: 2px; width: 100%; margin-top: 4px; }
         .progress-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease, background-color 0.3s ease; }
         
-        /* Altura aumentada em +25% (405px -> 506px) */
+        /* Altura 506px (estável) */
         .chart-container { height: 506px; width: 100%; border-top: 1px solid #2b3139; display: none; }
         .chart-visible { display: block !important; }
         .toggle-btn { transition: all 0.3s ease; cursor: pointer; }
@@ -29,8 +29,8 @@
     <div class="max-w-7xl mx-auto">
         <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
-                <h1 class="text-2xl font-bold tracking-tight text-white">CRYPTO COMMAND <span class="text-yellow-500">3.3</span></h1>
-                <p class="text-sm text-gray-500">Pro Monitor: Full Toolbar + Large Charts</p>
+                <h1 class="text-2xl font-bold tracking-tight text-white">CRYPTO COMMAND <span class="text-yellow-500">3.4</span></h1>
+                <p class="text-sm text-gray-500">Pro Monitor: RSI + MACD + Volume</p>
             </div>
             <div class="text-right">
                 <p class="metric-label">Total Unrealized PnL</p>
@@ -82,13 +82,20 @@
                     "locale": "pt",
                     "toolbar_bg": "#f1f3f6",
                     "enable_publishing": false,
-                    "hide_side_toolbar": false, // REATIVADO: Barra lateral completa
+                    "hide_side_toolbar": false, // Garante as ferramentas de desenho
                     "allow_symbol_change": true,
                     "container_id": `chart-${symbol}`,
                     "backgroundColor": "#181a20",
                     "gridColor": "rgba(43, 49, 57, 0.5)",
                     "withdateranges": true,
-                    "save_image": false
+                    // ADICIONANDO RSI E MACD POR DEFEITO
+                    "studies": [
+                        "RSI@tv-basicstudies",
+                        "MACD@tv-basicstudies"
+                    ],
+                    "show_popup_button": true,
+                    "popup_width": "1000",
+                    "popup_height": "650"
                 });
                 container.dataset.loaded = "true";
             }
@@ -150,25 +157,25 @@
 
                 document.getElementById(`metrics-${pos.symbol}`).innerHTML = `
                     <div>
-                        <p class="metric-label">Entrada / Atual</p>
-                        <p class="text-xs text-gray-500">$${entry.toFixed(3)}</p>
-                        <p class="metric-value ${statusClass} text-lg">$${current.toFixed(3)}</p>
+                        <p class="metric-label text-[10px]">Entrada / Atual</p>
+                        <p class="text-xs text-gray-500">$${entry.toFixed(4)}</p>
+                        <p class="metric-value ${statusClass} text-lg font-bold">$${current.toFixed(4)}</p>
                     </div>
                     <div class="text-right">
-                        <p class="metric-label">ROE REAL</p>
-                        <p class="metric-value ${statusClass} text-2xl">${roeReal >= 0 ? '+' : ''}${roeReal.toFixed(2)}%</p>
+                        <p class="metric-label text-[10px]">ROE REAL</p>
+                        <p class="metric-value ${statusClass} text-2xl font-black">${roeReal >= 0 ? '+' : ''}${roeReal.toFixed(2)}%</p>
                     </div>
                     <div class="col-span-2">
                         <div class="flex justify-between items-end">
                             <p class="metric-label text-red-500 font-bold">Risco de Liquidação</p>
-                            <p class="text-[10px] text-red-400 font-mono">$${liq.toFixed(3)} (${distLiq > 0 ? '+' : ''}${distLiq.toFixed(2)}%)</p>
+                            <p class="text-[10px] text-red-400 font-mono font-bold">$${liq.toFixed(4)} (${distLiq > 0 ? '+' : ''}${distLiq.toFixed(2)}%)</p>
                         </div>
                         <div class="progress-bg"><div class="progress-fill bg-red-600" style="width: ${Math.max(0, 100 - distAbs)}%"></div></div>
                     </div>
                     <div class="col-span-2">
                         <div class="flex justify-between items-end">
-                            <p class="metric-label text-yellow-500">Take Profit</p>
-                            <p class="text-[10px] text-yellow-500 font-mono">${tp > 0 ? '$'+tp.toFixed(3) : 'Sem TP'}</p>
+                            <p class="metric-label text-yellow-500">Alvo Take Profit</p>
+                            <p class="text-[10px] text-yellow-500 font-mono font-bold">${tp > 0 ? '$'+tp.toFixed(4) : 'N/A'}</p>
                         </div>
                         <div class="progress-bg"><div class="progress-fill bg-yellow-500" style="width: ${tp > 0 ? distTP : 0}%"></div></div>
                     </div>
@@ -177,8 +184,8 @@
                         <p class="metric-value text-gray-300">$${marginUsed.toFixed(2)}</p>
                     </div>
                     <div class="bg-black/30 p-3 rounded-lg border border-gray-800/50 text-right">
-                        <p class="metric-label">PnL Líquido</p>
-                        <p class="metric-value ${statusClass}">$${netPnL.toFixed(2)}</p>
+                        <p class="metric-label font-bold">PnL Aberto</p>
+                        <p class="metric-value ${statusClass} text-xl">$${netPnL.toFixed(2)}</p>
                     </div>
                 `;
             });
