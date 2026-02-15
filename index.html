@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crypto Command Center v3.0</title>
+    <title>Crypto Command Center v3.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0b0e11; color: #eaecef; font-family: 'Inter', sans-serif; }
@@ -16,9 +16,11 @@
         .down { color: #f6465d; }
         .progress-bg { background-color: #2b3139; height: 4px; border-radius: 2px; width: 100%; margin-top: 4px; }
         .progress-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
-        .chart-container { height: 300px; width: 100%; border-top: 1px solid #2b3139; display: none; }
+        
+        /* Altura aumentada em 35% (300px -> 405px) */
+        .chart-container { height: 405px; width: 100%; border-top: 1px solid #2b3139; display: none; }
         .chart-visible { display: block !important; }
-        .toggle-btn { transition: all 0.3s ease; }
+        .toggle-btn { transition: all 0.3s ease; cursor: pointer; }
         .toggle-btn.active { transform: rotate(180deg); color: #f3ba2f; }
     </style>
 </head>
@@ -27,8 +29,8 @@
     <div class="max-w-7xl mx-auto">
         <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
-                <h1 class="text-2xl font-bold tracking-tight text-white">CRYPTO COMMAND <span class="text-yellow-500">3.0</span></h1>
-                <p class="text-sm text-gray-500">Advanced Risk Monitor + Charts: Bybit Perps</p>
+                <h1 class="text-2xl font-bold tracking-tight text-white">CRYPTO COMMAND <span class="text-yellow-500">3.1</span></h1>
+                <p class="text-sm text-gray-500">Advanced Risk Monitor + High-Res Charts</p>
             </div>
             <div class="text-right">
                 <p class="metric-label">Total Unrealized PnL</p>
@@ -37,7 +39,7 @@
         </header>
 
         <div id="dashboard-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            <div id="loading-state" class="p-10 text-center col-span-full text-gray-500 animate-pulse">A calcular métricas e carregar gráficos...</div>
+            <div id="loading-state" class="p-10 text-center col-span-full text-gray-500 animate-pulse">A carregar interface...</div>
         </div>
     </div>
 
@@ -47,6 +49,9 @@
         const PROJECT_ID = 'qjzjxtxrlofnoyaaypbu'; 
         const SUPABASE_KEY = 'sb_publishable_bRa-mZWTaf0g6sNyWL9OmQ_uvo7Ex5H';
         const FUNC_PATH = `https://${PROJECT_ID}.supabase.co/functions/v1/get-bybit-positions`;
+
+        // Estado global para controlar quais gráficos o utilizador quer abertos
+        let activeCharts = new Set();
 
         async function fetchPositions() {
             try {
@@ -59,17 +64,31 @@
                     renderDashboard(result.result.list.filter(p => parseFloat(p.size) !== 0));
                 }
             } catch (err) {
-                console.error(err);
+                console.error("Erro API:", err);
             }
         }
 
-        function toggleChart(symbol) {
+        function handleToggle(symbol) {
             const container = document.getElementById(`chart-${symbol}`);
             const btn = document.getElementById(`btn-${symbol}`);
-            container.classList.toggle('chart-visible');
-            btn.classList.toggle('active');
+            
+            if (activeCharts.has(symbol)) {
+                activeCharts.delete(symbol);
+                container.classList.remove('chart-visible');
+                btn.classList.remove('active');
+            } else {
+                activeCharts.add(symbol);
+                container.classList.add('chart-visible');
+                btn.classList.add('active');
+                loadTVWidget(symbol);
+            }
+        }
 
-            if (container.classList.contains('chart-visible') && !container.dataset.loaded) {
+        function loadTVWidget(symbol) {
+            const containerId = `chart-${symbol}`;
+            const container = document.getElementById(containerId);
+            
+            if (container && !container.dataset.loaded) {
                 new TradingView.widget({
                     "autosize": true,
                     "symbol": `BYBIT:${symbol}.P`,
@@ -82,7 +101,7 @@
                     "enable_publishing": false,
                     "hide_side_toolbar": false,
                     "allow_symbol_change": true,
-                    "container_id": `chart-${symbol}`,
+                    "container_id": containerId,
                     "backgroundColor": "#181a20",
                     "gridColor": "rgba(43, 49, 57, 0.5)"
                 });
@@ -93,10 +112,6 @@
         function renderDashboard(positions) {
             const grid = document.getElementById('dashboard-grid');
             let totalPnL = 0;
-            
-            // Guardar quais gráficos estavam abertos antes de atualizar
-            const openCharts = Array.from(document.querySelectorAll('.chart-visible')).map(el => el.id);
-
             grid.innerHTML = '';
 
             positions.forEach(pos => {
@@ -120,12 +135,14 @@
                 const statusClass = netPnL >= 0 ? 'up' : 'down';
                 totalPnL += netPnL;
 
+                const isVisible = activeCharts.has(pos.symbol);
+
                 grid.innerHTML += `
                     <div class="card rounded-xl ${sideClass} shadow-xl border border-gray-800">
                         <div class="p-5">
                             <div class="flex justify-between items-center mb-6">
                                 <h2 class="text-xl font-black text-white">${pos.symbol} <span class="text-xs font-medium text-gray-500 ml-2">${leverage}x</span></h2>
-                                <button id="btn-${pos.symbol}" onclick="toggleChart('${pos.symbol}')" class="toggle-btn text-gray-500 hover:text-white">
+                                <button id="btn-${pos.symbol}" onclick="handleToggle('${pos.symbol}')" class="toggle-btn text-gray-500 hover:text-white ${isVisible ? 'active' : ''}">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                     </svg>
@@ -167,15 +184,18 @@
                             </div>
                         </div>
                         
-                        <div id="chart-${pos.symbol}" class="chart-container"></div>
+                        <div id="chart-${pos.symbol}" class="chart-container ${isVisible ? 'chart-visible' : ''}"></div>
                     </div>
                 `;
-            });
 
-            // Reabrir gráficos que estavam abertos
-            openCharts.forEach(id => {
-                const symbol = id.replace('chart-', '');
-                toggleChart(symbol);
+                // Se o gráfico deve estar visível, reinicia o widget após a renderização do HTML
+                if (isVisible) {
+                    setTimeout(() => {
+                        const container = document.getElementById(`chart-${pos.symbol}`);
+                        if (container) container.dataset.loaded = ""; // Reset para forçar recarga correta no render
+                        loadTVWidget(pos.symbol);
+                    }, 50);
+                }
             });
 
             const totalEl = document.getElementById('total-pnl');
