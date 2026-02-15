@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crypto Command Center v4.0</title>
+    <title>Crypto Command Center v5.0 - Masterpiece</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #0b0e11; color: #eaecef; font-family: 'Inter', sans-serif; }
-        .card { background-color: #181a20; border: 1px solid #2b3139; position: relative; overflow: hidden; height: fit-content; }
+        body { background-color: #0b0e11; color: #eaecef; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        .card { background-color: #181a20; border: 1px solid #2b3139; position: relative; overflow: hidden; }
         .metric-label { color: #848e9c; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; }
         .metric-value { font-family: 'Roboto Mono', monospace; font-weight: 600; }
         .up { color: #0ecb81; }
@@ -19,39 +19,51 @@
         .chart-visible { display: block !important; }
         .toggle-btn { transition: all 0.3s ease; cursor: pointer; }
         .toggle-btn.active { transform: rotate(180deg); color: #f3ba2f; }
+        
+        /* Sidebar AI Styles */
+        #ai-sidebar { width: 320px; border-left: 1px solid #2b3139; background: #0b0e11; height: 100vh; position: fixed; right: 0; top: 0; z-index: 50; padding: 20px; overflow-y: auto; display: none; }
+        .ai-active { display: block !important; margin-right: 0; }
+        .main-content { transition: margin-right 0.3s ease; }
+        .with-sidebar { margin-right: 320px; }
+        .insight-card { background: rgba(243, 186, 47, 0.05); border-left: 3px solid #f3ba2f; padding: 10px; margin-bottom: 15px; font-size: 0.85rem; }
     </style>
 </head>
 <body class="p-4 md:p-8">
 
-    <div class="max-w-7xl mx-auto">
+    <div id="main-wrapper" class="max-w-7xl mx-auto main-content">
         <header class="mb-8">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 border-b border-gray-800 pb-6">
                 <div>
-                    <h1 class="text-2xl font-black tracking-tight text-white uppercase italic">Command <span class="text-yellow-500">Center v4.0</span></h1>
-                    <p class="text-xs text-gray-500 font-mono" id="last-update">Updating...</p>
+                    <h1 class="text-2xl font-black tracking-tight text-white uppercase italic">Command <span class="text-yellow-500 text-3xl">5.0</span></h1>
+                    <p class="text-xs text-gray-500 font-mono" id="last-update">Initializing AI Intelligence...</p>
                 </div>
-                <div class="text-right">
-                    <p class="metric-label font-bold">Total Unrealized PnL</p>
-                    <p id="total-pnl" class="text-4xl metric-value leading-none">$0.00</p>
-                    <p id="total-pnl-perc" class="text-sm font-bold mt-1 opacity-80">0.00%</p>
+                <div class="flex items-center gap-6">
+                    <button onclick="toggleAISidebar()" class="bg-yellow-500/10 border border-yellow-500/50 text-yellow-500 px-4 py-2 rounded-lg text-xs font-bold hover:bg-yellow-500/20 transition-all">
+                        AI CO-PILOT
+                    </button>
+                    <div class="text-right">
+                        <p class="metric-label font-bold">Unrealized PnL</p>
+                        <p id="total-pnl" class="text-4xl metric-value leading-none">$0.00</p>
+                        <p id="total-pnl-perc" class="text-sm font-bold mt-1 opacity-80">0.00%</p>
+                    </div>
                 </div>
             </div>
 
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                 <div class="stat-box">
-                    <p class="metric-label font-bold text-gray-400">Market Value (Total)</p>
+                    <p class="metric-label font-bold text-gray-400">Total Market Value</p>
                     <p id="total-exposure" class="text-lg metric-value text-white">$0.00</p>
                 </div>
                 <div class="stat-box">
-                    <p class="metric-label font-bold text-gray-400">Margem em Uso</p>
+                    <p class="metric-label font-bold text-gray-400">Used Margin</p>
                     <p id="total-margin" class="text-lg metric-value text-gray-300">$0.00</p>
                 </div>
                 <div class="stat-box border-yellow-500/30">
-                    <p class="metric-label text-yellow-500 font-bold italic tracking-wider">Leverage Real Média</p>
+                    <p class="metric-label text-yellow-500 font-bold italic tracking-wider">Avg. Leverage</p>
                     <p id="avg-leverage" class="text-lg metric-value text-yellow-500 font-bold">0.00x</p>
                 </div>
                 <div class="stat-box">
-                    <p class="metric-label italic font-bold text-gray-400">Net Funding (24h)</p>
+                    <p class="metric-label italic font-bold text-gray-400">Est. Funding (24h)</p>
                     <p id="funding-est" class="text-lg metric-value">$0.00</p>
                 </div>
             </div>
@@ -60,12 +72,29 @@
         <div id="dashboard-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"></div>
     </div>
 
+    <aside id="ai-sidebar">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-yellow-500 font-black tracking-widest text-sm uppercase">AI Insights Co-Pilot</h3>
+            <button onclick="toggleAISidebar()" class="text-gray-500">✕</button>
+        </div>
+        <div id="ai-content">
+            <p class="text-gray-500 text-xs italic">A analisar fluxo de ordens e métricas de risco...</p>
+        </div>
+    </aside>
+
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
 
     <script>
         const PROJECT_ID = 'qjzjxtxrlofnoyaaypbu'; 
         const SUPABASE_KEY = 'sb_publishable_bRa-mZWTaf0g6sNyWL9OmQ_uvo7Ex5H';
         const FUNC_PATH = `https://${PROJECT_ID}.supabase.co/functions/v1/get-bybit-positions`;
+
+        function toggleAISidebar() {
+            const sidebar = document.getElementById('ai-sidebar');
+            const wrapper = document.getElementById('main-wrapper');
+            sidebar.classList.toggle('ai-active');
+            wrapper.classList.toggle('with-sidebar');
+        }
 
         async function fetchPositions() {
             try {
@@ -95,12 +124,44 @@
                     "theme": "dark",
                     "style": "1",
                     "locale": "pt",
+                    "toolbar_bg": "#f1f3f6",
+                    "hide_side_toolbar": false, // Toolbar ativa para ferramentas de análise
                     "container_id": `chart-${symbol}`,
                     "backgroundColor": "#181a20",
-                    "withdateranges": true
+                    "withdateranges": true,
+                    "studies": [
+                        "Volume@tv-basicstudies",
+                        "OrderBlock@tv-basicstudies" // Tentativa de carregar blocos de ordens/liquidez
+                    ]
                 });
                 container.dataset.loaded = "true";
             }
+        }
+
+        function generateAIInsights(positions, totalPnL, avgLev) {
+            const aiContent = document.getElementById('ai-content');
+            let insightsHTML = '';
+
+            if (avgLev > 5) {
+                insightsHTML += `<div class="insight-card border-red-500 bg-red-500/5"><p class="font-bold text-red-500">ALERTA DE LEVERAGE</p><p class="text-gray-400">A tua alavancagem média (${avgLev.toFixed(2)}x) está acima do recomendado para alta volatilidade. Considera reduzir exposição.</p></div>`;
+            }
+
+            positions.forEach(pos => {
+                const liqDist = Math.abs(((parseFloat(pos.liqPrice) - parseFloat(pos.markPrice)) / parseFloat(pos.markPrice)) * 100);
+                const roe = (parseFloat(pos.unrealisedPnl) / ( (parseFloat(pos.positionValue)) / parseFloat(pos.leverage) )) * 100;
+
+                if (liqDist < 15) {
+                    insightsHTML += `<div class="insight-card border-orange-500"><p class="font-bold text-orange-500">RISCO DE LIQUIDAÇÃO: ${pos.symbol}</p><p class="text-gray-400 text-xs">Apenas ${liqDist.toFixed(2)}% de distância. Sugestão: Subir Stop Loss ou adicionar margem.</p></div>`;
+                }
+                if (roe > 25) {
+                    insightsHTML += `<div class="insight-card border-green-500"><p class="font-bold text-green-500">TAKE PROFIT: ${pos.symbol}</p><p class="text-gray-400 text-xs">ROE atual de ${roe.toFixed(2)}%. Sugestão: Realizar 50% de lucro e deixar o resto correr com Stop no Break Even.</p></div>`;
+                }
+            });
+
+            if (insightsHTML === '') {
+                insightsHTML = '<p class="text-gray-500 text-xs italic">Portefólio saudável. Nenhuma ação urgente recomendada.</p>';
+            }
+            aiContent.innerHTML = insightsHTML;
         }
 
         function updateDashboard(positions) {
@@ -121,6 +182,7 @@
                 const liq = parseFloat(pos.liqPrice) || 0;
                 const leverage = parseFloat(pos.leverage) || 1;
                 const tp = parseFloat(pos.takeProfit) || 0;
+                const isLong = pos.side === 'Buy';
                 
                 const marketValue = parseFloat(pos.positionValue) || (current * qty);
                 const initialMargin = marketValue / leverage; 
@@ -130,7 +192,6 @@
                 totalMargin += initialMargin;
 
                 const rawFundingRate = -0.0001; 
-                const isLong = pos.side === 'Buy';
                 const fundingImpact = isLong ? (rawFundingRate < 0 ? 1 : -1) : (rawFundingRate < 0 ? -1 : 1);
                 netFunding24h += (marketValue * Math.abs(rawFundingRate) * 3) * fundingImpact;
 
@@ -151,46 +212,49 @@
                     grid.appendChild(card);
                 }
 
-                const roeReal = initialMargin > 0 ? (netPnL / initialMargin) * 100 : 0;
                 const distLiq = liq > 0 ? ((liq - current) / current) * 100 : 0;
-                const distTP = tp > 0 ? Math.min(Math.max(((current - entry) / (tp - entry)) * 100, 0), 100) : 0;
+                let distTP = 0;
+                if (tp > 0) {
+                    const totalDistance = isLong ? (tp - entry) : (entry - tp);
+                    const currentProgress = isLong ? (current - entry) : (entry - current);
+                    if (totalDistance > 0 && currentProgress > 0) distTP = Math.min((currentProgress / totalDistance) * 100, 100);
+                }
 
                 document.getElementById(`metrics-${pos.symbol}`).innerHTML = `
-                    <div><p class="metric-label font-bold">Entrada / Atual</p><p class="text-[10px] text-gray-500">$${entry.toFixed(4)}</p><p class="metric-value ${netPnL >= 0 ? 'up' : 'down'} text-lg font-bold">$${current.toFixed(4)}</p></div>
+                    <div><p class="metric-label font-bold text-gray-400">Entrada / Atual</p><p class="text-[10px] text-gray-500">$${entry.toFixed(4)}</p><p class="metric-value ${netPnL >= 0 ? 'up' : 'down'} text-lg font-bold">$${current.toFixed(4)}</p></div>
                     <div class="text-right">
-                        <p class="metric-label font-bold">ROE REAL</p>
-                        <p class="metric-value ${netPnL >= 0 ? 'up' : 'down'} text-2xl font-black">${roeReal >= 0 ? '+' : ''}${roeReal.toFixed(2)}%</p>
+                        <p class="metric-label font-bold text-gray-400">ROE REAL</p>
+                        <p class="metric-value ${netPnL >= 0 ? 'up' : 'down'} text-2xl font-black">${(netPnL/initialMargin*100).toFixed(2)}%</p>
                     </div>
                     <div class="col-span-2">
-                        <div class="flex justify-between items-end"><p class="metric-label text-red-500 font-bold uppercase">Liquidação</p><p class="text-[10px] text-red-400 font-bold">$${liq.toFixed(3)} (${distLiq.toFixed(2)}%)</p></div>
+                        <div class="flex justify-between items-end"><p class="metric-label text-red-500 font-bold uppercase tracking-widest">Liquidação</p><p class="text-[10px] text-red-400 font-bold">$${liq.toFixed(3)} (${distLiq.toFixed(2)}%)</p></div>
                         <div class="progress-bg"><div class="progress-fill bg-red-600" style="width: ${Math.max(0, 100 - Math.abs(distLiq))}%"></div></div>
                     </div>
                     <div class="col-span-2">
-                        <div class="flex justify-between items-end"><p class="metric-label text-yellow-500 font-bold uppercase">Alvo Take Profit</p><p class="text-[10px] text-yellow-500 font-bold">${tp > 0 ? '$'+tp.toFixed(3) : 'N/A'}</p></div>
-                        <div class="progress-bg"><div class="progress-fill bg-yellow-500" style="width: ${tp > 0 ? distTP : 0}%"></div></div>
+                        <div class="flex justify-between items-end"><p class="metric-label text-yellow-500 font-bold uppercase tracking-widest text-[9px]">Progresso Take Profit</p><p class="text-[10px] text-yellow-500 font-bold">${tp > 0 ? '$'+tp.toFixed(3) : 'N/A'}</p></div>
+                        <div class="progress-bg"><div class="progress-fill bg-yellow-500" style="width: ${distTP}%"></div></div>
                     </div>
-                    <div class="bg-black/30 p-3 rounded-lg border border-gray-800/50"><p class="metric-label italic">Margem</p><p class="metric-value text-gray-300 font-bold">$${initialMargin.toFixed(2)}</p></div>
-                    <div class="bg-black/30 p-3 rounded-lg border border-gray-800/50 text-right"><p class="metric-label italic font-bold">PnL Aberto</p><p class="metric-value ${netPnL >= 0 ? 'up' : 'down'} font-bold">$${netPnL.toFixed(2)}</p></div>
+                    <div class="bg-black/30 p-3 rounded-lg border border-gray-800/50 text-xs"><p class="metric-label italic">Margem Aberta</p><p class="metric-value text-gray-300 font-bold">$${initialMargin.toFixed(2)}</p></div>
+                    <div class="bg-black/30 p-3 rounded-lg border border-gray-800/50 text-right"><p class="metric-label font-bold text-white uppercase italic text-[9px]">PnL Aberto</p><p class="metric-value ${netPnL >= 0 ? 'up' : 'down'} font-black text-xl leading-none">$${netPnL.toFixed(2)}</p></div>
                 `;
             });
 
-            // HEADER UPDATES
             const totalROE = totalMargin > 0 ? (totalPnL / totalMargin) * 100 : 0;
+            const avgLev = totalMargin > 0 ? (totalExposure / totalMargin) : 0;
+            
             document.getElementById('total-pnl').innerText = `$${totalPnL.toFixed(2)}`;
             document.getElementById('total-pnl').className = `text-4xl metric-value ${totalPnL >= 0 ? 'up' : 'down'}`;
-            
             document.getElementById('total-pnl-perc').innerText = `${totalROE >= 0 ? '+' : ''}${totalROE.toFixed(2)}%`;
             document.getElementById('total-pnl-perc').className = `text-sm font-bold mt-1 ${totalPnL >= 0 ? 'up' : 'down'}`;
-
             document.getElementById('total-exposure').innerText = `$${totalExposure.toFixed(2)}`;
             document.getElementById('total-margin').innerText = `$${totalMargin.toFixed(2)}`;
-            
-            const realLev = totalMargin > 0 ? (totalExposure / totalMargin) : 0;
-            document.getElementById('avg-leverage').innerText = realLev.toFixed(2) + 'x';
+            document.getElementById('avg-leverage').innerText = avgLev.toFixed(2) + 'x';
             
             const fundEl = document.getElementById('funding-est');
             fundEl.innerText = (netFunding24h >= 0 ? '+$' : '-$') + Math.abs(netFunding24h).toFixed(2);
             fundEl.className = `text-lg metric-value ${netFunding24h >= 0 ? 'up' : 'down'}`;
+
+            generateAIInsights(positions, totalPnL, avgLev);
         }
 
         fetchPositions();
