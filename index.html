@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crypto Command Center v3.2</title>
+    <title>Crypto Command Center v3.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0b0e11; color: #eaecef; font-family: 'Inter', sans-serif; }
@@ -16,7 +16,9 @@
         .down { color: #f6465d; }
         .progress-bg { background-color: #2b3139; height: 4px; border-radius: 2px; width: 100%; margin-top: 4px; }
         .progress-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease, background-color 0.3s ease; }
-        .chart-container { height: 405px; width: 100%; border-top: 1px solid #2b3139; display: none; }
+        
+        /* Altura aumentada em +25% (405px -> 506px) */
+        .chart-container { height: 506px; width: 100%; border-top: 1px solid #2b3139; display: none; }
         .chart-visible { display: block !important; }
         .toggle-btn { transition: all 0.3s ease; cursor: pointer; }
         .toggle-btn.active { transform: rotate(180deg); color: #f3ba2f; }
@@ -27,8 +29,8 @@
     <div class="max-w-7xl mx-auto">
         <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
-                <h1 class="text-2xl font-bold tracking-tight text-white">CRYPTO COMMAND <span class="text-yellow-500">3.2</span></h1>
-                <p class="text-sm text-gray-500">Stable Monitor: No-Blink Charts</p>
+                <h1 class="text-2xl font-bold tracking-tight text-white">CRYPTO COMMAND <span class="text-yellow-500">3.3</span></h1>
+                <p class="text-sm text-gray-500">Pro Monitor: Full Toolbar + Large Charts</p>
             </div>
             <div class="text-right">
                 <p class="metric-label">Total Unrealized PnL</p>
@@ -74,11 +76,19 @@
                     "autosize": true,
                     "symbol": `BYBIT:${symbol}.P`,
                     "interval": "60",
+                    "timezone": "Etc/UTC",
                     "theme": "dark",
                     "style": "1",
                     "locale": "pt",
+                    "toolbar_bg": "#f1f3f6",
+                    "enable_publishing": false,
+                    "hide_side_toolbar": false, // REATIVADO: Barra lateral completa
+                    "allow_symbol_change": true,
                     "container_id": `chart-${symbol}`,
                     "backgroundColor": "#181a20",
+                    "gridColor": "rgba(43, 49, 57, 0.5)",
+                    "withdateranges": true,
+                    "save_image": false
                 });
                 container.dataset.loaded = "true";
             }
@@ -89,7 +99,6 @@
             let totalPnL = 0;
             const activeSymbols = positions.map(p => p.symbol);
 
-            // Remover cartões de moedas que já não têm posição aberta
             Array.from(grid.children).forEach(card => {
                 if (!activeSymbols.includes(card.id.replace('card-', ''))) {
                     card.remove();
@@ -118,7 +127,6 @@
 
                 let card = document.getElementById(`card-${pos.symbol}`);
 
-                // Se o cartão não existe, cria-se a estrutura base (incluindo o contentor do gráfico)
                 if (!card) {
                     card = document.createElement('div');
                     card.id = `card-${pos.symbol}`;
@@ -133,18 +141,16 @@
                                     </svg>
                                 </button>
                             </div>
-                            <div id="metrics-${pos.symbol}" class="grid grid-cols-2 gap-y-6 gap-x-4">
-                                </div>
+                            <div id="metrics-${pos.symbol}" class="grid grid-cols-2 gap-y-6 gap-x-4"></div>
                         </div>
                         <div id="chart-${pos.symbol}" class="chart-container"></div>
                     `;
                     grid.appendChild(card);
                 }
 
-                // Atualizar apenas a parte das métricas (sem tocar no gráfico)
                 document.getElementById(`metrics-${pos.symbol}`).innerHTML = `
                     <div>
-                        <p class="metric-label">Preço Entrada / Atual</p>
+                        <p class="metric-label">Entrada / Atual</p>
                         <p class="text-xs text-gray-500">$${entry.toFixed(3)}</p>
                         <p class="metric-value ${statusClass} text-lg">$${current.toFixed(3)}</p>
                     </div>
@@ -161,13 +167,13 @@
                     </div>
                     <div class="col-span-2">
                         <div class="flex justify-between items-end">
-                            <p class="metric-label text-yellow-500">Progresso Take Profit</p>
+                            <p class="metric-label text-yellow-500">Take Profit</p>
                             <p class="text-[10px] text-yellow-500 font-mono">${tp > 0 ? '$'+tp.toFixed(3) : 'Sem TP'}</p>
                         </div>
                         <div class="progress-bg"><div class="progress-fill bg-yellow-500" style="width: ${tp > 0 ? distTP : 0}%"></div></div>
                     </div>
                     <div class="bg-black/30 p-3 rounded-lg border border-gray-800/50">
-                        <p class="metric-label">Margem Inicial</p>
+                        <p class="metric-label">Margem</p>
                         <p class="metric-value text-gray-300">$${marginUsed.toFixed(2)}</p>
                     </div>
                     <div class="bg-black/30 p-3 rounded-lg border border-gray-800/50 text-right">
