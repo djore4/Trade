@@ -5,12 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Crypto Command Center v2.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body { background-color: #0b0e11; color: #eaecef; font-family: 'Inter', sans-serif; }
-        .card { background-color: #181a20; border: 1px solid #2b3139; transition: transform 0.2s; }
-        .card:hover { border-color: #4b4f56; }
-        .metric-label { color: #848e9c; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        .card { background-color: #181a20; border: 1px solid #2b3139; }
+        .metric-label { color: #848e9c; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; }
         .metric-value { font-family: 'Roboto Mono', monospace; font-weight: 600; }
         .pos-long { border-left: 4px solid #0ecb81; }
         .pos-short { border-left: 4px solid #f6465d; }
@@ -26,100 +24,106 @@
                 <h1 class="text-2xl font-bold tracking-tight">CRYPTO COMMAND <span class="text-yellow-500">2.0</span></h1>
                 <p class="text-sm text-gray-500">Live API Feed: Bybit Linear Perps</p>
             </div>
-            <div class="flex gap-6">
-                <div class="text-right">
-                    <p class="metric-label">Total Market Value</p>
-                    <p id="total-mkt" class="text-2xl metric-value">$0.00</p>
-                </div>
-                <div class="text-right border-l border-gray-700 pl-6">
-                    <p class="metric-label">Daily P/L Total</p>
-                    <p id="total-daily" class="text-2xl metric-value">$0.00</p>
-                </div>
+            <div class="text-right">
+                <p class="metric-label">Total Unrealized PnL</p>
+                <p id="total-pnl" class="text-2xl metric-value">$0.00</p>
             </div>
         </header>
 
         <div id="dashboard-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            </div>
+            <div class="p-10 text-center col-span-full text-gray-500">A ligar ao motor Supabase...</div>
+        </div>
     </div>
 
     <script>
-        // Lógica de Simulação (Substituir pela chamada API Bybit)
-        const positions = [
-            {
-                symbol: "APTUSDT",
-                entry: 1.2558,
-                current: 8.4200,
-                qty: 3313.46,
-                daily_change: 120.50,
-                tp: 12.00
-            }
-        ];
+        // CONFIGURAÇÃO: Substitui pelos teus dados do Supabase
+        const SUPABASE_FUNC_URL = 'https://TEU_PROJECT_ID.supabase.co/functions/v1/get-bybit-positions';
+        const SUPABASE_ANON_KEY = 'TUA_ANON_KEY';
 
-        function renderDashboard() {
+        async function fetchPositions() {
+            try {
+                const response = await fetch(SUPABASE_FUNC_URL, {
+                    headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+                });
+                const result = await response.json();
+                
+                if (result.result && result.result.list) {
+                    renderDashboard(result.result.list.filter(p => parseFloat(p.size) !== 0));
+                }
+            } catch (err) {
+                console.error("Erro na API:", err);
+                document.getElementById('dashboard-grid').innerHTML = `<div class='col-span-full text-red-500'>Erro ao carregar dados. Verifica a consola.</div>`;
+            }
+        }
+
+        function renderDashboard(positions) {
             const grid = document.getElementById('dashboard-grid');
+            let totalPnL = 0;
             grid.innerHTML = '';
 
             positions.forEach(pos => {
-                const diffAbs = pos.current - pos.entry;
-                const diffRel = (diffAbs / pos.entry) * 100;
-                const netPnL = diffAbs * pos.qty;
-                const mktValue = pos.current * pos.qty;
+                const entry = parseFloat(pos.avgPrice);
+                const current = parseFloat(pos.markPrice);
+                const qty = parseFloat(pos.size);
+                const netPnL = parseFloat(pos.unrealisedPnl);
+                const tp = parseFloat(pos.takeProfit);
+                
+                const diffAbs = current - entry;
+                const diffRel = (diffAbs / entry) * 100;
+                const mktValue = current * qty;
+                const sideClass = pos.side === 'Buy' ? 'pos-long' : 'pos-short';
                 const statusClass = netPnL >= 0 ? 'up' : 'down';
 
+                totalPnL += netPnL;
+
                 grid.innerHTML += `
-                    <div class="card p-6 rounded-xl pos-long shadow-lg">
-                        <div class="flex justify-between items-start mb-6">
-                            <h2 class="text-xl font-bold">${pos.symbol}</h2>
-                            <span class="text-xs bg-gray-800 px-2 py-1 rounded text-gray-400">PERPETUAL</span>
+                    <div class="card p-5 rounded-xl ${sideClass} shadow-lg">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-lg font-bold">${pos.symbol} <span class="text-xs font-normal text-gray-500">${pos.leverage}x</span></h2>
+                            <span class="text-[10px] bg-gray-800 px-2 py-1 rounded text-gray-400">${pos.side.toUpperCase()}</span>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-y-4">
+                        <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <p class="metric-label">Preço Entrada</p>
-                                <p class="metric-value">$${pos.entry.toFixed(4)}</p>
+                                <p class="metric-label">Entrada</p>
+                                <p class="metric-value">$${entry.toFixed(4)}</p>
                             </div>
                             <div>
                                 <p class="metric-label">Preço Atual</p>
-                                <p class="metric-value ${statusClass}">$${pos.current.toFixed(4)}</p>
+                                <p class="metric-value ${statusClass}">$${current.toFixed(4)}</p>
                             </div>
-                            
-                            <div class="col-span-2 border-t border-gray-800 my-1"></div>
-
                             <div>
                                 <p class="metric-label">Diferença (Abs)</p>
                                 <p class="metric-value ${statusClass}">${diffAbs >= 0 ? '+' : ''}${diffAbs.toFixed(4)}</p>
                             </div>
                             <div>
                                 <p class="metric-label">Diferença (%)</p>
-                                <p class="metric-value ${statusClass}">${diffRel >= 0 ? '+' : ''}${diffRel.toFixed(2)}%</p>
+                                <p class="metric-value ${statusClass}">${diffRel.toFixed(2)}%</p>
                             </div>
-
                             <div>
                                 <p class="metric-label">Market Value</p>
-                                <p class="metric-value text-white">$${mktValue.toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
+                                <p class="metric-value text-white">$${mktValue.toFixed(2)}</p>
                             </div>
                             <div>
                                 <p class="metric-label text-yellow-500">Take Profit</p>
-                                <p class="metric-value text-yellow-500">$${pos.tp.toFixed(4)}</p>
+                                <p class="metric-value text-yellow-500">${tp > 0 ? '$' + tp.toFixed(4) : 'N/A'}</p>
                             </div>
-
-                            <div class="col-span-2 bg-gray-900/50 p-3 rounded-lg flex justify-between mt-2">
-                                <div>
-                                    <p class="metric-label">PnL Diário</p>
-                                    <p class="metric-value ${pos.daily_change >= 0 ? 'up' : 'down'}">$${pos.daily_change.toFixed(2)}</p>
-                                </div>
-                                <div class="text-right">
-                                    <p class="metric-label">PnL Líquido</p>
-                                    <p class="text-lg metric-value ${statusClass}">$${netPnL.toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
-                                </div>
+                            <div class="col-span-2 bg-gray-900/50 p-3 rounded-lg flex justify-between items-center mt-2">
+                                <p class="metric-label">PnL Líquido</p>
+                                <p class="text-xl metric-value ${statusClass}">$${netPnL.toFixed(2)}</p>
                             </div>
                         </div>
                     </div>
                 `;
             });
+
+            document.getElementById('total-pnl').innerText = `$${totalPnL.toFixed(2)}`;
+            document.getElementById('total-pnl').className = `text-2xl metric-value ${totalPnL >= 0 ? 'up' : 'down'}`;
         }
 
-        renderDashboard();
+        // Update a cada 10 segundos
+        setInterval(fetchPositions, 10000);
+        fetchPositions();
     </script>
 </body>
 </html>
