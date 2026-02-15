@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crypto Command Center v2.1</title>
+    <title>Crypto Command Center v2.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0b0e11; color: #eaecef; font-family: 'Inter', sans-serif; }
@@ -36,9 +36,8 @@
     </div>
 
     <script>
-        // --- CONFIGURAÇÃO MANUAL OBRIGATÓRIA ---
-        // Substitui o valor abaixo pelo ID que aparece no teu URL do Supabase
-        const PROJECT_ID = 'https://qjzjxtxrlofnoyaaypbu.supabase.co'; 
+        // --- CONFIGURAÇÃO CORRIGIDA ---
+        const PROJECT_ID = 'qjzjxtxrlofnoyaaypbu'; // Apenas o ID, sem o https://
         const SUPABASE_KEY = 'sb_publishable_bRa-mZWTaf0g6sNyWL9OmQ_uvo7Ex5H';
         
         const SUPABASE_URL = `https://${PROJECT_ID}.supabase.co`;
@@ -60,7 +59,6 @@
                 }
 
                 const result = await response.json();
-                console.log("Dados recebidos:", result);
 
                 if (result.result && result.result.list) {
                     const activePositions = result.result.list.filter(p => parseFloat(p.size) !== 0);
@@ -74,7 +72,7 @@
                     <div class='col-span-full text-center text-red-500 bg-red-900/10 p-6 rounded-lg border border-red-500/50'>
                         <p class='font-bold text-lg'>Erro de Ligação</p>
                         <p class='text-sm mb-2'>${err.message}</p>
-                        <p class='text-[10px] text-gray-400'>Verifica se o PROJECT_ID '${PROJECT_ID}' está correto e se a função está ativa.</p>
+                        <p class='text-[10px] text-gray-400'>Verifica se a função 'get-bybit-positions' foi publicada (deployed) para o ID ${PROJECT_ID}.</p>
                     </div>`;
             }
         }
