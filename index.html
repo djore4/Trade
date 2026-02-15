@@ -21,7 +21,7 @@
     <div class="max-w-7xl mx-auto">
         <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
-                <h1 class="text-2xl font-bold tracking-tight">CRYPTO COMMAND <span class="text-yellow-500">2.0</span></h1>
+                <h1 class="text-2xl font-bold tracking-tight text-white">CRYPTO COMMAND <span class="text-yellow-500">2.0</span></h1>
                 <p class="text-sm text-gray-500">Live API Feed: Bybit Linear Perps</p>
             </div>
             <div class="text-right">
@@ -31,28 +31,53 @@
         </header>
 
         <div id="dashboard-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            <div class="p-10 text-center col-span-full text-gray-500">A ligar ao motor Supabase...</div>
+            <div class="p-10 text-center col-span-full text-gray-500 animate-pulse">A ligar ao motor Supabase...</div>
         </div>
     </div>
 
     <script>
-        // CONFIGURAÇÃO: Substitui pelos teus dados do Supabase
+        // CONFIGURAÇÃO DOS TEUS DADOS REAIS
         const SUPABASE_URL = 'https://pmdvckcxwfiwhrhibupo.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_bRa-mZWTaf0g6sNyWL9OmQ_uvo7Ex5H';
+        
+        // CONSTRUÇÃO DA URL DA FUNÇÃO (Caminho completo)
+        const FUNC_PATH = `${SUPABASE_URL}/functions/v1/get-bybit-positions`;
 
         async function fetchPositions() {
             try {
-                const response = await fetch(SUPABASE_FUNC_URL, {
-                    headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+                console.log("A tentar ligar a:", FUNC_PATH);
+                const response = await fetch(FUNC_PATH, {
+                    method: 'GET',
+                    headers: { 
+                        'Authorization': `Bearer ${SUPABASE_KEY}`,
+                        'Content-Type': 'application/json'
+                    }
                 });
+
+                if (!response.ok) {
+                    const errorMsg = await response.text();
+                    throw new Error(`Erro ${response.status}: ${errorMsg}`);
+                }
+
                 const result = await response.json();
+                console.log("Dados recebidos:", result);
                 
                 if (result.result && result.result.list) {
-                    renderDashboard(result.result.list.filter(p => parseFloat(p.size) !== 0));
+                    const activePositions = result.result.list.filter(p => parseFloat(p.size) !== 0);
+                    if (activePositions.length > 0) {
+                        renderDashboard(activePositions);
+                    } else {
+                        document.getElementById('dashboard-grid').innerHTML = `<div class='col-span-full text-gray-500 text-center'>Sem posições abertas na Bybit.</div>`;
+                    }
                 }
             } catch (err) {
-                console.error("Erro na API:", err);
-                document.getElementById('dashboard-grid').innerHTML = `<div class='col-span-full text-red-500'>Erro ao carregar dados. Verifica a consola.</div>`;
+                console.error("Detalhe do Erro:", err.message);
+                document.getElementById('dashboard-grid').innerHTML = `
+                    <div class='col-span-full text-red-500 text-center bg-red-900/20 p-6 rounded-lg border border-red-500/50'>
+                        <p class='font-bold'>Erro ao carregar dados</p>
+                        <p class='text-sm opacity-80'>${err.message}</p>
+                        <p class='text-[10px] mt-2 text-gray-400'>Verifica se a função 'get-bybit-positions' está ativa no Supabase.</p>
+                    </div>`;
             }
         }
 
@@ -69,7 +94,7 @@
                 const tp = parseFloat(pos.takeProfit);
                 
                 const diffAbs = current - entry;
-                const diffRel = (diffAbs / entry) * 100;
+                const diffRel = entry !== 0 ? (diffAbs / entry) * 100 : 0;
                 const mktValue = current * qty;
                 const sideClass = pos.side === 'Buy' ? 'pos-long' : 'pos-short';
                 const statusClass = netPnL >= 0 ? 'up' : 'down';
@@ -77,10 +102,10 @@
                 totalPnL += netPnL;
 
                 grid.innerHTML += `
-                    <div class="card p-5 rounded-xl ${sideClass} shadow-lg">
+                    <div class="card p-5 rounded-xl ${sideClass} shadow-lg border border-gray-800">
                         <div class="flex justify-between items-center mb-4">
-                            <h2 class="text-lg font-bold">${pos.symbol} <span class="text-xs font-normal text-gray-500">${pos.leverage}x</span></h2>
-                            <span class="text-[10px] bg-gray-800 px-2 py-1 rounded text-gray-400">${pos.side.toUpperCase()}</span>
+                            <h2 class="text-lg font-bold text-white">${pos.symbol} <span class="text-xs font-normal text-gray-500">${pos.leverage}x</span></h2>
+                            <span class="text-[10px] bg-gray-800 px-2 py-1 rounded text-gray-400 font-bold">${pos.side.toUpperCase()}</span>
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">
@@ -121,7 +146,6 @@
             document.getElementById('total-pnl').className = `text-2xl metric-value ${totalPnL >= 0 ? 'up' : 'down'}`;
         }
 
-        // Update a cada 10 segundos
         setInterval(fetchPositions, 10000);
         fetchPositions();
     </script>
