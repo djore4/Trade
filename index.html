@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crypto Command Center v3.5 - Pro Risk</title>
+    <title>Crypto Command Center v3.6 - Fixed Metrics</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0b0e11; color: #eaecef; font-family: 'Inter', sans-serif; }
@@ -29,8 +29,8 @@
         <header class="mb-8">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 border-b border-gray-800 pb-6">
                 <div>
-                    <h1 class="text-2xl font-black tracking-tight text-white uppercase italic">Command <span class="text-yellow-500">Center v3.5</span></h1>
-                    <p class="text-xs text-gray-500 font-mono" id="last-update">Syncing with Bybit API...</p>
+                    <h1 class="text-2xl font-black tracking-tight text-white uppercase italic">Command <span class="text-yellow-500">Center v3.6</span></h1>
+                    <p class="text-xs text-gray-500 font-mono" id="last-update">Syncing...</p>
                 </div>
                 <div class="text-right">
                     <p class="metric-label">Total Unrealized PnL</p>
@@ -40,37 +40,36 @@
 
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                 <div class="stat-box">
-                    <p class="metric-label">Exposição Total</p>
+                    <p class="metric-label">Exposição Total (Value)</p>
                     <p id="total-exposure" class="text-lg metric-value text-white">$0.00</p>
                 </div>
                 <div class="stat-box">
-                    <p class="metric-label">Margem em Risco</p>
+                    <p class="metric-label">Margem Inicial Total</p>
                     <p id="total-margin" class="text-lg metric-value text-gray-300">$0.00</p>
                 </div>
-                <div class="stat-box">
-                    <p class="metric-label">Leverage Efetiva</p>
+                <div class="stat-box border-yellow-500/30">
+                    <p class="metric-label text-yellow-500">Leverage Real Média</p>
                     <p id="avg-leverage" class="text-lg metric-value text-yellow-500">0.00x</p>
                 </div>
                 <div class="stat-box">
-                    <p class="metric-label italic">Funding Estimate (24h)</p>
+                    <p class="metric-label italic">Funding Est. (24h)</p>
                     <p id="funding-est" class="text-lg metric-value text-blue-400">$0.00</p>
                 </div>
                 <div class="col-span-full bg-gray-900/40 p-3 rounded-lg flex flex-col gap-2">
                     <div class="flex justify-between text-[10px] uppercase font-bold tracking-widest">
-                        <span class="text-green-500">Long Exposure</span>
-                        <span id="ls-ratio" class="text-gray-400">Neutral 50/50</span>
-                        <span class="text-red-500">Short Exposure</span>
+                        <span class="text-green-500 text-xs" id="long-label">Long: $0</span>
+                        <span id="ls-ratio" class="text-gray-400">Rácio L/S</span>
+                        <span class="text-red-500 text-xs" id="short-label">Short: $0</span>
                     </div>
                     <div class="w-full bg-gray-800 h-2 rounded-full overflow-hidden flex">
-                        <div id="long-bar" class="bg-green-500 h-full transition-all duration-500" style="width: 50%"></div>
-                        <div id="short-bar" class="bg-red-500 h-full transition-all duration-500" style="width: 50%"></div>
+                        <div id="long-bar" class="bg-green-500 h-full transition-all duration-700" style="width: 50%"></div>
+                        <div id="short-bar" class="bg-red-500 h-full transition-all duration-700" style="width: 50%"></div>
                     </div>
                 </div>
             </div>
         </header>
 
-        <div id="dashboard-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            </div>
+        <div id="dashboard-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"></div>
     </div>
 
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
@@ -89,11 +88,9 @@
                 const result = await response.json();
                 if (result.result?.list) {
                     updateDashboard(result.result.list.filter(p => parseFloat(p.size) !== 0));
-                    document.getElementById('last-update').innerText = 'Last Sync: ' + new Date().toLocaleTimeString();
+                    document.getElementById('last-update').innerText = 'Sync: ' + new Date().toLocaleTimeString();
                 }
-            } catch (err) {
-                console.error("Erro API:", err);
-            }
+            } catch (err) { console.error(err); }
         }
 
         function handleToggle(symbol) {
@@ -110,15 +107,10 @@
                     "theme": "dark",
                     "style": "1",
                     "locale": "pt",
-                    "toolbar_bg": "#f1f3f6",
-                    "enable_publishing": false,
-                    "hide_side_toolbar": false,
-                    "allow_symbol_change": true,
                     "container_id": `chart-${symbol}`,
                     "backgroundColor": "#181a20",
                     "gridColor": "rgba(43, 49, 57, 0.5)",
-                    "withdateranges": true,
-                    "save_image": false
+                    "withdateranges": true
                 });
                 container.dataset.loaded = "true";
             }
@@ -126,16 +118,10 @@
 
         function updateDashboard(positions) {
             const grid = document.getElementById('dashboard-grid');
-            let totalPnL = 0;
-            let totalExposure = 0;
-            let totalMargin = 0;
-            let longExposure = 0;
-            let shortExposure = 0;
-            let totalFunding = 0;
+            let totalPnL = 0, totalExposure = 0, totalMargin = 0;
+            let longExposure = 0, shortExposure = 0, totalFunding24h = 0;
 
             const activeSymbols = positions.map(p => p.symbol);
-
-            // Cleanup
             Array.from(grid.children).forEach(card => {
                 if (!activeSymbols.includes(card.id.replace('card-', ''))) card.remove();
             });
@@ -148,96 +134,79 @@
                 const liq = parseFloat(pos.liqPrice) || 0;
                 const leverage = parseFloat(pos.leverage) || 1;
                 const tp = parseFloat(pos.takeProfit) || 0;
+                const fRate = parseFloat(pos.curRealisedFunding) || 0; // Taxa atual aplicada
 
-                // Cálculos Pro
-                const posValue = current * qty;
-                const initialMargin = (entry * qty) / leverage;
-                const roeReal = initialMargin > 0 ? (netPnL / initialMargin) * 100 : 0;
-                const distLiq = liq > 0 ? ((liq - current) / current) * 100 : 0;
-                const distAbs = Math.abs(distLiq);
-                const distTP = tp > 0 ? Math.min(Math.abs(((tp - current) / (tp - entry)) * 100), 100) : 0;
-
-                // Agregados Globais
+                // MATEMÁTICA CORRIGIDA
+                const posValue = current * qty; // Valor de Mercado
+                const costValue = entry * qty; // Valor de Custo
+                const initialMargin = costValue / leverage; // Margem Real usada na abertura
+                
                 totalPnL += netPnL;
                 totalExposure += posValue;
                 totalMargin += initialMargin;
                 
+                // Cálculo de Funding projetado (simplificado: taxa * valor_posicao * 3 ciclos/dia)
+                // Nota: A API por vezes envia o acumulado, vamos estimar com base no valor nominal
+                const estFunding = (posValue * 0.0001 * 3); // 0.01% é a taxa média padrão
+                totalFunding24h += estFunding;
+
                 if (pos.side === 'Buy') longExposure += posValue;
                 else shortExposure += posValue;
-
-                const sideClass = pos.side === 'Buy' ? 'pos-long' : 'pos-short';
-                const statusClass = netPnL >= 0 ? 'up' : 'down';
 
                 let card = document.getElementById(`card-${pos.symbol}`);
                 if (!card) {
                     card = document.createElement('div');
                     card.id = `card-${pos.symbol}`;
-                    card.className = `card rounded-xl ${sideClass} shadow-xl border border-gray-800`;
-                    card.innerHTML = `
-                        <div class="p-5">
-                            <div class="flex justify-between items-center mb-6">
-                                <h2 class="text-xl font-black text-white">${pos.symbol} <span class="text-xs font-medium text-gray-500 ml-2">${leverage}x</span></h2>
-                                <button id="btn-${pos.symbol}" onclick="handleToggle('${pos.symbol}')" class="toggle-btn text-gray-400 hover:text-white">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                </button>
-                            </div>
-                            <div id="metrics-${pos.symbol}" class="grid grid-cols-2 gap-y-6 gap-x-4"></div>
+                    card.className = `card rounded-xl ${pos.side === 'Buy' ? 'pos-long' : 'pos-short'} shadow-xl border border-gray-800`;
+                    card.innerHTML = `<div class="p-5">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-xl font-black text-white">${pos.symbol} <span class="text-xs font-medium text-gray-500 ml-2">${leverage}x</span></h2>
+                            <button id="btn-${pos.symbol}" onclick="handleToggle('${pos.symbol}')" class="toggle-btn text-gray-400 hover:text-white">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                            </button>
                         </div>
-                        <div id="chart-${pos.symbol}" class="chart-container"></div>
-                    `;
+                        <div id="metrics-${pos.symbol}" class="grid grid-cols-2 gap-y-6 gap-x-4"></div>
+                    </div><div id="chart-${pos.symbol}" class="chart-container"></div>`;
                     grid.appendChild(card);
                 }
 
+                const roeReal = initialMargin > 0 ? (netPnL / initialMargin) * 100 : 0;
+                const distLiq = liq > 0 ? ((liq - current) / current) * 100 : 0;
+                const distTP = tp > 0 ? Math.min(Math.abs(((tp - current) / (tp - entry)) * 100), 100) : 0;
+
                 document.getElementById(`metrics-${pos.symbol}`).innerHTML = `
-                    <div>
-                        <p class="metric-label">Entrada / Atual</p>
-                        <p class="text-xs text-gray-500">$${entry.toFixed(3)}</p>
-                        <p class="metric-value ${statusClass} text-lg">$${current.toFixed(3)}</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="metric-label">ROE REAL</p>
-                        <p class="metric-value ${statusClass} text-2xl font-black">${roeReal >= 0 ? '+' : ''}${roeReal.toFixed(2)}%</p>
+                    <div><p class="metric-label font-bold text-white">Entrada / Atual</p><p class="text-xs text-gray-500 italic">$${entry.toFixed(3)}</p><p class="metric-value ${netPnL >= 0 ? 'up' : 'down'} text-lg font-bold">$${current.toFixed(3)}</p></div>
+                    <div class="text-right"><p class="metric-label font-bold text-white">ROE REAL</p><p class="metric-value ${netPnL >= 0 ? 'up' : 'down'} text-2xl font-black">${roeReal >= 0 ? '+' : ''}${roeReal.toFixed(2)}%</p></div>
+                    <div class="col-span-2">
+                        <div class="flex justify-between items-end"><p class="metric-label text-red-500 font-bold uppercase">Liquidação</p><p class="text-[10px] text-red-400 font-bold">$${liq.toFixed(3)} (${distLiq.toFixed(2)}%)</p></div>
+                        <div class="progress-bg"><div class="progress-fill bg-red-600" style="width: ${Math.max(0, 100 - Math.abs(distLiq))}%"></div></div>
                     </div>
                     <div class="col-span-2">
-                        <div class="flex justify-between items-end">
-                            <p class="metric-label text-red-500 font-bold">Risco de Liquidação</p>
-                            <p class="text-[10px] text-red-400 font-mono">$${liq.toFixed(3)} (${distLiq > 0 ? '+' : ''}${distLiq.toFixed(2)}%)</p>
-                        </div>
-                        <div class="progress-bg"><div class="progress-fill bg-red-600" style="width: ${Math.max(0, 100 - distAbs)}%"></div></div>
+                        <div class="flex justify-between items-end"><p class="metric-label text-yellow-500 font-bold uppercase">Alvo Take Profit</p><p class="text-[10px] text-yellow-500 font-bold">${tp > 0 ? '$'+tp.toFixed(3) : 'N/A'}</p></div>
+                        <div class="progress-bg"><div class="progress-fill bg-yellow-500" style="width: ${tp > 0 && netPnL > 0 ? distTP : 0}%"></div></div>
                     </div>
-                    <div class="col-span-2">
-                        <div class="flex justify-between items-end">
-                            <p class="metric-label text-yellow-500">Alvo Take Profit</p>
-                            <p class="text-[10px] text-yellow-500 font-mono">${tp > 0 ? '$'+tp.toFixed(3) : 'N/A'}</p>
-                        </div>
-                        <div class="progress-bg"><div class="progress-fill bg-yellow-500" style="width: ${tp > 0 ? distTP : 0}%"></div></div>
-                    </div>
-                    <div class="bg-black/30 p-3 rounded-lg border border-gray-800/50">
-                        <p class="metric-label">Margem</p>
-                        <p class="metric-value text-gray-300">$${initialMargin.toFixed(2)}</p>
-                    </div>
-                    <div class="bg-black/30 p-3 rounded-lg border border-gray-800/50 text-right">
-                        <p class="metric-label">PnL Aberto</p>
-                        <p class="metric-value ${statusClass}">$${netPnL.toFixed(2)}</p>
-                    </div>
+                    <div class="bg-black/30 p-3 rounded-lg border border-gray-800/50"><p class="metric-label italic">Margem Aberta</p><p class="metric-value text-gray-300 font-bold">$${initialMargin.toFixed(2)}</p></div>
+                    <div class="bg-black/30 p-3 rounded-lg border border-gray-800/50 text-right"><p class="metric-label italic font-bold text-white">PnL Líquido</p><p class="metric-value ${netPnL >= 0 ? 'up' : 'down'} font-bold">$${netPnL.toFixed(2)}</p></div>
                 `;
             });
 
-            // Update Global Metrics
+            // UPDATE GLOBAL
             document.getElementById('total-pnl').innerText = `$${totalPnL.toFixed(2)}`;
             document.getElementById('total-pnl').className = `text-4xl metric-value ${totalPnL >= 0 ? 'up' : 'down'}`;
             document.getElementById('total-exposure').innerText = `$${totalExposure.toFixed(2)}`;
             document.getElementById('total-margin').innerText = `$${totalMargin.toFixed(2)}`;
-            document.getElementById('avg-leverage').innerText = (totalMargin > 0 ? (totalExposure / totalMargin).toFixed(2) : '0.00') + 'x';
             
-            // L/S Ratio Bar Logic
+            // LEVERAGE REAL: Soma(Valor Nominal) / Soma(Margem Inicial)
+            const realLev = totalMargin > 0 ? (totalExposure / totalMargin) : 0;
+            document.getElementById('avg-leverage').innerText = realLev.toFixed(2) + 'x';
+            
+            document.getElementById('funding-est').innerText = (totalFunding24h >= 0 ? '-$' : '+$') + Math.abs(totalFunding24h).toFixed(2);
+            
             const longP = totalExposure > 0 ? (longExposure / totalExposure) * 100 : 50;
-            const shortP = totalExposure > 0 ? (shortExposure / totalExposure) * 100 : 50;
             document.getElementById('long-bar').style.width = longP + '%';
-            document.getElementById('short-bar').style.width = shortP + '%';
-            document.getElementById('ls-ratio').innerText = `L ${longP.toFixed(0)}% / S ${shortP.toFixed(0)}%`;
+            document.getElementById('short-bar').style.width = (100 - longP) + '%';
+            document.getElementById('long-label').innerText = `Long: $${longExposure.toFixed(0)}`;
+            document.getElementById('short-label').innerText = `Short: $${shortExposure.toFixed(0)}`;
         }
 
         fetchPositions();
