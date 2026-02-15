@@ -14,7 +14,6 @@
         .pos-short { border-left: 4px solid #f6465d; }
         .up { color: #0ecb81; }
         .down { color: #f6465d; }
-        .warning { color: #f3ba2f; }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -32,7 +31,7 @@
         </header>
 
         <div id="dashboard-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            <div class="p-10 text-center col-span-full text-gray-500 animate-pulse">A atualizar posições...</div>
+            <div id="loading-state" class="p-10 text-center col-span-full text-gray-500 animate-pulse">A procurar posições ativas...</div>
         </div>
     </div>
 
@@ -52,35 +51,45 @@
                 });
 
                 const result = await response.json();
-                
+                console.log("Dados brutos da Bybit:", result); // Debug no F12
+
                 if (result.result && result.result.list) {
                     const activePositions = result.result.list.filter(p => parseFloat(p.size) !== 0);
                     renderDashboard(activePositions);
+                } else {
+                    document.getElementById('dashboard-grid').innerHTML = `<div class='col-span-full text-center text-gray-500'>Nenhuma posição aberta encontrada.</div>`;
                 }
             } catch (err) {
-                console.error("Erro:", err.message);
+                console.error("Erro na busca:", err);
+                document.getElementById('dashboard-grid').innerHTML = `<div class='col-span-full text-center text-red-500'>Erro de ligação. Verifica a consola (F12).</div>`;
             }
         }
 
         function renderDashboard(positions) {
             const grid = document.getElementById('dashboard-grid');
             let totalPnL = 0;
+            
+            if (positions.length === 0) {
+                grid.innerHTML = `<div class='col-span-full text-center text-gray-500'>Sem posições ativas.</div>`;
+                return;
+            }
+
             grid.innerHTML = '';
 
             positions.forEach(pos => {
-                const entry = parseFloat(pos.avgPrice);
-                const current = parseFloat(pos.markPrice);
-                const qty = parseFloat(pos.size);
-                const netPnL = parseFloat(pos.unrealisedPnl);
-                const tp = parseFloat(pos.takeProfit);
-                const liq = parseFloat(pos.liqPrice);
-                const leverage = parseFloat(pos.leverage);
+                // Conversão segura de números
+                const entry = parseFloat(pos.avgPrice) || 0;
+                const current = parseFloat(pos.markPrice) || 0;
+                const qty = Math.abs(parseFloat(pos.size)) || 0;
+                const netPnL = parseFloat(pos.unrealisedPnl) || 0;
+                const tp = parseFloat(pos.takeProfit) || 0;
+                const liq = parseFloat(pos.liqPrice) || 0;
+                const leverage = parseFloat(pos.leverage) || 1;
                 
-                // CÁLCULOS
+                // Cálculos de Risco e ROE
                 const mktValue = current * qty;
-                // ROE (Real % com Leverage): (PnL / (Valor_Posicao / Alavancagem)) * 100
-                const marginUsed = mktValue / leverage;
-                const roeReal = (netPnL / marginUsed) * 100;
+                const marginUsed = leverage > 0 ? (mktValue / leverage) : 0;
+                const roeReal = marginUsed > 0 ? ((netPnL / marginUsed) * 100) : 0;
                 
                 const sideClass = pos.side === 'Buy' ? 'pos-long' : 'pos-short';
                 const statusClass = netPnL >= 0 ? 'up' : 'down';
@@ -106,11 +115,11 @@
                             
                             <div>
                                 <p class="metric-label text-red-500">Liquidação</p>
-                                <p class="metric-value text-red-500">${liq > 0 ? '$' + liq.toFixed(4) : 'N/A'}</p>
+                                <p class="metric-value text-red-500 font-bold">${liq > 0 ? '$' + liq.toFixed(4) : 'N/A'}</p>
                             </div>
                             <div>
-                                <p class="metric-label">ROE (Real %)</p>
-                                <p class="metric-value ${statusClass}">${roeReal >= 0 ? '+' : ''}${roeReal.toFixed(2)}%</p>
+                                <p class="metric-label font-bold">ROE (Real %)</p>
+                                <p class="metric-value ${statusClass} text-lg">${roeReal >= 0 ? '+' : ''}${roeReal.toFixed(2)}%</p>
                             </div>
 
                             <div>
@@ -119,7 +128,7 @@
                             </div>
                             <div>
                                 <p class="metric-label text-yellow-500">Take Profit</p>
-                                <p class="metric-value text-yellow-500">${tp > 0 ? '$' + tp.toFixed(4) : 'N/A'}</p>
+                                <p class="metric-value text-yellow-500 font-medium">${tp > 0 ? '$' + tp.toFixed(4) : 'N/A'}</p>
                             </div>
 
                             <div class="col-span-2 bg-gray-900/50 p-3 rounded-lg flex justify-between items-center mt-2 border border-gray-800">
@@ -137,12 +146,13 @@
                 `;
             });
 
-            document.getElementById('total-pnl').innerText = `$${totalPnL.toFixed(2)}`;
-            document.getElementById('total-pnl').className = `text-2xl metric-value ${totalPnL >= 0 ? 'up' : 'down'}`;
+            const totalEl = document.getElementById('total-pnl');
+            totalEl.innerText = `$${totalPnL.toFixed(2)}`;
+            totalEl.className = `text-2xl metric-value ${totalPnL >= 0 ? 'up' : 'down'}`;
         }
 
-        setInterval(fetchPositions, 10000);
         fetchPositions();
+        setInterval(fetchPositions, 10000);
     </script>
 </body>
 </html>
