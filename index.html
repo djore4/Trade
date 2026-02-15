@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crypto Command Center v3.7 - Pro Funding</title>
+    <title>Crypto Command Center v3.8 - Precision Metrics</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0b0e11; color: #eaecef; font-family: 'Inter', sans-serif; }
@@ -31,42 +31,31 @@
         <header class="mb-8">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 border-b border-gray-800 pb-6">
                 <div>
-                    <h1 class="text-2xl font-black tracking-tight text-white uppercase italic">Command <span class="text-yellow-500">Center v3.7</span></h1>
-                    <p class="text-xs text-gray-500 font-mono" id="last-update">Syncing...</p>
+                    <h1 class="text-2xl font-black tracking-tight text-white uppercase italic">Command <span class="text-yellow-500">Center v3.8</span></h1>
+                    <p class="text-xs text-gray-500 font-mono" id="last-update">Updating...</p>
                 </div>
                 <div class="text-right">
-                    <p class="metric-label">Total Unrealized PnL</p>
+                    <p class="metric-label font-bold">Total Unrealized PnL</p>
                     <p id="total-pnl" class="text-4xl metric-value">$0.00</p>
                 </div>
             </div>
 
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                 <div class="stat-box">
-                    <p class="metric-label font-bold">Exposição Global</p>
+                    <p class="metric-label font-bold">Market Value Total</p>
                     <p id="total-exposure" class="text-lg metric-value text-white">$0.00</p>
                 </div>
                 <div class="stat-box">
-                    <p class="metric-label font-bold">Capital empenhado</p>
+                    <p class="metric-label font-bold">Margem Empenhada</p>
                     <p id="total-margin" class="text-lg metric-value text-gray-300">$0.00</p>
                 </div>
-                <div class="stat-box">
-                    <p class="metric-label text-yellow-500 font-bold">Leverage Efetiva</p>
-                    <p id="avg-leverage" class="text-lg metric-value text-yellow-500">0.00x</p>
+                <div class="stat-box border-yellow-500/50">
+                    <p class="metric-label text-yellow-500 font-bold tracking-widest">Leverage Real Média</p>
+                    <p id="avg-leverage" class="text-2xl metric-value text-yellow-500 font-black italic">0.00x</p>
                 </div>
                 <div class="stat-box">
                     <p class="metric-label italic font-bold">Net Funding (24h)</p>
                     <p id="funding-est" class="text-lg metric-value">$0.00</p>
-                </div>
-                <div class="col-span-full bg-gray-900/40 p-3 rounded-lg flex flex-col gap-2">
-                    <div class="flex justify-between text-[10px] uppercase font-bold tracking-widest">
-                        <span class="text-green-500" id="long-label text-xs">Longs</span>
-                        <span id="ls-ratio" class="text-gray-400">Rácio L/S</span>
-                        <span class="text-red-500" id="short-label text-xs">Shorts</span>
-                    </div>
-                    <div class="w-full bg-gray-800 h-2 rounded-full overflow-hidden flex">
-                        <div id="long-bar" class="bg-green-500 h-full transition-all duration-700" style="width: 50%"></div>
-                        <div id="short-bar" class="bg-red-500 h-full transition-all duration-700" style="width: 50%"></div>
-                    </div>
                 </div>
             </div>
         </header>
@@ -120,7 +109,7 @@
         function updateDashboard(positions) {
             const grid = document.getElementById('dashboard-grid');
             let totalPnL = 0, totalExposure = 0, totalMargin = 0;
-            let longExposure = 0, shortExposure = 0, netFunding24h = 0;
+            let netFunding24h = 0;
 
             const activeSymbols = positions.map(p => p.symbol);
             Array.from(grid.children).forEach(card => {
@@ -136,25 +125,19 @@
                 const leverage = parseFloat(pos.leverage) || 1;
                 const tp = parseFloat(pos.takeProfit) || 0;
                 
-                // Lógica de Funding: Estimativa baseada em 0.01% ou taxa real se disponível
-                // Bybit funding positivo: Longs pagam Shorts. Negativo: Shorts pagam Longs.
-                const rawFundingRate = -0.0001; // Taxa negativa (Bearish)
-                const isLong = pos.side === 'Buy';
+                // MATH FIX: Usar 'positionValue' direto da API se possível, ou calcular nominal puro
+                const marketValue = current * qty;
+                const initialMargin = parseFloat(pos.positionIM) || (marketValue / leverage);
                 
-                // Se rate < 0 e Long = Ganha (+). Se rate < 0 e Short = Paga (-).
-                const fundingImpactFactor = isLong ? (rawFundingRate < 0 ? 1 : -1) : (rawFundingRate < 0 ? -1 : 1);
-                
-                const posValue = current * qty;
-                const initialMargin = (entry * qty) / leverage;
-                const fundingEst24h = (posValue * Math.abs(rawFundingRate) * 3) * fundingImpactFactor;
-
                 totalPnL += netPnL;
-                totalExposure += posValue;
+                totalExposure += marketValue;
                 totalMargin += initialMargin;
-                netFunding24h += fundingEst24h;
 
-                if (isLong) longExposure += posValue;
-                else shortExposure += posValue;
+                // Funding Logic
+                const rawFundingRate = -0.0001; // Taxa exemplo
+                const isLong = pos.side === 'Buy';
+                const fundingImpact = isLong ? (rawFundingRate < 0 ? 1 : -1) : (rawFundingRate < 0 ? -1 : 1);
+                netFunding24h += (marketValue * Math.abs(rawFundingRate) * 3) * fundingImpact;
 
                 let card = document.getElementById(`card-${pos.symbol}`);
                 if (!card) {
@@ -177,16 +160,11 @@
                 const distLiq = liq > 0 ? ((liq - current) / current) * 100 : 0;
                 const distTP = tp > 0 ? Math.min(Math.abs(((tp - current) / (tp - entry)) * 100), 100) : 0;
 
-                const fundingBadge = fundingImpactFactor > 0 
-                    ? `<span class="text-[9px] px-2 py-0.5 rounded-full badge-income font-bold tracking-tighter uppercase">Receber Funding</span>`
-                    : `<span class="text-[9px] px-2 py-0.5 rounded-full badge-expense font-bold tracking-tighter uppercase">Pagar Funding</span>`;
-
                 document.getElementById(`metrics-${pos.symbol}`).innerHTML = `
                     <div><p class="metric-label font-bold text-white">Entrada / Atual</p><p class="text-xs text-gray-500 italic">$${entry.toFixed(4)}</p><p class="metric-value ${netPnL >= 0 ? 'up' : 'down'} text-lg font-bold">$${current.toFixed(4)}</p></div>
                     <div class="text-right">
                         <p class="metric-label font-bold text-white">ROE REAL</p>
                         <p class="metric-value ${netPnL >= 0 ? 'up' : 'down'} text-2xl font-black">${roeReal >= 0 ? '+' : ''}${roeReal.toFixed(2)}%</p>
-                        ${fundingBadge}
                     </div>
                     <div class="col-span-2">
                         <div class="flex justify-between items-end"><p class="metric-label text-red-500 font-bold uppercase">Liquidação</p><p class="text-[10px] text-red-400 font-bold">$${liq.toFixed(3)} (${distLiq.toFixed(2)}%)</p></div>
@@ -197,33 +175,27 @@
                         <div class="progress-bg"><div class="progress-fill bg-yellow-500" style="width: ${tp > 0 && netPnL > 0 ? distTP : 0}%"></div></div>
                     </div>
                     <div class="bg-black/30 p-3 rounded-lg border border-gray-800/50"><p class="metric-label italic">Margem</p><p class="metric-value text-gray-300 font-bold">$${initialMargin.toFixed(2)}</p></div>
-                    <div class="bg-black/30 p-3 rounded-lg border border-gray-800/50 text-right"><p class="metric-label italic font-bold text-white">PnL Líquido</p><p class="metric-value ${netPnL >= 0 ? 'up' : 'down'} font-bold">$${netPnL.toFixed(2)}</p></div>
+                    <div class="bg-black/30 p-3 rounded-lg border border-gray-800/50 text-right"><p class="metric-label italic font-bold text-white">PnL Aberto</p><p class="metric-value ${netPnL >= 0 ? 'up' : 'down'} font-bold">$${netPnL.toFixed(2)}</p></div>
                 `;
             });
 
-            // UPDATE GLOBAL HEADER
+            // FINAL MATH FIX
             document.getElementById('total-pnl').innerText = `$${totalPnL.toFixed(2)}`;
             document.getElementById('total-pnl').className = `text-4xl metric-value ${totalPnL >= 0 ? 'up' : 'down'}`;
             document.getElementById('total-exposure').innerText = `$${totalExposure.toFixed(2)}`;
             document.getElementById('total-margin').innerText = `$${totalMargin.toFixed(2)}`;
             
+            // Leverage Real: Total Position Value / Total Initial Margin
             const realLev = totalMargin > 0 ? (totalExposure / totalMargin) : 0;
             document.getElementById('avg-leverage').innerText = realLev.toFixed(2) + 'x';
             
-            // Cor do Funding Global: Verde se for lucro neto, Vermelho se for custo neto
             const fundEl = document.getElementById('funding-est');
             fundEl.innerText = (netFunding24h >= 0 ? '+$' : '-$') + Math.abs(netFunding24h).toFixed(2);
             fundEl.className = `text-lg metric-value ${netFunding24h >= 0 ? 'up' : 'down'}`;
-            
-            const longP = totalExposure > 0 ? (longExposure / totalExposure) * 100 : 50;
-            document.getElementById('long-bar').style.width = longP + '%';
-            document.getElementById('short-bar').style.width = (100 - longP) + '%';
-            document.getElementById('long-label').innerText = `Long: $${longExposure.toFixed(0)}`;
-            document.getElementById('short-label').innerText = `Short: $${shortExposure.toFixed(0)}`;
         }
 
-        fetchPositions();
-        setInterval(fetchPositions, 10000);
+            fetchPositions();
+            setInterval(fetchPositions, 10000);
     </script>
 </body>
 </html>
