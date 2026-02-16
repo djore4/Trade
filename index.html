@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Command Center v5.9 - Clean Chart Edition</title>
+    <title>Command Center v5.9 - AI Final Integration</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0b0e11; color: #eaecef; font-family: 'Inter', sans-serif; overflow-x: hidden; }
@@ -34,8 +34,8 @@
         <header class="mb-8">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 border-b border-gray-800 pb-6">
                 <div>
-                    <h1 class="text-2xl font-black text-white uppercase italic leading-none tracking-tighter">COMMAND <span class="text-yellow-500 text-3xl">5.8</span></h1>
-                    <p class="text-[10px] text-gray-500 font-mono mt-1 italic text-yellow-500" id="last-update">CHARTS OPTIMIZED</p>
+                    <h1 class="text-2xl font-black text-white uppercase italic leading-none tracking-tighter">COMMAND <span class="text-yellow-500 text-3xl">5.9</span></h1>
+                    <p class="text-[10px] text-gray-500 font-mono mt-1 italic text-yellow-500" id="last-update">AI ENGINE INTEGRATED</p>
                 </div>
                 <div class="flex items-center gap-6">
                     <button onclick="toggleAISidebar()" class="bg-yellow-500/10 border border-yellow-500/50 text-yellow-500 px-6 py-3 rounded-lg text-xs font-black hover:bg-yellow-500/20 transition-all flex items-center gap-2">
@@ -68,7 +68,7 @@
         </div>
         <div class="grid grid-cols-2 gap-2 mb-6 text-center">
             <div class="bg-gray-900 p-2 rounded border border-gray-800"><p class="text-[8px] text-gray-500 uppercase font-bold">Fear & Greed</p><p id="fg-index" class="text-xs font-bold text-yellow-500">--</p></div>
-            <div class="bg-gray-900 p-2 rounded border border-gray-800"><p class="text-[8px] text-gray-500 uppercase font-bold">Status</p><p id="ai-status" class="text-xs font-bold text-blue-400">SYNCING</p></div>
+            <div class="bg-gray-900 p-2 rounded border border-gray-800"><p class="text-[8px] text-gray-500 uppercase font-bold">Status</p><p id="ai-status" class="text-xs font-bold text-blue-400">READY</p></div>
         </div>
         <div id="ai-content" class="space-y-4 text-[11px] text-gray-300 leading-relaxed italic"></div>
     </aside>
@@ -92,7 +92,9 @@
 
         async function fetchAIIntelligence() {
             const aiContent = document.getElementById('ai-content');
-            aiContent.innerHTML = `<p class="animate-pulse text-yellow-500 italic">Estabelecendo confluência neural...</p>`;
+            const statusEl = document.getElementById('ai-status');
+            aiContent.innerHTML = `<p class="animate-pulse text-yellow-500 italic">O Gemini está a analisar o mercado...</p>`;
+            
             try {
                 const response = await fetch(AI_FUNC_PATH, {
                     method: 'POST',
@@ -101,10 +103,12 @@
                 });
                 const data = await response.json();
                 document.getElementById('fg-index').innerText = data.fg || '--';
-                aiContent.innerHTML = `<div class="insight-card border-blue-500 bg-blue-500/5 whitespace-pre-wrap">${data.insight}</div>`;
-                document.getElementById('ai-status').innerText = "ONLINE";
+                aiContent.innerHTML = `<div class="insight-card border-blue-500 bg-blue-500/5 whitespace-pre-wrap text-white font-medium">${data.insight}</div>`;
+                statusEl.innerText = "ONLINE";
+                statusEl.className = "text-xs font-bold text-green-500";
             } catch (err) {
-                aiContent.innerHTML = `<p class="text-red-500">Erro na ligação à Edge Function.</p>`;
+                aiContent.innerHTML = `<p class="text-red-500 text-[10px]">Falha na resposta da IA. Verifica os logs no Supabase.</p>`;
+                statusEl.innerText = "ERROR";
             }
         }
 
@@ -139,10 +143,10 @@
                     "locale": "pt",
                     "toolbar_bg": "#f1f3f6",
                     "enable_publishing": false,
-                    "hide_side_toolbar": false, // REATIVADA A ABA DA ESQUERDA
+                    "hide_side_toolbar": false,
                     "allow_symbol_change": true,
                     "container_id": `chart-${symbol}`,
-                    "studies": [] // REMOVIDO MACD E RSI
+                    "studies": []
                 });
                 container.dataset.loaded = "true";
             }
