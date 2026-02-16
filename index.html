@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Command Center v5.7 - Full Restoration</title>
+    <title>Command Center v5.8 - Clean Chart Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0b0e11; color: #eaecef; font-family: 'Inter', sans-serif; overflow-x: hidden; }
@@ -34,8 +34,8 @@
         <header class="mb-8">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 border-b border-gray-800 pb-6">
                 <div>
-                    <h1 class="text-2xl font-black text-white uppercase italic leading-none tracking-tighter">COMMAND <span class="text-yellow-500 text-3xl">5.7</span></h1>
-                    <p class="text-[10px] text-gray-500 font-mono mt-1 italic text-yellow-500" id="last-update">SYSTEM FULL RECOVERY</p>
+                    <h1 class="text-2xl font-black text-white uppercase italic leading-none tracking-tighter">COMMAND <span class="text-yellow-500 text-3xl">5.8</span></h1>
+                    <p class="text-[10px] text-gray-500 font-mono mt-1 italic text-yellow-500" id="last-update">CHARTS OPTIMIZED</p>
                 </div>
                 <div class="flex items-center gap-6">
                     <button onclick="toggleAISidebar()" class="bg-yellow-500/10 border border-yellow-500/50 text-yellow-500 px-6 py-3 rounded-lg text-xs font-black hover:bg-yellow-500/20 transition-all flex items-center gap-2">
@@ -78,7 +78,7 @@
         const PROJECT_ID = 'qjzjxtxrlofnoyaaypbu'; 
         const SUPABASE_KEY = 'sb_publishable_bRa-mZWTaf0g6sNyWL9OmQ_uvo7Ex5H';
         const FUNC_PATH = `https://${PROJECT_ID}.supabase.co/functions/v1/get-bybit-positions`;
-        const AI_FUNC_PATH = `https://qjzjxtxrlofnoyaaypbu.supabase.co/functions/v1/trade-advisor`;
+        const AI_FUNC_PATH = `https://${PROJECT_ID}.supabase.co/functions/v1/ai-trader-insights`;
 
         let currentPositions = [];
 
@@ -128,10 +128,21 @@
             const btn = document.getElementById(`btn-${symbol}`);
             const isVisible = container.classList.toggle('chart-visible');
             btn.classList.toggle('active');
+            
             if (isVisible && !container.dataset.loaded) {
                 new TradingView.widget({
-                    "autosize": true, "symbol": `BYBIT:${symbol}.P`, "interval": "240", "theme": "dark", "style": "1", "container_id": `chart-${symbol}`,
-                    "studies": ["MACD@tv-basicstudies", "RSI@tv-basicstudies"]
+                    "autosize": true,
+                    "symbol": `BYBIT:${symbol}.P`,
+                    "interval": "240",
+                    "theme": "dark",
+                    "style": "1",
+                    "locale": "pt",
+                    "toolbar_bg": "#f1f3f6",
+                    "enable_publishing": false,
+                    "hide_side_toolbar": false, // REATIVADA A ABA DA ESQUERDA
+                    "allow_symbol_change": true,
+                    "container_id": `chart-${symbol}`,
+                    "studies": [] // REMOVIDO MACD E RSI
                 });
                 container.dataset.loaded = "true";
             }
@@ -203,7 +214,7 @@
             document.getElementById('total-exposure').innerText = `$${totalExposure.toFixed(2)}`;
             document.getElementById('total-margin').innerText = `$${totalMargin.toFixed(2)}`;
             document.getElementById('avg-leverage').innerText = (totalExposure / totalMargin).toFixed(2) + 'x';
-            document.getElementById('total-pnl-perc').innerText = `${((totalPnL/totalMargin)*100).toFixed(2)}%`;
+            document.getElementById('total-pnl-perc').innerText = `${totalMargin > 0 ? ((totalPnL/totalMargin)*100).toFixed(2) : 0}%`;
             document.getElementById('total-pnl-perc').className = `text-sm font-bold mt-1 ${totalPnL >= 0 ? 'up' : 'down'}`;
         }
 
