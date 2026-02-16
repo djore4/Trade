@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Command Center v5.4 - AI Live Intelligence</title>
+    <title>Command Center v5.5 - GitHub Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0b0e11; color: #eaecef; font-family: 'Inter', sans-serif; overflow-x: hidden; }
@@ -17,7 +17,6 @@
         .progress-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
         .chart-container { height: 506px; width: 100%; border-top: 1px solid #2b3139; display: none; }
         .chart-visible { display: block !important; }
-        .toggle-btn { transition: all 0.3s ease; cursor: pointer; }
         
         /* AI Sidebar */
         #ai-sidebar { width: 380px; border-left: 1px solid #2b3139; background: #0b0e11; height: 100vh; position: fixed; right: 0; top: 0; z-index: 50; padding: 24px; overflow-y: auto; transform: translateX(100%); transition: transform 0.3s ease; }
@@ -34,8 +33,8 @@
         <header class="mb-8 border-b border-gray-800 pb-6">
             <div class="flex justify-between items-center mb-6">
                 <div>
-                    <h1 class="text-2xl font-black text-white italic">COMMAND <span class="text-yellow-500 text-3xl">5.4</span></h1>
-                    <p id="last-update" class="text-[10px] text-gray-500 font-mono mt-1 italic">Waiting for AI Sync...</p>
+                    <h1 class="text-2xl font-black text-white italic italic">COMMAND <span class="text-yellow-500 text-3xl">5.5</span></h1>
+                    <p id="last-update" class="text-[10px] text-gray-500 font-mono mt-1 italic italic text-yellow-500">System Ready</p>
                 </div>
                 <div class="flex items-center gap-6">
                     <button onclick="toggleAISidebar()" class="bg-yellow-500/10 border border-yellow-500/50 text-yellow-500 px-6 py-3 rounded-lg text-xs font-black hover:bg-yellow-500/20 transition-all">
@@ -62,7 +61,7 @@
 
     <aside id="ai-sidebar">
         <div class="flex justify-between items-center mb-8 border-b border-gray-800 pb-4">
-            <div><span class="badge-ai">Live Intelligence</span></div>
+            <div><span class="badge-ai">Neural Engine</span></div>
             <button onclick="toggleAISidebar()" class="text-gray-500 hover:text-white">✕</button>
         </div>
         
@@ -72,13 +71,13 @@
                 <p id="fg-index" class="text-xs font-bold text-yellow-500">--</p>
             </div>
             <div class="bg-gray-900 p-2 rounded border border-gray-800">
-                <p class="text-[8px] text-gray-500 uppercase">AI Verdict</p>
-                <p id="ai-status" class="text-xs font-bold text-blue-400">Syncing...</p>
+                <p class="text-[8px] text-gray-500 uppercase">Status</p>
+                <p id="ai-status" class="text-xs font-bold text-blue-400">IDLE</p>
             </div>
         </div>
 
         <div id="ai-content" class="space-y-4 text-xs leading-relaxed text-gray-300">
-            <p class="italic text-gray-500">Clica em "AI INTELLIGENCE" para processar...</p>
+            <p class="italic text-gray-500 text-center">Aguarda sincronização das posições...</p>
         </div>
     </aside>
 
@@ -94,28 +93,36 @@
         function toggleAISidebar() {
             const sidebar = document.getElementById('ai-sidebar');
             const wrapper = document.getElementById('main-wrapper');
-            const active = sidebar.classList.toggle('ai-active');
+            const isActive = sidebar.classList.toggle('ai-active');
             wrapper.classList.toggle('with-sidebar');
-            if(active) fetchAIIntelligence();
+            if(isActive && currentPositions.length > 0) fetchAIIntelligence();
         }
 
         async function fetchAIIntelligence() {
             const aiContent = document.getElementById('ai-content');
-            aiContent.innerHTML = `<p class="animate-pulse text-yellow-500 italic">O Gemini está a analisar o mercado e as tuas posições...</p>`;
-            
+            const statusEl = document.getElementById('ai-status');
+            aiContent.innerHTML = `<p class="animate-pulse text-yellow-500 italic">Estabelecendo túnel CORS com Supabase...</p>`;
+            statusEl.innerText = "CALLING...";
+
             try {
                 const response = await fetch(AI_FUNC_PATH, {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ positions: currentPositions })
                 });
+
+                if (!response.ok) throw new Error(`Server Error: ${response.status}`);
+
                 const data = await response.json();
-                
-                document.getElementById('fg-index').innerText = `${data.fg} - ${data.fgClass}`;
+                document.getElementById('fg-index').innerText = data.fg || 'N/A';
                 aiContent.innerHTML = `<div class="insight-card border-blue-500 bg-blue-500/5 whitespace-pre-wrap">${data.insight}</div>`;
-                document.getElementById('ai-status').innerText = "Updated";
+                statusEl.innerText = "ONLINE";
+                statusEl.className = "text-xs font-bold text-green-500";
             } catch (err) {
-                aiContent.innerHTML = `<p class="text-red-500">Erro na análise neural.</p>`;
+                console.error("AI HUB Error:", err);
+                aiContent.innerHTML = `<p class="text-red-500 text-[10px]">Falha na resposta: ${err.message}. Garante que o JWT está OFF e o código tem headers CORS.</p>`;
+                statusEl.innerText = "ERROR";
+                statusEl.className = "text-xs font-bold text-red-500";
             }
         }
 
@@ -131,20 +138,15 @@
                     updateDashboard(currentPositions);
                     document.getElementById('last-update').innerText = 'Last Sync: ' + new Date().toLocaleTimeString();
                 }
-            } catch (err) { console.error(err); }
+            } catch (err) { console.error("Bybit Fetch Error:", err); }
         }
 
         function handleToggle(symbol) {
             const container = document.getElementById(`chart-${symbol}`);
-            const btn = document.getElementById(`btn-${symbol}`);
             const isVisible = container.classList.toggle('chart-visible');
-            btn.classList.toggle('active');
-
             if (isVisible && !container.dataset.loaded) {
                 new TradingView.widget({
-                    "autosize": true, "symbol": `BYBIT:${symbol}.P`, "interval": "240", "theme": "dark", "style": "1", "locale": "pt",
-                    "toolbar_bg": "#f1f3f6", "hide_side_toolbar": false, "container_id": `chart-${symbol}`, "backgroundColor": "#181a20",
-                    "studies": ["MACD@tv-basicstudies", "RSI@tv-basicstudies"]
+                    "autosize": true, "symbol": `BYBIT:${symbol}.P`, "interval": "240", "theme": "dark", "container_id": `chart-${symbol}`, "studies": ["MACD@tv-basicstudies", "RSI@tv-basicstudies"]
                 });
                 container.dataset.loaded = "true";
             }
@@ -152,12 +154,7 @@
 
         function updateDashboard(positions) {
             const grid = document.getElementById('dashboard-grid');
-            let totalPnL = 0, totalExposure = 0, totalMargin = 0, netFunding24h = 0;
-            const activeSymbols = positions.map(p => p.symbol);
-
-            Array.from(grid.children).forEach(card => {
-                if (!activeSymbols.includes(card.id.replace('card-', ''))) card.remove();
-            });
+            let totalPnL = 0, totalExposure = 0, totalMargin = 0;
 
             positions.forEach(pos => {
                 const entry = parseFloat(pos.avgPrice) || 0;
@@ -166,19 +163,13 @@
                 const netPnL = parseFloat(pos.unrealisedPnl) || 0;
                 const liq = parseFloat(pos.liqPrice) || 0;
                 const leverage = parseFloat(pos.leverage) || 1;
-                const tp = parseFloat(pos.takeProfit) || 0;
                 const isLong = pos.side === 'Buy';
-                
                 const marketValue = parseFloat(pos.positionValue) || (current * qty);
                 const initialMargin = (entry * qty) / leverage; 
                 
                 totalPnL += netPnL;
                 totalExposure += marketValue;
                 totalMargin += initialMargin;
-
-                const rawFundingRate = -0.0001; 
-                const fundingImpact = isLong ? (rawFundingRate < 0 ? 1 : -1) : (rawFundingRate < 0 ? -1 : 1);
-                netFunding24h += (marketValue * Math.abs(rawFundingRate) * 3) * fundingImpact;
 
                 let card = document.getElementById(`card-${pos.symbol}`);
                 if (!card) {
@@ -188,53 +179,28 @@
                     card.innerHTML = `<div class="p-5">
                         <div class="flex justify-between items-center mb-6">
                             <h2 class="text-xl font-black text-white">${pos.symbol} <span class="text-xs font-medium text-gray-500 ml-2">${leverage}x</span></h2>
-                            <button id="btn-${pos.symbol}" onclick="handleToggle('${pos.symbol}')" class="toggle-btn text-gray-400 hover:text-white">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
-                            </button>
+                            <button onclick="handleToggle('${pos.symbol}')" class="text-gray-400 hover:text-white">SVG_CHART</button>
                         </div>
-                        <div id="metrics-${pos.symbol}" class="grid grid-cols-2 gap-y-6 gap-x-4"></div>
+                        <div id="metrics-${pos.symbol}" class="grid grid-cols-2 gap-y-6"></div>
                     </div><div id="chart-${pos.symbol}" class="chart-container"></div>`;
                     grid.appendChild(card);
                 }
 
-                const roeReal = (netPnL / initialMargin) * 100;
-                const distLiq = liq > 0 ? ((liq - current) / current) * 100 : 0;
-                let distTP = 0;
-                if (tp > 0) {
-                    const totalDist = isLong ? (tp - entry) : (entry - tp);
-                    const currentProg = isLong ? (current - entry) : (entry - current);
-                    if (totalDist > 0 && currentProg > 0) distTP = Math.min((currentProg / totalDist) * 100, 100);
-                }
-
                 document.getElementById(`metrics-${pos.symbol}`).innerHTML = `
-                    <div><p class="metric-label font-bold">Entrada / Atual</p><p class="text-[10px] text-gray-500 italic">$${entry.toFixed(4)}</p><p class="metric-value ${netPnL >= 0 ? 'up' : 'down'} text-lg font-bold">$${current.toFixed(4)}</p></div>
-                    <div class="text-right"><p class="metric-label font-bold">ROE REAL</p><p class="metric-value ${netPnL >= 0 ? 'up' : 'down'} text-2xl font-black">${roeReal >= 0 ? '+' : ''}${roeReal.toFixed(2)}%</p></div>
+                    <div><p class="metric-label">ROE REAL</p><p class="${netPnL >= 0 ? 'up' : 'down'} text-2xl font-black">${(netPnL/initialMargin*100).toFixed(2)}%</p></div>
+                    <div class="text-right"><p class="metric-label">PnL</p><p class="${netPnL >= 0 ? 'up' : 'down'} text-xl font-bold">$${netPnL.toFixed(2)}</p></div>
                     <div class="col-span-2">
-                        <div class="flex justify-between items-end"><p class="metric-label text-red-500 font-bold uppercase tracking-widest text-[9px]">Liquidação</p><p class="text-[10px] text-red-400 font-bold">$${liq.toFixed(3)} (${distLiq.toFixed(2)}%)</p></div>
-                        <div class="progress-bg"><div class="progress-fill bg-red-600" style="width: ${Math.max(0, 100 - Math.abs(distLiq))}%"></div></div>
+                        <p class="metric-label">Dist. Liquidação: ${Math.abs(((liq-current)/current)*100).toFixed(2)}%</p>
+                        <div class="progress-bg"><div class="progress-fill bg-red-600" style="width: ${100 - Math.abs(((liq-current)/current)*100)}%"></div></div>
                     </div>
-                    <div class="col-span-2">
-                        <div class="flex justify-between items-end"><p class="metric-label text-yellow-500 font-bold uppercase tracking-widest text-[9px]">Progresso Take Profit</p><p class="text-[10px] text-yellow-500 font-bold">${tp > 0 ? '$'+tp.toFixed(3) : 'N/A'}</p></div>
-                        <div class="progress-bg"><div class="progress-fill bg-yellow-500" style="width: ${distTP}%"></div></div>
-                    </div>
-                    <div class="bg-black/30 p-3 rounded-lg border border-gray-800/50"><p class="metric-label italic">Margem</p><p class="metric-value text-gray-300 font-bold">$${initialMargin.toFixed(2)}</p></div>
-                    <div class="bg-black/30 p-3 rounded-lg border border-gray-800/50 text-right"><p class="metric-label font-bold text-white uppercase italic text-[9px]">PnL Aberto</p><p class="metric-value ${netPnL >= 0 ? 'up' : 'down'} font-black text-xl leading-none">$${netPnL.toFixed(2)}</p></div>
                 `;
             });
 
-            const totalROE = totalMargin > 0 ? (totalPnL / totalMargin) * 100 : 0;
-            const avgLev = totalMargin > 0 ? (totalExposure / totalMargin) : 0;
-            
             document.getElementById('total-pnl').innerText = `$${totalPnL.toFixed(2)}`;
-            document.getElementById('total-pnl-perc').innerText = `${totalROE >= 0 ? '+' : ''}${totalROE.toFixed(2)}%`;
-            document.getElementById('total-pnl-perc').className = `text-sm font-bold mt-1 ${totalPnL >= 0 ? 'up' : 'down'}`;
+            document.getElementById('total-pnl').className = `text-4xl metric-value ${totalPnL >= 0 ? 'up' : 'down'}`;
             document.getElementById('total-exposure').innerText = `$${totalExposure.toFixed(2)}`;
             document.getElementById('total-margin').innerText = `$${totalMargin.toFixed(2)}`;
-            document.getElementById('avg-leverage').innerText = avgLev.toFixed(2) + 'x';
-            
-            const fundEl = document.getElementById('funding-est');
-            fundEl.innerText = (netFunding24h >= 0 ? '+$' : '-$') + Math.abs(netFunding24h).toFixed(2);
-            fundEl.className = `text-lg metric-value ${netFunding24h >= 0 ? 'up' : 'down'}`;
+            document.getElementById('avg-leverage').innerText = (totalExposure / totalMargin).toFixed(2) + 'x';
         }
 
         fetchPositions();
