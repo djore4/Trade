@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crypto Command Center v5.1 - Final Masterpiece</title>
+    <title>Command Center v5.4 - AI Live Intelligence</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0b0e11; color: #eaecef; font-family: 'Inter', sans-serif; overflow-x: hidden; }
-        .card { background-color: #181a20; border: 1px solid #2b3139; position: relative; overflow: hidden; height: fit-content; }
+        .card { background-color: #181a20; border: 1px solid #2b3139; position: relative; overflow: hidden; }
         .metric-label { color: #848e9c; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; }
         .metric-value { font-family: 'Roboto Mono', monospace; font-weight: 600; }
         .up { color: #0ecb81; }
@@ -18,56 +18,42 @@
         .chart-container { height: 506px; width: 100%; border-top: 1px solid #2b3139; display: none; }
         .chart-visible { display: block !important; }
         .toggle-btn { transition: all 0.3s ease; cursor: pointer; }
-        .toggle-btn.active { transform: rotate(180deg); color: #f3ba2f; }
         
         /* AI Sidebar */
-        #ai-sidebar { width: 350px; border-left: 1px solid #2b3139; background: #0b0e11; height: 100vh; position: fixed; right: 0; top: 0; z-index: 50; padding: 24px; overflow-y: auto; transform: translateX(100%); transition: transform 0.3s ease; }
-        .ai-active { transform: translateX(0) !important; box-shadow: -10px 0 30px rgba(0,0,0,0.5); }
+        #ai-sidebar { width: 380px; border-left: 1px solid #2b3139; background: #0b0e11; height: 100vh; position: fixed; right: 0; top: 0; z-index: 50; padding: 24px; overflow-y: auto; transform: translateX(100%); transition: transform 0.3s ease; }
+        .ai-active { transform: translateX(0) !important; box-shadow: -15px 0 40px rgba(0,0,0,0.9); }
         .main-content { transition: margin-right 0.3s ease; }
-        .with-sidebar { margin-right: 350px; }
-        .insight-card { background: rgba(59, 130, 246, 0.05); border-left: 3px solid #3b82f6; padding: 15px; margin-bottom: 20px; border-radius: 0 8px 8px 0; }
-        .badge-ai { background: #f3ba2f; color: #000; font-size: 10px; font-weight: 900; padding: 2px 6px; border-radius: 4px; vertical-align: middle; margin-right: 8px; }
+        .with-sidebar { margin-right: 380px; }
+        .insight-card { border-left: 4px solid #3b82f6; padding: 14px; margin-bottom: 18px; border-radius: 6px; background: rgba(59, 130, 246, 0.03); }
+        .badge-ai { background: #f3ba2f; color: #000; font-size: 10px; font-weight: 900; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; }
     </style>
 </head>
 <body class="p-4 md:p-8">
 
     <div id="main-wrapper" class="max-w-7xl mx-auto main-content">
-        <header class="mb-8">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 border-b border-gray-800 pb-6">
+        <header class="mb-8 border-b border-gray-800 pb-6">
+            <div class="flex justify-between items-center mb-6">
                 <div>
-                    <h1 class="text-2xl font-black tracking-tight text-white uppercase italic leading-none">Command <span class="text-yellow-500 text-3xl">5.1</span></h1>
-                    <p class="text-[10px] text-gray-500 font-mono mt-1" id="last-update">Initializing Unified Interface...</p>
+                    <h1 class="text-2xl font-black text-white italic">COMMAND <span class="text-yellow-500 text-3xl">5.4</span></h1>
+                    <p id="last-update" class="text-[10px] text-gray-500 font-mono mt-1 italic">Waiting for AI Sync...</p>
                 </div>
                 <div class="flex items-center gap-6">
-                    <button onclick="toggleAISidebar()" class="bg-yellow-500/10 border border-yellow-500/50 text-yellow-500 px-5 py-2.5 rounded-lg text-xs font-black hover:bg-yellow-500/20 transition-all flex items-center gap-2">
-                        <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-yellow-500"></span></span>
-                        AI CO-PILOT
+                    <button onclick="toggleAISidebar()" class="bg-yellow-500/10 border border-yellow-500/50 text-yellow-500 px-6 py-3 rounded-lg text-xs font-black hover:bg-yellow-500/20 transition-all">
+                        AI INTELLIGENCE
                     </button>
                     <div class="text-right">
-                        <p class="metric-label font-bold">Total Unrealized PnL</p>
+                        <p class="metric-label font-bold text-[10px]">Net PnL</p>
                         <p id="total-pnl" class="text-4xl metric-value leading-none">$0.00</p>
                         <p id="total-pnl-perc" class="text-sm font-bold mt-1 opacity-80">0.00%</p>
                     </div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                <div class="stat-box">
-                    <p class="metric-label font-bold text-gray-400">Market Value (Total)</p>
-                    <p id="total-exposure" class="text-lg metric-value text-white">$0.00</p>
-                </div>
-                <div class="stat-box">
-                    <p class="metric-label font-bold text-gray-400">Margem em Uso</p>
-                    <p id="total-margin" class="text-lg metric-value text-gray-300">$0.00</p>
-                </div>
-                <div class="stat-box border-yellow-500/30">
-                    <p class="metric-label text-yellow-500 font-bold italic tracking-wider">Leverage Real Média</p>
-                    <p id="avg-leverage" class="text-lg metric-value text-yellow-500 font-bold">0.00x</p>
-                </div>
-                <div class="stat-box">
-                    <p class="metric-label italic font-bold text-gray-400">Net Funding (24h)</p>
-                    <p id="funding-est" class="text-lg metric-value">$0.00</p>
-                </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="stat-box"><p class="metric-label">Market Exposure</p><p id="total-exposure" class="text-lg metric-value text-white">$0.00</p></div>
+                <div class="stat-box"><p class="metric-label">Equity Used</p><p id="total-margin" class="text-lg metric-value text-gray-300">$0.00</p></div>
+                <div class="stat-box border-yellow-500/30"><p class="metric-label text-yellow-500">Global Leverage</p><p id="avg-leverage" class="text-lg metric-value text-yellow-500">0.00x</p></div>
+                <div class="stat-box"><p class="metric-label">Funding (24h)</p><p id="funding-est" class="text-lg metric-value">$0.00</p></div>
             </div>
         </header>
 
@@ -75,31 +61,62 @@
     </div>
 
     <aside id="ai-sidebar">
-        <div class="flex justify-between items-center mb-8">
-            <div>
-                <span class="badge-ai">PRO</span>
-                <h3 class="text-white font-black tracking-widest text-sm inline-block">AI TRADER INSIGHTS</h3>
-            </div>
-            <button onclick="toggleAISidebar()" class="text-gray-500 hover:text-white text-xl font-bold">✕</button>
+        <div class="flex justify-between items-center mb-8 border-b border-gray-800 pb-4">
+            <div><span class="badge-ai">Live Intelligence</span></div>
+            <button onclick="toggleAISidebar()" class="text-gray-500 hover:text-white">✕</button>
         </div>
-        <div id="ai-content" class="space-y-4">
-            <p class="text-gray-500 text-xs italic">A analisar posições e volatilidade de mercado...</p>
+        
+        <div class="grid grid-cols-2 gap-2 mb-6 text-center">
+            <div class="bg-gray-900 p-2 rounded border border-gray-800">
+                <p class="text-[8px] text-gray-500 uppercase">Fear & Greed</p>
+                <p id="fg-index" class="text-xs font-bold text-yellow-500">--</p>
+            </div>
+            <div class="bg-gray-900 p-2 rounded border border-gray-800">
+                <p class="text-[8px] text-gray-500 uppercase">AI Verdict</p>
+                <p id="ai-status" class="text-xs font-bold text-blue-400">Syncing...</p>
+            </div>
+        </div>
+
+        <div id="ai-content" class="space-y-4 text-xs leading-relaxed text-gray-300">
+            <p class="italic text-gray-500">Clica em "AI INTELLIGENCE" para processar...</p>
         </div>
     </aside>
 
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-
     <script>
         const PROJECT_ID = 'qjzjxtxrlofnoyaaypbu'; 
         const SUPABASE_KEY = 'sb_publishable_bRa-mZWTaf0g6sNyWL9OmQ_uvo7Ex5H';
         const FUNC_PATH = `https://${PROJECT_ID}.supabase.co/functions/v1/get-bybit-positions`;
+        const AI_FUNC_PATH = `https://${PROJECT_ID}.supabase.co/functions/v1/ai-trader-insights`;
+
+        let currentPositions = [];
 
         function toggleAISidebar() {
             const sidebar = document.getElementById('ai-sidebar');
             const wrapper = document.getElementById('main-wrapper');
-            const isActive = sidebar.classList.toggle('ai-active');
+            const active = sidebar.classList.toggle('ai-active');
             wrapper.classList.toggle('with-sidebar');
-            if(isActive) requestAIUpdate();
+            if(active) fetchAIIntelligence();
+        }
+
+        async function fetchAIIntelligence() {
+            const aiContent = document.getElementById('ai-content');
+            aiContent.innerHTML = `<p class="animate-pulse text-yellow-500 italic">O Gemini está a analisar o mercado e as tuas posições...</p>`;
+            
+            try {
+                const response = await fetch(AI_FUNC_PATH, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ positions: currentPositions })
+                });
+                const data = await response.json();
+                
+                document.getElementById('fg-index').innerText = `${data.fg} - ${data.fgClass}`;
+                aiContent.innerHTML = `<div class="insight-card border-blue-500 bg-blue-500/5 whitespace-pre-wrap">${data.insight}</div>`;
+                document.getElementById('ai-status').innerText = "Updated";
+            } catch (err) {
+                aiContent.innerHTML = `<p class="text-red-500">Erro na análise neural.</p>`;
+            }
         }
 
         async function fetchPositions() {
@@ -110,10 +127,11 @@
                 });
                 const result = await response.json();
                 if (result.result?.list) {
-                    updateDashboard(result.result.list.filter(p => parseFloat(p.size) !== 0));
-                    document.getElementById('last-update').innerText = 'Sync: ' + new Date().toLocaleTimeString();
+                    currentPositions = result.result.list.filter(p => parseFloat(p.size) !== 0);
+                    updateDashboard(currentPositions);
+                    document.getElementById('last-update').innerText = 'Last Sync: ' + new Date().toLocaleTimeString();
                 }
-            } catch (err) { console.error("Sync Error:", err); }
+            } catch (err) { console.error(err); }
         }
 
         function handleToggle(symbol) {
@@ -124,37 +142,19 @@
 
             if (isVisible && !container.dataset.loaded) {
                 new TradingView.widget({
-                    "autosize": true,
-                    "symbol": `BYBIT:${symbol}.P`,
-                    "interval": "60",
-                    "theme": "dark",
-                    "style": "1",
-                    "locale": "pt",
-                    "toolbar_bg": "#f1f3f6",
-                    "hide_side_toolbar": false, // REATIVADO: Barra lateral completa
-                    "container_id": `chart-${symbol}`,
-                    "backgroundColor": "#181a20",
-                    "withdateranges": true,
-                    "save_image": false,
-                    "studies": ["Volume@tv-basicstudies"]
+                    "autosize": true, "symbol": `BYBIT:${symbol}.P`, "interval": "240", "theme": "dark", "style": "1", "locale": "pt",
+                    "toolbar_bg": "#f1f3f6", "hide_side_toolbar": false, "container_id": `chart-${symbol}`, "backgroundColor": "#181a20",
+                    "studies": ["MACD@tv-basicstudies", "RSI@tv-basicstudies"]
                 });
                 container.dataset.loaded = "true";
             }
         }
 
-        function requestAIUpdate() {
-            // Esta função liga à Edge Function do Gemini que criámos anteriormente
-            // Por agora, mantém a lógica de análise local para garantir que nunca fica vazio
-            const aiContent = document.getElementById('ai-content');
-            aiContent.innerHTML = `<div class="insight-card"><p class="text-gray-400 text-xs">A processar dados com Gemini AI...</p></div>`;
-        }
-
         function updateDashboard(positions) {
             const grid = document.getElementById('dashboard-grid');
-            let totalPnL = 0, totalExposure = 0, totalMargin = 0;
-            let netFunding24h = 0;
-
+            let totalPnL = 0, totalExposure = 0, totalMargin = 0, netFunding24h = 0;
             const activeSymbols = positions.map(p => p.symbol);
+
             Array.from(grid.children).forEach(card => {
                 if (!activeSymbols.includes(card.id.replace('card-', ''))) card.remove();
             });
@@ -170,13 +170,12 @@
                 const isLong = pos.side === 'Buy';
                 
                 const marketValue = parseFloat(pos.positionValue) || (current * qty);
-                const initialMargin = marketValue / leverage; 
+                const initialMargin = (entry * qty) / leverage; 
                 
                 totalPnL += netPnL;
                 totalExposure += marketValue;
                 totalMargin += initialMargin;
 
-                // Funding Impact Math
                 const rawFundingRate = -0.0001; 
                 const fundingImpact = isLong ? (rawFundingRate < 0 ? 1 : -1) : (rawFundingRate < 0 ? -1 : 1);
                 netFunding24h += (marketValue * Math.abs(rawFundingRate) * 3) * fundingImpact;
@@ -198,75 +197,44 @@
                     grid.appendChild(card);
                 }
 
-                const roeReal = initialMargin > 0 ? (netPnL / initialMargin) * 100 : 0;
+                const roeReal = (netPnL / initialMargin) * 100;
                 const distLiq = liq > 0 ? ((liq - current) / current) * 100 : 0;
-                
-                // MATH FIX: Take Profit Progress
                 let distTP = 0;
                 if (tp > 0) {
-                    const totalDistance = isLong ? (tp - entry) : (entry - tp);
-                    const currentProgress = isLong ? (current - entry) : (entry - current);
-                    if (totalDistance > 0 && currentProgress > 0) {
-                        distTP = Math.min((currentProgress / totalDistance) * 100, 100);
-                    }
+                    const totalDist = isLong ? (tp - entry) : (entry - tp);
+                    const currentProg = isLong ? (current - entry) : (entry - current);
+                    if (totalDist > 0 && currentProg > 0) distTP = Math.min((currentProg / totalDist) * 100, 100);
                 }
 
                 document.getElementById(`metrics-${pos.symbol}`).innerHTML = `
                     <div><p class="metric-label font-bold">Entrada / Atual</p><p class="text-[10px] text-gray-500 italic">$${entry.toFixed(4)}</p><p class="metric-value ${netPnL >= 0 ? 'up' : 'down'} text-lg font-bold">$${current.toFixed(4)}</p></div>
-                    <div class="text-right">
-                        <p class="metric-label font-bold">ROE REAL</p>
-                        <p class="metric-value ${netPnL >= 0 ? 'up' : 'down'} text-2xl font-black">${roeReal >= 0 ? '+' : ''}${roeReal.toFixed(2)}%</p>
-                    </div>
+                    <div class="text-right"><p class="metric-label font-bold">ROE REAL</p><p class="metric-value ${netPnL >= 0 ? 'up' : 'down'} text-2xl font-black">${roeReal >= 0 ? '+' : ''}${roeReal.toFixed(2)}%</p></div>
                     <div class="col-span-2">
-                        <div class="flex justify-between items-end"><p class="metric-label text-red-500 font-bold uppercase tracking-widest">Liquidação</p><p class="text-[10px] text-red-400 font-bold">$${liq.toFixed(3)} (${distLiq.toFixed(2)}%)</p></div>
+                        <div class="flex justify-between items-end"><p class="metric-label text-red-500 font-bold uppercase tracking-widest text-[9px]">Liquidação</p><p class="text-[10px] text-red-400 font-bold">$${liq.toFixed(3)} (${distLiq.toFixed(2)}%)</p></div>
                         <div class="progress-bg"><div class="progress-fill bg-red-600" style="width: ${Math.max(0, 100 - Math.abs(distLiq))}%"></div></div>
                     </div>
                     <div class="col-span-2">
-                        <div class="flex justify-between items-end"><p class="metric-label text-yellow-500 font-bold uppercase tracking-widest">Alvo Take Profit</p><p class="text-[10px] text-yellow-500 font-bold">${tp > 0 ? '$'+tp.toFixed(3) : 'N/A'}</p></div>
+                        <div class="flex justify-between items-end"><p class="metric-label text-yellow-500 font-bold uppercase tracking-widest text-[9px]">Progresso Take Profit</p><p class="text-[10px] text-yellow-500 font-bold">${tp > 0 ? '$'+tp.toFixed(3) : 'N/A'}</p></div>
                         <div class="progress-bg"><div class="progress-fill bg-yellow-500" style="width: ${distTP}%"></div></div>
                     </div>
                     <div class="bg-black/30 p-3 rounded-lg border border-gray-800/50"><p class="metric-label italic">Margem</p><p class="metric-value text-gray-300 font-bold">$${initialMargin.toFixed(2)}</p></div>
-                    <div class="bg-black/30 p-3 rounded-lg border border-gray-800/50 text-right"><p class="metric-label italic font-bold">PnL Aberto</p><p class="metric-value ${netPnL >= 0 ? 'up' : 'down'} font-black text-xl leading-none">$${netPnL.toFixed(2)}</p></div>
+                    <div class="bg-black/30 p-3 rounded-lg border border-gray-800/50 text-right"><p class="metric-label font-bold text-white uppercase italic text-[9px]">PnL Aberto</p><p class="metric-value ${netPnL >= 0 ? 'up' : 'down'} font-black text-xl leading-none">$${netPnL.toFixed(2)}</p></div>
                 `;
             });
 
-            // Global Header Aggregates
             const totalROE = totalMargin > 0 ? (totalPnL / totalMargin) * 100 : 0;
-            const finalLeverage = totalMargin > 0 ? (totalExposure / totalMargin) : 0;
-
+            const avgLev = totalMargin > 0 ? (totalExposure / totalMargin) : 0;
+            
             document.getElementById('total-pnl').innerText = `$${totalPnL.toFixed(2)}`;
-            document.getElementById('total-pnl').className = `text-4xl metric-value ${totalPnL >= 0 ? 'up' : 'down'}`;
             document.getElementById('total-pnl-perc').innerText = `${totalROE >= 0 ? '+' : ''}${totalROE.toFixed(2)}%`;
             document.getElementById('total-pnl-perc').className = `text-sm font-bold mt-1 ${totalPnL >= 0 ? 'up' : 'down'}`;
             document.getElementById('total-exposure').innerText = `$${totalExposure.toFixed(2)}`;
             document.getElementById('total-margin').innerText = `$${totalMargin.toFixed(2)}`;
-            document.getElementById('avg-leverage').innerText = finalLeverage.toFixed(2) + 'x';
+            document.getElementById('avg-leverage').innerText = avgLev.toFixed(2) + 'x';
             
             const fundEl = document.getElementById('funding-est');
             fundEl.innerText = (netFunding24h >= 0 ? '+$' : '-$') + Math.abs(netFunding24h).toFixed(2);
             fundEl.className = `text-lg metric-value ${netFunding24h >= 0 ? 'up' : 'down'}`;
-
-            // Automatic Analysis for AI Sidebar
-            generateLocalInsights(positions, finalLeverage);
-        }
-
-        function generateLocalInsights(positions, avgLev) {
-            const aiContent = document.getElementById('ai-content');
-            let html = '';
-            
-            if (avgLev > 3) {
-                html += `<div class="insight-card border-yellow-500 bg-yellow-500/5"><p class="text-yellow-500 font-black text-[10px] mb-1">RISCO DE ALAVANCAGEM</p><p class="text-gray-400 text-xs">A alavancagem de ${avgLev.toFixed(1)}x é elevada. Um movimento de ${ (100/avgLev).toFixed(1) }% contra a carteira causaria liquidação total.</p></div>`;
-            }
-
-            positions.forEach(p => {
-                const liqDist = Math.abs(((parseFloat(p.liqPrice) - parseFloat(p.markPrice)) / parseFloat(p.markPrice)) * 100);
-                if (liqDist < 10) {
-                    html += `<div class="insight-card border-red-600 bg-red-600/5"><p class="text-red-500 font-black text-[10px] mb-1">CRITICAL: ${p.symbol}</p><p class="text-gray-400 text-xs">Preço a ${liqDist.toFixed(1)}% da liquidação. Reduzir posição IMEDIATAMENTE.</p></div>`;
-                }
-            });
-
-            if (html === '') html = `<div class="insight-card border-green-500 bg-green-500/5"><p class="text-green-500 font-black text-[10px] mb-1">PORTFOLIO HEALTH</p><p class="text-gray-400 text-xs">Métricas estáveis. Mantém a monitorização dos níveis de suporte.</p></div>`;
-            aiContent.innerHTML = html;
         }
 
         fetchPositions();
