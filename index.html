@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Trading Lab - v13.1 (Full Engine)</title>
+    <title>AI Trading Lab - v13.3 (Manual Trigger)</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -49,9 +49,13 @@
                             <span class="px-2 py-1 bg-white/5 rounded border border-white/10 text-[9px] font-bold text-gray-500 uppercase flex items-center gap-2">
                                 <span id="status-led" class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> Terminal Online
                             </span>
-                            <span id="macro-trend" class="px-2 py-1 bg-white/5 rounded border border-white/10 text-[9px] font-bold text-gray-400 uppercase">Tendência Macro: Syncing...</span>
+                            <span id="macro-trend" class="px-2 py-1 bg-white/5 rounded border border-white/10 text-[9px] font-bold text-gray-400 uppercase">Tendência Macro: Aguardando Bot...</span>
                         </div>
                     </div>
+                    <button onclick="fetchAIIntelligence()" class="bg-[#f3ba2f] hover:bg-yellow-400 text-black px-8 py-3 rounded-xl font-black transition-all flex justify-center items-center gap-3 shadow-[0_0_20px_rgba(243,186,47,0.3)] uppercase text-sm">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                        Analisar com Baltazar
+                    </button>
                 </div>
 
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
@@ -66,14 +70,14 @@
 
         <aside class="card p-6 chat-container flex flex-col">
             <div class="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
-                <span class="text-white text-xs font-bold tracking-widest uppercase">Baltazar Intelligence Engine</span>
+                <span class="text-white text-xs font-bold tracking-widest uppercase">Baltazar Strategy Console</span>
                 <span id="fg-index" class="text-[10px] font-black text-gray-500 font-mono bg-white/5 px-2 py-1 rounded">F&G: --</span>
             </div>
             <div id="ai-content" class="flex-grow overflow-y-auto pr-2 flex flex-col mb-4">
-                <div class="bot-msg msg">Aguardo telemetria para iniciar análise técnica e social...</div>
+                <div class="bot-msg msg">Sistema pronto. Clica no botão superior para iniciar a análise tática.</div>
             </div>
             <div class="pt-4 border-t border-gray-800">
-                <input type="text" id="chat-input" placeholder="Enviar comando..." class="w-full bg-white/5 p-4 rounded-xl text-white outline-none text-sm border border-white/5 focus:border-yellow-500/30 transition-all" onkeypress="handleChat(event)">
+                <input type="text" id="chat-input" placeholder="Perguntar algo específico..." class="w-full bg-white/5 p-4 rounded-xl text-white outline-none text-sm border border-white/5 focus:border-yellow-500/30 transition-all" onkeypress="handleChat(event)">
             </div>
         </aside>
     </div>
@@ -85,12 +89,12 @@
         const SUPABASE_KEY = 'sb_publishable_bRa-mZWTaf0g6sNyWL9OmQ_uvo7Ex5H';
 
         let currentPositions = [];
-        let aiLoaded = false;
 
+        // Apenas telemetria Bybit é automática. Bot é MANUAL.
         window.onload = () => { fetchPositions(); setInterval(fetchPositions, 10000); };
 
-        function formatPT(num, isMoney = false) {
-            const val = Math.abs(num).toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        function formatPT(num, isMoney = false, precision = 2) {
+            const val = Math.abs(num).toLocaleString('pt-PT', { minimumFractionDigits: precision, maximumFractionDigits: precision });
             return (num < 0 ? "-" : "") + (isMoney ? "$" : "") + val;
         }
 
@@ -101,7 +105,6 @@
                 if (result.result?.list) {
                     currentPositions = result.result.list.filter(p => parseFloat(p.size) !== 0);
                     updateDashboard(currentPositions);
-                    if(currentPositions.length > 0 && !aiLoaded) { fetchAIIntelligence(); aiLoaded = true; }
                 }
             } catch (err) { console.error(err); }
         }
@@ -137,13 +140,17 @@
 
                 document.getElementById(`m-${pos.symbol}`).innerHTML = `
                     <div><p class="metric-label">ROE</p><p class="${pnlClass} text-2xl font-black">${formatPT((netPnL/margin)*100)}%</p></div>
-                    <div class="text-right"><p class="metric-label">PnL</p><p class="${pnlClass} text-xl font-bold">${formatPT(netPnL, true)}</p></div>
+                    <div class="text-right"><p class="metric-label">PnL Atual</p><p class="${pnlClass} text-xl font-bold">${formatPT(netPnL, true)}</p></div>
+                    
+                    <div class="pt-2 border-t border-gray-800/50"><p class="metric-label">Valor Posição</p><p class="text-sm font-bold text-gray-200">${formatPT(mValue, true)}</p></div>
+                    <div class="text-right pt-2 border-t border-gray-800/50"><p class="metric-label">Entrada / Mercado</p><p class="text-xs font-bold text-gray-300">${formatPT(entry, false, 4)}</p><p class="text-[10px] text-gray-500 font-mono">${formatPT(current, false, 4)}</p></div>
+
                     <div class="col-span-2 mt-2">
-                        <div class="flex justify-between text-[9px] font-bold text-gray-500 uppercase"><span>Proximidade Liquidação</span><span>${formatPT(dLiq)}%</span></div>
+                        <div class="flex justify-between text-[9px] font-bold text-gray-500 uppercase"><span>Dist. Liquidação</span><span>${formatPT(dLiq)}%</span></div>
                         <div class="progress-bg"><div class="progress-fill ${dLiq < 12 ? 'bg-red-500' : 'bg-red-900/40'}" style="width: ${Math.max(0, 100 - dLiq)}%"></div></div>
                     </div>
                     <div class="col-span-2">
-                        <div class="flex justify-between text-[9px] font-bold text-yellow-600 uppercase"><span>Alvo Take Profit</span><span>${tpP.toFixed(0)}%</span></div>
+                        <div class="flex justify-between text-[9px] font-bold text-yellow-600 uppercase"><span>Take Profit (${tp})</span><span>${tpP.toFixed(0)}%</span></div>
                         <div class="progress-bg"><div class="progress-fill bg-yellow-500/60" style="width: ${Math.min(tpP, 100)}%"></div></div>
                     </div>`;
             });
@@ -152,9 +159,7 @@
             led.className = maxRisk === 2 ? "w-1.5 h-1.5 bg-red-500 rounded-full animate-ping" : (maxRisk === 1 ? "w-1.5 h-1.5 bg-yellow-500 rounded-full animate-pulse" : "w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse");
 
             document.getElementById('total-pnl').innerText = formatPT(totalPnL, true);
-            document.getElementById('total-pnl').className = `text-xl metric-value ${totalPnL >= 0 ? 'text-up' : 'text-down'}`;
             document.getElementById('total-pnl-perc').innerText = `${formatPT(totalMargin > 0 ? (totalPnL/totalMargin*100) : 0)}%`;
-            document.getElementById('total-pnl-perc').className = `text-xl metric-value ${totalPnL >= 0 ? 'text-up' : 'text-down'}`;
             document.getElementById('total-exposure').innerText = formatPT(totalExp, true);
             document.getElementById('avg-leverage').innerText = formatPT(totalMargin > 0 ? (totalExp / totalMargin) : 0) + 'x';
         }
