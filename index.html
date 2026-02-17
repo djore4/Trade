@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI TRADING LAB - v10.5</title>
+    <title>AI TRADING LAB - v10.1</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -18,16 +18,16 @@
         .metric-label { color: #848e9c; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; }
         .metric-value { font-family: 'Roboto Mono', monospace; font-weight: 700; }
         .up { color: #02d386; } .down { color: #ff3b5c; }
-        .stat-box { background: rgba(30, 33, 38, 0.5); border: 1px solid rgba(255, 255, 255, 0.03); padding: 10px; border-radius: 8px; }
+        .stat-box { background: rgba(30, 33, 38, 0.5); border: 1px solid rgba(255, 255, 255, 0.03); padding: 12px; border-radius: 8px; }
         
         .progress-bg { background-color: #2b3139; height: 6px; border-radius: 3px; width: 100%; margin-top: 4px; overflow: hidden; }
         .progress-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
         
-        /* LOGO ANIMADO */
+        /* LOGO ANIMADO ORIGINAL */
         @keyframes pulse-neural { 0%, 100% { opacity: 0.4; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1); } }
         .neural-node { animation: pulse-neural 3s infinite ease-in-out; }
 
-        /* Sistema de Gráficos Independentes corrigido */
+        /* Sistema de Gráficos Independentes - Corrigido */
         .chart-wrapper { display: none; height: 500px; width: 100%; border-top: 1px solid rgba(255, 255, 255, 0.1); margin-top: 15px; }
         .chart-wrapper.active { display: block; }
 
@@ -51,7 +51,7 @@
                             <circle cx="20" cy="20" r="3" fill="#f3ba2f" class="neural-node"/>
                             <circle cx="34" cy="12" r="2" fill="#f3ba2f" fill-opacity="0.6" class="neural-node"/>
                             <circle cx="6" cy="28" r="2" fill="#f3ba2f" fill-opacity="0.6" class="neural-node"/>
-                            <path d="M20 17L34 12M20 23L6 28M20 17L6 12M20 23L34 28" stroke="#f3ba2f" stroke-opacity="0.2" stroke-width="1"/>
+                            <path d="M20 17L34 12M20 23L6 28M20 17L6 12M20 23L6 28" stroke="#f3ba2f" stroke-opacity="0.2" stroke-width="1"/>
                         </svg>
                         <div>
                             <h1 class="text-3xl font-extrabold text-white tracking-[0.2em] uppercase leading-none">AI TRADING LAB</h1>
@@ -67,7 +67,7 @@
                 <div class="grid grid-cols-2 lg:grid-cols-3 gap-4">
                     <div class="stat-box"><p class="metric-label text-gray-400">Exposição Total</p><p id="total-exposure" class="text-xl metric-value text-white">$0</p></div>
                     <div class="stat-box"><p class="metric-label text-gray-400">Margem em Uso</p><p id="total-margin" class="text-xl metric-value text-gray-300">$0</p></div>
-                    <div class="stat-box border-yellow-500/10"><p class="metric-label text-yellow-500">Alavancagem Real</p><p id="avg-leverage" class="text-xl metric-value text-yellow-500">0,00x</p></div>
+                    <div class="stat-box border-yellow-500/10"><p class="metric-label text-yellow-500 font-bold">Alavancagem Real</p><p id="avg-leverage" class="text-xl metric-value text-yellow-500">0,00x</p></div>
                 </div>
             </header>
             <div id="dashboard-grid" class="grid grid-cols-1 md:grid-cols-2 gap-5"></div>
@@ -80,10 +80,10 @@
                 <span id="fg-index" class="text-xs font-bold text-gray-500 font-mono tracking-tighter">F&G: --</span>
             </div>
             <div id="ai-content" class="flex-grow overflow-y-auto mb-4 pr-2 scrollbar-hide text-sm leading-relaxed">
-                <div class="insight-card text-gray-500 text-center py-10" id="bot-status">Sincronizando Baltazar...</div>
+                <div class="insight-card text-gray-500 text-center py-10" id="bot-status">Sincronizando telemetria...</div>
             </div>
             <div class="pt-4 border-t border-gray-800">
-                <input type="text" id="chat-input" placeholder="Comando..." class="w-full bg-transparent text-white outline-none text-sm placeholder-gray-700" onkeypress="handleChat(event)">
+                <input type="text" id="chat-input" placeholder="Comando..." class="w-full bg-transparent text-white outline-none text-sm placeholder-gray-700 font-medium" onkeypress="handleChat(event)">
             </div>
         </aside>
     </div>
@@ -96,12 +96,11 @@
         const AI_FUNC_PATH = `https://${PROJECT_ID}.supabase.co/functions/v1/trade-advisor`;
 
         let currentPositions = [];
-        let isInitialLoad = true;
 
         window.onload = () => { fetchPositions(); setInterval(fetchPositions, 10000); };
 
         function formatNumber(num) {
-            return Math.floor(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            return Math.floor(Math.abs(num)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") ;
         }
 
         function formatDecimal(num) {
@@ -117,7 +116,6 @@
                     updateDashboard(currentPositions);
                     updateRiskSemaphore(currentPositions);
                     document.getElementById('update-timestamp').innerText = `Sync: ${new Date().toLocaleTimeString()}`;
-                    if(isInitialLoad && currentPositions.length > 0) { fetchAIIntelligence(); isInitialLoad = false; }
                 }
             } catch (err) { console.error(err); }
         }
@@ -154,7 +152,7 @@
                     card.innerHTML = `
                         <div class="p-5">
                             <div class="flex justify-between items-center mb-5">
-                                <h2 class="text-xl font-black text-white uppercase tracking-tighter">${pos.symbol} <span class="text-xs text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded ml-2 font-bold">${formatDecimal(leverage)}x</span></h2>
+                                <h2 class="text-xl font-black text-white uppercase tracking-tighter">${pos.symbol} <span class="text-xs font-bold text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded ml-2">${formatDecimal(leverage)}x</span></h2>
                                 <button onclick="handleToggle('${pos.symbol}')" class="text-gray-500">
                                     <svg id="arrow-${pos.symbol}" class="w-6 h-6 rotate-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                                 </button>
@@ -165,15 +163,16 @@
                             <div id="tv-${pos.symbol}" style="height: 100%; width: 100%;"></div>
                         </div>`;
                     grid.appendChild(card);
+                    fetchAIIntelligence(); 
                 }
 
                 const dLiq = liq > 0 ? Math.abs((liq - current) / current) * 100 : 100;
                 const tpP = tp > 0 ? (Math.abs(current - entry) / Math.abs(tp - entry)) * 100 : 0;
                 document.getElementById(`metrics-${pos.symbol}`).innerHTML = `
-                    <div><p class="metric-label">ROE</p><p class="${netPnL >= 0 ? 'up' : 'down'} text-2xl font-black">${((netPnL/margin)*100).toFixed(2)}%</p></div>
-                    <div class="text-right"><p class="metric-label">PnL</p><p class="${netPnL >= 0 ? 'up' : 'down'} text-xl font-bold">$${formatNumber(netPnL)}</p></div>
+                    <div><p class="metric-label">ROE</p><p class="${netPnL >= 0 ? 'up' : 'down'} text-2xl font-black">${formatDecimal((netPnL/margin)*100)}%</p></div>
+                    <div class="text-right"><p class="metric-label">PnL</p><p class="${netPnL >= 0 ? 'up' : 'down'} text-xl font-bold">${netPnL < 0 ? '-' : ''}$${formatNumber(netPnL)}</p></div>
                     <div class="col-span-2">
-                        <div class="flex justify-between text-[10px] font-bold mb-1 uppercase tracking-widest"><span class="${dLiq < 12 ? 'text-red-500 animate-pulse' : 'text-gray-500'}">Liquidação</span><span>${dLiq.toFixed(2)}%</span></div>
+                        <div class="flex justify-between text-[10px] font-bold mb-1 uppercase tracking-widest"><span class="${dLiq < 12 ? 'text-red-500 animate-pulse' : 'text-gray-500'}">Liquidação</span><span>${formatDecimal(dLiq)}%</span></div>
                         <div class="progress-bg"><div class="progress-fill ${dLiq < 12 ? 'bg-red-500' : 'bg-red-900/40'}" style="width: ${Math.max(0, 100 - dLiq)}%"></div></div>
                     </div>
                     <div class="col-span-2">
@@ -182,7 +181,8 @@
                     </div>`;
             });
 
-            document.getElementById('total-pnl').innerText = `$${formatNumber(totalPnL)}`;
+            const pnlLabel = totalPnL < 0 ? "-" : "";
+            document.getElementById('total-pnl').innerText = `${pnlLabel}$${formatNumber(totalPnL)}`;
             document.getElementById('total-pnl').className = `text-4xl metric-value ${totalPnL >= 0 ? 'up' : 'down'}`;
             document.getElementById('total-pnl-perc').innerText = `${formatDecimal(totalMargin > 0 ? (totalPnL/totalMargin*100) : 0)}%`;
             document.getElementById('total-pnl-perc').className = `text-lg metric-value mt-1 ${totalPnL >= 0 ? 'up' : 'down'}`;
@@ -207,19 +207,19 @@
             }
         }
 
-        async function fetchAIIntelligence(userQuery = null) {
+        async function fetchAIIntelligence(userMessage = null) {
             const aiContent = document.getElementById('ai-content');
             try {
                 const response = await fetch(AI_FUNC_PATH, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ positions: currentPositions, userMessage: userQuery })
+                    body: JSON.stringify({ positions: currentPositions, userMessage })
                 });
                 const data = await response.json();
                 document.getElementById('bot-status')?.remove();
                 const formatted = data.insight.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
                 const newCard = document.createElement('div');
-                newCard.className = 'border-l-2 border-yellow-500 pl-4 mb-6 text-white';
+                newCard.className = 'border-l-2 border-yellow-500 pl-4 mb-6 text-white font-medium';
                 aiContent.appendChild(newCard);
                 let i = 0;
                 function type() {
