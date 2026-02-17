@@ -4,15 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI TRADING LAB - v10.7</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root { --risk-rgb: 2, 211, 134; }
+        :root { 
+            --risk-rgb: 2, 211, 134; 
+            --accent-color: #2dd4bf; /* O teu novo Verde Turquesa */
+        }
         body { 
-            background-color: #080a0c; color: #f0f2f5; font-family: 'Outfit', sans-serif; 
-            -webkit-font-smoothing: antialiased; transition: background 1.5s ease;
+            background-color: #080a0c; 
+            color: #f0f2f5; 
+            font-family: 'Space Grotesk', sans-serif; 
+            -webkit-font-smoothing: antialiased; 
+            transition: background 1.5s ease;
             background-image: radial-gradient(circle at top right, rgba(var(--risk-rgb), 0.15), transparent 800px);
             min-height: 100vh;
+        }
+        .brand-highlight {
+            color: var(--accent-color);
+            text-shadow: 0 0 15px rgba(45, 212, 191, 0.3);
         }
         .card { background: rgba(24, 26, 32, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; }
         .metric-label { color: #848e9c; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; }
@@ -51,13 +61,15 @@
                 <div class="flex justify-between items-end mb-8 border-b border-gray-800/40 pb-6 flex-wrap gap-6">
                     <div class="flex items-center gap-5">
                         <svg width="45" height="45" viewBox="0 0 40 40" fill="none">
-                            <circle cx="20" cy="20" r="3" fill="#f3ba2f" class="neural-node"/>
-                            <circle cx="34" cy="12" r="2" fill="#f3ba2f" fill-opacity="0.6" class="neural-node"/>
-                            <circle cx="6" cy="28" r="2" fill="#f3ba2f" fill-opacity="0.6" class="neural-node"/>
-                            <path d="M20 17L34 12M20 23L6 28M20 17L6 12M20 23L6 28" stroke="#f3ba2f" stroke-opacity="0.2" stroke-width="1"/>
+                            <circle cx="20" cy="20" r="3" fill="#2dd4bf" class="neural-node"/>
+                            <circle cx="34" cy="12" r="2" fill="#2dd4bf" fill-opacity="0.6" class="neural-node"/>
+                            <circle cx="6" cy="28" r="2" fill="#2dd4bf" fill-opacity="0.6" class="neural-node"/>
+                            <path d="M20 17L34 12M20 23L6 28M20 17L6 12M20 23L6 28" stroke="#2dd4bf" stroke-opacity="0.2" stroke-width="1"/>
                         </svg>
                         <div>
-                            <h1 class="text-3xl font-extrabold text-white tracking-[0.2em] uppercase leading-none">AI TRADING LAB</h1>
+                            <h1 class="text-3xl font-extrabold text-white tracking-[0.2em] uppercase leading-none">
+                                <span class="brand-highlight">AI</span> TRADING <span class="brand-highlight">LAB</span>
+                            </h1>
                             <p id="update-timestamp" class="text-[8px] text-gray-500 font-mono tracking-widest uppercase mt-2 font-bold">Sync: Operational</p>
                         </div>
                     </div>
@@ -196,20 +208,14 @@
             document.getElementById('avg-leverage').innerText = formatDecimal(totalMargin > 0 ? (totalExposure / totalMargin) : 0) + 'x';
         }
 
-        // LÓGICA DE GRÁFICO ADAPTATIVA
         function handleChartToggle(symbol) {
             const isDesktop = window.innerWidth >= 1280;
-
             if (isDesktop) {
-                // Em Desktop, abre/fecha TODOS
                 const allWrappers = document.querySelectorAll('.chart-wrapper');
-                const allArrows = document.querySelectorAll('.rotate-icon');
                 const anyActive = Array.from(allWrappers).some(w => w.classList.contains('active'));
-
                 currentPositions.forEach(pos => {
                     const w = document.getElementById(`wrap-${pos.symbol}`);
                     const a = document.getElementById(`arrow-${pos.symbol}`);
-                    
                     if (anyActive) {
                         w.classList.remove('active');
                         a.classList.remove('rotate-180');
@@ -220,7 +226,6 @@
                     }
                 });
             } else {
-                // Em Mobile, abre apenas o CLICADO
                 const w = document.getElementById(`wrap-${symbol}`);
                 const a = document.getElementById(`arrow-${symbol}`);
                 const isActive = w.classList.toggle('active');
@@ -235,7 +240,6 @@
                 new TradingView.widget({ 
                     "autosize": true, "symbol": `BYBIT:${s}.P`, "interval": "15", "theme": "dark", "style": "1",
                     "container_id": `tv-${s}`, "hide_side_toolbar": true 
-                    // Removido o Volume fixo para evitar duplicado
                 });
                 container.dataset.loaded = "true";
             }
