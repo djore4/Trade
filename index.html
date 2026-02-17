@@ -4,26 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI TRADING LAB - v10.7</title>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { 
             --risk-rgb: 2, 211, 134; 
-            --accent-color: #2dd4bf; /* O teu novo Verde Turquesa */
+            --accent-color: #2dd4bf; 
         }
         body { 
             background-color: #080a0c; 
             color: #f0f2f5; 
-            font-family: 'Space Grotesk', sans-serif; 
+            font-family: 'Outfit', sans-serif; /* Voltamos à Outfit */
             -webkit-font-smoothing: antialiased; 
             transition: background 1.5s ease;
             background-image: radial-gradient(circle at top right, rgba(var(--risk-rgb), 0.15), transparent 800px);
             min-height: 100vh;
         }
+
+        /* EFEITOS DO LOGO */
         .brand-highlight {
             color: var(--accent-color);
-            text-shadow: 0 0 15px rgba(45, 212, 191, 0.3);
+            text-shadow: 0 0 15px rgba(45, 212, 191, 0.4);
         }
+        
+        .brand-decorator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-right: 10px;
+        }
+        .decorator-line {
+            height: 2px;
+            width: 14px;
+            background: var(--accent-color);
+            border-radius: 2px;
+            box-shadow: 0 0 8px var(--accent-color);
+        }
+        .decorator-dot {
+            width: 7px;
+            height: 7px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--accent-color);
+        }
+
         .card { background: rgba(24, 26, 32, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; }
         .metric-label { color: #848e9c; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; }
         .metric-value { font-family: 'Roboto Mono', monospace; font-weight: 700; }
@@ -39,7 +63,6 @@
         .chart-wrapper { display: none; height: 500px; width: 100%; border-top: 1px solid rgba(255, 255, 255, 0.1); margin-top: 15px; }
         .chart-wrapper.active { display: block; }
 
-        /* SCROLLBAR CUSTOM */
         #ai-content::-webkit-scrollbar { width: 4px; }
         #ai-content::-webkit-scrollbar-track { background: transparent; }
         #ai-content::-webkit-scrollbar-thumb { background: #2b3139; border-radius: 10px; }
@@ -66,11 +89,17 @@
                             <circle cx="6" cy="28" r="2" fill="#2dd4bf" fill-opacity="0.6" class="neural-node"/>
                             <path d="M20 17L34 12M20 23L6 28M20 17L6 12M20 23L6 28" stroke="#2dd4bf" stroke-opacity="0.2" stroke-width="1"/>
                         </svg>
-                        <div>
-                            <h1 class="text-3xl font-extrabold text-white tracking-[0.2em] uppercase leading-none">
-                                <span class="brand-highlight">AI</span> TRADING <span class="brand-highlight">LAB</span>
-                            </h1>
-                            <p id="update-timestamp" class="text-[8px] text-gray-500 font-mono tracking-widest uppercase mt-2 font-bold">Sync: Operational</p>
+                        <div class="flex flex-col">
+                            <div class="flex items-center">
+                                <div class="brand-decorator">
+                                    <div class="decorator-dot"></div>
+                                    <div class="decorator-line"></div>
+                                </div>
+                                <h1 class="text-3xl font-extrabold text-white tracking-[0.2em] uppercase leading-none">
+                                    <span class="brand-highlight">AI</span> TRADING <span class="brand-highlight">LAB</span>
+                                </h1>
+                            </div>
+                            <p id="update-timestamp" class="text-[8px] text-gray-500 font-mono tracking-widest uppercase mt-2 font-bold ml-[30px]">Sync: Operational</p>
                         </div>
                     </div>
                     <div class="text-right">
