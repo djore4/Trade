@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Trading Lab - v11.2</title>
+    <title>AI Trading Lab - v11.3</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -23,9 +23,10 @@
         .progress-bg { background-color: #2b3139; height: 6px; border-radius: 3px; width: 100%; margin-top: 4px; overflow: hidden; }
         .progress-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
         
+        /* HEADER REESTRUTURADO: MARCA DOMINANTE */
         .ai-glow { 
             color: #f3ba2f; 
-            text-shadow: 0 0 15px rgba(243, 186, 47, 0.5), 0 0 30px rgba(243, 186, 47, 0.2);
+            text-shadow: 0 0 20px rgba(243, 186, 47, 0.6), 0 0 40px rgba(243, 186, 47, 0.3);
             font-weight: 800;
         }
 
@@ -40,6 +41,8 @@
         }
         .rotate-icon { transition: transform 0.3s ease; }
         .rotate-180 { transform: rotate(180deg); }
+
+        /* Scrollbar custom */
         #ai-content::-webkit-scrollbar { width: 4px; }
         #ai-content::-webkit-scrollbar-thumb { background: #2b3139; border-radius: 10px; }
     </style>
@@ -47,20 +50,29 @@
 <body>
     <div class="layout-container">
         <main id="main-content">
-            <header class="mb-8">
-                <div class="flex justify-between items-end mb-8 border-b border-gray-800/40 pb-6 flex-wrap gap-6">
-                    <div>
-                        <h1 class="text-3xl font-bold text-white tracking-tight leading-none">
+            <header class="mb-10">
+                <div class="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-8 border-b border-gray-800/40 pb-8 gap-8">
+                    <div class="flex flex-col">
+                        <h1 class="text-5xl font-extrabold text-white tracking-tight leading-none mb-3">
                             <span class="ai-glow">AI</span> Trading Lab
                         </h1>
-                        <p id="update-timestamp" class="text-[8px] text-gray-500 font-mono tracking-widest uppercase mt-2 font-bold text-left text-gray-600 uppercase">Sync: Operational</p>
+                        <div class="flex items-center gap-3">
+                            <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_#22c55e]"></span>
+                            <p id="update-timestamp" class="text-[9px] text-gray-500 font-mono tracking-[0.2em] uppercase font-bold">Terminal Operational</p>
+                        </div>
                     </div>
-                    <div class="text-right">
-                        <p class="metric-label">PnL Global Aberto</p>
-                        <p id="total-pnl" class="text-4xl metric-value leading-none">$0</p>
-                        <p id="total-pnl-perc" class="text-lg metric-value mt-1">0,00%</p>
+
+                    <div class="flex flex-row lg:flex-col gap-6 lg:gap-1 items-center lg:items-end bg-white/[0.02] p-4 rounded-xl border border-white/[0.05]">
+                        <div class="text-left lg:text-right">
+                            <p class="metric-label opacity-70">PnL Global Aberto</p>
+                            <div class="flex items-baseline gap-2">
+                                <p id="total-pnl" class="text-2xl metric-value leading-none">$0</p>
+                                <p id="total-pnl-perc" class="text-sm metric-value">0,00%</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
                 <div class="grid grid-cols-2 lg:grid-cols-3 gap-4">
                     <div class="stat-box"><p class="metric-label text-gray-400">Exposição Total</p><p id="total-exposure" class="text-xl metric-value text-white">$0</p></div>
                     <div class="stat-box"><p class="metric-label text-gray-400">Margem em Uso</p><p id="total-margin" class="text-xl metric-value text-gray-300">$0</p></div>
@@ -72,12 +84,14 @@
 
         <aside id="ai-section" class="card p-6">
             <div class="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
-                <span id="engine-led" class="w-2.5 h-2.5 bg-green-500 rounded-full"></span>
-                <span class="text-white text-[11px] font-bold uppercase tracking-widest">Engine 2.0 Flash</span>
-                <span id="fg-index" class="text-xs font-bold text-gray-500 font-mono tracking-tighter">F&G: --</span>
+                <div class="flex items-center gap-3">
+                    <span id="engine-led" class="w-2.5 h-2.5 bg-green-500 rounded-full"></span>
+                    <span class="text-white text-[11px] font-bold uppercase tracking-widest">Engine 2.0 Flash</span>
+                </div>
+                <span id="fg-index" class="text-[10px] font-bold text-gray-500 font-mono bg-white/5 px-2 py-1 rounded">F&G: SYNCING...</span>
             </div>
             <div id="ai-content" class="flex-grow overflow-y-auto mb-4 pr-2 text-sm leading-relaxed scrollbar-hide">
-                <div class="insight-card text-gray-500 text-center py-10" id="bot-status text-gray-500">A processar telemetria Bybit...</div>
+                <div class="insight-card text-gray-500 text-center py-10" id="bot-status">A aguardar telemetria Bybit...</div>
             </div>
             <div class="pt-4 border-t border-gray-800">
                 <input type="text" id="chat-input" placeholder="Comando..." class="w-full bg-transparent text-white outline-none text-sm placeholder-gray-700" onkeypress="handleChat(event)">
@@ -114,7 +128,7 @@
                     currentPositions = result.result.list.filter(p => parseFloat(p.size) !== 0);
                     updateDashboard(currentPositions);
                     updateRiskSemaphore(currentPositions);
-                    document.getElementById('update-timestamp').innerText = `Sync: ${new Date().toLocaleTimeString()}`;
+                    document.getElementById('update-timestamp').innerText = `Terminal: ${new Date().toLocaleTimeString()}`;
                     if(isInitialLoad && currentPositions.length > 0) { fetchAIIntelligence(); isInitialLoad = false; }
                 }
             } catch (err) { console.error(err); }
@@ -185,11 +199,10 @@
                     </div>`;
             });
 
-            const sign = totalPnL >= 0 ? '' : ''; // O formatNumber já trata o sinal
             document.getElementById('total-pnl').innerText = formatNumber(totalPnL);
-            document.getElementById('total-pnl').className = `text-4xl metric-value ${totalPnL >= 0 ? 'up' : 'down'}`;
+            document.getElementById('total-pnl').className = `text-2xl metric-value ${totalPnL >= 0 ? 'up' : 'down'}`;
             document.getElementById('total-pnl-perc').innerText = `${formatDecimal(totalMargin > 0 ? (totalPnL/totalMargin*100) : 0)}%`;
-            document.getElementById('total-pnl-perc').className = `text-lg metric-value mt-1 ${totalPnL >= 0 ? 'up' : 'down'}`;
+            document.getElementById('total-pnl-perc').className = `text-sm metric-value ${totalPnL >= 0 ? 'up' : 'down'}`;
             
             document.getElementById('total-exposure').innerText = formatNumber(totalExposure);
             document.getElementById('total-margin').innerText = formatNumber(totalMargin);
