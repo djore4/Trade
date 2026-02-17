@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Command Center v7.1 - Baltazar Doctrine</title>
+    <title>Command Center v7.2 - Baltazar Fixed</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0b0e11; color: #eaecef; font-family: 'Inter', sans-serif; }
@@ -18,7 +18,6 @@
         .chart-container { height: 500px; width: 100%; border-top: 1px solid #2b3139; display: none; }
         .chart-visible { display: block !important; }
         
-        /* Ajuste do Bot */
         .insight-card { border-left: 4px solid #f3ba2f; padding: 16px; margin-bottom: 12px; border-radius: 6px; background: rgba(243, 186, 47, 0.08); font-size: 14px; line-height: 1.6; color: #ffffff; }
         #health-status { padding: 4px 12px; border-radius: 99px; font-size: 11px; font-weight: 900; }
         .status-safe { background: #0ecb8122; color: #0ecb81; border: 1px solid #0ecb81; }
@@ -39,34 +38,29 @@
             <header class="mb-8">
                 <div class="flex justify-between items-center mb-6 border-b border-gray-800 pb-6">
                     <div>
-                        <h1 class="text-2xl font-black text-white uppercase italic tracking-tighter">COMMAND <span class="text-yellow-500 text-3xl">7.1</span></h1>
-                        <p class="text-[10px] text-yellow-500 font-mono italic">BALTAZAR DOCTRINE ACTIVE</p>
+                        <h1 class="text-2xl font-black text-white uppercase italic tracking-tighter">COMMAND <span class="text-yellow-500 text-3xl">7.2</span></h1>
+                        <p class="text-[10px] text-yellow-500 font-mono italic uppercase">Baltazar Precision Engine</p>
                     </div>
                     <div class="text-right">
-                        <p class="metric-label font-bold">Net PnL Aberto</p>
+                        <p class="metric-label font-bold text-white">Net PnL Aberto</p>
                         <p id="total-pnl" class="text-4xl metric-value leading-none">$0.00</p>
+                        <p id="total-pnl-perc" class="text-sm font-bold mt-1 opacity-80">0.00%</p>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                     <div class="stat-box"><p class="metric-label">Exposure Total</p><p id="total-exposure" class="text-lg metric-value text-white">$0.00</p></div>
-                    <div class="stat-box"><p class="metric-label">Equity (Muralha)</p><p id="total-equity" class="text-lg metric-value text-white">$0.00</p></div>
-                    <div class="stat-box border-yellow-500/30">
-                        <p class="metric-label text-yellow-500 font-bold">Lev Patrimonial</p>
-                        <p id="avg-leverage" class="text-lg metric-value text-yellow-500">0.00x</p>
-                    </div>
+                    <div class="stat-box"><p class="metric-label">Muralha (Equity+Reserva)</p><p id="total-equity" class="text-lg metric-value text-white">$0.00</p></div>
+                    <div class="stat-box border-yellow-500/30"><p class="metric-label text-yellow-500 font-bold">Lev Patrimonial</p><p id="avg-leverage" class="text-lg metric-value text-yellow-500">0.00x</p></div>
                     <div class="stat-box"><p class="metric-label">Health Index</p><p id="account-health-val" class="text-lg metric-value font-bold">--%</p></div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4 mb-8">
                     <div class="stat-box bg-blue-900/10">
-                        <p class="metric-label text-blue-400">Reserva Externa ($)</p>
+                        <p class="metric-label text-blue-400 font-bold">Reserva Externa ($)</p>
                         <input type="number" id="external-reserve" value="1000" class="bg-transparent border-none text-white text-xl metric-value w-full focus:outline-none" oninput="calculateGlobalRisk()">
                     </div>
-                    <div class="stat-box bg-green-900/10">
-                        <p class="metric-label text-green-400">Margem Livre Bybit</p>
-                        <p id="free-margin" class="text-xl metric-value text-white">$0.00</p>
-                    </div>
+                    <div class="stat-box bg-green-900/10"><p class="metric-label text-green-400">Available Bybit</p><p id="free-margin" class="text-xl metric-value text-white">$0.00</p></div>
                 </div>
             </header>
 
@@ -75,14 +69,14 @@
 
         <aside id="ai-section" class="card p-5 mt-8 lg:mt-0">
             <div class="flex justify-between items-center mb-4 border-b border-gray-800 pb-3">
-                <span id="health-status" class="status-safe">BALTAZAR: SYNCING</span>
+                <span id="health-status" class="status-safe">ESTADO: ANALISANDO</span>
                 <span id="fg-index" class="text-xs font-bold text-yellow-500">F&G: --</span>
             </div>
-            <div id="ai-content" class="flex-grow overflow-y-auto mb-4 space-y-4 pr-2 scrollbar-hide">
-                <div class="insight-card italic animate-pulse">Aguardando telemetria das posições...</div>
+            <div id="ai-content" class="flex-grow overflow-y-auto mb-4 space-y-4 pr-2 scrollbar-hide font-medium text-white">
+                <div class="insight-card italic animate-pulse">Sincronizando telemetria com Baltazar...</div>
             </div>
             <div class="pt-3 border-t border-gray-800">
-                <input type="text" id="chat-input" placeholder="Comunicar com o Baltazar..." class="bg-[#1e2126] border border-[#2b3139] p-4 rounded-lg w-full text-white text-sm outline-none focus:border-yellow-500" onkeypress="handleChat(event)">
+                <input type="text" id="chat-input" placeholder="Mensagem para o Baltazar..." class="bg-[#1e2126] border border-[#2b3139] p-4 rounded-lg w-full text-white text-sm outline-none focus:border-yellow-500" onkeypress="handleChat(event)">
             </div>
         </aside>
     </div>
@@ -95,14 +89,11 @@
         const AI_FUNC_PATH = `https://${PROJECT_ID}.supabase.co/functions/v1/trade-advisor`;
 
         let currentPositions = [];
-        let totalExposure = 0;
-        let totalInitialMargin = 0;
         let walletBalance = 0;
+        let globalExposure = 0;
+        let globalMarginUsed = 0;
 
-        window.onload = () => {
-            fetchPositions();
-            setInterval(fetchPositions, 10000);
-        };
+        window.onload = () => { fetchPositions(); setInterval(fetchPositions, 10000); };
 
         async function fetchPositions() {
             try {
@@ -111,10 +102,8 @@
                     headers: { 'Authorization': `Bearer ${SUPABASE_KEY}` }
                 });
                 const result = await response.json();
-                
                 if (result.result?.list) {
                     currentPositions = result.result.list.filter(p => parseFloat(p.size) !== 0);
-                    // Na Bybit Unified, o walletBalance vem em cada posição mas é o mesmo
                     walletBalance = parseFloat(result.result.list[0]?.walletBalance) || 0;
                     updateDashboard(currentPositions);
                     calculateGlobalRisk();
@@ -124,24 +113,29 @@
 
         function calculateGlobalRisk() {
             const reserve = parseFloat(document.getElementById('external-reserve').value) || 0;
-            const totalEquity = walletBalance + reserve;
-            const levPatrimonial = totalExposure / totalEquity;
-            const health = Math.max(0, 100 - (levPatrimonial * 10));
+            const totalMuralha = walletBalance + reserve;
+            
+            // CORREÇÃO: Leverage Patrimonial = Soma das Exposições / (Equity Bybit + Reserva)
+            const levPatrimonial = globalExposure > 0 ? globalExposure / totalMuralha : 0;
+            
+            // Health Index baseado na agressividade da alavancagem real
+            // 0x a 3x = 100% a 70% | 3x a 7x = 70% a 20% | > 10x = 0%
+            const health = Math.max(0, 100 - (levPatrimonial * 12.5));
 
-            document.getElementById('total-equity').innerText = `$${totalEquity.toFixed(2)}`;
+            document.getElementById('total-equity').innerText = `$${totalMuralha.toFixed(2)}`;
             document.getElementById('avg-leverage').innerText = levPatrimonial.toFixed(2) + 'x';
             document.getElementById('account-health-val').innerText = health.toFixed(0) + '%';
-            document.getElementById('free-margin').innerText = `$${(walletBalance - totalInitialMargin).toFixed(2)}`;
+            document.getElementById('free-margin').innerText = `$${(walletBalance - globalMarginUsed).toFixed(2)}`;
 
             const statusBox = document.getElementById('health-status');
-            if(levPatrimonial > 7) { statusBox.innerText = "ESTADO: DANGER"; statusBox.className = "status-danger"; }
-            else if(levPatrimonial > 3.5) { statusBox.innerText = "ESTADO: WARNING"; statusBox.className = "status-warning"; }
+            if(levPatrimonial > 6.5) { statusBox.innerText = "ESTADO: DANGER"; statusBox.className = "status-danger"; }
+            else if(levPatrimonial > 3.0) { statusBox.innerText = "ESTADO: WARNING"; statusBox.className = "status-warning"; }
             else { statusBox.innerText = "ESTADO: SAFE"; statusBox.className = "status-safe"; }
         }
 
         function updateDashboard(positions) {
             const grid = document.getElementById('dashboard-grid');
-            let totalPnL = 0; totalExposure = 0; totalInitialMargin = 0;
+            let totalPnL = 0; globalExposure = 0; globalMarginUsed = 0;
             
             positions.forEach(pos => {
                 const entry = parseFloat(pos.avgPrice), current = parseFloat(pos.markPrice);
@@ -150,7 +144,7 @@
                 const tp = parseFloat(pos.takeProfit), mValue = parseFloat(pos.positionValue);
                 const initialMargin = mValue / leverage;
 
-                totalPnL += netPnL; totalExposure += mValue; totalInitialMargin += initialMargin;
+                totalPnL += netPnL; globalExposure += mValue; globalMarginUsed += initialMargin;
 
                 let card = document.getElementById(`card-${pos.symbol}`);
                 if (!card) {
@@ -158,61 +152,44 @@
                     card.id = `card-${pos.symbol}`;
                     card.className = `card rounded-xl border-l-4 ${pos.side === 'Buy' ? 'border-l-green-500' : 'border-l-red-500'}`;
                     card.innerHTML = `<div class="p-5">
-                        <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-xl font-black text-white italic uppercase">${pos.symbol} <span class="text-[10px] text-gray-500 ml-2 font-mono">${leverage}x</span></h2>
-                            <button onclick="handleToggle('${pos.symbol}')" class="text-gray-400">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
-                            </button>
-                        </div>
-                        <div id="metrics-${pos.symbol}" class="grid grid-cols-2 gap-y-6"></div>
-                    </div><div id="chart-${pos.symbol}" class="chart-container"></div>`;
+                        <div class="flex justify-between items-center mb-6"><h2 class="text-xl font-black text-white italic uppercase">${pos.symbol} <span class="text-[10px] text-gray-500 ml-2">${leverage}x</span></h2>
+                        <button onclick="handleToggle('${pos.symbol}')" class="text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg></button></div>
+                        <div id="metrics-${pos.symbol}" class="grid grid-cols-2 gap-y-6"></div></div><div id="chart-${pos.symbol}" class="chart-container"></div>`;
                     grid.appendChild(card);
                 }
-
                 const distLiq = liq > 0 ? ((liq - current) / current) * 100 : 0;
                 let tpProgress = tp > 0 ? (Math.abs(current - entry) / Math.abs(tp - entry)) * 100 : 0;
-
                 document.getElementById(`metrics-${pos.symbol}`).innerHTML = `
                     <div><p class="metric-label">ROE Real</p><p class="${netPnL >= 0 ? 'up' : 'down'} text-2xl font-black">${((netPnL/initialMargin)*100).toFixed(2)}%</p></div>
                     <div class="text-right"><p class="metric-label">PnL Aberto</p><p class="${netPnL >= 0 ? 'up' : 'down'} text-xl font-black">$${netPnL.toFixed(2)}</p></div>
-                    <div class="col-span-2">
-                        <div class="flex justify-between text-[10px] font-bold"><span class="text-red-500 tracking-widest uppercase italic">Liquidação</span><span class="text-red-400">$${liq.toFixed(3)} (${distLiq.toFixed(2)}%)</span></div>
-                        <div class="progress-bg"><div class="progress-fill bg-red-600" style="width: ${Math.max(0, 100 - Math.abs(distLiq))}%"></div></div>
-                    </div>
-                    <div class="col-span-2">
-                        <div class="flex justify-between text-[10px] font-bold"><span class="text-yellow-500 tracking-widest uppercase italic">Take Profit</span><span class="text-yellow-500">$${tp > 0 ? tp.toFixed(3) : 'N/A'}</span></div>
-                        <div class="progress-bg"><div class="progress-fill bg-yellow-500" style="width: ${Math.min(tpProgress, 100)}%"></div></div>
-                    </div>
-                `;
+                    <div class="col-span-2"><div class="flex justify-between text-[10px] font-bold"><span class="text-red-500 uppercase italic">Liquidação</span><span class="text-red-400">$${liq.toFixed(3)} (${distLiq.toFixed(2)}%)</span></div>
+                    <div class="progress-bg"><div class="progress-fill bg-red-600" style="width: ${Math.max(0, 100 - Math.abs(distLiq))}%"></div></div></div>
+                    <div class="col-span-2"><div class="flex justify-between text-[10px] font-bold"><span class="text-yellow-500 uppercase italic">Take Profit</span><span class="text-yellow-500">$${tp > 0 ? tp.toFixed(3) : 'N/A'}</span></div>
+                    <div class="progress-bg"><div class="progress-fill bg-yellow-500" style="width: ${Math.min(tpProgress, 100)}%"></div></div></div>`;
             });
 
             document.getElementById('total-pnl').innerText = `$${totalPnL.toFixed(2)}`;
             document.getElementById('total-pnl').className = `text-4xl metric-value ${totalPnL >= 0 ? 'up' : 'down'}`;
-            document.getElementById('total-exposure').innerText = `$${totalExposure.toFixed(2)}`;
+            document.getElementById('total-pnl-perc').innerText = `${globalMarginUsed > 0 ? ((totalPnL/globalMarginUsed)*100).toFixed(2) : 0}%`;
+            document.getElementById('total-pnl-perc').className = `text-sm font-bold mt-1 ${totalPnL >= 0 ? 'up' : 'down'}`;
+            document.getElementById('total-exposure').innerText = `$${globalExposure.toFixed(2)}`;
             
-            // Disparar análise inicial do Baltazar apenas uma vez
-            if(currentPositions.length > 0 && !window.aiStarted) {
-                fetchAIIntelligence();
-                window.aiStarted = true;
-            }
+            if(currentPositions.length > 0 && !window.aiStarted) { fetchAIIntelligence(); window.aiStarted = true; }
         }
 
         async function fetchAIIntelligence(userQuery = null) {
             const aiContent = document.getElementById('ai-content');
             const reserve = document.getElementById('external-reserve').value;
-            if (userQuery) {
-                aiContent.innerHTML += `<div class="insight-card border-blue-500 bg-blue-500/10 text-right">${userQuery}</div>`;
-                aiContent.scrollTop = aiContent.scrollHeight;
-            }
+            if (userQuery) { aiContent.innerHTML += `<div class="insight-card border-blue-500 bg-blue-500/10 text-right">${userQuery}</div>`; aiContent.scrollTop = aiContent.scrollHeight; }
             try {
                 const response = await fetch(AI_FUNC_PATH, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
-                        positions: currentPositions, 
-                        userMessage: userQuery,
-                        externalReserve: reserve,
-                        accountHealth: document.getElementById('account-health-val').innerText 
+                        positions: currentPositions, userMessage: userQuery, 
+                        externalReserve: reserve, 
+                        accountHealth: document.getElementById('account-health-val').innerText,
+                        levPatrimonial: document.getElementById('avg-leverage').innerText
                     })
                 });
                 const data = await response.json();
@@ -227,19 +204,12 @@
             const container = document.getElementById(`chart-${symbol}`);
             const isVisible = container.classList.toggle('chart-visible');
             if (isVisible && !container.dataset.loaded) {
-                new TradingView.widget({
-                    "autosize": true, "symbol": `BYBIT:${symbol}.P`, "interval": "240", "theme": "dark", "style": "1",
-                    "locale": "pt", "hide_side_toolbar": false, "container_id": `chart-${symbol}`, "studies": []
-                });
+                new TradingView.widget({ "autosize": true, "symbol": `BYBIT:${symbol}.P`, "interval": "240", "theme": "dark", "style": "1", "locale": "pt", "hide_side_toolbar": false, "container_id": `chart-${symbol}`, "studies": [] });
                 container.dataset.loaded = "true";
             }
         }
 
-        function handleChat(e) {
-            if (e.key === 'Enter' && e.target.value.trim() !== '') {
-                const query = e.target.value; e.target.value = ''; fetchAIIntelligence(query);
-            }
-        }
+        function handleChat(e) { if (e.key === 'Enter' && e.target.value.trim() !== '') { const query = e.target.value; e.target.value = ''; fetchAIIntelligence(query); } }
     </script>
 </body>
 </html>
