@@ -3,23 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Command Center v7.2 - Baltazar Fixed</title>
+    <title>Command Center v7.3 - Baltazar Precision</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0b0e11; color: #eaecef; font-family: 'Inter', sans-serif; }
         .card { background-color: #181a20; border: 1px solid #2b3139; position: relative; overflow: hidden; height: fit-content; }
-        .metric-label { color: #848e9c; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; }
-        .metric-value { font-family: 'Roboto Mono', monospace; font-weight: 600; }
+        .metric-label { color: #848e9c; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
+        .metric-value { font-family: 'Roboto Mono', monospace; font-weight: 700; }
         .up { color: #0ecb81; }
         .down { color: #f6465d; }
-        .stat-box { background: #1e2126; border: 1px solid #2b3139; padding: 12px; border-radius: 8px; }
-        .progress-bg { background-color: #2b3139; height: 4px; border-radius: 2px; width: 100%; margin-top: 4px; }
-        .progress-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+        .stat-box { background: #1e2126; border: 1px solid #2b3139; padding: 14px; border-radius: 8px; }
+        .progress-bg { background-color: #2b3139; height: 6px; border-radius: 3px; width: 100%; margin-top: 6px; }
+        .progress-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
         .chart-container { height: 500px; width: 100%; border-top: 1px solid #2b3139; display: none; }
         .chart-visible { display: block !important; }
         
-        .insight-card { border-left: 4px solid #f3ba2f; padding: 16px; margin-bottom: 12px; border-radius: 6px; background: rgba(243, 186, 47, 0.08); font-size: 14px; line-height: 1.6; color: #ffffff; }
-        #health-status { padding: 4px 12px; border-radius: 99px; font-size: 11px; font-weight: 900; }
+        /* Ajuste Baltazar */
+        .insight-card { border-left: 5px solid #f3ba2f; padding: 18px; margin-bottom: 12px; border-radius: 8px; background: rgba(243, 186, 47, 0.1); font-size: 15px; line-height: 1.6; color: #ffffff; font-weight: 500; }
+        #health-status { padding: 6px 14px; border-radius: 99px; font-size: 11px; font-weight: 900; }
         .status-safe { background: #0ecb8122; color: #0ecb81; border: 1px solid #0ecb81; }
         .status-warning { background: #f3ba2f22; color: #f3ba2f; border: 1px solid #f3ba2f; }
         .status-danger { background: #f6465d22; color: #f6465d; border: 1px solid #f6465d; }
@@ -27,7 +28,7 @@
         @media (min-width: 1280px) {
             .layout-container { display: flex; flex-direction: row; gap: 24px; max-width: 1600px; margin: 0 auto; padding: 16px; align-items: flex-start; }
             #main-content { flex: 1; }
-            #ai-section { width: 420px; height: calc(100vh - 40px); position: sticky; top: 20px; display: flex; flex-direction: column; }
+            #ai-section { width: 450px; height: calc(100vh - 40px); position: sticky; top: 20px; display: flex; flex-direction: column; }
         }
     </style>
 </head>
@@ -38,45 +39,45 @@
             <header class="mb-8">
                 <div class="flex justify-between items-center mb-6 border-b border-gray-800 pb-6">
                     <div>
-                        <h1 class="text-2xl font-black text-white uppercase italic tracking-tighter">COMMAND <span class="text-yellow-500 text-3xl">7.2</span></h1>
-                        <p class="text-[10px] text-yellow-500 font-mono italic uppercase">Baltazar Precision Engine</p>
+                        <h1 class="text-2xl font-black text-white uppercase italic tracking-tighter">COMMAND <span class="text-yellow-500 text-3xl">7.3</span></h1>
+                        <p class="text-[10px] text-yellow-500 font-mono italic">BALTAZAR CORE</p>
                     </div>
                     <div class="text-right">
-                        <p class="metric-label font-bold text-white">Net PnL Aberto</p>
+                        <p class="metric-label">Net PnL Aberto</p>
                         <p id="total-pnl" class="text-4xl metric-value leading-none">$0.00</p>
-                        <p id="total-pnl-perc" class="text-sm font-bold mt-1 opacity-80">0.00%</p>
+                        <p id="total-pnl-perc" class="text-lg font-bold mt-1 opacity-90">0.00%</p>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                    <div class="stat-box"><p class="metric-label">Exposure Total</p><p id="total-exposure" class="text-lg metric-value text-white">$0.00</p></div>
-                    <div class="stat-box"><p class="metric-label">Muralha (Equity+Reserva)</p><p id="total-equity" class="text-lg metric-value text-white">$0.00</p></div>
-                    <div class="stat-box border-yellow-500/30"><p class="metric-label text-yellow-500 font-bold">Lev Patrimonial</p><p id="avg-leverage" class="text-lg metric-value text-yellow-500">0.00x</p></div>
-                    <div class="stat-box"><p class="metric-label">Health Index</p><p id="account-health-val" class="text-lg metric-value font-bold">--%</p></div>
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div class="stat-box"><p class="metric-label text-white">Exposição Total</p><p id="total-exposure" class="text-xl metric-value">$0.00</p></div>
+                    <div class="stat-box"><p class="metric-label text-white">Muralha Total</p><p id="total-equity" class="text-xl metric-value">$0.00</p></div>
+                    <div class="stat-box border-yellow-500/30"><p class="metric-label text-yellow-500">Lev Patrimonial</p><p id="avg-leverage" class="text-xl metric-value text-yellow-500">0.00x</p></div>
+                    <div class="stat-box"><p class="metric-label">Health Index</p><p id="account-health-val" class="text-xl metric-value font-bold text-green-400">--%</p></div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4 mb-8">
                     <div class="stat-box bg-blue-900/10">
-                        <p class="metric-label text-blue-400 font-bold">Reserva Externa ($)</p>
-                        <input type="number" id="external-reserve" value="1000" class="bg-transparent border-none text-white text-xl metric-value w-full focus:outline-none" oninput="calculateGlobalRisk()">
+                        <p class="metric-label text-blue-400">Reserva Externa ($)</p>
+                        <input type="number" id="external-reserve" value="1000" class="bg-transparent border-none text-white text-2xl metric-value w-full focus:outline-none" oninput="calculateGlobalRisk()">
                     </div>
-                    <div class="stat-box bg-green-900/10"><p class="metric-label text-green-400">Available Bybit</p><p id="free-margin" class="text-xl metric-value text-white">$0.00</p></div>
+                    <div class="stat-box bg-green-900/10"><p class="metric-label text-green-400">Bybit Wallet</p><p id="wallet-bal" class="text-2xl metric-value text-white">$0.00</p></div>
                 </div>
             </header>
 
             <div id="dashboard-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
         </main>
 
-        <aside id="ai-section" class="card p-5 mt-8 lg:mt-0">
+        <aside id="ai-section" class="card p-6 mt-8 lg:mt-0">
             <div class="flex justify-between items-center mb-4 border-b border-gray-800 pb-3">
-                <span id="health-status" class="status-safe">ESTADO: ANALISANDO</span>
+                <span id="health-status" class="status-safe">BALTAZAR LIVE</span>
                 <span id="fg-index" class="text-xs font-bold text-yellow-500">F&G: --</span>
             </div>
-            <div id="ai-content" class="flex-grow overflow-y-auto mb-4 space-y-4 pr-2 scrollbar-hide font-medium text-white">
-                <div class="insight-card italic animate-pulse">Sincronizando telemetria com Baltazar...</div>
+            <div id="ai-content" class="flex-grow overflow-y-auto mb-4 space-y-4 pr-2 scrollbar-hide">
+                <div class="insight-card italic animate-pulse">Sincronizando estratégia com Baltazar...</div>
             </div>
             <div class="pt-3 border-t border-gray-800">
-                <input type="text" id="chat-input" placeholder="Mensagem para o Baltazar..." class="bg-[#1e2126] border border-[#2b3139] p-4 rounded-lg w-full text-white text-sm outline-none focus:border-yellow-500" onkeypress="handleChat(event)">
+                <input type="text" id="chat-input" placeholder="Ordem para o Baltazar..." class="bg-[#1e2126] border border-[#2b3139] p-4 rounded-lg w-full text-white text-base outline-none focus:border-yellow-500" onkeypress="handleChat(event)">
             </div>
         </aside>
     </div>
@@ -97,10 +98,7 @@
 
         async function fetchPositions() {
             try {
-                const response = await fetch(FUNC_PATH, {
-                    method: 'GET',
-                    headers: { 'Authorization': `Bearer ${SUPABASE_KEY}` }
-                });
+                const response = await fetch(FUNC_PATH, { method: 'GET', headers: { 'Authorization': `Bearer ${SUPABASE_KEY}` } });
                 const result = await response.json();
                 if (result.result?.list) {
                     currentPositions = result.result.list.filter(p => parseFloat(p.size) !== 0);
@@ -115,21 +113,18 @@
             const reserve = parseFloat(document.getElementById('external-reserve').value) || 0;
             const totalMuralha = walletBalance + reserve;
             
-            // CORREÇÃO: Leverage Patrimonial = Soma das Exposições / (Equity Bybit + Reserva)
-            const levPatrimonial = globalExposure > 0 ? globalExposure / totalMuralha : 0;
-            
-            // Health Index baseado na agressividade da alavancagem real
-            // 0x a 3x = 100% a 70% | 3x a 7x = 70% a 20% | > 10x = 0%
-            const health = Math.max(0, 100 - (levPatrimonial * 12.5));
+            // CÁLCULO CORRIGIDO: Soma das Exposições / (Equity Bybit + Reserva)
+            const levPatrimonial = totalMuralha > 0 ? globalExposure / totalMuralha : 0;
+            const health = Math.max(0, 100 - (levPatrimonial * 10)); // 10x lev = 0% saúde
 
+            document.getElementById('wallet-bal').innerText = `$${walletBalance.toFixed(2)}`;
             document.getElementById('total-equity').innerText = `$${totalMuralha.toFixed(2)}`;
             document.getElementById('avg-leverage').innerText = levPatrimonial.toFixed(2) + 'x';
             document.getElementById('account-health-val').innerText = health.toFixed(0) + '%';
-            document.getElementById('free-margin').innerText = `$${(walletBalance - globalMarginUsed).toFixed(2)}`;
 
             const statusBox = document.getElementById('health-status');
-            if(levPatrimonial > 6.5) { statusBox.innerText = "ESTADO: DANGER"; statusBox.className = "status-danger"; }
-            else if(levPatrimonial > 3.0) { statusBox.innerText = "ESTADO: WARNING"; statusBox.className = "status-warning"; }
+            if(levPatrimonial > 7) { statusBox.innerText = "ESTADO: DANGER"; statusBox.className = "status-danger"; }
+            else if(levPatrimonial > 3.5) { statusBox.innerText = "ESTADO: WARNING"; statusBox.className = "status-warning"; }
             else { statusBox.innerText = "ESTADO: SAFE"; statusBox.className = "status-safe"; }
         }
 
@@ -152,7 +147,7 @@
                     card.id = `card-${pos.symbol}`;
                     card.className = `card rounded-xl border-l-4 ${pos.side === 'Buy' ? 'border-l-green-500' : 'border-l-red-500'}`;
                     card.innerHTML = `<div class="p-5">
-                        <div class="flex justify-between items-center mb-6"><h2 class="text-xl font-black text-white italic uppercase">${pos.symbol} <span class="text-[10px] text-gray-500 ml-2">${leverage}x</span></h2>
+                        <div class="flex justify-between items-center mb-6"><h2 class="text-xl font-black text-white italic uppercase">${pos.symbol} <span class="text-[10px] text-gray-500 ml-2 font-mono">${leverage}x</span></h2>
                         <button onclick="handleToggle('${pos.symbol}')" class="text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg></button></div>
                         <div id="metrics-${pos.symbol}" class="grid grid-cols-2 gap-y-6"></div></div><div id="chart-${pos.symbol}" class="chart-container"></div>`;
                     grid.appendChild(card);
@@ -162,16 +157,16 @@
                 document.getElementById(`metrics-${pos.symbol}`).innerHTML = `
                     <div><p class="metric-label">ROE Real</p><p class="${netPnL >= 0 ? 'up' : 'down'} text-2xl font-black">${((netPnL/initialMargin)*100).toFixed(2)}%</p></div>
                     <div class="text-right"><p class="metric-label">PnL Aberto</p><p class="${netPnL >= 0 ? 'up' : 'down'} text-xl font-black">$${netPnL.toFixed(2)}</p></div>
-                    <div class="col-span-2"><div class="flex justify-between text-[10px] font-bold"><span class="text-red-500 uppercase italic">Liquidação</span><span class="text-red-400">$${liq.toFixed(3)} (${distLiq.toFixed(2)}%)</span></div>
+                    <div class="col-span-2"><div class="flex justify-between text-[10px] font-bold"><span class="text-red-500 uppercase tracking-widest italic">Liquidação</span><span class="text-red-400">$${liq.toFixed(3)} (${distLiq.toFixed(2)}%)</span></div>
                     <div class="progress-bg"><div class="progress-fill bg-red-600" style="width: ${Math.max(0, 100 - Math.abs(distLiq))}%"></div></div></div>
-                    <div class="col-span-2"><div class="flex justify-between text-[10px] font-bold"><span class="text-yellow-500 uppercase italic">Take Profit</span><span class="text-yellow-500">$${tp > 0 ? tp.toFixed(3) : 'N/A'}</span></div>
+                    <div class="col-span-2"><div class="flex justify-between text-[10px] font-bold"><span class="text-yellow-500 uppercase tracking-widest italic">Take Profit</span><span class="text-yellow-500">$${tp > 0 ? tp.toFixed(3) : 'N/A'}</span></div>
                     <div class="progress-bg"><div class="progress-fill bg-yellow-500" style="width: ${Math.min(tpProgress, 100)}%"></div></div></div>`;
             });
 
             document.getElementById('total-pnl').innerText = `$${totalPnL.toFixed(2)}`;
             document.getElementById('total-pnl').className = `text-4xl metric-value ${totalPnL >= 0 ? 'up' : 'down'}`;
             document.getElementById('total-pnl-perc').innerText = `${globalMarginUsed > 0 ? ((totalPnL/globalMarginUsed)*100).toFixed(2) : 0}%`;
-            document.getElementById('total-pnl-perc').className = `text-sm font-bold mt-1 ${totalPnL >= 0 ? 'up' : 'down'}`;
+            document.getElementById('total-pnl-perc').className = `text-lg font-bold mt-1 ${totalPnL >= 0 ? 'up' : 'down'}`;
             document.getElementById('total-exposure').innerText = `$${globalExposure.toFixed(2)}`;
             
             if(currentPositions.length > 0 && !window.aiStarted) { fetchAIIntelligence(); window.aiStarted = true; }
