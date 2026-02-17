@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI TRADING LAB - v10.0</title>
+    <title>AI TRADING LAB - v10.1</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -23,9 +23,13 @@
         .progress-bg { background-color: #2b3139; height: 6px; border-radius: 3px; width: 100%; margin-top: 4px; overflow: hidden; }
         .progress-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
         
-        /* Sistema de Gráficos Independentes */
-        .chart-wrapper { height: 0; overflow: hidden; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0; }
-        .chart-wrapper.active { height: 500px; opacity: 1; border-top: 1px solid rgba(255, 255, 255, 0.1); margin-top: 15px; }
+        /* LOGO ANIMADO ORIGINAL */
+        @keyframes pulse-neural { 0%, 100% { opacity: 0.4; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1); } }
+        .neural-node { animation: pulse-neural 3s infinite ease-in-out; }
+
+        /* FIX: GRÁFICOS INDEPENDENTES */
+        .chart-wrapper { display: none; height: 500px; width: 100%; border-top: 1px solid rgba(255, 255, 255, 0.1); margin-top: 15px; }
+        .chart-wrapper.active { display: block; }
 
         .layout-container { display: flex; flex-direction: column; gap: 24px; max-width: 1600px; margin: 0 auto; padding: 20px; }
         @media (min-width: 1280px) {
@@ -42,8 +46,13 @@
         <main id="main-content">
             <header class="mb-8">
                 <div class="flex justify-between items-end mb-8 border-b border-gray-800/40 pb-6 flex-wrap gap-6">
-                    <div class="flex items-center gap-5">
-                        <svg width="40" height="40" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="4" fill="#f3ba2f"/><circle cx="20" cy="20" r="10" stroke="#f3ba2f" stroke-width="0.5" stroke-dasharray="2 2"/></svg>
+                    <div class="flex items-center gap-4">
+                        <svg width="45" height="45" viewBox="0 0 40 40" fill="none">
+                            <circle cx="20" cy="20" r="3" fill="#f3ba2f" class="neural-node"/>
+                            <circle cx="34" cy="12" r="2" fill="#f3ba2f" fill-opacity="0.6" class="neural-node"/>
+                            <circle cx="6" cy="28" r="2" fill="#f3ba2f" fill-opacity="0.6" class="neural-node"/>
+                            <path d="M20 17L34 12M20 23L6 28M20 17L6 12M20 23L34 28" stroke="#f3ba2f" stroke-opacity="0.2" stroke-width="1"/>
+                        </svg>
                         <div>
                             <h1 class="text-3xl font-extrabold text-white tracking-[0.2em] uppercase leading-none">AI TRADING LAB</h1>
                             <p id="update-timestamp" class="text-[8px] text-gray-500 font-mono tracking-widest uppercase mt-2 font-bold">Sync: Operational</p>
@@ -52,13 +61,13 @@
                     <div class="text-right">
                         <p class="metric-label">PnL Global Aberto</p>
                         <p id="total-pnl" class="text-4xl metric-value leading-none">$0</p>
-                        <p id="total-pnl-perc" class="text-lg metric-value mt-1">0,00%</p>
+                        <p id="total-pnl-perc" class="text-lg metric-value mt-1">0.00%</p>
                     </div>
                 </div>
                 <div class="grid grid-cols-2 lg:grid-cols-3 gap-4">
                     <div class="stat-box"><p class="metric-label text-gray-400">Exposição Total</p><p id="total-exposure" class="text-xl metric-value text-white">$0</p></div>
                     <div class="stat-box"><p class="metric-label text-gray-400">Margem em Uso</p><p id="total-margin" class="text-xl metric-value text-gray-300">$0</p></div>
-                    <div class="stat-box border-yellow-500/10"><p class="metric-label text-yellow-500">Alavancagem Real</p><p id="avg-leverage" class="text-xl metric-value text-yellow-500">0,00x</p></div>
+                    <div class="stat-box border-yellow-500/10"><p class="metric-label text-yellow-500 font-bold">Alavancagem Real</p><p id="avg-leverage" class="text-xl metric-value text-yellow-500">0,00x</p></div>
                 </div>
             </header>
             <div id="dashboard-grid" class="grid grid-cols-1 md:grid-cols-2 gap-5"></div>
@@ -68,13 +77,13 @@
             <div class="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
                 <span id="engine-led" class="w-2.5 h-2.5 bg-green-500 rounded-full"></span>
                 <span class="text-white text-[11px] font-bold uppercase tracking-widest">Engine 2.0 Flash</span>
-                <span id="fg-index" class="text-xs font-bold text-gray-500 font-mono tracking-tighter">F&G: --</span>
+                <span id="fg-index" class="text-xs font-bold text-gray-500 font-mono">F&G: --</span>
             </div>
-            <div id="ai-content" class="flex-grow overflow-y-auto mb-4 pr-2 scrollbar-hide text-sm leading-relaxed">
-                <div class="insight-card text-gray-500 text-center py-10" id="bot-status">Sincronizando telemetria...</div>
+            <div id="ai-content" class="flex-grow overflow-y-auto mb-4 pr-2 scrollbar-hide text-sm">
+                <div class="insight-card text-gray-500 text-center py-10" id="bot-status">Sincronizando Baltazar...</div>
             </div>
             <div class="pt-4 border-t border-gray-800">
-                <input type="text" id="chat-input" placeholder="Comando..." class="w-full bg-transparent text-white outline-none text-sm placeholder-gray-700" onkeypress="handleChat(event)">
+                <input type="text" id="chat-input" placeholder="Comando..." class="w-full bg-transparent text-white outline-none text-sm placeholder-gray-700 font-medium" onkeypress="handleChat(event)">
             </div>
         </aside>
     </div>
@@ -91,7 +100,7 @@
         window.onload = () => { fetchPositions(); setInterval(fetchPositions, 10000); };
 
         function formatNumber(num) {
-            return Math.floor(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            return Math.floor(Math.abs(num)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
         }
 
         function formatDecimal(num) {
@@ -143,7 +152,7 @@
                     card.innerHTML = `
                         <div class="p-5">
                             <div class="flex justify-between items-center mb-5">
-                                <h2 class="text-xl font-black text-white uppercase tracking-tighter">${pos.symbol} <span class="text-xs text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded ml-2">${formatDecimal(leverage)}x</span></h2>
+                                <h2 class="text-xl font-black text-white uppercase tracking-tighter">${pos.symbol} <span class="text-xs text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded ml-2 font-bold">${formatDecimal(leverage)}x</span></h2>
                                 <button onclick="handleToggle('${pos.symbol}')" class="text-gray-500">
                                     <svg id="arrow-${pos.symbol}" class="w-6 h-6 rotate-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                                 </button>
@@ -154,27 +163,27 @@
                             <div id="tv-${pos.symbol}" style="height: 100%; width: 100%;"></div>
                         </div>`;
                     grid.appendChild(card);
+                    if(isInitialLoad && positions.length > 0) { fetchAIIntelligence(); isInitialLoad = false; }
                 }
 
                 const dLiq = liq > 0 ? Math.abs((liq - current) / current) * 100 : 100;
                 const tpP = tp > 0 ? (Math.abs(current - entry) / Math.abs(tp - entry)) * 100 : 0;
                 document.getElementById(`metrics-${pos.symbol}`).innerHTML = `
                     <div><p class="metric-label">ROE</p><p class="${netPnL >= 0 ? 'up' : 'down'} text-2xl font-black">${((netPnL/margin)*100).toFixed(2)}%</p></div>
-                    <div class="text-right"><p class="metric-label">PnL</p><p class="${netPnL >= 0 ? 'up' : 'down'} text-xl font-bold">$${formatNumber(netPnL)}</p></div>
+                    <div class="text-right"><p class="metric-label">PnL</p><p class="${netPnL >= 0 ? 'up' : 'down'} text-xl font-bold">${netPnL < 0 ? '-' : ''}$${formatNumber(netPnL)}</p></div>
                     <div class="col-span-2">
-                        <div class="flex justify-between text-[10px] font-bold mb-1 uppercase"><span class="${dLiq < 12 ? 'text-red-500 animate-pulse' : 'text-gray-500'}">Liquidação</span><span>${dLiq.toFixed(2)}%</span></div>
+                        <div class="flex justify-between text-[10px] font-bold mb-1 uppercase tracking-widest"><span class="${dLiq < 12 ? 'text-red-500 animate-pulse' : 'text-gray-500'}">Liquidação</span><span>${dLiq.toFixed(2)}%</span></div>
                         <div class="progress-bg"><div class="progress-fill ${dLiq < 12 ? 'bg-red-500' : 'bg-red-900/40'}" style="width: ${Math.max(0, 100 - dLiq)}%"></div></div>
                     </div>
                     <div class="col-span-2">
-                        <div class="flex justify-between text-[10px] font-bold mb-1 uppercase"><span class="text-yellow-500">Take Profit</span><span>$${tp > 0 ? tp.toFixed(2) : '--'}</span></div>
+                        <div class="flex justify-between text-[10px] font-bold mb-1 uppercase tracking-widest"><span class="text-yellow-500 font-bold">Take Profit</span><span>$${tp > 0 ? tp.toFixed(2) : '--'}</span></div>
                         <div class="progress-bg"><div class="progress-fill bg-yellow-500" style="width: ${Math.min(tpP, 100)}%"></div></div>
                     </div>`;
             });
 
-            const pnlEl = document.getElementById('total-pnl');
-            pnlEl.innerText = `$${formatNumber(totalPnL)}`;
-            pnlEl.className = `text-4xl metric-value ${totalPnL >= 0 ? 'up' : 'down'}`;
-            document.getElementById('total-pnl-perc').innerText = `${formatDecimal(totalMargin > 0 ? (totalPnL/totalMargin*100) : 0)}%`;
+            document.getElementById('total-pnl').innerText = `${totalPnL < 0 ? '-' : ''}$${formatNumber(totalPnL)}`;
+            document.getElementById('total-pnl').className = `text-4xl metric-value ${totalPnL >= 0 ? 'up' : 'down'}`;
+            document.getElementById('total-pnl-perc').innerText = `${(totalMargin > 0 ? (totalPnL/totalMargin*100) : 0).toFixed(2)}%`;
             document.getElementById('total-pnl-perc').className = `text-lg metric-value mt-1 ${totalPnL >= 0 ? 'up' : 'down'}`;
             
             document.getElementById('total-exposure').innerText = `$${formatNumber(totalExposure)}`;
@@ -185,6 +194,8 @@
         function handleToggle(s) { 
             const wrap = document.getElementById(`wrap-${s}`);
             const arrow = document.getElementById(`arrow-${s}`);
+            
+            // Toggle do gráfico atual
             const isActive = wrap.classList.toggle('active');
             arrow.classList.toggle('rotate-180');
             
@@ -209,7 +220,7 @@
                 document.getElementById('bot-status')?.remove();
                 const formatted = data.insight.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
                 const newCard = document.createElement('div');
-                newCard.className = 'border-l-2 border-yellow-500 pl-4 mb-6 text-white';
+                newCard.className = 'border-l-2 border-yellow-500 pl-4 mb-6 text-white font-medium';
                 aiContent.appendChild(newCard);
                 let i = 0;
                 function type() {
@@ -227,7 +238,6 @@
                 if(data.fg) document.getElementById('fg-index').innerText = `F&G: ${data.fg}`;
             } catch (err) { console.error(err); }
         }
-
         function handleChat(e) { if (e.key === 'Enter') { fetchAIIntelligence(e.target.value); e.target.value = ''; } }
     </script>
 </body>
