@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Command Center v6.0 - Neural Native</title>
+    <title>Command Center v6.1 - Responsive Neural</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #0b0e11; color: #eaecef; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        body { background-color: #0b0e11; color: #eaecef; font-family: 'Inter', sans-serif; }
         .card { background-color: #181a20; border: 1px solid #2b3139; position: relative; overflow: hidden; height: fit-content; }
         .metric-label { color: #848e9c; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; }
         .metric-value { font-family: 'Roboto Mono', monospace; font-weight: 600; }
@@ -18,74 +18,79 @@
         .chart-container { height: 506px; width: 100%; border-top: 1px solid #2b3139; display: none; }
         .chart-visible { display: block !important; }
         
-        /* Layout com Sidebar Nativa */
-        #main-wrapper { transition: margin-right 0.3s ease; margin-right: 380px; }
-        #ai-sidebar { width: 380px; border-left: 1px solid #2b3139; background: #0b0e11; height: 100vh; position: fixed; right: 0; top: 0; z-index: 50; padding: 20px; display: flex; flex-direction: column; }
+        /* Layout Inteligente */
+        .layout-container { display: flex; flex-direction: column; gap: 24px; max-width: 1600px; margin: 0 auto; padding: 16px; }
         
-        .insight-card { border-left: 4px solid #f3ba2f; padding: 12px; margin-bottom: 12px; border-radius: 6px; background: rgba(243, 186, 47, 0.05); font-size: 11px; }
-        .user-message { border-right: 4px solid #3b82f6; border-left: none; background: rgba(59, 130, 246, 0.05); text-align: right; }
-        .badge-ai { background: #f3ba2f; color: #000; font-size: 10px; font-weight: 900; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; }
+        #ai-section { background: #0b0e11; border: 1px solid #2b3139; border-radius: 12px; display: flex; flex-direction: column; height: 400px; order: -1; }
         
-        #chat-input { background: #1e2126; border: 1px solid #2b3139; color: white; padding: 10px; border-radius: 6px; width: 100%; outline: none; font-size: 12px; }
-        #chat-input:focus { border-color: #f3ba2f; }
+        .insight-card { border-left: 3px solid #f3ba2f; padding: 10px; margin-bottom: 8px; border-radius: 4px; background: rgba(243, 186, 47, 0.03); font-size: 11px; line-height: 1.4; }
+        .user-message { border-right: 3px solid #3b82f6; border-left: none; background: rgba(59, 130, 246, 0.03); text-align: right; }
+        
+        #chat-input { background: #181a20; border: 1px solid #2b3139; color: white; padding: 12px; border-radius: 8px; width: 100%; outline: none; font-size: 13px; }
+
+        /* Media Query para Desktop: Volta a ser lateral se houver espaço */
+        @media (min-width: 1280px) {
+            .layout-container { flex-direction: row; align-items: flex-start; }
+            #main-content { flex: 1; }
+            #ai-section { width: 400px; height: calc(100vh - 64px); position: sticky; top: 32px; order: 1; }
+        }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body>
 
-    <div id="main-wrapper" class="max-w-full mx-auto">
-        <header class="mb-8">
-            <div class="flex justify-between items-center mb-6 gap-4 border-b border-gray-800 pb-6">
-                <div>
-                    <h1 class="text-2xl font-black text-white uppercase italic leading-none tracking-tighter">COMMAND <span class="text-yellow-500 text-3xl">6.0</span></h1>
-                    <p class="text-[10px] text-gray-500 font-mono mt-1 italic text-yellow-500" id="last-update">AUTO-NEURAL ACTIVE</p>
+    <div class="layout-container">
+        <main id="main-content" class="w-full">
+            <header class="mb-8">
+                <div class="flex justify-between items-center mb-6 border-b border-gray-800 pb-6">
+                    <div>
+                        <h1 class="text-2xl font-black text-white uppercase italic tracking-tighter">COMMAND <span class="text-yellow-500 text-3xl">6.1</span></h1>
+                        <p class="text-[10px] text-gray-500 font-mono italic text-yellow-500" id="last-update">SYNCING...</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="metric-label font-bold text-[10px]">Net PnL Aberto</p>
+                        <p id="total-pnl" class="text-4xl metric-value leading-none">$0.00</p>
+                    </div>
                 </div>
-                <div class="text-right">
-                    <p class="metric-label font-bold text-[10px]">Net PnL Aberto</p>
-                    <p id="total-pnl" class="text-4xl metric-value leading-none">$0.00</p>
-                    <p id="total-pnl-perc" class="text-sm font-bold mt-1 opacity-80">0.00%</p>
+
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    <div class="stat-box"><p class="metric-label">Exposure</p><p id="total-exposure" class="text-lg metric-value">$0.00</p></div>
+                    <div class="stat-box"><p class="metric-label">Margin</p><p id="total-margin" class="text-lg metric-value">$0.00</p></div>
+                    <div class="stat-box border-yellow-500/30"><p class="metric-label text-yellow-500">Lev Real</p><p id="avg-leverage" class="text-lg metric-value text-yellow-500">0.00x</p></div>
+                    <div class="stat-box"><p class="metric-label">PnL %</p><p id="total-pnl-perc" class="text-lg metric-value">0.00%</p></div>
+                </div>
+            </header>
+
+            <div id="dashboard-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+        </main>
+
+        <aside id="ai-section" class="p-5">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-800 pb-3">
+                <span class="bg-yellow-500 text-black text-[10px] font-black px-2 py-1 rounded">NEURAL HUB 2.5</span>
+                <div class="flex gap-3">
+                    <span id="fg-index" class="text-xs font-bold text-yellow-500">F&G: --</span>
+                    <span class="text-xs font-bold text-green-500">LIVE</span>
                 </div>
             </div>
-
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                <div class="stat-box"><p class="metric-label font-bold">Total Exposure</p><p id="total-exposure" class="text-lg metric-value text-white font-bold">$0.00</p></div>
-                <div class="stat-box"><p class="metric-label font-bold">Equity Usada</p><p id="total-margin" class="text-lg metric-value text-gray-300 font-bold">$0.00</p></div>
-                <div class="stat-box border-yellow-500/30"><p class="metric-label text-yellow-500 font-bold italic">Leverage Real</p><p id="avg-leverage" class="text-lg metric-value text-yellow-500 font-black">0.00x</p></div>
-                <div class="stat-box"><p class="metric-label font-bold">Funding 24h Est.</p><p id="funding-est" class="text-lg metric-value font-bold">$0.00</p></div>
+            
+            <div id="ai-content" class="flex-grow overflow-y-auto mb-4 space-y-3 pr-2 custom-scrollbar">
+                <div class="insight-card italic animate-pulse text-gray-400">A processar análise inicial...</div>
             </div>
-        </header>
 
-        <div id="dashboard-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+            <div class="pt-3 border-t border-gray-800">
+                <input type="text" id="chat-input" placeholder="Perguntar sobre as posições..." onkeypress="handleChat(event)">
+            </div>
+        </aside>
     </div>
-
-    <aside id="ai-sidebar">
-        <div class="flex justify-between items-center mb-4 border-b border-gray-800 pb-4">
-            <div><span class="badge-ai">Neural Engine 2.5</span></div>
-            <div class="flex gap-4">
-                <div class="text-center"><p class="text-[8px] text-gray-500 uppercase font-bold">F&G</p><p id="fg-index" class="text-xs font-bold text-yellow-500">--</p></div>
-                <div class="text-center"><p class="text-[8px] text-gray-500 uppercase font-bold">Status</p><p id="ai-status" class="text-xs font-bold text-green-500">LIVE</p></div>
-            </div>
-        </div>
-        
-        <div id="ai-content" class="flex-grow overflow-y-auto mb-4 space-y-3 pr-2 scrollbar-hide">
-            <div class="insight-card italic animate-pulse">A inicializar análise neural automática...</div>
-        </div>
-
-        <div class="mt-auto pt-4 border-t border-gray-800">
-            <input type="text" id="chat-input" placeholder="Perguntar à IA sobre estas posições..." onkeypress="handleChat(event)">
-            <p class="text-[9px] text-gray-600 mt-2 italic text-center text-yellow-500/50">Gemini 2.5 Flash • Análise em tempo real</p>
-        </div>
-    </aside>
 
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <script>
         const PROJECT_ID = 'qjzjxtxrlofnoyaaypbu'; 
         const SUPABASE_KEY = 'sb_publishable_bRa-mZWTaf0g6sNyWL9OmQ_uvo7Ex5H';
-        const FUNC_PATH = `https://qjzjxtxrlofnoyaaypbu.supabase.co/functions/v1/get-bybit-positions`;
-        const AI_FUNC_PATH = `https://qjzjxtxrlofnoyaaypbu.supabase.co/functions/v1/trade-advisor`;
+        const FUNC_PATH = `https://${PROJECT_ID}.supabase.co/functions/v1/get-bybit-positions`;
+        const AI_FUNC_PATH = `https://${PROJECT_ID}.supabase.co/functions/v1/trade-advisor`;
 
         let currentPositions = [];
 
-        // Início Automático
         window.onload = () => {
             fetchPositions().then(() => {
                 if(currentPositions.length > 0) fetchAIIntelligence();
@@ -94,33 +99,26 @@
 
         async function fetchAIIntelligence(userQuery = null) {
             const aiContent = document.getElementById('ai-content');
-            
-            if (!userQuery) {
-                aiContent.innerHTML = `<div class="insight-card italic animate-pulse">A processar análise automática de mercado...</div>`;
-            } else {
+            if (userQuery) {
                 aiContent.innerHTML += `<div class="insight-card user-message">${userQuery}</div>`;
-                aiContent.innerHTML += `<div id="loading-temp" class="insight-card italic animate-pulse">A pensar...</div>`;
+                aiContent.scrollTop = aiContent.scrollHeight;
             }
 
             try {
                 const response = await fetch(AI_FUNC_PATH, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        positions: currentPositions,
-                        userMessage: userQuery // Enviamos a mensagem do utilizador se existir
-                    })
+                    body: JSON.stringify({ positions: currentPositions, userMessage: userQuery })
                 });
                 const data = await response.json();
                 
-                const loader = document.getElementById('loading-temp');
-                if(loader) loader.remove();
-
-                document.getElementById('fg-index').innerText = data.fg || '--';
-                aiContent.innerHTML += `<div class="insight-card border-blue-500 bg-blue-500/5 whitespace-pre-wrap text-white font-medium">${data.insight}</div>`;
+                if(!userQuery) aiContent.innerHTML = ''; // Limpa loader inicial
+                
+                document.getElementById('fg-index').innerText = `F&G: ${data.fg || '--'}`;
+                aiContent.innerHTML += `<div class="insight-card text-white font-medium">${data.insight}</div>`;
                 aiContent.scrollTop = aiContent.scrollHeight;
             } catch (err) {
-                aiContent.innerHTML += `<div class="insight-card text-red-500">Erro na ligação à Neural Engine.</div>`;
+                console.error(err);
             }
         }
 
@@ -132,7 +130,6 @@
             }
         }
 
-        // --- Lógica de Trading Mantida ---
         async function fetchPositions() {
             try {
                 const response = await fetch(FUNC_PATH, {
@@ -143,7 +140,7 @@
                 if (result.result?.list) {
                     currentPositions = result.result.list.filter(p => parseFloat(p.size) !== 0);
                     updateDashboard(currentPositions);
-                    document.getElementById('last-update').innerText = 'Sync: ' + new Date().toLocaleTimeString();
+                    document.getElementById('last-update').innerText = 'Last Sync: ' + new Date().toLocaleTimeString();
                 }
             } catch (err) { console.error(err); }
         }
@@ -152,12 +149,10 @@
             const container = document.getElementById(`chart-${symbol}`);
             const btn = document.getElementById(`btn-${symbol}`);
             const isVisible = container.classList.toggle('chart-visible');
-            btn.classList.toggle('active');
             if (isVisible && !container.dataset.loaded) {
                 new TradingView.widget({
                     "autosize": true, "symbol": `BYBIT:${symbol}.P`, "interval": "240", "theme": "dark", "style": "1",
-                    "locale": "pt", "toolbar_bg": "#f1f3f6", "enable_publishing": false, "hide_side_toolbar": false,
-                    "allow_symbol_change": true, "container_id": `chart-${symbol}`, "studies": []
+                    "locale": "pt", "hide_side_toolbar": false, "container_id": `chart-${symbol}`, "studies": []
                 });
                 container.dataset.loaded = "true";
             }
@@ -177,7 +172,6 @@
                 const liq = parseFloat(pos.liqPrice) || 0;
                 const leverage = parseFloat(pos.leverage) || 1;
                 const tp = parseFloat(pos.takeProfit) || 0;
-                const isLong = pos.side === 'Buy';
                 const marketValue = parseFloat(pos.positionValue);
                 const initialMargin = (entry * qty) / leverage; 
                 
@@ -187,37 +181,26 @@
                 if (!card) {
                     card = document.createElement('div');
                     card.id = `card-${pos.symbol}`;
-                    card.className = `card rounded-xl border border-gray-800 ${isLong ? 'border-l-4 border-l-green-500' : 'border-l-4 border-l-red-500'}`;
-                    card.innerHTML = `<div class="p-5">
+                    card.className = `card rounded-xl p-5 border-l-4 ${pos.side === 'Buy' ? 'border-l-green-500' : 'border-l-red-500'}`;
+                    card.innerHTML = `
                         <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-xl font-black text-white italic tracking-tighter">${pos.symbol} <span class="text-[10px] text-gray-500 ml-2 font-mono">${leverage}x</span></h2>
-                            <button id="btn-${pos.symbol}" onclick="handleToggle('${pos.symbol}')" class="toggle-btn text-gray-400">
+                            <h2 class="text-xl font-black text-white italic">${pos.symbol} <span class="text-[10px] text-gray-500 font-mono">${leverage}x</span></h2>
+                            <button id="btn-${pos.symbol}" onclick="handleToggle('${pos.symbol}')" class="text-gray-400">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                             </button>
                         </div>
                         <div id="metrics-${pos.symbol}" class="grid grid-cols-2 gap-y-6"></div>
-                    </div><div id="chart-${pos.symbol}" class="chart-container"></div>`;
+                        <div id="chart-${pos.symbol}" class="chart-container mt-4"></div>`;
                     grid.appendChild(card);
                 }
 
                 const distLiq = liq > 0 ? ((liq - current) / current) * 100 : 0;
-                let tpProgress = 0;
-                if(tp > 0) {
-                    const totalDist = Math.abs(tp - entry);
-                    const currentDist = Math.abs(current - entry);
-                    tpProgress = Math.min((currentDist/totalDist)*100, 100);
-                }
-
                 document.getElementById(`metrics-${pos.symbol}`).innerHTML = `
                     <div><p class="metric-label">ROE Real</p><p class="${netPnL >= 0 ? 'up' : 'down'} text-2xl font-black">${((netPnL/initialMargin)*100).toFixed(2)}%</p></div>
-                    <div class="text-right"><p class="metric-label font-bold text-white italic text-[10px]">PnL Aberto</p><p class="${netPnL >= 0 ? 'up' : 'down'} text-xl font-black leading-none">$${netPnL.toFixed(2)}</p></div>
+                    <div class="text-right"><p class="metric-label">PnL Aberto</p><p class="${netPnL >= 0 ? 'up' : 'down'} text-xl font-black">$${netPnL.toFixed(2)}</p></div>
                     <div class="col-span-2">
-                        <div class="flex justify-between items-end"><p class="metric-label text-red-500 font-bold tracking-widest text-[9px]">Liquidação</p><p class="text-[10px] text-red-400 font-bold">$${liq.toFixed(3)} (${distLiq.toFixed(2)}%)</p></div>
+                        <div class="flex justify-between text-[10px] font-bold"><span class="text-red-500">LIQUIDAÇÃO</span><span class="text-red-400">$${liq.toFixed(3)} (${distLiq.toFixed(2)}%)</span></div>
                         <div class="progress-bg"><div class="progress-fill bg-red-600" style="width: ${Math.max(0, 100 - Math.abs(distLiq))}%"></div></div>
-                    </div>
-                    <div class="col-span-2">
-                        <div class="flex justify-between items-end"><p class="metric-label text-yellow-500 font-bold tracking-widest text-[9px]">Take Profit Progresso</p><p class="text-[10px] text-yellow-500 font-bold">${tp > 0 ? '$'+tp.toFixed(3) : 'N/A'}</p></div>
-                        <div class="progress-bg"><div class="progress-fill bg-yellow-500" style="width: ${tpProgress}%"></div></div>
                     </div>
                 `;
             });
@@ -225,13 +208,4 @@
             document.getElementById('total-pnl').innerText = `$${totalPnL.toFixed(2)}`;
             document.getElementById('total-pnl').className = `text-4xl metric-value ${totalPnL >= 0 ? 'up' : 'down'}`;
             document.getElementById('total-exposure').innerText = `$${totalExposure.toFixed(2)}`;
-            document.getElementById('total-margin').innerText = `$${totalMargin.toFixed(2)}`;
-            document.getElementById('avg-leverage').innerText = (totalExposure / totalMargin).toFixed(2) + 'x';
-            document.getElementById('total-pnl-perc').innerText = `${totalMargin > 0 ? ((totalPnL/totalMargin)*100).toFixed(2) : 0}%`;
-            document.getElementById('total-pnl-perc').className = `text-sm font-bold mt-1 ${totalPnL >= 0 ? 'up' : 'down'}`;
-        }
-
-        setInterval(fetchPositions, 10000);
-    </script>
-</body>
-</html>
+            document.getElementById('total-margin').innerText =
