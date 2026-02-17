@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Command Center v6.2 - Neural Full Recall</title>
+    <title>Command Center v7.5 - Restored Core</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0b0e11; color: #eaecef; font-family: 'Inter', sans-serif; }
@@ -20,6 +20,7 @@
         .toggle-btn { transition: all 0.3s ease; cursor: pointer; }
         .toggle-btn.active { transform: rotate(180deg); color: #f3ba2f; }
         
+        /* Layout Adaptativo Restaurado */
         .layout-container { display: flex; flex-direction: column; gap: 24px; max-width: 1600px; margin: 0 auto; padding: 16px; }
         #ai-section { background: #111417; border: 1px solid #2b3139; border-radius: 12px; display: flex; flex-direction: column; height: 450px; order: -1; }
         .insight-card { border-left: 3px solid #f3ba2f; padding: 12px; margin-bottom: 10px; border-radius: 4px; background: rgba(243, 186, 47, 0.05); font-size: 11px; line-height: 1.5; }
@@ -40,7 +41,7 @@
             <header class="mb-8">
                 <div class="flex justify-between items-center mb-6 border-b border-gray-800 pb-6">
                     <div>
-                        <h1 class="text-2xl font-black text-white uppercase italic tracking-tighter">COMMAND <span class="text-yellow-500 text-3xl">6.2</span></h1>
+                        <h1 class="text-2xl font-black text-white uppercase italic tracking-tighter">COMMAND <span class="text-yellow-500 text-3xl">7.5</span></h1>
                         <p class="text-[10px] text-gray-500 font-mono italic text-yellow-500" id="last-update">AI FULL RECALL ACTIVE</p>
                     </div>
                     <div class="text-right">
@@ -71,7 +72,7 @@
                 <div class="insight-card italic animate-pulse text-gray-500">A carregar análise inteligente...</div>
             </div>
             <div class="pt-3 border-t border-gray-800">
-                <input type="text" id="chat-input" placeholder="Analisar posições..." onkeypress="handleChat(event)">
+                <input type="text" id="chat-input" placeholder="Analisar posições..." class="w-full text-white p-2 bg-transparent outline-none" onkeypress="handleChat(event)">
             </div>
         </aside>
     </div>
