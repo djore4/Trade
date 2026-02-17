@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Trading Lab - v12.3</title>
+    <title>AI Trading Lab - v12.5 (Full Features)</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -16,38 +16,29 @@
         .card { background: rgba(24, 26, 32, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; }
         .metric-label { color: #848e9c; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; }
         .metric-value { font-family: 'Roboto Mono', monospace; font-weight: 700; }
+        
         .text-up { color: #02d386 !important; }
         .text-down { color: #ff3b5c !important; }
         
-        /* Drawer Chat Mobile & Desktop */
         #ai-section { 
-            position: fixed; right: -100%; top: 0; width: 100%; max-width: 500px; height: 100vh; 
+            position: fixed; right: -100%; top: 0; width: 100%; max-width: 525px; height: 100vh; 
             transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1); z-index: 100;
             box-shadow: -20px 0 50px rgba(0,0,0,0.9); background: #0c0e12;
         }
         #ai-section.open { right: 0; }
         
-        /* Balões de Chat */
-        .msg { margin-bottom: 12px; padding: 12px 16px; border-radius: 12px; font-size: 0.9rem; line-height: 1.6; position: relative; }
-        .user-msg { 
-            background: rgba(30, 144, 255, 0.1); border-right: 4px solid #1e90ff; 
-            align-self: flex-end; margin-left: auto; color: #e2e8f0; 
-        }
-        .bot-msg { 
-            background: rgba(243, 186, 47, 0.05); border-left: 4px solid #f3ba2f; 
-            color: #ffffff; align-self: flex-start;
-        }
+        .msg { margin-bottom: 16px; padding: 14px; border-radius: 12px; font-size: 0.9rem; line-height: 1.6; }
+        .user-msg { background: rgba(30, 144, 255, 0.1); border-right: 4px solid #1e90ff; align-self: flex-end; margin-left: auto; color: #e2e8f0; }
+        .bot-msg { background: rgba(243, 186, 47, 0.05); border-left: 4px solid #f3ba2f; color: #ffffff; }
 
         .layout-container { max-width: 1600px; margin: 0 auto; padding: 15px; transition: opacity 0.4s ease; }
-        .layout-container.shifted { opacity: 0.3; pointer-events: none; }
+        .layout-container.shifted { opacity: 0.2; pointer-events: none; }
 
         .progress-bg { background-color: #1e2329; height: 6px; border-radius: 3px; width: 100%; margin-top: 4px; overflow: hidden; }
         .progress-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
 
         @media (max-width: 640px) {
-            .text-5xl { font-size: 2.5rem; }
-            .stat-box { padding: 8px; }
-            .metric-value { font-size: 1rem; }
+            .text-5xl { font-size: 2.2rem; }
             #ai-section { max-width: 100%; }
         }
     </style>
@@ -60,32 +51,40 @@
                     <h1 class="text-4xl md:text-5xl font-extrabold text-white tracking-tight mb-2">
                         <span class="text-[#f3ba2f] drop-shadow-[0_0_15px_rgba(243,186,47,0.4)]">AI</span> Trading Lab
                     </h1>
-                    <div id="macro-trend" class="text-[10px] font-bold px-2 py-1 bg-white/5 rounded border border-white/10 text-gray-500 inline-block">MACRO: SYNC...</div>
+                    <div class="flex flex-wrap gap-2">
+                        <div class="flex items-center gap-2 bg-white/5 px-2 py-1 rounded border border-white/10">
+                            <span id="status-led" class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                            <span id="update-timestamp" class="text-[9px] text-gray-400 font-mono uppercase font-bold">Terminal Online</span>
+                        </div>
+                        <div id="macro-trend" class="text-[9px] font-bold px-2 py-1 bg-white/5 rounded border border-white/10 text-gray-500 uppercase">Tendência: Syncing...</div>
+                    </div>
                 </div>
-                <button onclick="toggleAI()" class="w-full md:w-auto bg-[#f3ba2f] hover:bg-yellow-400 text-black px-8 py-3 rounded-xl font-black transition-all flex justify-center items-center gap-3">
+                <button onclick="toggleAI()" class="w-full md:w-auto bg-[#f3ba2f] hover:bg-yellow-400 text-black px-8 py-3 rounded-xl font-black transition-all flex justify-center items-center gap-3 shadow-[0_0_15px_rgba(243,186,47,0.2)]">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                    BALTAZAR AI
+                    ABRIR BALTAZAR
                 </button>
             </div>
 
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-                <div class="stat-box card p-4"><p class="metric-label">PnL Global</p><p id="total-pnl" class="text-xl metric-value">$0</p></div>
-                <div class="stat-box card p-4"><p class="metric-label">ROE Avg</p><p id="total-pnl-perc" class="text-xl metric-value">0,00%</p></div>
-                <div class="stat-box card p-4"><p class="metric-label">Exposição</p><p id="total-exposure" class="text-xl metric-value text-white">$0</p></div>
-                <div class="stat-box card p-4 border-yellow-500/20"><p class="metric-label text-yellow-500">Alavancagem</p><p id="avg-leverage" class="text-xl metric-value text-yellow-500">0,00x</p></div>
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <div class="card p-4"><p class="metric-label">PnL Global</p><p id="total-pnl" class="text-xl metric-value leading-none">$0</p></div>
+                <div class="card p-4"><p class="metric-label">ROE Avg</p><p id="total-pnl-perc" class="text-xl metric-value leading-none">0%</p></div>
+                <div class="card p-4"><p class="metric-label">Exposição</p><p id="total-exposure" class="text-xl metric-value text-white leading-none">$0</p></div>
+                <div class="card p-4 border-yellow-500/20"><p class="metric-label text-yellow-500 font-bold">Alavancagem</p><p id="avg-leverage" class="text-xl metric-value text-yellow-500 leading-none">0x</p></div>
             </div>
         </header>
-        <div id="dashboard-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6"></div>
+        <div id="dashboard-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
     </div>
 
     <aside id="ai-section" class="card p-6 flex flex-col">
         <div class="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
-            <span class="text-white text-xs font-bold uppercase tracking-widest">Baltazar Strategist v2.0</span>
-            <button onclick="toggleAI()" class="text-gray-500 text-2xl">&times;</button>
+            <span class="text-white text-xs font-bold uppercase tracking-widest">Baltazar Engine v12.5</span>
+            <button onclick="toggleAI()" class="text-gray-500 text-3xl font-light hover:text-white">&times;</button>
         </div>
-        <div id="ai-content" class="flex-grow overflow-y-auto pr-2 flex flex-col scrollbar-hide"></div>
+        <div id="ai-content" class="flex-grow overflow-y-auto pr-2 flex flex-col scrollbar-hide">
+            <div class="bot-msg msg">Aguarda enquanto analiso as posições...</div>
+        </div>
         <div class="pt-4 border-t border-gray-800">
-            <input type="text" id="chat-input" placeholder="Comando..." class="w-full bg-white/5 p-4 rounded-xl text-white outline-none text-sm border border-white/5 focus:border-yellow-500/50" onkeypress="handleChat(event)">
+            <input type="text" id="chat-input" placeholder="Comando ao Baltazar..." class="w-full bg-white/5 p-4 rounded-xl text-white outline-none text-sm border border-white/5" onkeypress="handleChat(event)">
         </div>
     </aside>
 
@@ -112,18 +111,19 @@
                 if (result.result?.list) {
                     currentPositions = result.result.list.filter(p => parseFloat(p.size) !== 0);
                     updateDashboard(currentPositions);
+                    document.getElementById('update-timestamp').innerText = `Terminal: ${new Date().toLocaleTimeString()}`;
                 }
             } catch (err) { console.error(err); }
         }
 
         function updateDashboard(positions) {
             const grid = document.getElementById('dashboard-grid');
-            let totalPnL = 0, totalMargin = 0, totalExp = 0;
+            let totalPnL = 0, totalMargin = 0, totalExp = 0, maxRisk = 0;
 
             positions.forEach(pos => {
                 const netPnL = parseFloat(pos.unrealisedPnl), mValue = parseFloat(pos.positionValue);
                 const leverage = parseFloat(pos.leverage), current = parseFloat(pos.markPrice);
-                const liq = parseFloat(pos.liqPrice), tp = parseFloat(pos.takeProfit);
+                const liq = parseFloat(pos.liqPrice), tp = parseFloat(pos.takeProfit), entry = parseFloat(pos.avgPrice);
                 const margin = mValue / leverage;
                 totalPnL += netPnL; totalMargin += margin; totalExp += mValue;
 
@@ -131,26 +131,37 @@
                 if (!card) {
                     card = document.createElement('div');
                     card.id = `card-${pos.symbol}`;
-                    card.className = `card border-l-4 p-4 ${pos.side === 'Buy' ? 'border-l-green-500' : 'border-l-red-500'}`;
+                    card.className = `card border-l-4 p-5 ${pos.side === 'Buy' ? 'border-l-green-500' : 'border-l-red-500'}`;
                     card.innerHTML = `<div class="flex justify-between mb-4">
                         <h2 class="font-black text-white text-lg">${pos.symbol} <span class="text-[10px] text-yellow-500 ml-1">${leverage}x</span></h2>
                         <button onclick="handleToggleChart('${pos.symbol}')" class="text-gray-500"><svg id="arr-${pos.symbol}" class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="3"></path></svg></button>
                     </div><div id="m-${pos.symbol}" class="grid grid-cols-2 gap-4"></div>
-                    <div id="c-${pos.symbol}" class="hidden h-[300px] mt-4 rounded overflow-hidden"></div>`;
+                    <div id="c-${pos.symbol}" class="hidden h-[350px] mt-4 rounded overflow-hidden shadow-inner bg-black"></div>`;
                     grid.appendChild(card);
                 }
 
                 const dLiq = liq > 0 ? Math.abs((liq - current) / current) * 100 : 100;
+                const tpDist = tp > 0 ? (Math.abs(current - entry) / Math.abs(tp - entry)) * 100 : 0;
                 const pnlClass = netPnL >= 0 ? 'text-up' : 'text-down';
+                if(dLiq < 12) maxRisk = 2; else if(dLiq < 25 && maxRisk < 2) maxRisk = 1;
 
+                // FUNÇÃO RECUPERADA: MÉTRICAS COMPLETAS + BARRAS DE PROGRESSO (LIQ + TP)
                 document.getElementById(`m-${pos.symbol}`).innerHTML = `
-                    <div><p class="metric-label">ROE</p><p class="${pnlClass} text-xl font-black">${(netPnL/margin*100).toFixed(2)}%</p></div>
-                    <div class="text-right"><p class="metric-label">PnL</p><p class="${pnlClass} text-lg font-bold">$${Math.floor(netPnL)}</p></div>
+                    <div><p class="metric-label">ROE</p><p class="${pnlClass} text-2xl font-black">${(netPnL/margin*100).toFixed(2)}%</p></div>
+                    <div class="text-right"><p class="metric-label">PnL</p><p class="${pnlClass} text-xl font-bold">$${Math.floor(netPnL)}</p></div>
                     <div class="col-span-2">
-                        <div class="flex justify-between text-[9px] font-bold text-gray-500 uppercase"><span>Liq. Dist.</span><span>${dLiq.toFixed(2)}%</span></div>
+                        <div class="flex justify-between text-[9px] font-bold text-gray-500 uppercase"><span>Dist. Liquidação</span><span>${dLiq.toFixed(2)}%</span></div>
                         <div class="progress-bg"><div class="progress-fill ${dLiq < 12 ? 'bg-red-500' : 'bg-red-900/40'}" style="width: ${Math.max(0, 100 - dLiq)}%"></div></div>
+                    </div>
+                    <div class="col-span-2">
+                        <div class="flex justify-between text-[9px] font-bold text-yellow-600 uppercase"><span>Take Profit Goal</span><span>${tpDist.toFixed(0)}%</span></div>
+                        <div class="progress-bg"><div class="progress-fill bg-yellow-500/60" style="width: ${Math.min(tpDist, 100)}%"></div></div>
                     </div>`;
             });
+
+            // LED DE RISCO DINÂMICO
+            const led = document.getElementById('status-led');
+            led.className = maxRisk === 2 ? "w-2 h-2 bg-red-500 rounded-full animate-ping" : (maxRisk === 1 ? "w-2 h-2 bg-yellow-500 rounded-full animate-pulse" : "w-2 h-2 bg-green-500 rounded-full animate-pulse");
 
             document.getElementById('total-pnl').innerText = `$${Math.floor(totalPnL)}`;
             document.getElementById('total-pnl').className = `text-xl metric-value ${totalPnL >= 0 ? 'text-up' : 'text-down'}`;
@@ -162,6 +173,8 @@
 
         async function fetchAIIntelligence(userQuery = null) {
             const aiContent = document.getElementById('ai-content');
+            const macroTrendEl = document.getElementById('macro-trend');
+            
             if (userQuery) {
                 const uMsg = document.createElement('div'); uMsg.className = 'msg user-msg'; uMsg.innerText = userQuery;
                 aiContent.appendChild(uMsg); aiContent.scrollTop = aiContent.scrollHeight;
@@ -175,9 +188,18 @@
                 });
                 const data = await response.json();
                 
+                // FUNÇÃO RECUPERADA: TENDÊNCIA MACRO DINÂMICA
+                if (data.insight.toUpperCase().includes("BULLISH") || data.insight.toUpperCase().includes("ALTA")) {
+                    macroTrendEl.innerText = "Tendência: BULLISH";
+                    macroTrendEl.className = "text-[9px] font-bold px-2 py-1 bg-green-500/20 rounded border border-green-500/30 text-green-500 uppercase";
+                } else if (data.insight.toUpperCase().includes("BEARISH") || data.insight.toUpperCase().includes("BAIXA")) {
+                    macroTrendEl.innerText = "Tendência: BEARISH";
+                    macroTrendEl.className = "text-[9px] font-bold px-2 py-1 bg-red-500/20 rounded border border-red-500/30 text-red-500 uppercase";
+                }
+
                 const nMsg = document.createElement('div'); nMsg.className = 'msg bot-msg'; aiContent.appendChild(nMsg);
                 
-                // LIMPADEZA DE HTML INDESEJADO DO GEMINI
+                // SANITIZAÇÃO DE HTML
                 let cleaned = data.insight
                     .replace(/<\/?[^>]+(>|$)/g, (match) => ["<strong>", "</strong>", "<br>", "<br/>"].includes(match) ? match : "")
                     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
