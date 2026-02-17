@@ -33,16 +33,14 @@
 
         @media (max-width: 768px) {
             .layout-container { padding: 12px; gap: 16px; }
-            #total-pnl { font-size: 2.5rem; }
+            #total-pnl { font-size: 2rem; } /* Reduzido para equilíbrio */
             .card { border-radius: 8px; }
-            .p-4 { padding: 16px; }
-            .chart-container { height: 520px; } /* +30% no mobile */
+            .chart-container { height: 520px; }
         }
 
         .progress-bg { background-color: #2b3139; height: 5px; border-radius: 3px; width: 100%; margin-top: 4px; }
         .progress-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
         
-        /* Gráficos aumentados em 30% (de 400px para 520px) */
         .chart-container { height: 520px; width: 100%; border-top: 1px solid rgba(255, 255, 255, 0.05); display: none; }
         .chart-visible { display: block !important; }
         
@@ -72,15 +70,15 @@
     <div class="layout-container">
         <main id="main-content" class="w-full">
             <header class="mb-6">
-                <div class="flex justify-between items-start mb-6 border-b border-gray-800/40 pb-6">
+                <div class="flex justify-between items-end mb-6 border-b border-gray-800/40 pb-6">
                     <div>
-                        <h1 class="text-xl font-extrabold text-white tracking-widest uppercase">AI TRADING LAB</h1>
-                        <p id="update-timestamp" class="text-[7px] text-gray-600 font-mono tracking-widest uppercase mt-1">Initializing Sync...</p>
+                        <h1 class="text-3xl font-extrabold text-white tracking-widest uppercase">AI TRADING LAB</h1>
+                        <p id="update-timestamp" class="text-[7px] text-gray-600 font-mono tracking-widest uppercase mt-2 pl-1">Last Sync: Initializing...</p>
                     </div>
                     <div class="text-right">
-                        <p class="metric-label">Net PnL</p>
-                        <p id="total-pnl" class="text-4xl metric-value leading-none">$0.00</p>
-                        <p id="total-pnl-perc" class="text-lg metric-value mt-1">0.00%</p>
+                        <p class="metric-label">Net PnL Aberto</p>
+                        <p id="total-pnl" class="text-3xl metric-value leading-none">$0.00</p>
+                        <p id="total-pnl-perc" class="text-base metric-value mt-1">0.00%</p>
                     </div>
                 </div>
 
@@ -100,7 +98,7 @@
                 <span id="fg-index" class="text-xs font-bold text-gray-500">F&G: --</span>
             </div>
             <div id="ai-content" class="flex-grow overflow-y-auto mb-4 space-y-3 pr-2 scrollbar-hide">
-                <div class="insight-card text-gray-500 text-center">A aguardar dados...</div>
+                <div class="insight-card text-gray-500 text-center">Sincronizando telemetria...</div>
             </div>
             <div class="pt-3 border-t border-gray-800">
                 <input type="text" id="chat-input" placeholder="Comando..." class="w-full bg-transparent text-white p-1 outline-none text-sm" onkeypress="handleChat(event)">
@@ -126,10 +124,8 @@
                 if (result.result?.list) {
                     currentPositions = result.result.list.filter(p => parseFloat(p.size) !== 0);
                     updateDashboard(currentPositions);
-                    
-                    // Atualiza data e hora do update
                     const now = new Date();
-                    document.getElementById('update-timestamp').innerText = `Last Update: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
+                    document.getElementById('update-timestamp').innerText = `Last Sync: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
                 }
             } catch (err) { console.error(err); }
         }
@@ -198,9 +194,9 @@
             });
 
             document.getElementById('total-pnl').innerText = `$${totalPnL.toFixed(2)}`;
-            document.getElementById('total-pnl').className = `text-4xl metric-value ${totalPnL >= 0 ? 'up' : 'down'}`;
+            document.getElementById('total-pnl').className = `text-3xl metric-value ${totalPnL >= 0 ? 'up' : 'down'}`;
             document.getElementById('total-pnl-perc').innerText = `${totalMargin > 0 ? ((totalPnL/totalMargin)*100).toFixed(2) : 0}%`;
-            document.getElementById('total-pnl-perc').className = `text-lg metric-value ${totalPnL >= 0 ? 'up' : 'down'}`;
+            document.getElementById('total-pnl-perc').className = `text-base metric-value ${totalPnL >= 0 ? 'up' : 'down'}`;
             document.getElementById('total-exposure').innerText = `$${totalExposure.toFixed(2)}`;
             document.getElementById('total-margin').innerText = `$${totalMargin.toFixed(2)}`;
             document.getElementById('avg-leverage').innerText = (totalExposure / totalMargin).toFixed(2) + 'x';
