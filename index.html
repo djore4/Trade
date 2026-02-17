@@ -3,11 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Trading Lab v9.2</title>
+    <title>AI Trading Lab v9.5</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #080a0c; color: #f0f2f5; font-family: 'Outfit', sans-serif; -webkit-font-smoothing: antialiased; }
+        :root { --risk-rgb: 2, 211, 134; }
+        body { 
+            background-color: #080a0c; 
+            color: #f0f2f5; 
+            font-family: 'Outfit', sans-serif; 
+            -webkit-font-smoothing: antialiased;
+            transition: background 1.5s ease;
+            background-image: radial-gradient(circle at top right, rgba(var(--risk-rgb), 0.1), transparent 600px);
+        }
         .card { background: rgba(24, 26, 32, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; }
         .metric-label { color: #848e9c; font-size: 0.55rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; }
         .metric-value { font-family: 'Roboto Mono', monospace; font-weight: 700; }
@@ -15,38 +23,28 @@
         .down { color: #ff3b5c; }
         .stat-box { background: rgba(30, 33, 38, 0.5); border: 1px solid rgba(255, 255, 255, 0.03); padding: 10px; border-radius: 8px; }
         
-        @keyframes pulse-neural { 0%, 100% { opacity: 0.4; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1); } }
-        .neural-node { animation: pulse-neural 3s infinite ease-in-out; }
-
-        /* Estilo do Texto do Baltazar */
-        .insight-content { line-height: 1.8; letter-spacing: 0.02em; }
-        .insight-content strong { color: #f3ba2f; font-weight: 600; }
-        .insight-content br { margin-bottom: 12px; display: block; content: ""; }
-        
-        /* Módulo de Liquidação */
-        .liq-map-container { background: rgba(255, 255, 255, 0.02); border-radius: 8px; padding: 12px; }
+        /* Estilo do Mapa de Liquidação CoinGlass */
+        .liq-map-mini { background: rgba(255, 255, 255, 0.02); border-radius: 8px; padding: 12px; border: 1px solid rgba(243, 186, 47, 0.1); }
         .liq-bar { height: 4px; border-radius: 2px; transition: width 1s ease-in-out; }
-        .liq-label { font-size: 9px; color: #848e9c; margin-bottom: 2px; font-weight: 700; }
+        .liq-label { font-size: 9px; color: #848e9c; margin-bottom: 2px; font-weight: 700; text-transform: uppercase; }
 
+        .insight-content { line-height: 1.8; letter-spacing: 0.02em; font-size: 14px; }
+        .insight-content strong { color: #f3ba2f; }
+        
+        .chart-container { height: 550px; width: 100%; border-top: 1px solid rgba(255, 255, 255, 0.05); display: none; }
+        .chart-visible { display: block !important; }
+        
         @media (max-width: 768px) {
             .header-flex { flex-direction: column; align-items: flex-start !important; gap: 20px; }
-            .pnl-box { width: 100%; text-align: left !important; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 16px; }
-            .metrics-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 6px !important; }
             #total-pnl { font-size: 2.2rem; }
-            .chart-container { height: 520px; }
+            .metrics-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 6px !important; }
         }
 
-        .chart-container { height: 520px; width: 100%; border-top: 1px solid rgba(255, 255, 255, 0.05); display: none; }
-        .chart-visible { display: block !important; }
         .layout-container { display: flex; flex-direction: column; gap: 24px; max-width: 1600px; margin: 0 auto; padding: 20px; }
-        
-        #ai-section { background: #0d0f12; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; display: flex; flex-direction: column; height: auto; min-height: 500px; order: 10; }
-        .insight-card { border-left: 3px solid #f3ba2f; padding: 16px; margin-bottom: 12px; border-radius: 4px; background: rgba(243, 186, 47, 0.02); font-size: 14px; }
-        
         @media (min-width: 1280px) {
             .layout-container { flex-direction: row; align-items: flex-start; }
             #main-content { flex: 1; }
-            #ai-section { width: 420px; height: calc(100vh - 40px); position: sticky; top: 20px; order: 1; }
+            #ai-section { width: 420px; position: sticky; top: 20px; height: calc(100vh - 40px); display: flex; flex-direction: column; }
         }
         .progress-bg { background-color: #2b3139; height: 5px; border-radius: 3px; width: 100%; margin-top: 4px; }
         .progress-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
@@ -58,18 +56,14 @@
             <header class="mb-6">
                 <div class="flex justify-between items-end mb-6 border-b border-gray-800/40 pb-6 header-flex">
                     <div class="flex items-center gap-4">
-                        <svg width="35" height="35" viewBox="0 0 40 40" fill="none" class="mb-1">
-                            <circle cx="20" cy="20" r="3" fill="#f3ba2f" class="neural-node"/>
-                            <circle cx="34" cy="12" r="2" fill="#f3ba2f" fill-opacity="0.6" class="neural-node"/>
-                            <path d="M20 17L34 12M20 23L34 28M20 17L6 12M20 23L6 28" stroke="#f3ba2f" stroke-opacity="0.2" stroke-width="1.5"/>
-                        </svg>
+                        <svg width="35" height="35" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="3" fill="#f3ba2f"/></svg>
                         <div>
                             <h1 class="text-3xl font-extrabold text-white tracking-widest uppercase leading-none">AI TRADING LAB</h1>
                             <p id="update-timestamp" class="text-[7px] text-gray-600 font-mono tracking-widest uppercase mt-2">Sync: Operational</p>
                         </div>
                     </div>
                     <div class="text-right pnl-box">
-                        <p class="metric-label">Total Net PnL</p>
+                        <p class="metric-label">PnL Global Aberto</p>
                         <p id="total-pnl" class="text-3xl metric-value leading-none">$0.00</p>
                         <p id="total-pnl-perc" class="text-base metric-value mt-1">0.00%</p>
                     </div>
@@ -83,17 +77,17 @@
             <div id="dashboard-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </main>
 
-        <aside id="ai-section" class="p-6">
-            <div id="liquidation-map-mini" class="mb-6 liq-map-container border border-yellow-500/10">
-                <p class="text-[10px] font-bold text-yellow-500 mb-3 uppercase tracking-widest">Magnet Liquidity Zones</p>
-                <div id="liq-zones-list" class="space-y-3">
-                    <div class="text-[10px] text-gray-600 font-mono animate-pulse text-center">A aguardar telemetria...</div>
+        <aside id="ai-section" class="card p-6">
+            <div id="liq-map" class="liq-map-mini mb-6">
+                <p class="text-[10px] font-bold text-yellow-500 mb-3 uppercase tracking-widest">CoinGlass Liquidity Magnet</p>
+                <div id="liq-list" class="space-y-3">
+                    <div class="text-[10px] text-gray-600 font-mono animate-pulse text-center">A aguardar telemetria CoinGlass...</div>
                 </div>
             </div>
 
             <div class="flex justify-between items-center mb-4 border-b border-gray-800 pb-4">
                 <span class="text-yellow-500 text-[10px] font-extrabold tracking-widest uppercase flex items-center gap-2">
-                    <span class="w-2 h-2 bg-green-500 rounded-full animate-ping"></span> Engine 2.0 Flash
+                    <span id="engine-led" class="w-2 h-2 bg-green-500 rounded-full animate-ping"></span> Engine 2.0 Flash
                 </span>
                 <span id="fg-index" class="text-xs font-bold text-gray-500">F&G: --</span>
             </div>
@@ -103,7 +97,7 @@
             </div>
             
             <div class="pt-4 border-t border-gray-800">
-                <input type="text" id="chat-input" placeholder="Comando de alta intensidade..." class="w-full bg-transparent text-white p-1 outline-none text-sm placeholder-gray-700" onkeypress="handleChat(event)">
+                <input type="text" id="chat-input" placeholder="Comando de sobrevivência..." class="w-full bg-transparent text-white p-1 outline-none text-sm placeholder-gray-700" onkeypress="handleChat(event)">
             </div>
         </aside>
     </div>
@@ -127,16 +121,30 @@
                 if (result.result?.list) {
                     currentPositions = result.result.list.filter(p => parseFloat(p.size) !== 0);
                     updateDashboard(currentPositions);
+                    updateRiskSemaphore(currentPositions);
                     document.getElementById('update-timestamp').innerText = `Sync: ${new Date().toLocaleTimeString()}`;
                     if(isInitialLoad && currentPositions.length > 0) { fetchAIIntelligence(); isInitialLoad = false; }
                 }
             } catch (err) { console.error(err); }
         }
 
+        function updateRiskSemaphore(positions) {
+            let maxRisk = 0;
+            positions.forEach(pos => {
+                const liq = parseFloat(pos.liqPrice), mark = parseFloat(pos.markPrice);
+                const dist = liq > 0 ? Math.abs((liq - mark) / mark) * 100 : 100;
+                if (dist < 12) maxRisk = 2; else if (dist < 25 && maxRisk < 2) maxRisk = 1;
+            });
+            const led = document.getElementById('engine-led');
+            if (maxRisk === 2) { document.body.style.setProperty('--risk-rgb', '255, 59, 92'); led.className = "w-2 h-2 bg-red-500 rounded-full animate-ping"; }
+            else if (maxRisk === 1) { document.body.style.setProperty('--risk-rgb', '243, 186, 47'); led.className = "w-2 h-2 bg-yellow-500 rounded-full animate-ping"; }
+            else { document.body.style.setProperty('--risk-rgb', '2, 211, 134'); led.className = "w-2 h-2 bg-green-500 rounded-full animate-ping"; }
+        }
+
         async function fetchAIIntelligence(userQuery = null) {
             const aiContent = document.getElementById('ai-content');
-            const liqList = document.getElementById('liq-zones-list');
-            if (userQuery) aiContent.innerHTML += `<div class="insight-card border-blue-500 bg-blue-500/5 text-right text-xs opacity-80">${userQuery}</div>`;
+            const liqList = document.getElementById('liq-list');
+            if (userQuery) aiContent.innerHTML += `<div class="insight-card border-blue-500 bg-blue-500/5 text-right text-xs opacity-70">${userQuery}</div>`;
             
             try {
                 const response = await fetch(AI_FUNC_PATH, {
@@ -145,26 +153,24 @@
                     body: JSON.stringify({ positions: currentPositions, userMessage: userQuery })
                 });
                 const data = await response.json();
-
-                // Desenhar Mapas de Liquidação
-                if (data.liqZones) {
+                
+                // --- ATUALIZAÇÃO COINGLASS ---
+                if (data.liqZones && data.liqZones.length > 0) {
                     liqList.innerHTML = '';
-                    data.liqZones.forEach(zone => {
-                        const color = zone.side === 'short' ? '#ff3b5c' : '#02d386';
+                    data.liqZones.forEach(z => {
+                        const color = z.side === 'short' ? '#ff3b5c' : '#02d386';
                         liqList.innerHTML += `
-                            <div class="heatmap-zone flex items-center justify-between gap-3 mb-2">
-                                <div class="flex flex-col flex-1">
-                                    <span class="liq-label">${zone.side.toUpperCase()} LIQ @ $${zone.price}</span>
-                                    <div class="progress-bg h-1"><div class="liq-bar" style="width: ${zone.intensity}%; background: ${color}"></div></div>
+                            <div class="flex flex-col mb-2">
+                                <div class="flex justify-between liq-label">
+                                    <span>${z.side} Liquidation @ $${z.price}</span>
+                                    <span class="font-mono text-white">${z.vol}</span>
                                 </div>
-                                <span class="text-[10px] font-mono text-white">${zone.vol}</span>
+                                <div class="progress-bg h-1"><div class="liq-bar" style="width: ${z.intensity}%; background: ${color}"></div></div>
                             </div>`;
                     });
                 }
 
-                const status = document.getElementById('bot-status');
-                if(status) status.remove();
-
+                const status = document.getElementById('bot-status'); if(status) status.remove();
                 const formatted = data.insight.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
                 const newCard = document.createElement('div');
                 newCard.className = 'insight-card text-white';
@@ -202,12 +208,12 @@
                     card = document.createElement('div');
                     card.id = `card-${pos.symbol}`;
                     card.className = `card border-l-4 ${pos.side === 'Buy' ? 'border-l-green-500' : 'border-l-red-500'}`;
-                    card.innerHTML = `<div class="p-4"><div class="flex justify-between items-center mb-4"><h2 class="text-lg font-extrabold text-white tracking-tighter uppercase">${pos.symbol} <span class="text-[9px] text-gray-600 font-mono ml-1">${leverage}x</span></h2><button onclick="handleToggle('${pos.symbol}')" class="text-gray-600"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg></button></div><div id="metrics-${pos.symbol}" class="grid grid-cols-2 gap-y-4"></div></div><div id="chart-${pos.symbol}" class="chart-container"></div>`;
+                    card.innerHTML = `<div class="p-4"><div class="flex justify-between items-center mb-4"><h2 class="text-lg font-extrabold text-white uppercase">${pos.symbol} <span class="text-[9px] text-gray-500 font-mono ml-1">${leverage}x</span></h2><button onclick="handleToggle('${pos.symbol}')" class="text-gray-600"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg></button></div><div id="metrics-${pos.symbol}" class="grid grid-cols-2 gap-y-4"></div></div><div id="chart-${pos.symbol}" class="chart-container"></div>`;
                     grid.appendChild(card);
                 }
-                const dLiq = liq > 0 ? ((liq - current) / current) * 100 : 0;
+                const dLiq = liq > 0 ? Math.abs((liq - current) / current) * 100 : 100;
                 let tpP = tp > 0 ? (Math.abs(current - entry) / Math.abs(tp - entry)) * 100 : 0;
-                document.getElementById(`metrics-${pos.symbol}`).innerHTML = `<div><p class="metric-label">ROE</p><p class="${netPnL >= 0 ? 'up' : 'down'} text-xl font-black">${((netPnL/margin)*100).toFixed(2)}%</p></div><div class="text-right"><p class="metric-label">PnL</p><p class="${netPnL >= 0 ? 'up' : 'down'} text-lg font-black">$${netPnL.toFixed(2)}</p></div><div class="col-span-2"><div class="flex justify-between text-[9px] font-bold mb-1"><span class="text-red-500 uppercase tracking-widest font-bold">Liquidação</span><span class="text-red-400 font-mono font-bold">$${liq.toFixed(2)} (${dLiq.toFixed(1)}%)</span></div><div class="progress-bg"><div class="progress-fill bg-red-600" style="width: ${Math.max(0, 100 - Math.abs(dLiq))}%"></div></div></div><div class="col-span-2"><div class="flex justify-between text-[9px] font-bold mb-1"><span class="text-yellow-500 uppercase tracking-widest font-bold">Target TP</span><span class="text-yellow-500 font-mono font-bold">$${tp > 0 ? tp.toFixed(2) : '--'}</span></div><div class="progress-bg"><div class="progress-fill bg-yellow-500" style="width: ${Math.min(tpP, 100)}%"></div></div></div>`;
+                document.getElementById(`metrics-${pos.symbol}`).innerHTML = `<div><p class="metric-label">ROE</p><p class="${netPnL >= 0 ? 'up' : 'down'} text-xl font-black">${((netPnL/margin)*100).toFixed(2)}%</p></div><div class="text-right"><p class="metric-label">PnL</p><p class="${netPnL >= 0 ? 'up' : 'down'} text-lg font-black">$${netPnL.toFixed(2)}</p></div><div class="col-span-2"><div class="flex justify-between text-[9px] font-bold mb-1"><span class="${dLiq < 15 ? 'text-red-500 animate-pulse' : 'text-gray-500'} uppercase font-bold tracking-widest">Liquidação</span><span class="text-gray-400 font-mono">$${liq.toFixed(2)} (${dLiq.toFixed(1)}%)</span></div><div class="progress-bg"><div class="progress-fill ${dLiq < 15 ? 'bg-red-500' : 'bg-red-900/40'}" style="width: ${Math.max(0, 100 - dLiq)}%"></div></div></div><div class="col-span-2"><div class="flex justify-between text-[9px] font-bold mb-1"><span class="text-yellow-500 uppercase font-bold tracking-widest">Target TP</span><span class="text-yellow-500 font-mono">$${tp > 0 ? tp.toFixed(2) : '--'}</span></div><div class="progress-bg"><div class="progress-fill bg-yellow-500" style="width: ${Math.min(tpP, 100)}%"></div></div></div>`;
             });
             document.getElementById('total-pnl').innerText = `$${totalPnL.toFixed(2)}`;
             document.getElementById('total-pnl').className = `text-3xl metric-value ${totalPnL >= 0 ? 'up' : 'down'}`;
@@ -222,11 +228,11 @@
             const c = document.getElementById(`chart-${s}`); 
             const isV = c.classList.toggle('chart-visible');
             if (isV && !c.dataset.loaded) {
-                new TradingView.widget({ "autosize": true, "symbol": `BYBIT:${s}.P`, "interval": "240", "theme": "dark", "style": "1", "container_id": `chart-${s}` });
+                new TradingView.widget({ "autosize": true, "symbol": `BYBIT:${s}.P`, "interval": "240", "theme": "dark", "style": "1", "container_id": `chart-${s}`, "studies": ["Volume@tv-basicstudies"] });
                 c.dataset.loaded = "true";
             }
         }
-        function handleChat(e) { if (e.key === 'Enter' && e.target.value.trim() !== '') { const q = e.target.value; e.target.value = ''; fetchAIIntelligence(q); } }
+        function handleChat(e) { if (e.key === 'Enter' && e.target.value.trim() !== '') { fetchAIIntelligence(e.target.value); e.target.value = ''; } }
     </script>
 </body>
 </html>
