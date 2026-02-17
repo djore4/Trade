@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Trading Lab - v13.0</title>
+    <title>AI Trading Lab - v13.1 (Full Engine)</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -19,61 +19,61 @@
         .text-up { color: #02d386 !important; }
         .text-down { color: #ff3b5c !important; }
         
-        /* Layout Split Responsivo */
         .app-grid { display: grid; grid-template-columns: 1fr; gap: 20px; padding: 20px; max-width: 1800px; margin: 0 auto; }
-        @media (min-width: 1280px) { .app-grid { grid-template-columns: 1fr 450px; align-items: start; } }
+        @media (min-width: 1280px) { .app-grid { grid-template-columns: 1fr 480px; align-items: start; } }
 
-        /* Estilos do Chat (Corrigidos) */
-        .chat-container { height: 600px; display: flex; flex-direction: column; }
+        .chat-container { height: 600px; display: flex; flex-direction: column; position: relative; }
         @media (min-width: 1280px) { .chat-container { height: calc(100vh - 40px); position: sticky; top: 20px; } }
         
-        .msg { margin-bottom: 12px; padding: 12px 16px; border-radius: 12px; font-size: 0.85rem; line-height: 1.5; }
+        .msg { margin-bottom: 12px; padding: 14px; border-radius: 12px; font-size: 0.88rem; line-height: 1.6; }
         .user-msg { background: rgba(30, 144, 255, 0.15); border-right: 4px solid #1e90ff; align-self: flex-end; margin-left: auto; color: #e2e8f0; }
         .bot-msg { background: rgba(243, 186, 47, 0.05); border-left: 4px solid #f3ba2f; color: #ffffff; }
 
         .progress-bg { background-color: #1e2329; height: 6px; border-radius: 3px; width: 100%; margin-top: 4px; overflow: hidden; }
         .progress-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
         
-        .tv-wrap { height: 350px; margin-top: 15px; border-radius: 8px; overflow: hidden; background: #000; }
+        .tv-wrap { height: 400px; margin-top: 15px; border-radius: 8px; overflow: hidden; background: #000; border: 1px solid rgba(255,255,255,0.05); }
         .hidden { display: none; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #2b3139; border-radius: 10px; }
     </style>
 </head>
 <body>
     <div class="app-grid">
-        <main id="main-content">
+        <main>
             <header class="mb-8">
                 <div class="flex flex-col md:flex-row justify-between gap-4 border-b border-gray-800/40 pb-6 mb-8">
                     <div>
                         <h1 class="text-4xl font-extrabold text-white tracking-tight mb-2"><span class="text-[#f3ba2f]">AI</span> Trading Lab</h1>
-                        <div class="flex gap-2">
-                            <span id="status-led" class="px-2 py-1 bg-white/5 rounded border border-white/10 text-[9px] font-bold text-gray-500 uppercase flex items-center gap-2">
-                                <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> Terminal Online
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-2 py-1 bg-white/5 rounded border border-white/10 text-[9px] font-bold text-gray-500 uppercase flex items-center gap-2">
+                                <span id="status-led" class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> Terminal Online
                             </span>
-                            <span id="macro-trend" class="px-2 py-1 bg-white/5 rounded border border-white/10 text-[9px] font-bold text-gray-500 uppercase">Tendência: Sync...</span>
+                            <span id="macro-trend" class="px-2 py-1 bg-white/5 rounded border border-white/10 text-[9px] font-bold text-gray-400 uppercase">Tendência Macro: Syncing...</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
                     <div class="card p-4"><p class="metric-label">PnL Global</p><p id="total-pnl" class="text-xl metric-value leading-none">$0</p></div>
-                    <div class="card p-4"><p class="metric-label">ROE Avg</p><p id="total-pnl-perc" class="text-xl metric-value leading-none">0,00%</p></div>
+                    <div class="card p-4"><p class="metric-label">ROE Médio</p><p id="total-pnl-perc" class="text-xl metric-value leading-none">0,00%</p></div>
                     <div class="card p-4"><p class="metric-label">Exposição</p><p id="total-exposure" class="text-xl metric-value text-white leading-none">$0</p></div>
-                    <div class="card p-4 border-yellow-500/10"><p class="metric-label text-yellow-500">Alavancagem</p><p id="avg-leverage" class="text-xl metric-value text-yellow-500 leading-none">0x</p></div>
+                    <div class="card p-4 border-yellow-500/10"><p class="metric-label text-yellow-500">Alavancagem</p><p id="avg-leverage" class="text-xl metric-value text-yellow-500 leading-none">0,00x</p></div>
                 </div>
             </header>
             <div id="dashboard-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </main>
 
-        <aside class="card p-5 chat-container">
-            <div class="flex justify-between items-center mb-4 border-b border-gray-800 pb-3">
-                <span class="text-white text-xs font-bold tracking-widest uppercase">Baltazar Strategist</span>
-                <span id="fg-index" class="text-[10px] font-black text-gray-500 font-mono">F&G: --</span>
+        <aside class="card p-6 chat-container flex flex-col">
+            <div class="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
+                <span class="text-white text-xs font-bold tracking-widest uppercase">Baltazar Intelligence Engine</span>
+                <span id="fg-index" class="text-[10px] font-black text-gray-500 font-mono bg-white/5 px-2 py-1 rounded">F&G: --</span>
             </div>
-            <div id="ai-content" class="flex-grow overflow-y-auto pr-2 flex flex-col scrollbar-hide mb-4">
-                <div class="bot-msg msg">A aguardar telemetria para análise...</div>
+            <div id="ai-content" class="flex-grow overflow-y-auto pr-2 flex flex-col mb-4">
+                <div class="bot-msg msg">Aguardo telemetria para iniciar análise técnica e social...</div>
             </div>
-            <div class="pt-3 border-t border-gray-800">
-                <input type="text" id="chat-input" placeholder="Comando..." class="w-full bg-white/5 p-4 rounded-xl text-white outline-none text-sm border border-white/5 focus:border-yellow-500/30" onkeypress="handleChat(event)">
+            <div class="pt-4 border-t border-gray-800">
+                <input type="text" id="chat-input" placeholder="Enviar comando..." class="w-full bg-white/5 p-4 rounded-xl text-white outline-none text-sm border border-white/5 focus:border-yellow-500/30 transition-all" onkeypress="handleChat(event)">
             </div>
         </aside>
     </div>
@@ -85,17 +85,13 @@
         const SUPABASE_KEY = 'sb_publishable_bRa-mZWTaf0g6sNyWL9OmQ_uvo7Ex5H';
 
         let currentPositions = [];
+        let aiLoaded = false;
 
         window.onload = () => { fetchPositions(); setInterval(fetchPositions, 10000); };
 
-        function formatMoney(num) {
-            const parts = Math.floor(num).toString().split(".");
-            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-            return (num < 0 ? "-" : "") + "$" + parts.join(",");
-        }
-
-        function formatDec(num, p = 2) {
-            return num.toFixed(p).replace('.', ',');
+        function formatPT(num, isMoney = false) {
+            const val = Math.abs(num).toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            return (num < 0 ? "-" : "") + (isMoney ? "$" : "") + val;
         }
 
         async function fetchPositions() {
@@ -105,14 +101,14 @@
                 if (result.result?.list) {
                     currentPositions = result.result.list.filter(p => parseFloat(p.size) !== 0);
                     updateDashboard(currentPositions);
-                    if(currentPositions.length > 0 && !window.aiLoaded) { fetchAIIntelligence(); window.aiLoaded = true; }
+                    if(currentPositions.length > 0 && !aiLoaded) { fetchAIIntelligence(); aiLoaded = true; }
                 }
             } catch (err) { console.error(err); }
         }
 
         function updateDashboard(positions) {
             const grid = document.getElementById('dashboard-grid');
-            let totalPnL = 0, totalMargin = 0, totalExp = 0;
+            let totalPnL = 0, totalMargin = 0, totalExp = 0, maxRisk = 0;
 
             positions.forEach(pos => {
                 const netPnL = parseFloat(pos.unrealisedPnl), mValue = parseFloat(pos.positionValue);
@@ -126,11 +122,9 @@
                     card = document.createElement('div');
                     card.id = `card-${pos.symbol}`;
                     card.className = `card border-l-4 p-5 ${pos.side === 'Buy' ? 'border-l-green-500' : 'border-l-red-500'}`;
-                    card.innerHTML = `<div class="flex justify-between items-center mb-4">
-                        <h2 class="font-black text-white text-lg uppercase tracking-tighter">${pos.symbol} <span class="text-[10px] text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded ml-1">${leverage}x</span></h2>
-                        <button onclick="toggleChart('${pos.symbol}')" class="text-gray-500 hover:text-white transition-colors">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke-width="2.5"></path></svg>
-                        </button>
+                    card.innerHTML = `<div class="flex justify-between items-center mb-5">
+                        <h2 class="font-black text-white text-lg tracking-tighter uppercase">${pos.symbol} <span class="text-[10px] text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded ml-1">${leverage}x</span></h2>
+                        <button onclick="toggleChart('${pos.symbol}')" class="text-gray-500 hover:text-white"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke-width="2.5" stroke-linecap="round"></path></svg></button>
                     </div><div id="m-${pos.symbol}" class="grid grid-cols-2 gap-4"></div>
                     <div id="tv-${pos.symbol}" class="tv-wrap hidden"></div>`;
                     grid.appendChild(card);
@@ -139,26 +133,30 @@
                 const dLiq = liq > 0 ? Math.abs((liq - current) / current) * 100 : 100;
                 const tpP = tp > 0 ? (Math.abs(current - entry) / Math.abs(tp - entry)) * 100 : 0;
                 const pnlClass = netPnL >= 0 ? 'text-up' : 'text-down';
+                if(dLiq < 12) maxRisk = 2; else if(dLiq < 25 && maxRisk < 2) maxRisk = 1;
 
                 document.getElementById(`m-${pos.symbol}`).innerHTML = `
-                    <div><p class="metric-label">ROE</p><p class="${pnlClass} text-2xl font-black">${formatDec((netPnL/margin)*100)}%</p></div>
-                    <div class="text-right"><p class="metric-label">PnL</p><p class="${pnlClass} text-xl font-bold">${formatMoney(netPnL)}</p></div>
+                    <div><p class="metric-label">ROE</p><p class="${pnlClass} text-2xl font-black">${formatPT((netPnL/margin)*100)}%</p></div>
+                    <div class="text-right"><p class="metric-label">PnL</p><p class="${pnlClass} text-xl font-bold">${formatPT(netPnL, true)}</p></div>
                     <div class="col-span-2 mt-2">
-                        <div class="flex justify-between text-[9px] font-bold text-gray-500 uppercase"><span>Dist. Liq</span><span>${formatDec(dLiq)}%</span></div>
+                        <div class="flex justify-between text-[9px] font-bold text-gray-500 uppercase"><span>Proximidade Liquidação</span><span>${formatPT(dLiq)}%</span></div>
                         <div class="progress-bg"><div class="progress-fill ${dLiq < 12 ? 'bg-red-500' : 'bg-red-900/40'}" style="width: ${Math.max(0, 100 - dLiq)}%"></div></div>
                     </div>
                     <div class="col-span-2">
-                        <div class="flex justify-between text-[9px] font-bold text-yellow-600 uppercase"><span>Take Profit</span><span>${tpP.toFixed(0)}%</span></div>
+                        <div class="flex justify-between text-[9px] font-bold text-yellow-600 uppercase"><span>Alvo Take Profit</span><span>${tpP.toFixed(0)}%</span></div>
                         <div class="progress-bg"><div class="progress-fill bg-yellow-500/60" style="width: ${Math.min(tpP, 100)}%"></div></div>
                     </div>`;
             });
 
-            document.getElementById('total-pnl').innerText = formatMoney(totalPnL);
+            const led = document.getElementById('status-led');
+            led.className = maxRisk === 2 ? "w-1.5 h-1.5 bg-red-500 rounded-full animate-ping" : (maxRisk === 1 ? "w-1.5 h-1.5 bg-yellow-500 rounded-full animate-pulse" : "w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse");
+
+            document.getElementById('total-pnl').innerText = formatPT(totalPnL, true);
             document.getElementById('total-pnl').className = `text-xl metric-value ${totalPnL >= 0 ? 'text-up' : 'text-down'}`;
-            document.getElementById('total-pnl-perc').innerText = `${formatDec(totalMargin > 0 ? (totalPnL/totalMargin*100) : 0)}%`;
+            document.getElementById('total-pnl-perc').innerText = `${formatPT(totalMargin > 0 ? (totalPnL/totalMargin*100) : 0)}%`;
             document.getElementById('total-pnl-perc').className = `text-xl metric-value ${totalPnL >= 0 ? 'text-up' : 'text-down'}`;
-            document.getElementById('total-exposure').innerText = formatMoney(totalExp);
-            document.getElementById('avg-leverage').innerText = formatDec(totalMargin > 0 ? (totalExp / totalMargin) : 0) + 'x';
+            document.getElementById('total-exposure').innerText = formatPT(totalExp, true);
+            document.getElementById('avg-leverage').innerText = formatPT(totalMargin > 0 ? (totalExp / totalMargin) : 0) + 'x';
         }
 
         async function fetchAIIntelligence(userQuery = null) {
@@ -175,13 +173,12 @@
                     body: JSON.stringify({ positions: currentPositions, userMessage: userQuery })
                 });
                 const data = await response.json();
-                
                 if(data.fg) document.getElementById('fg-index').innerText = `F&G: ${data.fg}`;
                 
                 const macro = document.getElementById('macro-trend');
                 const isBull = data.insight.toUpperCase().includes("BULLISH") || data.insight.toUpperCase().includes("ALTA");
-                macro.innerText = isBull ? "Tendência: BULLISH" : "Tendência: BEARISH";
-                macro.className = `px-2 py-1 rounded border text-[9px] font-bold uppercase ${isBull ? 'bg-green-500/10 border-green-500/20 text-green-500' : 'bg-red-500/10 border-red-500/20 text-red-500'}`;
+                macro.innerText = isBull ? "Tendência Macro: BULLISH" : "Tendência Macro: BEARISH";
+                macro.className = `px-2 py-1 rounded border text-[9px] font-bold uppercase transition-colors ${isBull ? 'bg-green-500/10 border-green-500/20 text-green-500' : 'bg-red-500/10 border-red-500/20 text-red-500'}`;
 
                 const nMsg = document.createElement('div'); nMsg.className = 'msg bot-msg'; aiContent.appendChild(nMsg);
                 const cleaned = data.insight.replace(/<\/?[^>]+(>|$)/g, (match) => ["<strong>", "</strong>", "<br>"].includes(match) ? match : "").replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
