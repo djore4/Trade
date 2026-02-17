@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Trading Lab - v14.0</title>
+    <title>AI Trading Lab - v14.4 Final</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -17,21 +17,16 @@
         .metric-label { color: #848e9c; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; }
         .metric-value { font-family: 'Roboto Mono', monospace; font-weight: 700; }
         
-        /* Cores de PnL Blindadas */
-        .text-up { color: #02d386 !important; }
-        .text-down { color: #ff3b5c !important; }
-        
         .app-grid { display: grid; grid-template-columns: 1fr; gap: 20px; padding: 15px; max-width: 1800px; margin: 0 auto; transition: all 0.4s ease; }
         @media (min-width: 1280px) { .app-grid.chat-open { grid-template-columns: 1fr 500px; } }
 
-        /* Consola Baltazar */
         #ai-section { display: none; flex-direction: column; }
         #ai-section.open { display: flex; }
         @media (min-width: 1280px) { #ai-section.open { height: calc(100vh - 40px); position: sticky; top: 20px; } }
         
         .msg { margin-bottom: 12px; padding: 14px; border-radius: 12px; font-size: 0.88rem; line-height: 1.6; }
-        .user-msg { background: rgba(30, 144, 255, 0.15); border-right: 4px solid #1e90ff; align-self: flex-end; margin-left: auto; color: #e2e8f0; }
-        .bot-msg { background: rgba(243, 186, 47, 0.05); border-left: 4px solid #f3ba2f; color: #ffffff; }
+        .user-msg { background: rgba(30, 144, 255, 0.15); border-right: 4px solid #1e90ff; align-self: flex-end; margin-left: auto; }
+        .bot-msg { background: rgba(243, 186, 47, 0.05); border-left: 4px solid #f3ba2f; }
 
         .progress-bg { background-color: #1e2329; height: 6px; border-radius: 3px; width: 100%; margin-top: 4px; overflow: hidden; }
         .progress-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
@@ -54,7 +49,7 @@
                             <span id="macro-trend" class="px-2 py-1 bg-white/5 rounded border border-white/10 text-[9px] font-bold text-gray-400 uppercase tracking-widest">Macro: Syncing...</span>
                         </div>
                     </div>
-                    <button id="btn-baltazar" onclick="handleBaltazarCall()" class="w-full md:w-auto bg-[#f3ba2f] hover:bg-yellow-400 text-black px-8 py-3 rounded-xl font-black transition-all flex justify-center items-center gap-3 uppercase text-xs shadow-lg">
+                    <button onclick="handleBaltazarCall()" class="w-full md:w-auto bg-[#f3ba2f] hover:bg-yellow-400 text-black px-8 py-3 rounded-xl font-black transition-all flex justify-center items-center gap-3 uppercase text-xs shadow-lg">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                         Baltazar AI
                     </button>
@@ -64,19 +59,19 @@
                     <div class="card p-4"><p class="metric-label">PnL Global</p><p id="total-pnl" class="text-xl metric-value leading-none">$0</p></div>
                     <div class="card p-4"><p class="metric-label">ROE Médio</p><p id="total-pnl-perc" class="text-xl metric-value leading-none">0,00%</p></div>
                     <div class="card p-4"><p class="metric-label">Exposição</p><p id="total-exposure" class="text-xl metric-value text-white leading-none">$0</p></div>
-                    <div class="card p-4 border-yellow-500/10"><p class="metric-label text-yellow-500">Alavancagem</p><p id="avg-leverage" class="text-xl metric-value text-yellow-500 leading-none">0,00x</p></div>
+                    <div class="card p-4 border-yellow-500/10"><p class="metric-label text-yellow-500 font-bold">Alavancagem</p><p id="avg-leverage" class="text-xl metric-value text-yellow-500 leading-none">0,00x</p></div>
                 </div>
             </header>
             <div id="dashboard-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </main>
 
-        <aside id="ai-section" class="card p-6 flex-col">
+        <aside id="ai-section" class="card p-6 flex flex-col">
             <div class="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
-                <span class="text-white text-xs font-bold tracking-widest uppercase">Consola de Análise</span>
+                <span class="text-white text-xs font-bold tracking-widest uppercase">Estrategista Baltazar</span>
                 <span id="fg-index" class="text-[10px] font-black text-gray-500 font-mono bg-white/5 px-2 py-1 rounded">F&G: --</span>
             </div>
             <div id="ai-content" class="flex-grow overflow-y-auto pr-2 flex flex-col mb-4 scrollbar-hide">
-                <div class="bot-msg msg">Baltazar pronto para análise profunda.</div>
+                <div class="bot-msg msg">Utiliza o botão superior para iniciar análise tática.</div>
             </div>
             <div class="pt-4 border-t border-gray-800">
                 <input type="text" id="chat-input" placeholder="Enviar comando..." class="w-full bg-white/5 p-4 rounded-xl text-white outline-none text-sm border border-white/5 focus:border-yellow-500/30" onkeypress="handleChat(event)">
@@ -101,86 +96,90 @@
             if (window.innerWidth < 1280) document.getElementById('ai-section').scrollIntoView({ behavior: 'smooth' });
         }
 
-        function formatPT(num, isMoney = false, precision = 2) {
-            const finalPrecision = isMoney ? 0 : precision;
-            const val = Math.abs(num).toLocaleString('pt-PT', { minimumFractionDigits: finalPrecision, maximumFractionDigits: finalPrecision });
-            return (num < 0 ? "-" : "") + (isMoney ? "$" : "") + val;
+        // FORMATAÇÃO PT-PT BLINDADA: Dinheiro (isM=true) s/ decimais. Ativos (isM=false) c/ 4 decimais.
+        function fPT(n, isM = false, p = 2) {
+            const dec = isM ? 0 : p;
+            let res = Math.abs(n).toLocaleString('pt-PT', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+            return (n < 0 ? "-" : "") + (isM ? "$" : "") + res;
         }
 
         async function fetchPositions() {
             try {
-                const response = await fetch(FUNC_PATH, { headers: { 'Authorization': `Bearer ${SUPABASE_KEY}` } });
-                const result = await response.json();
-                if (result.result?.list) {
-                    currentPositions = result.result.list.filter(p => parseFloat(p.size) !== 0);
+                const r = await fetch(FUNC_PATH, { headers: { 'Authorization': `Bearer ${SUPABASE_KEY}` } });
+                const d = await r.json();
+                if (d.result?.list) {
+                    currentPositions = d.result.list.filter(p => parseFloat(p.size) !== 0);
                     updateDashboard(currentPositions);
                 }
-            } catch (err) {}
+            } catch (e) {}
         }
 
         function updateDashboard(positions) {
             const grid = document.getElementById('dashboard-grid');
-            let totalPnL = 0, totalMargin = 0, totalExp = 0, maxRisk = 0;
+            let tPnL = 0, tMarg = 0, tExp = 0, mRisk = 0;
 
             positions.forEach(pos => {
-                const netPnL = parseFloat(pos.unrealisedPnl), mValue = parseFloat(pos.positionValue);
-                const leverage = parseFloat(pos.leverage), current = parseFloat(pos.markPrice);
-                const entry = parseFloat(pos.avgPrice), liq = parseFloat(pos.liqPrice), tp = parseFloat(pos.takeProfit);
-                const margin = mValue / leverage;
-                totalPnL += netPnL; totalMargin += margin; totalExp += mValue;
+                const pnl = parseFloat(pos.unrealisedPnl), val = parseFloat(pos.positionValue);
+                const lev = parseFloat(pos.leverage), cur = parseFloat(pos.markPrice);
+                const ent = parseFloat(pos.avgPrice), liq = parseFloat(pos.liqPrice), tp = parseFloat(pos.takeProfit);
+                const marg = val / lev;
+                tPnL += pnl; tMarg += marg; tExp += val;
 
                 let card = document.getElementById(`card-${pos.symbol}`);
                 if (!card) {
                     card = document.createElement('div');
                     card.id = `card-${pos.symbol}`;
                     card.className = `card border-l-4 p-5 ${pos.side === 'Buy' ? 'border-l-green-500' : 'border-l-red-500'}`;
-                    card.innerHTML = `<div class="flex justify-between items-center mb-5">
-                        <h2 class="font-black text-white text-lg uppercase tracking-tighter">${pos.symbol} <span class="text-[10px] text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded ml-1">${leverage}x</span></h2>
-                        <button onclick="handleUniversalToggle('${pos.symbol}')" class="text-gray-500 hover:text-white"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke-width="2.5" stroke-linecap="round"></path></svg></button>
-                    </div><div id="m-${pos.symbol}" class="grid grid-cols-2 gap-4"></div>
-                    <div id="tv-${pos.symbol}" class="tv-wrap hidden"></div>`;
                     grid.appendChild(card);
                 }
 
-                const dLiq = liq > 0 ? Math.abs((liq - current) / current) * 100 : 100;
-                const tpP = tp > 0 ? (Math.abs(current - entry) / Math.abs(tp - entry)) * 100 : 0;
-                const pnlClass = netPnL >= 0 ? 'text-up' : 'text-down';
-                if(dLiq < 12) maxRisk = 2; else if(dLiq < 25 && maxRisk < 2) maxRisk = 1;
+                const dLiq = liq > 0 ? Math.abs((liq - cur) / cur) * 100 : 100;
+                const tpP = tp > 0 ? (Math.abs(cur - ent) / Math.abs(tp - ent)) * 100 : 0;
+                const cPnL = pnl >= 0 ? '#02d386' : '#ff3b5c';
+                if(dLiq < 12) mRisk = 2; else if(dLiq < 25 && mRisk < 2) mRisk = 1;
 
-                document.getElementById(`m-${pos.symbol}`).innerHTML = `
-                    <div><p class="metric-label">ROE</p><p class="${pnlClass} text-2xl font-black">${formatPT((netPnL/margin)*100)}%</p></div>
-                    <div class="text-right"><p class="metric-label">PnL</p><p class="${pnlClass} text-xl font-bold">${formatPT(netPnL, true)}</p></div>
-                    <div class="pt-2 border-t border-gray-800/50"><p class="metric-label">Valor Posição</p><p class="text-sm font-bold text-gray-200">${formatPT(mValue, true)}</p></div>
-                    <div class="text-right pt-2 border-t border-gray-800/50"><p class="metric-label">Entrada / Mercado</p><p class="text-xs font-bold text-gray-300">${entry.toFixed(4)}</p><p class="text-[10px] text-gray-500 font-mono">${current.toFixed(4)}</p></div>
-                    <div class="col-span-2 mt-2">
-                        <div class="flex justify-between text-[9px] font-bold text-gray-500 uppercase"><span>Proximidade Liq.</span><span>${formatPT(dLiq)}%</span></div>
-                        <div class="progress-bg"><div class="progress-fill ${dLiq < 12 ? 'bg-red-500' : 'bg-red-900/40'}" style="width: ${Math.max(0, 100 - dLiq)}%"></div></div>
+                card.innerHTML = `
+                    <div class="flex justify-between items-center mb-5">
+                        <h2 class="font-black text-white text-lg uppercase tracking-tighter">${pos.symbol} <span class="text-[10px] text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded ml-1">${lev}x</span></h2>
+                        <button onclick="handleUniversalToggle('${pos.symbol}')" class="text-gray-500 hover:text-white"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke-width="2.5" stroke-linecap="round"></path></svg></button>
                     </div>
-                    <div class="col-span-2">
-                        <div class="flex justify-between text-[9px] font-bold text-yellow-600 uppercase"><span>Alvo Take Profit</span><span>${tpP.toFixed(0)}%</span></div>
-                        <div class="progress-bg"><div class="progress-fill bg-yellow-500/60" style="width: ${Math.min(tpP, 100)}%"></div></div>
-                    </div>`;
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><p class="metric-label">ROE</p><p class="text-2xl font-black" style="color:${cPnL}">${fPT((pnl/marg)*100)}%</p></div>
+                        <div class="text-right"><p class="metric-label">PnL</p><p class="text-xl font-bold" style="color:${cPnL}">${fPT(pnl, true)}</p></div>
+                        <div class="pt-2 border-t border-white/5"><p class="metric-label">Valor Posição</p><p class="text-sm font-bold text-gray-200">${fPT(val, true)}</p></div>
+                        <div class="text-right pt-2 border-t border-white/5"><p class="metric-label">Entrada / Mercado</p><p class="text-[11px] font-bold text-gray-300">${fPT(ent, false, 4)}</p><p class="text-[10px] text-gray-500 font-mono">${fPT(cur, false, 4)}</p></div>
+                        <div class="col-span-2 mt-2">
+                            <div class="flex justify-between text-[9px] font-bold text-gray-500 uppercase"><span>Liq Alvo ($${fPT(liq, false, 4)})</span><span>${fPT(dLiq)}%</span></div>
+                            <div class="progress-bg"><div class="progress-fill ${dLiq < 12 ? 'bg-red-500' : 'bg-red-900/40'}" style="width: ${Math.max(0, 100 - dLiq)}%"></div></div>
+                        </div>
+                        <div class="col-span-2">
+                            <div class="flex justify-between text-[9px] font-bold text-yellow-600 uppercase"><span>Take Profit ($${fPT(tp, false, 4)})</span><span>${tpP.toFixed(0)}%</span></div>
+                            <div class="progress-bg"><div class="progress-fill bg-yellow-500/60" style="width: ${Math.min(tpP, 100)}%"></div></div>
+                        </div>
+                    </div>
+                    <div id="tv-${pos.symbol}" class="tv-wrap hidden"></div>`;
             });
 
             const led = document.getElementById('status-led');
-            led.className = maxRisk === 2 ? "w-1.5 h-1.5 bg-red-500 rounded-full animate-ping" : (maxRisk === 1 ? "w-1.5 h-1.5 bg-yellow-500 rounded-full animate-pulse" : "w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse");
+            led.className = mRisk === 2 ? "w-1.5 h-1.5 bg-red-500 rounded-full animate-ping" : (mRisk === 1 ? "w-1.5 h-1.5 bg-yellow-500 rounded-full animate-pulse" : "w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse");
 
-            document.getElementById('total-pnl').innerText = formatPT(totalPnL, true);
-            document.getElementById('total-pnl').className = `text-xl metric-value ${totalPnL >= 0 ? 'text-up' : 'text-down'}`;
-            document.getElementById('total-pnl-perc').innerText = `${formatPT(totalMargin > 0 ? (totalPnL/totalMargin*100) : 0)}%`;
-            document.getElementById('total-pnl-perc').className = `text-xl metric-value ${totalPnL >= 0 ? 'text-up' : 'text-down'}`;
-            document.getElementById('total-exposure').innerText = formatPT(totalExp, true);
-            document.getElementById('avg-leverage').innerText = formatPT(totalMargin > 0 ? (totalExp / totalMargin) : 0) + 'x';
+            const mainPnLCol = tPnL >= 0 ? '#02d386' : '#ff3b5c';
+            document.getElementById('total-pnl').innerText = fPT(tPnL, true);
+            document.getElementById('total-pnl').style.color = mainPnLCol;
+            document.getElementById('total-pnl-perc').innerText = `${fPT(tMarg > 0 ? (tPnL/tMarg*100) : 0)}%`;
+            document.getElementById('total-pnl-perc').style.color = mainPnLCol;
+            document.getElementById('total-exposure').innerText = fPT(tExp, true);
+            document.getElementById('avg-leverage').innerText = fPT(tMarg > 0 ? (tExp / tMarg) : 0) + 'x';
         }
 
         async function fetchMacroOnly() {
             try {
-                const response = await fetch(AI_FUNC_PATH, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ positions: [], userMessage: "Apenas tendência macro BTC" }) });
-                const data = await response.json();
+                const r = await fetch(AI_FUNC_PATH, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ positions: [], userMessage: "BTC Macro Trend Status" }) });
+                const d = await r.json();
                 const macro = document.getElementById('macro-trend');
-                const isBull = data.insight.toUpperCase().includes("BULLISH") || data.insight.toUpperCase().includes("ALTA");
-                macro.innerText = isBull ? "Macro: BULLISH" : "Macro: BEARISH";
-                macro.className = `px-2 py-1 rounded border text-[9px] font-bold uppercase ${isBull ? 'bg-green-500/10 border-green-500/20 text-green-500' : 'bg-red-500/10 border-red-500/20 text-red-500'}`;
+                const isB = d.insight.toUpperCase().includes("BULLISH") || d.insight.toUpperCase().includes("ALTA");
+                macro.innerText = isB ? "Macro: BULLISH" : "Macro: BEARISH";
+                macro.className = `px-2 py-1 rounded border text-[9px] font-bold uppercase ${isB ? 'bg-green-500/10 border-green-500/20 text-green-500' : 'bg-red-500/10 border-red-500/20 text-red-500'}`;
             } catch (e) {}
         }
 
@@ -190,27 +189,18 @@
                 const uMsg = document.createElement('div'); uMsg.className = 'msg user-msg'; uMsg.innerText = userQuery;
                 aiContent.appendChild(uMsg); aiContent.scrollTop = aiContent.scrollHeight;
             }
-
             try {
-                const response = await fetch(AI_FUNC_PATH, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ positions: currentPositions, userMessage: userQuery })
-                });
-                const data = await response.json();
-                if(data.fg) document.getElementById('fg-index').innerText = `F&G: ${data.fg}`;
-
+                const r = await fetch(AI_FUNC_PATH, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ positions: currentPositions, userMessage: userQuery }) });
+                const d = await r.json();
+                if(d.fg) document.getElementById('fg-index').innerText = `F&G: ${d.fg}`;
                 const nMsg = document.createElement('div'); nMsg.className = 'msg bot-msg'; aiContent.appendChild(nMsg);
-                const cleaned = data.insight.replace(/<\/?[^>]+(>|$)/g, (match) => ["<strong>", "</strong>", "<br>"].includes(match) ? match : "").replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
-                
+                const cl = d.insight.replace(/<\/?[^>]+(>|$)/g, (m) => ["<strong>", "</strong>", "<br>"].includes(m) ? m : "").replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
                 let i = 0;
                 function type() {
-                    if (i < cleaned.length) {
-                        if (cleaned.substring(i, i+4) === '<br>') { nMsg.innerHTML += '<br>'; i += 4; }
-                        else if (cleaned.substring(i, i+8) === '<strong>') {
-                            let end = cleaned.indexOf('</strong>', i);
-                            nMsg.innerHTML += cleaned.substring(i, end + 9); i = end + 9;
-                        } else { nMsg.innerHTML += cleaned.charAt(i); i++; }
+                    if (i < cl.length) {
+                        if (cl.substring(i, i+4) === '<br>') { nMsg.innerHTML += '<br>'; i += 4; }
+                        else if (cl.substring(i, i+8) === '<strong>') { let end = cl.indexOf('</strong>', i); nMsg.innerHTML += cl.substring(i, end + 9); i = end + 9; }
+                        else { nMsg.innerHTML += cl.charAt(i); i++; }
                         aiContent.scrollTop = aiContent.scrollHeight;
                         setTimeout(type, 5);
                     }
@@ -220,13 +210,13 @@
         }
 
         function handleUniversalToggle(s) {
-            const isDesktop = window.innerWidth >= 1280;
-            if (isDesktop) {
+            const isD = window.innerWidth >= 1280;
+            if (isD) {
                 const wraps = Array.from(document.querySelectorAll('.tv-wrap'));
-                const anyOpen = wraps.some(el => !el.classList.contains('hidden'));
+                const anyO = wraps.some(el => !el.classList.contains('hidden'));
                 currentPositions.forEach(pos => {
                     const el = document.getElementById(`tv-${pos.symbol}`);
-                    if (anyOpen) el.classList.add('hidden');
+                    if (anyO) el.classList.add('hidden');
                     else { el.classList.remove('hidden'); loadChart(pos.symbol); }
                 });
             } else {
