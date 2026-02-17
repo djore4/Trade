@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Trading Lab - v12.0</title>
+    <title>AI Trading Lab - v12.1</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -12,16 +12,17 @@
             background-color: #080a0c; color: #f0f2f5; font-family: 'Outfit', sans-serif; 
             -webkit-font-smoothing: antialiased; transition: background 1.5s ease;
             background-image: radial-gradient(circle at top right, rgba(var(--risk-rgb), 0.15), transparent 800px);
-            min-height: 100vh;
+            min-height: 100vh; overflow-x: hidden;
         }
         .card { background: rgba(24, 26, 32, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; }
         .metric-label { color: #848e9c; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; }
         .metric-value { font-family: 'Roboto Mono', monospace; font-weight: 700; }
-        .up { color: #02d386 !important; } .down { color: #ff3b5c !important; }
-        .stat-box { background: rgba(30, 33, 38, 0.5); border: 1px solid rgba(255, 255, 255, 0.03); padding: 12px; border-radius: 8px; }
         
-        .progress-bg { background-color: #2b3139; height: 6px; border-radius: 3px; width: 100%; margin-top: 4px; overflow: hidden; }
-        .progress-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
+        /* Cores de PnL Forçadas */
+        .text-up { color: #02d386 !important; }
+        .text-down { color: #ff3b5c !important; }
+        
+        .stat-box { background: rgba(30, 33, 38, 0.5); border: 1px solid rgba(255, 255, 255, 0.03); padding: 12px; border-radius: 8px; }
         
         .ai-glow { 
             color: #f3ba2f; 
@@ -29,70 +30,85 @@
             font-weight: 800;
         }
 
-        /* Balões de Chat */
-        .msg { margin-bottom: 16px; padding: 12px; border-radius: 8px; max-width: 90%; line-height: 1.5; }
-        .user-msg { background: rgba(255, 255, 255, 0.05); border-right: 3px solid #f3ba2f; align-self: flex-end; margin-left: auto; color: #cbd5e1; }
-        .bot-msg { background: rgba(243, 186, 47, 0.03); border-left: 3px solid #f3ba2f; color: #fff; }
+        /* Sistema de Chat Retrátil (Drawer) */
+        #ai-section { 
+            position: fixed; right: -550px; top: 0; width: 525px; height: 100vh; 
+            transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1); z-index: 50;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+        }
+        #ai-section.open { right: 0; }
+        .msg { margin-bottom: 16px; padding: 12px; border-radius: 8px; max-width: 90%; }
+        .user-msg { background: rgba(255, 255, 255, 0.05); border-right: 3px solid #f3ba2f; align-self: flex-end; margin-left: auto; }
+        .bot-msg { background: rgba(243, 186, 47, 0.03); border-left: 3px solid #f3ba2f; }
 
         .chart-wrapper { display: none; height: 500px; width: 100%; border-top: 1px solid rgba(255, 255, 255, 0.1); margin-top: 15px; }
         .chart-wrapper.active { display: block; }
 
-        .layout-container { display: flex; flex-direction: column; gap: 24px; max-width: 1600px; margin: 0 auto; padding: 20px; }
-        @media (min-width: 1280px) {
-            .layout-container { flex-direction: row; align-items: flex-start; }
-            #main-content { flex: 1; }
-            #ai-section { width: 525px; position: sticky; top: 20px; height: calc(100vh - 40px); display: flex; flex-direction: column; }
-        }
-        #ai-content::-webkit-scrollbar { width: 4px; }
-        #ai-content::-webkit-scrollbar-thumb { background: #2b3139; border-radius: 10px; }
+        .layout-container { max-width: 1600px; margin: 0 auto; padding: 20px; transition: margin-right 0.4s; }
+        .layout-container.shifted { margin-right: 540px; }
+
+        .progress-bg { background-color: #2b3139; height: 6px; border-radius: 3px; width: 100%; margin-top: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
     </style>
 </head>
 <body>
-    <div class="layout-container">
+    <div id="main-wrapper" class="layout-container">
         <main id="main-content">
             <header class="mb-10">
-                <div class="mb-8 border-b border-gray-800/40 pb-6">
-                    <h1 class="text-5xl font-extrabold text-white tracking-tight leading-none mb-3">
-                        <span class="ai-glow">AI</span> Trading Lab
-                    </h1>
-                    <div class="flex items-center gap-3">
-                        <span class="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></span>
-                        <p id="update-timestamp" class="text-[9px] text-gray-500 font-mono tracking-[0.2em] uppercase font-bold">Terminal Operational</p>
+                <div class="flex justify-between items-start mb-8 border-b border-gray-800/40 pb-6">
+                    <div>
+                        <h1 class="text-5xl font-extrabold text-white tracking-tight leading-none mb-3">
+                            <span class="ai-glow">AI</span> Trading Lab
+                        </h1>
+                        <div class="flex items-center gap-3">
+                            <span class="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></span>
+                            <p id="update-timestamp" class="text-[9px] text-gray-500 font-mono tracking-[0.2em] uppercase font-bold">Terminal Operational</p>
+                        </div>
                     </div>
+                    <button onclick="toggleAI()" class="bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/30 text-yellow-500 px-6 py-3 rounded-xl font-bold transition-all flex items-center gap-3">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                        ANALISAR COM BALTAZAR
+                    </button>
                 </div>
 
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     <div class="stat-box">
-                        <p class="metric-label text-gray-400">PnL Global</p>
+                        <p class="metric-label">PnL Global</p>
                         <div class="flex items-baseline gap-2">
                             <p id="total-pnl" class="text-xl metric-value leading-none">$0</p>
                             <p id="total-pnl-perc" class="text-[10px] metric-value">0,00%</p>
                         </div>
                     </div>
-                    <div class="stat-box"><p class="metric-label text-gray-400">Exposição</p><p id="total-exposure" class="text-xl metric-value text-white">$0</p></div>
-                    <div class="stat-box"><p class="metric-label text-gray-400">Margem</p><p id="total-margin" class="text-xl metric-value text-gray-300">$0</p></div>
+                    <div class="stat-box"><p class="metric-label">Exposição</p><p id="total-exposure" class="text-xl metric-value text-white">$0</p></div>
+                    <div class="stat-box"><p class="metric-label">Margem</p><p id="total-margin" class="text-xl metric-value text-gray-300">$0</p></div>
                     <div class="stat-box border-yellow-500/10"><p class="metric-label text-yellow-500 font-bold">Alavancagem</p><p id="avg-leverage" class="text-xl metric-value text-yellow-500">0,00x</p></div>
                 </div>
             </header>
             <div id="dashboard-grid" class="grid grid-cols-1 md:grid-cols-2 gap-5"></div>
         </main>
-
-        <aside id="ai-section" class="card p-6">
-            <div class="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
-                <div class="flex items-center gap-3">
-                    <span id="engine-led" class="w-2.5 h-2.5 bg-green-500 rounded-full"></span>
-                    <span class="text-white text-[11px] font-bold uppercase tracking-widest">Engine 2.0 Flash</span>
-                </div>
-                <span id="fg-index" class="text-xs font-black font-mono px-3 py-1 rounded-full shadow-lg border border-white/10 transition-colors duration-500">F&G: SYNC...</span>
-            </div>
-            <div id="ai-content" class="flex-grow overflow-y-auto mb-4 pr-2 text-sm flex flex-col scrollbar-hide">
-                <div class="bot-msg msg" id="bot-status">A aguardar telemetria Bybit...</div>
-            </div>
-            <div class="pt-4 border-t border-gray-800">
-                <input type="text" id="chat-input" placeholder="Enviar comando ao Baltazar..." class="w-full bg-transparent text-white outline-none text-sm placeholder-gray-700 font-medium" onkeypress="handleChat(event)">
-            </div>
-        </aside>
     </div>
+
+    <aside id="ai-section" class="card p-6 flex flex-col">
+        <div class="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
+            <div class="flex items-center gap-3">
+                <span id="engine-led" class="w-2.5 h-2.5 bg-green-500 rounded-full"></span>
+                <span class="text-white text-[11px] font-bold uppercase tracking-widest">Baltazar Intelligence</span>
+            </div>
+            <button onclick="toggleAI()" class="text-gray-500 hover:text-white">&times; Fechar</button>
+        </div>
+        
+        <div id="fg-container" class="mb-4">
+            <span id="fg-index" class="text-xs font-black font-mono px-3 py-1 rounded-full border border-white/10 block text-center">F&G: SYNCING...</span>
+        </div>
+
+        <div id="ai-content" class="flex-grow overflow-y-auto mb-4 pr-2 text-sm flex flex-col scrollbar-hide">
+            <div class="bot-msg msg">O que pretendes analisar hoje? Clica em "Analisar com Baltazar" ou escreve um comando.</div>
+        </div>
+        
+        <div class="pt-4 border-t border-gray-800">
+            <input type="text" id="chat-input" placeholder="Comando..." class="w-full bg-transparent text-white outline-none text-sm" onkeypress="handleChat(event)">
+        </div>
+    </aside>
 
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <script>
@@ -102,16 +118,21 @@
         const AI_FUNC_PATH = `https://${PROJECT_ID}.supabase.co/functions/v1/trade-advisor`;
 
         let currentPositions = [];
-        let isInitialLoad = true;
 
         window.onload = () => { fetchPositions(); setInterval(fetchPositions, 10000); };
+
+        function toggleAI() {
+            document.getElementById('ai-section').classList.toggle('open');
+            document.getElementById('main-wrapper').classList.toggle('shifted');
+            if (document.getElementById('ai-section').classList.contains('open') && currentPositions.length > 0) {
+                fetchAIIntelligence();
+            }
+        }
 
         function formatNumber(num) {
             const sign = num < 0 ? "-" : "";
             return sign + "$" + Math.floor(Math.abs(num)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
         }
-
-        function formatDecimal(num, places = 2) { return num.toFixed(places).replace('.', ','); }
 
         async function fetchPositions() {
             try {
@@ -120,24 +141,8 @@
                 if (result.result?.list) {
                     currentPositions = result.result.list.filter(p => parseFloat(p.size) !== 0);
                     updateDashboard(currentPositions);
-                    updateRiskSemaphore(currentPositions);
-                    document.getElementById('update-timestamp').innerText = `Terminal: ${new Date().toLocaleTimeString()}`;
-                    if(isInitialLoad && currentPositions.length > 0) { fetchAIIntelligence(); isInitialLoad = false; }
                 }
             } catch (err) { console.error(err); }
-        }
-
-        function updateRiskSemaphore(positions) {
-            let maxRisk = 0;
-            positions.forEach(pos => {
-                const liq = parseFloat(pos.liqPrice), mark = parseFloat(pos.markPrice);
-                const dist = liq > 0 ? Math.abs((liq - mark) / mark) * 100 : 100;
-                if (dist < 12) maxRisk = 2; else if (dist < 25 && maxRisk < 2) maxRisk = 1;
-            });
-            const led = document.getElementById('engine-led');
-            if (maxRisk === 2) { document.body.style.setProperty('--risk-rgb', '255, 59, 92'); led.className = "w-2.5 h-2.5 bg-red-500 rounded-full animate-ping"; }
-            else if (maxRisk === 1) { document.body.style.setProperty('--risk-rgb', '243, 186, 47'); led.className = "w-2.5 h-2.5 bg-yellow-500 rounded-full animate-ping"; }
-            else { document.body.style.setProperty('--risk-rgb', '2, 211, 134'); led.className = "w-2.5 h-2.5 bg-green-500 rounded-full shadow-[0_0_10px_rgba(34,197,94,0.5)]"; }
         }
 
         function updateDashboard(positions) {
@@ -145,11 +150,12 @@
             let totalPnL = 0, totalExposure = 0, totalMargin = 0;
 
             positions.forEach(pos => {
-                const entry = parseFloat(pos.avgPrice), current = parseFloat(pos.markPrice);
-                const netPnL = parseFloat(pos.unrealisedPnl), leverage = parseFloat(pos.leverage);
+                const netPnL = parseFloat(pos.unrealisedPnl);
                 const mValue = parseFloat(pos.positionValue);
-                const tp = parseFloat(pos.takeProfit), liq = parseFloat(pos.liqPrice);
-                const margin = mValue / leverage; 
+                const leverage = parseFloat(pos.leverage);
+                const entry = parseFloat(pos.avgPrice), current = parseFloat(pos.markPrice);
+                const liq = parseFloat(pos.liqPrice);
+                const margin = mValue / leverage;
                 totalPnL += netPnL; totalExposure += mValue; totalMargin += margin;
 
                 let card = document.getElementById(`card-${pos.symbol}`);
@@ -160,50 +166,42 @@
                     card.innerHTML = `
                         <div class="p-5">
                             <div class="flex justify-between items-center mb-5">
-                                <h2 class="text-xl font-black text-white uppercase tracking-tighter">${pos.symbol} <span class="text-xs text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded ml-2 font-bold">${formatDecimal(leverage)}x</span></h2>
-                                <button onclick="handleChartToggle('${pos.symbol}')" class="text-gray-500 p-2">
-                                    <svg id="arrow-${pos.symbol}" class="w-6 h-6 rotate-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                </button>
+                                <h2 class="text-xl font-black text-white uppercase">${pos.symbol} <span class="text-xs text-yellow-500 font-bold">${leverage}x</span></h2>
+                                <button onclick="handleChartToggle('${pos.symbol}')" class="text-gray-500"><svg id="arrow-${pos.symbol}" class="w-6 h-6 rotate-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"></path></svg></button>
                             </div>
-                            <div id="metrics-${pos.symbol}" class="grid grid-cols-2 gap-y-4 text-gray-400"></div>
+                            <div id="metrics-${pos.symbol}" class="grid grid-cols-2 gap-y-4"></div>
                         </div>
                         <div id="wrap-${pos.symbol}" class="chart-wrapper"><div id="tv-${pos.symbol}" style="height: 100%; width: 100%;"></div></div>`;
                     grid.appendChild(card);
                 }
 
                 const dLiq = liq > 0 ? Math.abs((liq - current) / current) * 100 : 100;
-                const tpP = tp > 0 ? (Math.abs(current - entry) / Math.abs(tp - entry)) * 100 : 0;
-                const pnlStatus = netPnL >= 0 ? 'up' : 'down';
+                const pnlClass = netPnL >= 0 ? 'text-up' : 'text-down';
 
                 document.getElementById(`metrics-${pos.symbol}`).innerHTML = `
-                    <div><p class="metric-label">ROE</p><p class="${pnlStatus} text-2xl font-black">${formatDecimal((netPnL/margin)*100)}%</p></div>
-                    <div class="text-right"><p class="metric-label">PnL</p><p class="${pnlStatus} text-xl font-bold">${formatNumber(netPnL)}</p></div>
-                    <div class="pt-2 border-t border-gray-800/50"><p class="metric-label">Tamanho USD</p><p class="text-sm font-bold text-gray-200">${formatNumber(mValue)}</p></div>
-                    <div class="text-right pt-2 border-t border-gray-800/50"><p class="metric-label">Entrada / Mercado</p><p class="text-sm font-bold text-gray-200">${formatDecimal(entry, 4)}</p><p class="text-[10px] text-gray-500 font-mono">${formatDecimal(current, 4)}</p></div>
+                    <div><p class="metric-label">ROE</p><p class="${pnlClass} text-2xl font-black">${(netPnL/margin*100).toFixed(2).replace('.', ',')}%</p></div>
+                    <div class="text-right"><p class="metric-label">PnL</p><p class="${pnlClass} text-xl font-bold">${formatNumber(netPnL)}</p></div>
                     <div class="col-span-2 mt-2">
-                        <div class="flex justify-between text-[10px] font-bold mb-1 uppercase tracking-widest"><span class="${dLiq < 12 ? 'text-red-500 animate-pulse' : 'text-gray-500'}">Liquidação</span><span>${formatDecimal(dLiq)}%</span></div>
+                        <div class="flex justify-between text-[10px] font-bold mb-1 uppercase tracking-widest text-gray-500"><span>Liquidação</span><span>${dLiq.toFixed(2).replace('.', ',')}%</span></div>
                         <div class="progress-bg"><div class="progress-fill ${dLiq < 12 ? 'bg-red-500' : 'bg-red-900/40'}" style="width: ${Math.max(0, 100 - dLiq)}%"></div></div>
                     </div>
                 `;
             });
 
             document.getElementById('total-pnl').innerText = formatNumber(totalPnL);
-            document.getElementById('total-pnl-perc').innerText = `${formatDecimal(totalMargin > 0 ? (totalPnL/totalMargin*100) : 0)}%`;
+            document.getElementById('total-pnl').className = `text-xl metric-value ${totalPnL >= 0 ? 'text-up' : 'text-down'}`;
+            document.getElementById('total-pnl-perc').innerText = `${(totalMargin > 0 ? (totalPnL/totalMargin*100) : 0).toFixed(2).replace('.', ',')}%`;
+            document.getElementById('total-pnl-perc').className = `text-[10px] metric-value ${totalPnL >= 0 ? 'text-up' : 'text-down'}`;
             document.getElementById('total-exposure').innerText = formatNumber(totalExposure);
             document.getElementById('total-margin').innerText = formatNumber(totalMargin);
-            document.getElementById('avg-leverage').innerText = formatDecimal(totalMargin > 0 ? (totalExposure / totalMargin) : 0) + 'x';
+            document.getElementById('avg-leverage').innerText = (totalMargin > 0 ? (totalExposure / totalMargin) : 0).toFixed(2).replace('.', ',') + 'x';
         }
 
         async function fetchAIIntelligence(userQuery = null) {
             const aiContent = document.getElementById('ai-content');
-            
-            // 1. Mostrar mensagem do utilizador se existir
             if (userQuery) {
-                const userBubble = document.createElement('div');
-                userBubble.className = 'msg user-msg';
-                userBubble.innerText = userQuery;
-                aiContent.appendChild(userBubble);
-                aiContent.scrollTop = aiContent.scrollHeight;
+                const uMsg = document.createElement('div'); uMsg.className = 'msg user-msg'; uMsg.innerText = userQuery;
+                aiContent.appendChild(uMsg); aiContent.scrollTop = aiContent.scrollHeight;
             }
 
             try {
@@ -214,31 +212,25 @@
                 });
                 const data = await response.json();
                 
-                // 2. Atualizar o F&G com cor dinâmica
+                // Update F&G
                 const fgEl = document.getElementById('fg-index');
                 if (data.fg) {
                     fgEl.innerText = `F&G Index: ${data.fg}`;
-                    const val = parseInt(data.fg);
-                    if (val >= 70) { fgEl.style.color = '#02d386'; fgEl.style.background = 'rgba(2, 211, 134, 0.15)'; }
-                    else if (val <= 30) { fgEl.style.color = '#ff3b5c'; fgEl.style.background = 'rgba(255, 59, 92, 0.15)'; }
-                    else { fgEl.style.color = '#f3ba2f'; fgEl.style.background = 'rgba(243, 186, 47, 0.15)'; }
+                    const v = parseInt(data.fg);
+                    fgEl.style.color = v >= 70 ? '#02d386' : (v <= 30 ? '#ff3b5c' : '#f3ba2f');
+                    fgEl.style.background = v >= 70 ? 'rgba(2,211,134,0.1)' : (v <= 30 ? 'rgba(255,59,92,0.1)' : 'rgba(243,186,47,0.1)');
                 }
 
-                // 3. Efeito de escrita para o Baltazar
-                document.getElementById('bot-status')?.remove();
-                const newMsg = document.createElement('div');
-                newMsg.className = 'msg bot-msg';
-                aiContent.appendChild(newMsg);
-                
+                const nMsg = document.createElement('div'); nMsg.className = 'msg bot-msg'; aiContent.appendChild(nMsg);
                 const formatted = data.insight.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
                 let i = 0;
                 function type() {
                     if (i < formatted.length) {
-                        if (formatted.substring(i, i+4) === '<br>') { newMsg.innerHTML += '<br>'; i += 4; }
+                        if (formatted.substring(i, i+4) === '<br>') { nMsg.innerHTML += '<br>'; i += 4; }
                         else if (formatted.substring(i, i+8) === '<strong>') {
                             let end = formatted.indexOf('</strong>', i);
-                            newMsg.innerHTML += formatted.substring(i, end + 9); i = end + 9;
-                        } else { newMsg.innerHTML += formatted.charAt(i); i++; }
+                            nMsg.innerHTML += formatted.substring(i, end + 9); i = end + 9;
+                        } else { nMsg.innerHTML += formatted.charAt(i); i++; }
                         aiContent.scrollTop = aiContent.scrollHeight;
                         setTimeout(type, 5);
                     }
