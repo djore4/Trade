@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Trading Lab v9.1</title>
+    <title>AI Trading Lab v9.2</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -25,7 +25,8 @@
         
         /* Módulo de Liquidação */
         .liq-map-container { background: rgba(255, 255, 255, 0.02); border-radius: 8px; padding: 12px; }
-        .liq-bar { height: 4px; border-radius: 2px; transition: width 1s ease; }
+        .liq-bar { height: 4px; border-radius: 2px; transition: width 1s ease-in-out; }
+        .liq-label { font-size: 9px; color: #848e9c; margin-bottom: 2px; font-weight: 700; }
 
         @media (max-width: 768px) {
             .header-flex { flex-direction: column; align-items: flex-start !important; gap: 20px; }
@@ -47,6 +48,8 @@
             #main-content { flex: 1; }
             #ai-section { width: 420px; height: calc(100vh - 40px); position: sticky; top: 20px; order: 1; }
         }
+        .progress-bg { background-color: #2b3139; height: 5px; border-radius: 3px; width: 100%; margin-top: 4px; }
+        .progress-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
     </style>
 </head>
 <body>
@@ -84,7 +87,7 @@
             <div id="liquidation-map-mini" class="mb-6 liq-map-container border border-yellow-500/10">
                 <p class="text-[10px] font-bold text-yellow-500 mb-3 uppercase tracking-widest">Magnet Liquidity Zones</p>
                 <div id="liq-zones-list" class="space-y-3">
-                    <div class="text-[10px] text-gray-600 font-mono animate-pulse">A aguardar telemetria CoinGlass...</div>
+                    <div class="text-[10px] text-gray-600 font-mono animate-pulse text-center">A aguardar telemetria...</div>
                 </div>
             </div>
 
@@ -132,6 +135,7 @@
 
         async function fetchAIIntelligence(userQuery = null) {
             const aiContent = document.getElementById('ai-content');
+            const liqList = document.getElementById('liq-zones-list');
             if (userQuery) aiContent.innerHTML += `<div class="insight-card border-blue-500 bg-blue-500/5 text-right text-xs opacity-80">${userQuery}</div>`;
             
             try {
@@ -141,6 +145,23 @@
                     body: JSON.stringify({ positions: currentPositions, userMessage: userQuery })
                 });
                 const data = await response.json();
+
+                // Desenhar Mapas de Liquidação
+                if (data.liqZones) {
+                    liqList.innerHTML = '';
+                    data.liqZones.forEach(zone => {
+                        const color = zone.side === 'short' ? '#ff3b5c' : '#02d386';
+                        liqList.innerHTML += `
+                            <div class="heatmap-zone flex items-center justify-between gap-3 mb-2">
+                                <div class="flex flex-col flex-1">
+                                    <span class="liq-label">${zone.side.toUpperCase()} LIQ @ $${zone.price}</span>
+                                    <div class="progress-bg h-1"><div class="liq-bar" style="width: ${zone.intensity}%; background: ${color}"></div></div>
+                                </div>
+                                <span class="text-[10px] font-mono text-white">${zone.vol}</span>
+                            </div>`;
+                    });
+                }
+
                 const status = document.getElementById('bot-status');
                 if(status) status.remove();
 
