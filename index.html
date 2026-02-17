@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Trading Lab - v13.8</title>
+    <title>AI Trading Lab - v14.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -17,12 +17,14 @@
         .metric-label { color: #848e9c; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; }
         .metric-value { font-family: 'Roboto Mono', monospace; font-weight: 700; }
         
+        /* Cores de PnL Blindadas */
         .text-up { color: #02d386 !important; }
         .text-down { color: #ff3b5c !important; }
         
         .app-grid { display: grid; grid-template-columns: 1fr; gap: 20px; padding: 15px; max-width: 1800px; margin: 0 auto; transition: all 0.4s ease; }
         @media (min-width: 1280px) { .app-grid.chat-open { grid-template-columns: 1fr 500px; } }
 
+        /* Consola Baltazar */
         #ai-section { display: none; flex-direction: column; }
         #ai-section.open { display: flex; }
         @media (min-width: 1280px) { #ai-section.open { height: calc(100vh - 40px); position: sticky; top: 20px; } }
@@ -52,7 +54,7 @@
                             <span id="macro-trend" class="px-2 py-1 bg-white/5 rounded border border-white/10 text-[9px] font-bold text-gray-400 uppercase tracking-widest">Macro: Syncing...</span>
                         </div>
                     </div>
-                    <button onclick="handleBaltazarCall()" class="w-full md:w-auto bg-[#f3ba2f] hover:bg-yellow-400 text-black px-8 py-3 rounded-xl font-black transition-all flex justify-center items-center gap-3 uppercase text-xs shadow-lg">
+                    <button id="btn-baltazar" onclick="handleBaltazarCall()" class="w-full md:w-auto bg-[#f3ba2f] hover:bg-yellow-400 text-black px-8 py-3 rounded-xl font-black transition-all flex justify-center items-center gap-3 uppercase text-xs shadow-lg">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                         Baltazar AI
                     </button>
@@ -70,14 +72,14 @@
 
         <aside id="ai-section" class="card p-6 flex-col">
             <div class="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
-                <span class="text-white text-xs font-bold tracking-widest uppercase">Console Baltazar</span>
+                <span class="text-white text-xs font-bold tracking-widest uppercase">Consola de Análise</span>
                 <span id="fg-index" class="text-[10px] font-black text-gray-500 font-mono bg-white/5 px-2 py-1 rounded">F&G: --</span>
             </div>
             <div id="ai-content" class="flex-grow overflow-y-auto pr-2 flex flex-col mb-4 scrollbar-hide">
-                <div class="bot-msg msg">Baltazar a processar telemetria...</div>
+                <div class="bot-msg msg">Baltazar pronto para análise profunda.</div>
             </div>
             <div class="pt-4 border-t border-gray-800">
-                <input type="text" id="chat-input" placeholder="Comando..." class="w-full bg-white/5 p-4 rounded-xl text-white outline-none text-sm border border-white/5 focus:border-yellow-500/30" onkeypress="handleChat(event)">
+                <input type="text" id="chat-input" placeholder="Enviar comando..." class="w-full bg-white/5 p-4 rounded-xl text-white outline-none text-sm border border-white/5 focus:border-yellow-500/30" onkeypress="handleChat(event)">
             </div>
         </aside>
     </div>
