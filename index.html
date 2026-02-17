@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Trading Lab - v11.4</title>
+    <title>AI Trading Lab - v12.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -20,6 +20,10 @@
         .up { color: #02d386 !important; } .down { color: #ff3b5c !important; }
         .stat-box { background: rgba(30, 33, 38, 0.5); border: 1px solid rgba(255, 255, 255, 0.03); padding: 12px; border-radius: 8px; }
         
+        /* Fibonacci Mini-Display */
+        .fib-line { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.03); display: flex; justify-content: space-between; }
+        .fib-gold { border-left: 2px solid #f3ba2f; background: rgba(243, 186, 47, 0.05); }
+
         .progress-bg { background-color: #2b3139; height: 6px; border-radius: 3px; width: 100%; margin-top: 4px; overflow: hidden; }
         .progress-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
         
@@ -40,9 +44,6 @@
         }
         .rotate-icon { transition: transform 0.3s ease; }
         .rotate-180 { transform: rotate(180deg); }
-
-        #ai-content::-webkit-scrollbar { width: 4px; }
-        #ai-content::-webkit-scrollbar-thumb { background: #2b3139; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -63,7 +64,7 @@
                     <div class="stat-box">
                         <p class="metric-label text-gray-400">PnL Global</p>
                         <div class="flex items-baseline gap-2">
-                            <p id="total-pnl" class="text-xl metric-value leading-none">$0</p>
+                            <p id="total-pnl" class="text-xl metric-value">$0</p>
                             <p id="total-pnl-perc" class="text-[10px] metric-value">0,00%</p>
                         </div>
                     </div>
@@ -79,12 +80,12 @@
             <div class="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
                 <div class="flex items-center gap-3">
                     <span id="engine-led" class="w-2.5 h-2.5 bg-green-500 rounded-full"></span>
-                    <span class="text-white text-[11px] font-bold uppercase tracking-widest">Engine 2.0 Flash</span>
+                    <span class="text-white text-[11px] font-bold uppercase tracking-widest">Baltazar 2.0 Engine</span>
                 </div>
-                <span id="fg-index" class="text-[10px] font-bold text-gray-500 font-mono bg-white/5 px-2 py-1 rounded">F&G: SYNC...</span>
+                <span id="fg-index" class="text-[10px] font-bold text-gray-500 font-mono bg-white/5 px-2 py-1 rounded">F&G: SYNCING...</span>
             </div>
             <div id="ai-content" class="flex-grow overflow-y-auto mb-4 pr-2 text-sm leading-relaxed scrollbar-hide">
-                <div class="insight-card text-gray-500 text-center py-10" id="bot-status">A aguardar telemetria Bybit...</div>
+                <div class="insight-card text-gray-500 text-center py-10">A aguardar telemetria...</div>
             </div>
             <div class="pt-4 border-t border-gray-800">
                 <input type="text" id="chat-input" placeholder="Comando..." class="w-full bg-transparent text-white outline-none text-sm placeholder-gray-700" onkeypress="handleChat(event)">
@@ -109,9 +110,7 @@
             return sign + "$" + Math.floor(Math.abs(num)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
         }
 
-        function formatDecimal(num, places = 2) {
-            return num.toFixed(places).replace('.', ',');
-        }
+        function formatDecimal(num, p = 2) { return num.toFixed(p).replace('.', ','); }
 
         async function fetchPositions() {
             try {
@@ -166,6 +165,7 @@
                                 </button>
                             </div>
                             <div id="metrics-${pos.symbol}" class="grid grid-cols-2 gap-y-4 text-gray-400"></div>
+                            <div id="fib-${pos.symbol}" class="mt-4 grid grid-cols-1 gap-1 border-t border-white/5 pt-3"></div>
                         </div>
                         <div id="wrap-${pos.symbol}" class="chart-wrapper"><div id="tv-${pos.symbol}" style="height: 100%; width: 100%;"></div></div>`;
                     grid.appendChild(card);
@@ -178,58 +178,18 @@
                 document.getElementById(`metrics-${pos.symbol}`).innerHTML = `
                     <div><p class="metric-label">ROE</p><p class="${pnlStatus} text-2xl font-black">${formatDecimal((netPnL/margin)*100)}%</p></div>
                     <div class="text-right"><p class="metric-label">PnL</p><p class="${pnlStatus} text-xl font-bold">${formatNumber(netPnL)}</p></div>
-                    
                     <div class="pt-2 border-t border-gray-800/50"><p class="metric-label">Tamanho USD</p><p class="text-sm font-bold text-gray-200">${formatNumber(mValue)}</p></div>
                     <div class="text-right pt-2 border-t border-gray-800/50"><p class="metric-label">Entrada / Mercado</p><p class="text-sm font-bold text-gray-200">${formatDecimal(entry, 4)}</p><p class="text-[10px] text-gray-500 font-mono">${formatDecimal(current, 4)}</p></div>
-
-                    <div class="col-span-2 mt-2">
-                        <div class="flex justify-between text-[10px] font-bold mb-1 uppercase tracking-widest"><span class="${dLiq < 12 ? 'text-red-500 animate-pulse' : 'text-gray-500'}">Liquidação</span><span>${formatDecimal(dLiq)}%</span></div>
-                        <div class="progress-bg"><div class="progress-fill ${dLiq < 12 ? 'bg-red-500' : 'bg-red-900/40'}" style="width: ${Math.max(0, 100 - dLiq)}%"></div></div>
-                    </div>
-                    <div class="col-span-2">
-                        <div class="flex justify-between text-[10px] font-bold mb-1 uppercase tracking-widest"><span class="text-yellow-500 font-bold text-yellow-500">Take Profit</span><span>$${formatDecimal(tp, 4)}</span></div>
-                        <div class="progress-bg"><div class="progress-fill bg-yellow-500" style="width: ${Math.min(tpP, 100)}%"></div></div>
-                    </div>`;
+                `;
             });
 
             document.getElementById('total-pnl').innerText = formatNumber(totalPnL);
             document.getElementById('total-pnl').className = `text-xl metric-value ${totalPnL >= 0 ? 'up' : 'down'}`;
             document.getElementById('total-pnl-perc').innerText = `${formatDecimal(totalMargin > 0 ? (totalPnL/totalMargin*100) : 0)}%`;
-            document.getElementById('total-pnl-perc').className = `text-[10px] metric-value mt-1 ${totalPnL >= 0 ? 'up' : 'down'}`;
-            
+            document.getElementById('total-pnl-perc').className = `text-[10px] metric-value ${totalPnL >= 0 ? 'up' : 'down'}`;
             document.getElementById('total-exposure').innerText = formatNumber(totalExposure);
             document.getElementById('total-margin').innerText = formatNumber(totalMargin);
             document.getElementById('avg-leverage').innerText = formatDecimal(totalMargin > 0 ? (totalExposure / totalMargin) : 0) + 'x';
-        }
-
-        function handleChartToggle(symbol) {
-            const isDesktop = window.innerWidth >= 1280;
-            if (isDesktop) {
-                const anyActive = Array.from(document.querySelectorAll('.chart-wrapper')).some(w => w.classList.contains('active'));
-                currentPositions.forEach(pos => {
-                    const w = document.getElementById(`wrap-${pos.symbol}`);
-                    const a = document.getElementById(`arrow-${pos.symbol}`);
-                    if (anyActive) { w.classList.remove('active'); a.classList.remove('rotate-180'); }
-                    else { w.classList.add('active'); a.classList.add('rotate-180'); loadTV(pos.symbol); }
-                });
-            } else {
-                const w = document.getElementById(`wrap-${symbol}`);
-                const a = document.getElementById(`arrow-${symbol}`);
-                const isActive = w.classList.toggle('active');
-                a.classList.toggle('rotate-180');
-                if (isActive) loadTV(symbol);
-            }
-        }
-
-        function loadTV(s) {
-            const wrap = document.getElementById(`wrap-${s}`);
-            if (!wrap.dataset.loaded) {
-                new TradingView.widget({ 
-                    "autosize": true, "symbol": `BYBIT:${s}.P`, "interval": "15", "theme": "dark", "style": "1",
-                    "container_id": `tv-${s}`, "hide_side_toolbar": true 
-                });
-                wrap.dataset.loaded = "true";
-            }
         }
 
         async function fetchAIIntelligence(userQuery = null) {
@@ -241,7 +201,22 @@
                     body: JSON.stringify({ positions: currentPositions, userMessage: userQuery })
                 });
                 const data = await response.json();
-                document.getElementById('bot-status')?.remove();
+                
+                // ATUALIZAR NÍVEIS VISUAIS SE DISPONÍVEIS
+                if (data.positionsTech) {
+                    data.positionsTech.forEach(tech => {
+                        const fibDiv = document.getElementById(`fib-${tech.symbol}`);
+                        if (fibDiv) {
+                            fibDiv.innerHTML = `
+                                <div class="fib-line"><span class="text-gray-500">RESISTÊNCIA (R1)</span><span class="text-red-400 font-bold">${tech.resistance}</span></div>
+                                <div class="fib-line fib-gold"><span class="text-yellow-500 font-bold">GOLDEN RATIO (0.618)</span><span class="text-yellow-500 font-bold">${tech.fib.level618}</span></div>
+                                <div class="fib-line"><span class="text-gray-500">SUPORTE (S1)</span><span class="text-green-400 font-bold">${tech.support}</span></div>
+                            `;
+                        }
+                    });
+                }
+
+                document.getElementById('fg-index').innerText = `F&G: ${data.fg || '--'}`;
                 const formatted = data.insight.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
                 const newCard = document.createElement('div');
                 newCard.className = 'border-l-2 border-yellow-500 pl-4 mb-6 text-white font-medium';
@@ -259,8 +234,18 @@
                     }
                 }
                 type();
-                if(data.fg) document.getElementById('fg-index').innerText = `F&G: ${data.fg}`;
             } catch (err) { console.error(err); }
+        }
+
+        function handleChartToggle(s) {
+            const w = document.getElementById(`wrap-${s}`);
+            const a = document.getElementById(`arrow-${s}`);
+            const isActive = w.classList.toggle('active');
+            a.classList.toggle('rotate-180');
+            if (isActive && !w.dataset.loaded) {
+                new TradingView.widget({ "autosize": true, "symbol": `BYBIT:${s}.P`, "interval": "60", "theme": "dark", "style": "1", "container_id": `tv-${s}`, "hide_side_toolbar": true });
+                w.dataset.loaded = "true";
+            }
         }
 
         function handleChat(e) { if (e.key === 'Enter') { fetchAIIntelligence(e.target.value); e.target.value = ''; } }
