@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Trading Lab - v14.4 Final</title>
+    <title>AI Trading Lab - v14.5 Final Fix</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -71,10 +71,10 @@
                 <span id="fg-index" class="text-[10px] font-black text-gray-500 font-mono bg-white/5 px-2 py-1 rounded">F&G: --</span>
             </div>
             <div id="ai-content" class="flex-grow overflow-y-auto pr-2 flex flex-col mb-4 scrollbar-hide">
-                <div class="bot-msg msg">Utiliza o botão superior para iniciar análise tática.</div>
+                <div class="bot-msg msg">Pronto para a análise tática.</div>
             </div>
             <div class="pt-4 border-t border-gray-800">
-                <input type="text" id="chat-input" placeholder="Enviar comando..." class="w-full bg-white/5 p-4 rounded-xl text-white outline-none text-sm border border-white/5 focus:border-yellow-500/30" onkeypress="handleChat(event)">
+                <input type="text" id="chat-input" placeholder="Comando..." class="w-full bg-white/5 p-4 rounded-xl text-white outline-none text-sm border border-white/5 focus:border-yellow-500/30" onkeypress="handleChat(event)">
             </div>
         </aside>
     </div>
@@ -96,11 +96,18 @@
             if (window.innerWidth < 1280) document.getElementById('ai-section').scrollIntoView({ behavior: 'smooth' });
         }
 
-        // FORMATAÇÃO PT-PT BLINDADA: Dinheiro (isM=true) s/ decimais. Ativos (isM=false) c/ 4 decimais.
+        // FORMATAÇÃO MANUAL BLINDADA (FORÇA PONTO NOS MILHARES E VÍRGULA NOS DECIMAIS)
         function fPT(n, isM = false, p = 2) {
             const dec = isM ? 0 : p;
-            let res = Math.abs(n).toLocaleString('pt-PT', { minimumFractionDigits: dec, maximumFractionDigits: dec });
-            return (n < 0 ? "-" : "") + (isM ? "$" : "") + res;
+            let parts = n.toFixed(dec).split(".");
+            // Substitui o separador de milhar por ponto
+            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            // Junta com a vírgula se houver decimais
+            let res = parts.join(",");
+            
+            // Remove o "-" do valor absoluto para formatar o sinal manualmente no início
+            let final = res.startsWith("-") ? res.substring(1) : res;
+            return (n < 0 ? "-" : "") + (isM ? "$" : "") + final;
         }
 
         async function fetchPositions() {
@@ -149,11 +156,11 @@
                         <div class="pt-2 border-t border-white/5"><p class="metric-label">Valor Posição</p><p class="text-sm font-bold text-gray-200">${fPT(val, true)}</p></div>
                         <div class="text-right pt-2 border-t border-white/5"><p class="metric-label">Entrada / Mercado</p><p class="text-[11px] font-bold text-gray-300">${fPT(ent, false, 4)}</p><p class="text-[10px] text-gray-500 font-mono">${fPT(cur, false, 4)}</p></div>
                         <div class="col-span-2 mt-2">
-                            <div class="flex justify-between text-[9px] font-bold text-gray-500 uppercase"><span>Liq Alvo ($${fPT(liq, false, 4)})</span><span>${fPT(dLiq)}%</span></div>
+                            <div class="flex justify-between text-[9px] font-bold text-gray-500 uppercase"><span>Liq Alvo (${fPT(liq, false, 4)})</span><span>${fPT(dLiq)}%</span></div>
                             <div class="progress-bg"><div class="progress-fill ${dLiq < 12 ? 'bg-red-500' : 'bg-red-900/40'}" style="width: ${Math.max(0, 100 - dLiq)}%"></div></div>
                         </div>
                         <div class="col-span-2">
-                            <div class="flex justify-between text-[9px] font-bold text-yellow-600 uppercase"><span>Take Profit ($${fPT(tp, false, 4)})</span><span>${tpP.toFixed(0)}%</span></div>
+                            <div class="flex justify-between text-[9px] font-bold text-yellow-600 uppercase"><span>Take Profit (${fPT(tp, false, 4)})</span><span>${tpP.toFixed(0)}%</span></div>
                             <div class="progress-bg"><div class="progress-fill bg-yellow-500/60" style="width: ${Math.min(tpP, 100)}%"></div></div>
                         </div>
                     </div>
