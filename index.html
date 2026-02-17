@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI TRADING LAB - v9.9</title>
+    <title>AI TRADING LAB - v10.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -19,17 +19,14 @@
         .metric-value { font-family: 'Roboto Mono', monospace; font-weight: 700; }
         .up { color: #02d386; } .down { color: #ff3b5c; }
         .stat-box { background: rgba(30, 33, 38, 0.5); border: 1px solid rgba(255, 255, 255, 0.03); padding: 12px; border-radius: 8px; }
+        
         .progress-bg { background-color: #2b3139; height: 6px; border-radius: 3px; width: 100%; margin-top: 4px; overflow: hidden; }
-        .progress-fill { height: 100%; border-radius: 3px; transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
-        .liq-radar-container { background: rgba(255, 255, 255, 0.02); border-radius: 8px; padding: 14px; border: 1px solid rgba(243, 186, 47, 0.1); }
-        .insight-content { line-height: 1.8; font-size: 14px; }
-        .insight-content strong { color: #f3ba2f; }
-        .insight-card { border-left: 3px solid #f3ba2f; padding-left: 12px; margin-bottom: 16px; }
+        .progress-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
         
-        /* Correção Desktop: Gráficos Independentes */
-        .chart-container { height: 0; width: 100%; overflow: hidden; transition: height 0.3s ease; border-top: 0px solid transparent; }
-        .chart-container.active { height: 500px; border-top: 1px solid rgba(255, 255, 255, 0.05); }
-        
+        /* Sistema de Gráficos Independentes */
+        .chart-wrapper { height: 0; overflow: hidden; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0; }
+        .chart-wrapper.active { height: 500px; opacity: 1; border-top: 1px solid rgba(255, 255, 255, 0.1); margin-top: 15px; }
+
         .layout-container { display: flex; flex-direction: column; gap: 24px; max-width: 1600px; margin: 0 auto; padding: 20px; }
         @media (min-width: 1280px) {
             .layout-container { flex-direction: row; align-items: flex-start; }
@@ -49,39 +46,35 @@
                         <svg width="40" height="40" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="4" fill="#f3ba2f"/><circle cx="20" cy="20" r="10" stroke="#f3ba2f" stroke-width="0.5" stroke-dasharray="2 2"/></svg>
                         <div>
                             <h1 class="text-3xl font-extrabold text-white tracking-[0.2em] uppercase leading-none">AI TRADING LAB</h1>
-                            <p id="update-timestamp" class="text-[8px] text-gray-500 font-mono tracking-widest uppercase mt-2">Core: Operational</p>
+                            <p id="update-timestamp" class="text-[8px] text-gray-500 font-mono tracking-widest uppercase mt-2 font-bold">Sync: Operational</p>
                         </div>
                     </div>
                     <div class="text-right">
                         <p class="metric-label">PnL Global Aberto</p>
                         <p id="total-pnl" class="text-4xl metric-value leading-none">$0</p>
-                        <p id="total-pnl-perc" class="text-lg metric-value mt-1">0%</p>
+                        <p id="total-pnl-perc" class="text-lg metric-value mt-1">0,00%</p>
                     </div>
                 </div>
                 <div class="grid grid-cols-2 lg:grid-cols-3 gap-4">
                     <div class="stat-box"><p class="metric-label text-gray-400">Exposição Total</p><p id="total-exposure" class="text-xl metric-value text-white">$0</p></div>
                     <div class="stat-box"><p class="metric-label text-gray-400">Margem em Uso</p><p id="total-margin" class="text-xl metric-value text-gray-300">$0</p></div>
-                    <div class="stat-box border-yellow-500/10"><p class="metric-label text-yellow-500">Alavancagem Real</p><p id="avg-leverage" class="text-xl metric-value text-yellow-500">0.00x</p></div>
+                    <div class="stat-box border-yellow-500/10"><p class="metric-label text-yellow-500">Alavancagem Real</p><p id="avg-leverage" class="text-xl metric-value text-yellow-500">0,00x</p></div>
                 </div>
             </header>
             <div id="dashboard-grid" class="grid grid-cols-1 md:grid-cols-2 gap-5"></div>
         </main>
 
         <aside id="ai-section" class="card p-6">
-            <div id="liq-radar" class="liq-radar-container mb-6">
-                <p class="text-[10px] font-bold text-yellow-500 uppercase tracking-widest mb-4">Liquidity Magnets</p>
-                <div id="liq-list" class="space-y-4 text-[10px] text-gray-600 font-mono">Scanning...</div>
-            </div>
             <div class="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
                 <span id="engine-led" class="w-2.5 h-2.5 bg-green-500 rounded-full"></span>
                 <span class="text-white text-[11px] font-bold uppercase tracking-widest">Engine 2.0 Flash</span>
-                <span id="fg-index" class="text-xs font-bold text-gray-500 font-mono">F&G: --</span>
+                <span id="fg-index" class="text-xs font-bold text-gray-500 font-mono tracking-tighter">F&G: --</span>
             </div>
-            <div id="ai-content" class="flex-grow overflow-y-auto mb-4 pr-2 scrollbar-hide insight-content">
-                <div class="insight-card text-gray-500 text-center py-10" id="bot-status">Aguardando telemetria...</div>
+            <div id="ai-content" class="flex-grow overflow-y-auto mb-4 pr-2 scrollbar-hide text-sm leading-relaxed">
+                <div class="insight-card text-gray-500 text-center py-10" id="bot-status">Sincronizando telemetria...</div>
             </div>
             <div class="pt-4 border-t border-gray-800">
-                <input type="text" id="chat-input" placeholder="Comando..." class="w-full bg-transparent text-white outline-none text-sm placeholder-gray-700 font-medium" onkeypress="handleChat(event)">
+                <input type="text" id="chat-input" placeholder="Comando..." class="w-full bg-transparent text-white outline-none text-sm placeholder-gray-700" onkeypress="handleChat(event)">
             </div>
         </aside>
     </div>
@@ -94,9 +87,16 @@
         const AI_FUNC_PATH = `https://${PROJECT_ID}.supabase.co/functions/v1/trade-advisor`;
 
         let currentPositions = [];
-        let isInitialLoad = true;
 
         window.onload = () => { fetchPositions(); setInterval(fetchPositions, 10000); };
+
+        function formatNumber(num) {
+            return Math.floor(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+
+        function formatDecimal(num) {
+            return num.toFixed(2).replace('.', ',');
+        }
 
         async function fetchPositions() {
             try {
@@ -107,7 +107,6 @@
                     updateDashboard(currentPositions);
                     updateRiskSemaphore(currentPositions);
                     document.getElementById('update-timestamp').innerText = `Sync: ${new Date().toLocaleTimeString()}`;
-                    if(isInitialLoad && currentPositions.length > 0) { fetchAIIntelligence(); isInitialLoad = false; }
                 }
             } catch (err) { console.error(err); }
         }
@@ -125,47 +124,10 @@
             else { document.body.style.setProperty('--risk-rgb', '2, 211, 134'); led.className = "w-2.5 h-2.5 bg-green-500 rounded-full shadow-[0_0_10px_rgba(34,197,94,0.5)]"; }
         }
 
-        async function fetchAIIntelligence(userQuery = null) {
-            const aiContent = document.getElementById('ai-content');
-            const liqList = document.getElementById('liq-list');
-            try {
-                const response = await fetch(AI_FUNC_PATH, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ positions: currentPositions, userMessage: userQuery })
-                });
-                const data = await response.json();
-                if (data.liqZones) {
-                    liqList.innerHTML = '';
-                    data.liqZones.forEach(z => {
-                        const color = z.side === 'short' ? '#ff3b5c' : '#02d386';
-                        liqList.innerHTML += `<div><div class="flex justify-between font-bold mb-1 uppercase"><span style="color: ${color}">${z.side} $${z.price}</span><span>${z.vol}</span></div><div class="progress-bg"><div class="progress-fill" style="width: ${z.intensity}%; background: ${color}"></div></div></div>`;
-                    });
-                }
-                document.getElementById('bot-status')?.remove();
-                const formatted = data.insight.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
-                const newCard = document.createElement('div');
-                newCard.className = 'insight-card text-white';
-                aiContent.appendChild(newCard);
-                let i = 0;
-                function type() {
-                    if (i < formatted.length) {
-                        if (formatted.substring(i, i+4) === '<br>') { newCard.innerHTML += '<br>'; i += 4; }
-                        else if (formatted.substring(i, i+8) === '<strong>') {
-                            let end = formatted.indexOf('</strong>', i);
-                            newCard.innerHTML += formatted.substring(i, end + 9); i = end + 9;
-                        } else { newCard.innerHTML += formatted.charAt(i); i++; }
-                        aiContent.scrollTop = aiContent.scrollHeight;
-                        setTimeout(type, 8);
-                    }
-                }
-                type();
-            } catch (err) { console.error(err); }
-        }
-
         function updateDashboard(positions) {
             const grid = document.getElementById('dashboard-grid');
             let totalPnL = 0, totalExposure = 0, totalMargin = 0;
+
             positions.forEach(pos => {
                 const entry = parseFloat(pos.avgPrice), current = parseFloat(pos.markPrice);
                 const netPnL = parseFloat(pos.unrealisedPnl), leverage = parseFloat(pos.leverage);
@@ -181,23 +143,24 @@
                     card.innerHTML = `
                         <div class="p-5">
                             <div class="flex justify-between items-center mb-5">
-                                <h2 class="text-xl font-black text-white uppercase tracking-tighter">${pos.symbol} <span class="text-[10px] text-gray-600 font-mono ml-2">${leverage}x</span></h2>
-                                <button onclick="handleToggle('${pos.symbol}')" class="text-gray-500 p-1">
-                                    <svg id="arrow-${pos.symbol}" class="w-5 h-5 rotate-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                <h2 class="text-xl font-black text-white uppercase tracking-tighter">${pos.symbol} <span class="text-xs text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded ml-2">${formatDecimal(leverage)}x</span></h2>
+                                <button onclick="handleToggle('${pos.symbol}')" class="text-gray-500">
+                                    <svg id="arrow-${pos.symbol}" class="w-6 h-6 rotate-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                                 </button>
                             </div>
                             <div id="metrics-${pos.symbol}" class="grid grid-cols-2 gap-y-5"></div>
                         </div>
-                        <div id="chart-wrap-${pos.symbol}" class="chart-container">
-                            <div id="chart-${pos.symbol}" style="height: 100%; width: 100%;"></div>
+                        <div id="wrap-${pos.symbol}" class="chart-wrapper">
+                            <div id="tv-${pos.symbol}" style="height: 100%; width: 100%;"></div>
                         </div>`;
                     grid.appendChild(card);
                 }
+
                 const dLiq = liq > 0 ? Math.abs((liq - current) / current) * 100 : 100;
                 const tpP = tp > 0 ? (Math.abs(current - entry) / Math.abs(tp - entry)) * 100 : 0;
                 document.getElementById(`metrics-${pos.symbol}`).innerHTML = `
                     <div><p class="metric-label">ROE</p><p class="${netPnL >= 0 ? 'up' : 'down'} text-2xl font-black">${((netPnL/margin)*100).toFixed(2)}%</p></div>
-                    <div class="text-right"><p class="metric-label">PnL</p><p class="${netPnL >= 0 ? 'up' : 'down'} text-xl font-bold">$${netPnL.toFixed(0)}</p></div>
+                    <div class="text-right"><p class="metric-label">PnL</p><p class="${netPnL >= 0 ? 'up' : 'down'} text-xl font-bold">$${formatNumber(netPnL)}</p></div>
                     <div class="col-span-2">
                         <div class="flex justify-between text-[10px] font-bold mb-1 uppercase"><span class="${dLiq < 12 ? 'text-red-500 animate-pulse' : 'text-gray-500'}">Liquidação</span><span>${dLiq.toFixed(2)}%</span></div>
                         <div class="progress-bg"><div class="progress-fill ${dLiq < 12 ? 'bg-red-500' : 'bg-red-900/40'}" style="width: ${Math.max(0, 100 - dLiq)}%"></div></div>
@@ -207,28 +170,64 @@
                         <div class="progress-bg"><div class="progress-fill bg-yellow-500" style="width: ${Math.min(tpP, 100)}%"></div></div>
                     </div>`;
             });
-            document.getElementById('total-pnl').innerText = `$${Math.floor(totalPnL)}`;
-            document.getElementById('total-pnl').className = `text-4xl metric-value ${totalPnL >= 0 ? 'up' : 'down'}`;
-            document.getElementById('total-pnl-perc').innerText = `${totalMargin > 0 ? (totalPnL/totalMargin*100).toFixed(0) : 0}%`;
-            document.getElementById('total-pnl-perc').className = `text-lg metric-value ${totalPnL >= 0 ? 'up' : 'down'}`;
-            document.getElementById('total-exposure').innerText = `$${Math.floor(totalExposure)}`;
-            document.getElementById('total-margin').innerText = `$${Math.floor(totalMargin)}`;
-            document.getElementById('avg-leverage').innerText = (totalMargin > 0 ? (totalExposure / totalMargin).toFixed(2) : 0) + 'x';
+
+            const pnlEl = document.getElementById('total-pnl');
+            pnlEl.innerText = `$${formatNumber(totalPnL)}`;
+            pnlEl.className = `text-4xl metric-value ${totalPnL >= 0 ? 'up' : 'down'}`;
+            document.getElementById('total-pnl-perc').innerText = `${formatDecimal(totalMargin > 0 ? (totalPnL/totalMargin*100) : 0)}%`;
+            document.getElementById('total-pnl-perc').className = `text-lg metric-value mt-1 ${totalPnL >= 0 ? 'up' : 'down'}`;
+            
+            document.getElementById('total-exposure').innerText = `$${formatNumber(totalExposure)}`;
+            document.getElementById('total-margin').innerText = `$${formatNumber(totalMargin)}`;
+            document.getElementById('avg-leverage').innerText = formatDecimal(totalMargin > 0 ? (totalExposure / totalMargin) : 0) + 'x';
         }
 
         function handleToggle(s) { 
-            const wrap = document.getElementById(`chart-wrap-${s}`);
+            const wrap = document.getElementById(`wrap-${s}`);
             const arrow = document.getElementById(`arrow-${s}`);
             const isActive = wrap.classList.toggle('active');
             arrow.classList.toggle('rotate-180');
+            
             if (isActive && !wrap.dataset.loaded) {
                 new TradingView.widget({ 
                     "autosize": true, "symbol": `BYBIT:${s}.P`, "interval": "15", "theme": "dark", "style": "1",
-                    "container_id": `chart-${s}`, "studies": ["Volume@tv-basicstudies"] 
+                    "container_id": `tv-${s}`, "studies": ["Volume@tv-basicstudies"], "hide_side_toolbar": true 
                 });
                 wrap.dataset.loaded = "true";
             }
         }
+
+        async function fetchAIIntelligence(userQuery = null) {
+            const aiContent = document.getElementById('ai-content');
+            try {
+                const response = await fetch(AI_FUNC_PATH, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ positions: currentPositions, userMessage: userQuery })
+                });
+                const data = await response.json();
+                document.getElementById('bot-status')?.remove();
+                const formatted = data.insight.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+                const newCard = document.createElement('div');
+                newCard.className = 'border-l-2 border-yellow-500 pl-4 mb-6 text-white';
+                aiContent.appendChild(newCard);
+                let i = 0;
+                function type() {
+                    if (i < formatted.length) {
+                        if (formatted.substring(i, i+4) === '<br>') { newCard.innerHTML += '<br>'; i += 4; }
+                        else if (formatted.substring(i, i+8) === '<strong>') {
+                            let end = formatted.indexOf('</strong>', i);
+                            newCard.innerHTML += formatted.substring(i, end + 9); i = end + 9;
+                        } else { newCard.innerHTML += formatted.charAt(i); i++; }
+                        aiContent.scrollTop = aiContent.scrollHeight;
+                        setTimeout(type, 8);
+                    }
+                }
+                type();
+                if(data.fg) document.getElementById('fg-index').innerText = `F&G: ${data.fg}`;
+            } catch (err) { console.error(err); }
+        }
+
         function handleChat(e) { if (e.key === 'Enter') { fetchAIIntelligence(e.target.value); e.target.value = ''; } }
     </script>
 </body>
