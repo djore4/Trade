@@ -20,7 +20,7 @@
             border-radius: 12px;
         }
         .metric-label { color: #848e9c; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 700; }
-        .metric-value { font-family: 'Roboto Mono', monospace; font-weight: 700; }
+        .metric-value { font-family: 'Roboto+Mono', monospace; font-weight: 700; }
         .up { color: #02d386; }
         .down { color: #ff3b5c; }
         
@@ -31,10 +31,18 @@
             border-radius: 8px;
         }
 
+        /* Animação do Logótipo SVG */
+        @keyframes pulse-neural {
+            0% { opacity: 0.4; transform: scale(0.95); }
+            50% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0.4; transform: scale(0.95); }
+        }
+        .neural-node { animation: pulse-neural 3s infinite ease-in-out; }
+        .node-delayed { animation-delay: 1.5s; }
+
         @media (max-width: 768px) {
             .layout-container { padding: 12px; gap: 16px; }
-            #total-pnl { font-size: 2rem; } /* Reduzido para equilíbrio */
-            .card { border-radius: 8px; }
+            #total-pnl { font-size: 2rem; }
             .chart-container { height: 520px; }
         }
 
@@ -71,9 +79,20 @@
         <main id="main-content" class="w-full">
             <header class="mb-6">
                 <div class="flex justify-between items-end mb-6 border-b border-gray-800/40 pb-6">
-                    <div>
-                        <h1 class="text-3xl font-extrabold text-white tracking-widest uppercase">AI TRADING LAB</h1>
-                        <p id="update-timestamp" class="text-[7px] text-gray-600 font-mono tracking-widest uppercase mt-2 pl-1">Last Sync: Initializing...</p>
+                    <div class="flex items-center gap-4">
+                        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" class="mb-1">
+                            <circle cx="20" cy="20" r="3" fill="#f3ba2f" class="neural-node"/>
+                            <circle cx="34" cy="12" r="2" fill="#f3ba2f" fill-opacity="0.6" class="neural-node node-delayed"/>
+                            <circle cx="34" cy="28" r="2" fill="#f3ba2f" fill-opacity="0.6" class="neural-node"/>
+                            <circle cx="6" cy="12" r="2" fill="#f3ba2f" fill-opacity="0.6" class="neural-node"/>
+                            <circle cx="6" cy="28" r="2" fill="#f3ba2f" fill-opacity="0.6" class="neural-node node-delayed"/>
+                            <path d="M20 17L34 12M20 23L34 28M20 17L6 12M20 23L6 28M20 17V7M20 33V23" stroke="#f3ba2f" stroke-opacity="0.2" stroke-width="1.5"/>
+                        </svg>
+                        
+                        <div>
+                            <h1 class="text-3xl font-extrabold text-white tracking-widest uppercase leading-none">AI TRADING LAB</h1>
+                            <p id="update-timestamp" class="text-[7px] text-gray-600 font-mono tracking-widest uppercase mt-2">Last Sync: Initializing...</p>
+                        </div>
                     </div>
                     <div class="text-right">
                         <p class="metric-label">Net PnL Aberto</p>
@@ -168,7 +187,7 @@
                         <div class="p-4">
                             <div class="flex justify-between items-center mb-4">
                                 <h2 class="text-lg font-extrabold text-white tracking-tighter uppercase">${pos.symbol} <span class="text-[9px] text-gray-600 font-mono ml-1">${leverage}x</span></h2>
-                                <button onclick="handleToggle('${pos.symbol}')" class="text-gray-600 hover:text-white">
+                                <button onclick="handleToggle('${pos.symbol}')" class="text-gray-600 hover:text-white transition-colors">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                                 </button>
                             </div>
