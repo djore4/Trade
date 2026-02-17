@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Trading Lab - v10.8</title>
+    <title>AI Trading Lab - v11.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -23,17 +23,13 @@
         .progress-bg { background-color: #2b3139; height: 6px; border-radius: 3px; width: 100%; margin-top: 4px; overflow: hidden; }
         .progress-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
         
-        /* LOGO ANIMADO E GLOW */
-        @keyframes pulse-neural { 0%, 100% { opacity: 0.4; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1); } }
-        .neural-node { animation: pulse-neural 3s infinite ease-in-out; }
-        
+        /* ESTILO FANCY PARA O TÍTULO */
         .ai-glow { 
             color: #f3ba2f; 
-            text-shadow: 0 0 15px rgba(243, 186, 47, 0.4), 0 0 30px rgba(243, 186, 47, 0.2);
+            text-shadow: 0 0 15px rgba(243, 186, 47, 0.5), 0 0 30px rgba(243, 186, 47, 0.2);
             font-weight: 800;
         }
 
-        /* Sistema de Gráficos Independentes */
         .chart-wrapper { display: none; height: 500px; width: 100%; border-top: 1px solid rgba(255, 255, 255, 0.1); margin-top: 15px; }
         .chart-wrapper.active { display: block; }
 
@@ -46,7 +42,6 @@
         .rotate-icon { transition: transform 0.3s ease; }
         .rotate-180 { transform: rotate(180deg); }
 
-        /* Scrollbar tática */
         #ai-content::-webkit-scrollbar { width: 4px; }
         #ai-content::-webkit-scrollbar-track { background: transparent; }
         #ai-content::-webkit-scrollbar-thumb { background: #2b3139; border-radius: 10px; }
@@ -57,18 +52,12 @@
         <main id="main-content">
             <header class="mb-8">
                 <div class="flex justify-between items-end mb-8 border-b border-gray-800/40 pb-6 flex-wrap gap-6">
-                    <div class="flex items-center gap-4">
-                        <svg width="45" height="45" viewBox="0 0 40 40" fill="none">
-                            <circle cx="20" cy="20" r="3" fill="#f3ba2f" class="neural-node"/>
-                            <circle cx="34" cy="12" r="2" fill="#f3ba2f" fill-opacity="0.6" class="neural-node"/>
-                            <circle cx="6" cy="28" r="2" fill="#f3ba2f" fill-opacity="0.6" class="neural-node"/>
-                            <path d="M20 17L34 12M20 23L6 28M20 17L6 12M20 23L34 28" stroke="#f3ba2f" stroke-opacity="0.2" stroke-width="1"/>
-                        </svg>
+                    <div class="flex items-center gap-2">
                         <div>
-                            <h1 class="text-3xl font-bold text-white tracking-tight leading-none italic">
+                            <h1 class="text-3xl font-bold text-white tracking-tight leading-none">
                                 <span class="ai-glow">AI</span> Trading Lab
                             </h1>
-                            <p id="update-timestamp" class="text-[8px] text-gray-500 font-mono tracking-widest uppercase mt-2 font-bold">Sync: Operational</p>
+                            <p id="update-timestamp" class="text-[8px] text-gray-500 font-mono tracking-widest uppercase mt-2 font-bold text-left">Sync: Operational</p>
                         </div>
                     </div>
                     <div class="text-right">
@@ -92,7 +81,7 @@
                 <span class="text-white text-[11px] font-bold uppercase tracking-widest">Engine 2.0 Flash</span>
                 <span id="fg-index" class="text-xs font-bold text-gray-500 font-mono">F&G: --</span>
             </div>
-            <div id="ai-content" class="flex-grow overflow-y-auto mb-4 pr-2 scrollbar-hide text-sm leading-relaxed">
+            <div id="ai-content" class="flex-grow overflow-y-auto mb-4 pr-2 scrollbar-hide text-sm leading-relaxed font-light">
                 <div class="insight-card text-gray-500 text-center py-10" id="bot-status">Sincronizando Baltazar...</div>
             </div>
             <div class="pt-4 border-t border-gray-800">
@@ -114,7 +103,8 @@
         window.onload = () => { fetchPositions(); setInterval(fetchPositions, 10000); };
 
         function formatNumber(num) {
-            return Math.floor(Math.abs(num)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            const sign = num < 0 ? "-" : "";
+            return sign + "$" + Math.floor(Math.abs(num)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
         }
 
         function formatDecimal(num) {
@@ -168,7 +158,7 @@
                         <div class="p-5">
                             <div class="flex justify-between items-center mb-5">
                                 <h2 class="text-xl font-black text-white uppercase tracking-tighter">${pos.symbol} <span class="text-xs text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded ml-2 font-bold">${formatDecimal(leverage)}x</span></h2>
-                                <button onclick="handleChartToggle('${pos.symbol}')" class="text-gray-500">
+                                <button onclick="handleChartToggle('${pos.symbol}')" class="text-gray-500 p-2">
                                     <svg id="arrow-${pos.symbol}" class="w-6 h-6 rotate-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                                 </button>
                             </div>
@@ -184,7 +174,7 @@
                 const tpP = tp > 0 ? (Math.abs(current - entry) / Math.abs(tp - entry)) * 100 : 0;
                 document.getElementById(`metrics-${pos.symbol}`).innerHTML = `
                     <div><p class="metric-label">ROE</p><p class="${netPnL >= 0 ? 'up' : 'down'} text-2xl font-black">${formatDecimal((netPnL/margin)*100)}%</p></div>
-                    <div class="text-right"><p class="metric-label">PnL</p><p class="${netPnL >= 0 ? 'up' : 'down'} text-xl font-bold">${netPnL < 0 ? '-' : ''}$${formatNumber(netPnL)}</p></div>
+                    <div class="text-right"><p class="metric-label">PnL</p><p class="${netPnL >= 0 ? 'up' : 'down'} text-xl font-bold">${formatNumber(netPnL)}</p></div>
                     <div class="col-span-2">
                         <div class="flex justify-between text-[10px] font-bold mb-1 uppercase tracking-widest"><span class="${dLiq < 12 ? 'text-red-500 animate-pulse' : 'text-gray-500'}">Liquidação</span><span>${formatDecimal(dLiq)}%</span></div>
                         <div class="progress-bg"><div class="progress-fill ${dLiq < 12 ? 'bg-red-500' : 'bg-red-900/40'}" style="width: ${Math.max(0, 100 - dLiq)}%"></div></div>
@@ -195,52 +185,43 @@
                     </div>`;
             });
 
-            const sign = totalPnL < 0 ? "-" : "";
-            document.getElementById('total-pnl').innerText = `${sign}$${formatNumber(totalPnL)}`;
+            document.getElementById('total-pnl').innerText = formatNumber(totalPnL);
             document.getElementById('total-pnl').className = `text-4xl metric-value ${totalPnL >= 0 ? 'up' : 'down'}`;
             document.getElementById('total-pnl-perc').innerText = `${formatDecimal(totalMargin > 0 ? (totalPnL/totalMargin*100) : 0)}%`;
             document.getElementById('total-pnl-perc').className = `text-lg metric-value mt-1 ${totalPnL >= 0 ? 'up' : 'down'}`;
             
-            document.getElementById('total-exposure').innerText = `$${formatNumber(totalExposure)}`;
-            document.getElementById('total-margin').innerText = `$${formatNumber(totalMargin)}`;
+            document.getElementById('total-exposure').innerText = formatNumber(totalExposure);
+            document.getElementById('total-margin').innerText = formatNumber(totalMargin);
             document.getElementById('avg-leverage').innerText = formatDecimal(totalMargin > 0 ? (totalExposure / totalMargin) : 0) + 'x';
         }
 
-        // LÓGICA ADAPTATIVA DE GRÁFICO (RECONSTRUÍDA)
         function handleChartToggle(symbol) {
             const isDesktop = window.innerWidth >= 1280;
-
             if (isDesktop) {
                 const anyActive = Array.from(document.querySelectorAll('.chart-wrapper')).some(w => w.classList.contains('active'));
                 currentPositions.forEach(pos => {
                     const w = document.getElementById(`wrap-${pos.symbol}`);
                     const a = document.getElementById(`arrow-${pos.symbol}`);
-                    if (anyActive) {
-                        w.classList.remove('active');
-                        a.classList.remove('rotate-180');
-                    } else {
-                        w.classList.add('active');
-                        a.classList.add('rotate-180');
-                        loadTradingView(pos.symbol);
-                    }
+                    if (anyActive) { w.classList.remove('active'); a.classList.remove('rotate-180'); }
+                    else { w.classList.add('active'); a.classList.add('rotate-180'); loadTV(pos.symbol); }
                 });
             } else {
                 const w = document.getElementById(`wrap-${symbol}`);
                 const a = document.getElementById(`arrow-${symbol}`);
                 const isActive = w.classList.toggle('active');
                 a.classList.toggle('rotate-180');
-                if (isActive) loadTradingView(symbol);
+                if (isActive) loadTV(symbol);
             }
         }
 
-        function loadTradingView(s) {
-            const container = document.getElementById(`wrap-${s}`);
-            if (!container.dataset.loaded) {
+        function loadTV(s) {
+            const wrap = document.getElementById(`wrap-${s}`);
+            if (!wrap.dataset.loaded) {
                 new TradingView.widget({ 
                     "autosize": true, "symbol": `BYBIT:${s}.P`, "interval": "15", "theme": "dark", "style": "1",
                     "container_id": `tv-${s}`, "hide_side_toolbar": true 
                 });
-                container.dataset.loaded = "true";
+                wrap.dataset.loaded = "true";
             }
         }
 
