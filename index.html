@@ -3,48 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Command Center v7.8 - Modern Progressive</title>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <title>Command Center v7.9 - Premium Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { 
-            background-color: #0b0e11; 
-            color: #eaecef; 
-            font-family: 'Space Grotesk', sans-serif; 
+            background-color: #080a0c; 
+            color: #f0f2f5; 
+            font-family: 'Outfit', sans-serif; 
+            -webkit-font-smoothing: antialiased;
         }
-        .card { background-color: #181a20; border: 1px solid #2b3139; position: relative; overflow: hidden; height: fit-content; }
-        .metric-label { color: #848e9c; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 500; }
+        .card { 
+            background: rgba(24, 26, 32, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+        .card:hover { border-color: rgba(243, 186, 47, 0.3); }
+        .metric-label { color: #848e9c; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 600; }
         .metric-value { font-family: 'Roboto Mono', monospace; font-weight: 700; }
-        .up { color: #0ecb81; }
-        .down { color: #f6465d; }
-        .stat-box { background: #1e2126; border: 1px solid #2b3139; padding: 12px; border-radius: 4px; transition: all 0.2s; }
-        .stat-box:hover { border-color: #f3ba2f; }
-        .progress-bg { background-color: #2b3139; height: 4px; border-radius: 2px; width: 100%; margin-top: 4px; }
-        .progress-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
-        .chart-container { height: 500px; width: 100%; border-top: 1px solid #2b3139; display: none; }
+        .up { color: #02d386; }
+        .down { color: #ff3b5c; }
+        .stat-box { 
+            background: rgba(30, 33, 38, 0.5); 
+            border: 1px solid rgba(255, 255, 255, 0.03); 
+            padding: 16px; 
+            border-radius: 12px;
+        }
+        .progress-bg { background-color: #2b3139; height: 6px; border-radius: 3px; width: 100%; margin-top: 6px; }
+        .progress-fill { height: 100%; border-radius: 3px; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+        .chart-container { height: 500px; width: 100%; border-top: 1px solid rgba(255, 255, 255, 0.05); display: none; }
         .chart-visible { display: block !important; }
         
-        /* Layout Adaptativo com Foco Mobile */
-        .layout-container { display: flex; flex-direction: column; gap: 24px; max-width: 1600px; margin: 0 auto; padding: 16px; }
+        .layout-container { display: flex; flex-direction: column; gap: 28px; max-width: 1600px; margin: 0 auto; padding: 20px; }
         
-        /* AI Section no FIM em Mobile */
         #ai-section { 
-            background: #111417; 
-            border: 1px solid #2b3139; 
-            border-radius: 8px; 
+            background: #0d0f12; 
+            border: 1px solid rgba(255, 255, 255, 0.05); 
+            border-radius: 16px; 
             display: flex; 
             flex-direction: column; 
-            height: 450px; 
+            height: 480px; 
             order: 10; 
         }
         
-        .insight-card { border-left: 3px solid #f3ba2f; padding: 14px; margin-bottom: 12px; border-radius: 4px; background: rgba(243, 186, 47, 0.05); font-size: 13px; line-height: 1.6; }
-        .user-message { border-right: 3px solid #3b82f6; border-left: none; background: rgba(59, 130, 246, 0.05); text-align: right; }
+        .insight-card { border-left: 4px solid #f3ba2f; padding: 16px; margin-bottom: 12px; border-radius: 8px; background: rgba(243, 186, 47, 0.03); font-size: 14px; line-height: 1.7; font-weight: 400; }
+        .user-message { border-right: 4px solid #3b82f6; border-left: none; background: rgba(59, 130, 246, 0.03); text-align: right; }
         
         @media (min-width: 1280px) {
             .layout-container { flex-direction: row; align-items: flex-start; }
             #main-content { flex: 1; }
-            #ai-section { width: 400px; height: calc(100vh - 40px); position: sticky; top: 20px; order: 1; }
+            #ai-section { width: 420px; height: calc(100vh - 40px); position: sticky; top: 20px; order: 1; }
         }
     </style>
 </head>
@@ -52,41 +62,39 @@
 
     <div class="layout-container">
         <main id="main-content" class="w-full">
-            <header class="mb-8">
-                <div class="flex justify-between items-center mb-6 border-b border-gray-800 pb-6">
+            <header class="mb-10">
+                <div class="flex justify-between items-start mb-8 border-b border-gray-800/50 pb-8">
                     <div>
-                        <h1 class="text-2xl font-black text-white uppercase italic tracking-tighter">COMMAND <span class="text-yellow-500 text-3xl">7.8</span></h1>
-                        <p class="text-[10px] text-gray-500 font-mono italic text-yellow-500 uppercase tracking-widest" id="last-update">Neural Link Active</p>
+                        <h1 class="text-3xl font-extrabold text-white uppercase tracking-tighter italic">COMMAND <span class="text-yellow-500">7.9</span></h1>
+                        <p class="text-[10px] text-yellow-500 font-mono italic tracking-[0.3em] uppercase mt-1" id="last-update">Neural Recall v2</p>
                     </div>
                     <div class="text-right">
-                        <p class="metric-label font-bold">Net PnL Aberto</p>
-                        <p id="total-pnl" class="text-4xl metric-value leading-none">$0.00</p>
+                        <p class="metric-label mb-1">Total Net PnL</p>
+                        <p id="total-pnl" class="text-5xl metric-value leading-none">$0.00</p>
+                        <p id="total-pnl-perc" class="text-xl metric-value mt-2">0.00%</p>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                    <div class="stat-box"><p class="metric-label">Exposure</p><p id="total-exposure" class="text-lg metric-value text-white">$0.00</p></div>
-                    <div class="stat-box"><p class="metric-label">Margin</p><p id="total-margin" class="text-lg metric-value text-gray-400">$0.00</p></div>
-                    <div class="stat-box border-yellow-500/30"><p class="metric-label text-yellow-500 font-bold">Lev Real</p><p id="avg-leverage" class="text-lg metric-value text-yellow-500">0.00x</p></div>
-                    <div class="stat-box"><p class="metric-label font-bold">PnL %</p><p id="total-pnl-perc" class="text-lg metric-value font-bold">0.00%</p></div>
+                <div class="grid grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="stat-box"><p class="metric-label">Exposure</p><p id="total-exposure" class="text-2xl metric-value text-white">$0.00</p></div>
+                    <div class="stat-box"><p class="metric-label">Margin In-Use</p><p id="total-margin" class="text-2xl metric-value text-gray-400">$0.00</p></div>
+                    <div class="stat-box border-yellow-500/20 col-span-2 lg:col-span-1"><p class="metric-label text-yellow-500 font-bold">Patrimonial Lev</p><p id="avg-leverage" class="text-2xl metric-value text-yellow-500">0.00x</p></div>
                 </div>
             </header>
 
-            <div id="dashboard-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+            <div id="dashboard-grid" class="grid grid-cols-1 md:grid-cols-2 gap-8"></div>
         </main>
 
-        <aside id="ai-section" class="p-5">
-            <div class="flex justify-between items-center mb-4 border-b border-gray-800 pb-3">
-                <span class="bg-yellow-500 text-black text-[9px] font-black px-2 py-1 rounded tracking-widest">BALTAZAR AI</span>
-                <div class="flex gap-3">
-                    <span id="fg-index" class="text-xs font-bold text-yellow-500">F&G: --</span>
-                </div>
+        <aside id="ai-section" class="p-6">
+            <div class="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
+                <span class="bg-yellow-500 text-black text-[10px] font-black px-3 py-1 rounded-full tracking-wider">BALTAZAR AI</span>
+                <span id="fg-index" class="text-xs font-bold text-yellow-500">F&G: --</span>
             </div>
-            <div id="ai-content" class="flex-grow overflow-y-auto mb-4 space-y-3 pr-2 scrollbar-hide">
-                <div class="insight-card italic animate-pulse text-gray-500">A processar análise tática...</div>
+            <div id="ai-content" class="flex-grow overflow-y-auto mb-4 space-y-4 pr-2 scrollbar-hide text-gray-200">
+                <div class="insight-card italic animate-pulse text-gray-500 text-center">A aguardar telemetria...</div>
             </div>
-            <div class="pt-3 border-t border-gray-800">
-                <input type="text" id="chat-input" placeholder="Comando para Baltazar..." class="w-full bg-transparent text-white p-2 outline-none text-sm" onkeypress="handleChat(event)">
+            <div class="pt-4 border-t border-gray-800">
+                <input type="text" id="chat-input" placeholder="Enviar comando..." class="w-full bg-transparent text-white p-2 outline-none text-base placeholder-gray-600" onkeypress="handleChat(event)">
             </div>
         </aside>
     </div>
@@ -118,13 +126,8 @@
                 });
                 const data = await response.json();
                 if(!userQuery) aiContent.innerHTML = ''; 
-                
                 document.getElementById('fg-index').innerText = `F&G: ${data.fg || '--'}`;
-                
-                const formattedInsight = data.insight
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\n/g, '<br>');
-
+                const formattedInsight = data.insight.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
                 aiContent.innerHTML += `<div class="insight-card text-white">${formattedInsight}</div>`;
                 aiContent.scrollTop = aiContent.scrollHeight;
             } catch (err) { console.error(err); }
@@ -156,9 +159,8 @@
             const isVisible = container.classList.toggle('chart-visible');
             if (isVisible && !container.dataset.loaded) {
                 new TradingView.widget({
-                    "autosize": true, "symbol": `BYBIT:${symbol}.P`, "interval": "240", "theme": "dark", "style": "1",
-                    "locale": "pt", "toolbar_bg": "#f1f3f6", "enable_publishing": false, "hide_side_toolbar": false,
-                    "container_id": `chart-${symbol}`, "studies": []
+                    "autosize": true, "symbol": `BYBYT:${symbol}.P`, "interval": "240", "theme": "dark", "style": "1",
+                    "locale": "pt", "container_id": `chart-${symbol}`, "studies": []
                 });
                 container.dataset.loaded = "true";
             }
@@ -175,23 +177,23 @@
                 const qty = Math.abs(parseFloat(pos.size)), netPnL = parseFloat(pos.unrealisedPnl);
                 const liq = parseFloat(pos.liqPrice), leverage = parseFloat(pos.leverage);
                 const tp = parseFloat(pos.takeProfit), mValue = parseFloat(pos.positionValue);
-                const initialMargin = (entry * qty) / leverage; 
+                const initialMargin = mValue / leverage; 
                 totalPnL += netPnL; totalExposure += mValue; totalMargin += initialMargin;
 
                 let card = document.getElementById(`card-${pos.symbol}`);
                 if (!card) {
                     card = document.createElement('div');
                     card.id = `card-${pos.symbol}`;
-                    card.className = `card border-l-4 ${pos.side === 'Buy' ? 'border-l-green-500' : 'border-l-red-500'}`;
+                    card.className = `card border-l-8 ${pos.side === 'Buy' ? 'border-l-green-500' : 'border-l-red-500'}`;
                     card.innerHTML = `
-                        <div class="p-5">
-                            <div class="flex justify-between items-center mb-6">
-                                <h2 class="text-xl font-black text-white italic tracking-tighter">${pos.symbol} <span class="text-[10px] text-gray-500 ml-2 font-mono">${leverage}x</span></h2>
-                                <button onclick="handleToggle('${pos.symbol}')" class="text-gray-400">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                        <div class="p-6">
+                            <div class="flex justify-between items-center mb-8">
+                                <h2 class="text-2xl font-extrabold text-white tracking-tighter uppercase italic">${pos.symbol} <span class="text-xs text-gray-600 font-mono ml-2">${leverage}x</span></h2>
+                                <button onclick="handleToggle('${pos.symbol}')" class="text-gray-500 hover:text-white transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                                 </button>
                             </div>
-                            <div id="metrics-${pos.symbol}" class="grid grid-cols-2 gap-y-6"></div>
+                            <div id="metrics-${pos.symbol}" class="grid grid-cols-2 gap-y-8"></div>
                         </div><div id="chart-${pos.symbol}" class="chart-container"></div>`;
                     grid.appendChild(card);
                 }
@@ -200,26 +202,26 @@
                 let tpProg = tp > 0 ? (Math.abs(current - entry) / Math.abs(tp - entry)) * 100 : 0;
 
                 document.getElementById(`metrics-${pos.symbol}`).innerHTML = `
-                    <div><p class="metric-label">ROE Real</p><p class="${netPnL >= 0 ? 'up' : 'down'} text-2xl font-black">${((netPnL/initialMargin)*100).toFixed(2)}%</p></div>
-                    <div class="text-right"><p class="metric-label">PnL Aberto</p><p class="${netPnL >= 0 ? 'up' : 'down'} text-xl font-black">$${netPnL.toFixed(2)}</p></div>
+                    <div><p class="metric-label">ROE (%)</p><p class="${netPnL >= 0 ? 'up' : 'down'} text-3xl font-black">${((netPnL/initialMargin)*100).toFixed(2)}%</p></div>
+                    <div class="text-right"><p class="metric-label">PnL ($)</p><p class="${netPnL >= 0 ? 'up' : 'down'} text-2xl font-black">$${netPnL.toFixed(2)}</p></div>
                     <div class="col-span-2">
-                        <div class="flex justify-between text-[9px] font-bold"><span class="text-red-500 uppercase italic">Liquidação</span><span class="text-red-400">$${liq.toFixed(3)} (${distLiq.toFixed(2)}%)</span></div>
+                        <div class="flex justify-between text-[10px] font-bold mb-1"><span class="text-red-500 uppercase italic tracking-widest">Liquidação</span><span class="text-red-400 font-mono">$${liq.toFixed(3)} (${distLiq.toFixed(2)}%)</span></div>
                         <div class="progress-bg"><div class="progress-fill bg-red-600" style="width: ${Math.max(0, 100 - Math.abs(distLiq))}%"></div></div>
                     </div>
                     <div class="col-span-2">
-                        <div class="flex justify-between text-[9px] font-bold"><span class="text-yellow-500 uppercase italic">Take Profit</span><span class="text-yellow-500">$${tp > 0 ? tp.toFixed(3) : 'N/A'}</span></div>
+                        <div class="flex justify-between text-[10px] font-bold mb-1"><span class="text-yellow-500 uppercase italic tracking-widest">Target TP</span><span class="text-yellow-500 font-mono">$${tp > 0 ? tp.toFixed(3) : 'N/A'}</span></div>
                         <div class="progress-bg"><div class="progress-fill bg-yellow-500" style="width: ${Math.min(tpProg, 100)}%"></div></div>
                     </div>
                 `;
             });
 
             document.getElementById('total-pnl').innerText = `$${totalPnL.toFixed(2)}`;
-            document.getElementById('total-pnl').className = `text-4xl metric-value ${totalPnL >= 0 ? 'up' : 'down'}`;
+            document.getElementById('total-pnl').className = `text-5xl metric-value ${totalPnL >= 0 ? 'up' : 'down'}`;
+            document.getElementById('total-pnl-perc').innerText = `${totalMargin > 0 ? ((totalPnL/totalMargin)*100).toFixed(2) : 0}%`;
+            document.getElementById('total-pnl-perc').className = `text-xl metric-value ${totalPnL >= 0 ? 'up' : 'down'}`;
             document.getElementById('total-exposure').innerText = `$${totalExposure.toFixed(2)}`;
             document.getElementById('total-margin').innerText = `$${totalMargin.toFixed(2)}`;
             document.getElementById('avg-leverage').innerText = (totalExposure / totalMargin).toFixed(2) + 'x';
-            document.getElementById('total-pnl-perc').innerText = `${totalMargin > 0 ? ((totalPnL/totalMargin)*100).toFixed(2) : 0}%`;
-            document.getElementById('total-pnl-perc').className = `text-lg metric-value ${totalPnL >= 0 ? 'up' : 'down'}`;
         }
         setInterval(fetchPositions, 10000);
     </script>
