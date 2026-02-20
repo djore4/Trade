@@ -13,10 +13,10 @@
             -webkit-font-smoothing: antialiased; background-image: radial-gradient(circle at top right, rgba(var(--risk-rgb), 0.1), transparent 800px);
             min-height: 100vh; overflow-x: hidden;
         }
-        .card { background: rgba(24, 26, 32, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; transition: all 0.3s ease; }
+        .card { background: rgba(24, 26, 32, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; }
         .metric-label { color: #848e9c; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.15em; font-weight: 700; }
         .metric-value { font-family: 'Roboto Mono', monospace; font-weight: 700; }
-        .app-grid { display: grid; grid-template-columns: 1fr; gap: 20px; padding: 20px; max-width: 1800px; margin: 0 auto; }
+        .app-grid { display: grid; grid-template-columns: 1fr; gap: 20px; padding: 20px; max-width: 1800px; margin: 0 auto; transition: all 0.3s ease; }
         @media (min-width: 1280px) { .app-grid.chat-open { grid-template-columns: 1fr 500px; } }
         #ai-section { display: none; flex-direction: column; }
         #ai-section.open { display: flex; animation: slideIn 0.3s ease-out; }
@@ -39,9 +39,7 @@
                     <div>
                         <h1 class="text-4xl font-extrabold text-white tracking-tight mb-2"><span class="text-[#f3ba2f]">AI</span> Trading Lab</h1>
                         <div class="flex flex-wrap gap-3 text-[10px] font-bold uppercase tracking-wider">
-                            <span class="px-3 py-1 bg-white/5 rounded-full border border-white/10 text-gray-400 flex items-center gap-2">
-                                <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Online
-                            </span>
+                            <span class="px-3 py-1 bg-white/5 rounded-full border border-white/10 text-gray-400 flex items-center gap-2"><span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Online</span>
                             <span id="macro-trend" class="px-3 py-1 bg-white/5 rounded-full border border-white/10">Macro: --</span>
                             <span id="fg-index-top" class="px-3 py-1 bg-white/5 rounded-full border border-white/10">F&G: --</span>
                         </div>
@@ -60,10 +58,10 @@
         <aside id="ai-section" class="card p-8 flex flex-col">
             <div class="flex justify-between items-center mb-8 border-b border-gray-800 pb-5">
                 <span class="text-white text-xs font-black uppercase tracking-widest text-yellow-500/80">Baltazar</span>
-                <span id="ai-loading" class="text-[10px] text-yellow-500 animate-pulse hidden uppercase">Analisando...</span>
+                <span id="ai-loading" class="text-[10px] text-yellow-500 animate-pulse hidden uppercase">A analisar...</span>
             </div>
             <div id="ai-content" class="flex-grow overflow-y-auto mb-6 pr-2 flex flex-col scrollbar-hide">
-                <div class="bot-msg msg">Dados sincronizados. Pronto para o diagnóstico tático.</div>
+                <div class="bot-msg msg">Dados sincronizados. Pronto para o diagnóstico.</div>
             </div>
             <input type="text" id="chat-input" placeholder="Comando..." class="w-full bg-white/5 p-5 rounded-2xl text-white outline-none text-sm border border-white/5 focus:border-yellow-500/30 transition-all" onkeypress="handleChat(event)">
         </aside>
@@ -100,14 +98,11 @@
         function updateDashboard(positions) {
             const grid = document.getElementById('dashboard-grid');
             let tPnL = 0, tMarg = 0, tExp = 0;
-
             positions.forEach(pos => {
                 const pnl = parseFloat(pos.unrealisedPnl), val = parseFloat(pos.positionValue);
                 const lev = parseFloat(pos.leverage), cur = parseFloat(pos.markPrice);
                 const ent = parseFloat(pos.avgPrice), liq = parseFloat(pos.liqPrice), tp = parseFloat(pos.takeProfit);
-                const marg = val / lev;
-                tPnL += pnl; tMarg += marg; tExp += val;
-
+                const marg = val / lev; tPnL += pnl; tMarg += marg; tExp += val;
                 let card = document.getElementById(`card-${pos.symbol}`);
                 if (!card) {
                     card = document.createElement('div'); card.id = `card-${pos.symbol}`;
@@ -115,11 +110,9 @@
                     card.innerHTML = `<div class="content-area"></div><div id="tv-${pos.symbol}" class="tv-wrap hidden"></div>`;
                     grid.appendChild(card);
                 }
-
                 const dLiq = liq > 0 ? Math.abs((liq - cur) / cur) * 100 : 100;
                 const tpP = tp > 0 ? (Math.abs(cur - ent) / Math.abs(tp - ent)) * 100 : 0;
                 const cPnL = pnl >= 0 ? '#02d386' : '#ff3b5c';
-
                 card.querySelector('.content-area').innerHTML = `
                     <div class="flex justify-between items-center mb-6">
                         <h2 class="font-black text-white text-xl uppercase tracking-tighter">${pos.symbol} <span class="text-xs text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded ml-1">${lev}x</span></h2>
@@ -132,7 +125,7 @@
                         <div class="text-right pt-3 border-t border-white/5"><p class="metric-label">Entrada / Mark</p><p class="text-[11px] font-bold text-gray-300 font-mono">${fPT(ent, false, 4)} → ${fPT(cur, false, 4)}</p></div>
                         <div class="col-span-2 mt-2">
                             <div class="flex justify-between text-[10px] font-bold text-gray-500 uppercase mb-1"><span>Liquidação ($${fPT(liq, false, 4)})</span><span>${fPT(dLiq)}%</span></div>
-                            <div class="progress-bg"><div class="progress-fill ${dLiq < 12 ? 'bg-red-500 animate-pulse' : 'bg-red-900/40'}" style="width: ${Math.max(0, 100 - dLiq)}%"></div></div>
+                            <div class="progress-bg"><div class="progress-fill ${dLiq < 12 ? 'bg-red-500' : 'bg-red-900/40'}" style="width: ${Math.max(0, 100 - dLiq)}%"></div></div>
                         </div>
                         <div class="col-span-2">
                             <div class="flex justify-between text-[10px] font-bold text-yellow-600 uppercase mb-1"><span>Take Profit ($${fPT(tp, false, 4)})</span><span>${tpP.toFixed(0)}%</span></div>
@@ -140,12 +133,10 @@
                         </div>
                     </div>`;
             });
-
-            const tCol = tPnL >= 0 ? '#02d386' : '#ff3b5c';
             document.getElementById('total-pnl').innerText = fPT(tPnL, true);
-            document.getElementById('total-pnl').style.color = tCol;
+            document.getElementById('total-pnl').style.color = tPnL >= 0 ? '#02d386' : '#ff3b5c';
             document.getElementById('total-pnl-perc').innerText = `${fPT(tMarg > 0 ? (tPnL/tMarg*100) : 0)}%`;
-            document.getElementById('total-pnl-perc').style.color = tCol;
+            document.getElementById('total-pnl-perc').style.color = tPnL >= 0 ? '#02d386' : '#ff3b5c';
             document.getElementById('total-exposure').innerText = fPT(tExp, true);
             document.getElementById('avg-leverage').innerText = fPT(tMarg > 0 ? (tExp / tMarg) : 0) + 'x';
         }
@@ -162,10 +153,9 @@
         }
 
         function handleUniversalToggle(s) {
-            const isD = window.innerWidth >= 1280;
-            const wraps = Array.from(document.querySelectorAll('.tv-wrap'));
-            const anyO = wraps.some(el => !el.classList.contains('hidden'));
-            if (isD) {
+            if (window.innerWidth >= 1280) {
+                const wraps = Array.from(document.querySelectorAll('.tv-wrap'));
+                const anyO = wraps.some(el => !el.classList.contains('hidden'));
                 currentPositions.forEach(pos => {
                     const el = document.getElementById(`tv-${pos.symbol}`);
                     if (anyO) el.classList.add('hidden'); else { el.classList.remove('hidden'); loadChart(pos.symbol); }
@@ -185,7 +175,7 @@
             }
         }
 
-        function handleBaltazarCall() { document.getElementById('ai-section').classList.add('open'); document.getElementById('main-grid').classList.add('chat-open'); }
+        function handleBaltazarCall() { document.getElementById('ai-section').classList.add('open'); document.getElementById('main-grid').classList.add('chat-open'); fetchAIIntelligence(); }
 
         async function fetchAIIntelligence(userQuery = null) {
             const aiContent = document.getElementById('ai-content');
@@ -199,7 +189,7 @@
                 const r = await fetch(AI_FUNC_PATH, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ positions: currentPositions, userMessage: userQuery }) });
                 const d = await r.json();
                 const nMsg = document.createElement('div'); nMsg.className = 'msg bot-msg';
-                nMsg.innerHTML = d.insight.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-black">$1</strong>').replace(/---/g, '<hr>').replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+                nMsg.innerHTML = d.insight.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/---/g, '<hr>').replace(/\n/g, '<br>');
                 aiContent.appendChild(nMsg); aiContent.scrollTop = aiContent.scrollHeight;
             } catch (err) {} finally { loader.classList.add('hidden'); }
         }
