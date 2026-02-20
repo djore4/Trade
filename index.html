@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Trading Lab - v16.7 Delta Tracking</title>
+    <title>AI Trading Lab - v16.8 Clean</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -45,7 +45,7 @@
                 </div>
 
                 <div class="card pnl-chart-container">
-                    <p class="metric-label mb-2">PnL Diário Isolado (Variação 24h)</p>
+                    <p class="metric-label mb-2">PnL Diário (USD)</p>
                     <canvas id="pnlDailyChart"></canvas>
                 </div>
 
@@ -59,7 +59,7 @@
             <div id="dashboard-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </main>
         <aside id="ai-section" class="card p-6 flex flex-col">
-            <div class="mb-6 border-b border-gray-800 pb-4"><span class="text-white text-xs font-bold uppercase">Baltazar Intelligence</span></div>
+            <div class="mb-6 border-b border-gray-800 pb-4"><span class="text-white text-xs font-bold uppercase">Baltazar Console</span></div>
             <div id="ai-content" class="flex-grow overflow-y-auto mb-4 scrollbar-hide"></div>
             <input type="text" id="chat-input" placeholder="Comando..." class="w-full bg-white/5 p-4 rounded-xl text-white border border-white/5 focus:border-yellow-500/30" onkeypress="handleChat(event)">
         </aside>
@@ -73,8 +73,8 @@
 
         let currentPositions = [];
         let pnlChart;
-        // Histórico Real dos dias passados (lucro/prejuízo isolado em cada dia)
-        const dailyHistoryDeltas = [200, 150, -50, 100, 250, -100, 150, 300, 120]; 
+        // REMOVIDO HISTÓRICO FICTÍCIO PARA LIMPAR O CÁLCULO DE HOJE
+        const dailyHistoryDeltas = [0, 0, 0, 0, 0, 0, 0, 0, 0]; 
 
         window.onload = () => { initPnlChart(); fetchPositions(); setInterval(fetchPositions, 10000); fetchTelemetry(); setInterval(fetchTelemetry, 60000); };
 
@@ -93,7 +93,7 @@
                 if (d.result?.list) {
                     currentPositions = d.result.list.filter(p => parseFloat(p.size) !== 0);
                     updateDashboard(currentPositions);
-                    updateChartDelta(currentPositions);
+                    updateChart(currentPositions);
                 }
             } catch (e) {}
         }
@@ -119,20 +119,14 @@
                     <div class="flex justify-between items-center mb-5"><h2 class="font-black text-white text-lg">${pos.symbol} <span class="text-[10px] text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded">${lev}x</span></h2><button onclick="handleUniversalToggle('${pos.symbol}')" class="text-gray-500 hover:text-white"><svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke-width="2.5"></path></svg></button></div>
                     <div class="grid grid-cols-2 gap-4">
                         <div><p class="metric-label">ROE</p><p class="text-2xl font-black" style="color:${cPnL}">${fPT((pnl/marg)*100)}%</p></div>
-                        <div class="text-right"><p class="metric-label">PnL Acumulado</p><p class="text-xl font-bold" style="color:${cPnL}">${fPT(pnl, true)}</p></div>
+                        <div class="text-right"><p class="metric-label">PnL Acum.</p><p class="text-xl font-bold" style="color:${cPnL}">${fPT(pnl, true)}</p></div>
                         <div class="pt-2 border-t border-white/5"><p class="metric-label">Valor Posição</p><p class="text-sm font-bold text-gray-200">${fPT(val, true)}</p></div>
-                        <div class="text-right pt-2 border-t border-white/5"><p class="metric-label">Entrada / Mercado</p><p class="text-[11px] font-bold text-gray-300">${fPT(ent, false, 4)}</p><p class="text-[10px] text-gray-500 font-mono">${fPT(cur, false, 4)}</p></div>
-                        <div class="col-span-2 mt-2">
-                            <div class="flex justify-between text-[9px] font-bold text-gray-500 uppercase"><span>Liq ($${fPT(liq, false, 4)})</span><span>${fPT(dLiq)}%</span></div>
-                            <div class="progress-bg"><div class="progress-fill ${dLiq < 12 ? 'bg-red-500' : 'bg-red-900/40'}" style="width: ${Math.max(0, 100 - dLiq)}%"></div></div>
-                        </div>
-                        <div class="col-span-2">
-                            <div class="flex justify-between text-[9px] font-bold text-yellow-600 uppercase"><span>Take Profit ($${fPT(tp, false, 4)})</span><span>${tpP.toFixed(0)}%</span></div>
-                            <div class="progress-bg"><div class="progress-fill bg-yellow-500/60" style="width: ${Math.min(tpP, 100)}%"></div></div>
-                        </div>
+                        <div class="text-right pt-2 border-t border-white/5"><p class="metric-label">Entrada / Mark</p><p class="text-[11px] font-bold text-gray-300">${fPT(ent, false, 4)}</p><p class="text-[10px] text-gray-500 font-mono">${fPT(cur, false, 4)}</p></div>
+                        <div class="col-span-2 mt-2"><div class="flex justify-between text-[9px] font-bold text-gray-500"><span>Liq ($${fPT(liq, false, 4)})</span><span>${fPT(dLiq)}%</span></div><div class="progress-bg"><div class="progress-fill ${dLiq < 12 ? 'bg-red-500' : 'bg-red-900/40'}" style="width: ${Math.max(0, 100 - dLiq)}%"></div></div></div>
+                        <div class="col-span-2"><div class="flex justify-between text-[9px] font-bold text-yellow-600"><span>TP ($${fPT(tp, false, 4)})</span><span>${tpP.toFixed(0)}%</span></div><div class="progress-bg"><div class="progress-fill bg-yellow-500/60" style="width: ${Math.min(tpP, 100)}%"></div></div></div>
                     </div>`;
             });
-            const led = document.getElementById('status-led'); led.className = mRisk === 2 ? "w-1.5 h-1.5 bg-red-500 rounded-full animate-ping" : (mRisk === 1 ? "w-1.5 h-1.5 bg-yellow-500 rounded-full animate-pulse" : "w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse");
+            const led = document.getElementById('status-led'); led.className = mRisk === 2 ? "w-1.5 h-1.5 bg-red-500 animate-ping" : (mRisk === 1 ? "w-1.5 h-1.5 bg-yellow-500 animate-pulse" : "w-1.5 h-1.5 bg-green-500 animate-pulse");
             const cM = tPnL >= 0 ? '#02d386' : '#ff3b5c';
             document.getElementById('total-pnl').innerText = fPT(tPnL, true); document.getElementById('total-pnl').style.color = cM;
             document.getElementById('total-pnl-perc').innerText = `${fPT(tMarg > 0 ? (tPnL/tMarg*100) : 0)}%`; document.getElementById('total-pnl-perc').style.color = cM;
@@ -148,31 +142,25 @@
                     labels: Array.from({length: 10}, (_, i) => { const d = new Date(); d.setDate(d.getDate() - (9-i)); return i === 9 ? "Hoje" : d.toLocaleDateString('pt-PT', {day:'2-digit', month:'2-digit'}); }),
                     datasets: [{
                         data: [...dailyHistoryDeltas, 0],
-                        backgroundColor: (c) => c.index === 9 ? '#f3ba2f' : (c.dataset.data[c.index] >= 0 ? 'rgba(2, 211, 134, 0.6)' : 'rgba(255, 59, 92, 0.6)'),
-                        borderColor: (c) => c.index === 9 ? '#f3ba2f' : (c.dataset.data[c.index] >= 0 ? '#02d386' : '#ff3b5c'),
+                        backgroundColor: (c) => c.index === 9 ? '#f3ba2f' : 'rgba(255,255,255,0.05)',
+                        borderColor: (c) => c.index === 9 ? '#f3ba2f' : 'rgba(255,255,255,0.1)',
                         borderWidth: 1.5, borderRadius: 4
                     }]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        datalabels: {
-                            anchor: 'end', align: 'start', offset: 4, color: '#fff', font: { size: 10, weight: 'bold' },
-                            textShadowColor: '#000', textShadowBlur: 4, formatter: (v) => '$' + Math.floor(v)
-                        }
-                    },
-                    scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { display: false } }, x: { grid: { display: false }, ticks: { color: '#848e9c', font: { size: 9 } } } }
+                    plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'start', offset: 4, color: '#fff', font: { size: 11, weight: 'bold' }, textShadowColor: '#000', textShadowBlur: 4, formatter: (v) => v === 0 ? '' : '$' + Math.floor(v) } },
+                    scales: { y: { grid: { display: false }, ticks: { display: false } }, x: { grid: { display: false }, ticks: { color: '#848e9c', font: { size: 10 } } } }
                 }
             });
         }
 
-        function updateChartDelta(positions) {
+        function updateChart(positions) {
             if (!pnlChart) return;
-            const currentGlobalPnL = positions.reduce((acc, pos) => acc + parseFloat(pos.unrealisedPnl), 0);
+            const currentTotalPnL = positions.reduce((acc, pos) => acc + parseFloat(pos.unrealisedPnl), 0);
             const sumPast = dailyHistoryDeltas.reduce((a, b) => a + b, 0);
-            // HOJE = O que ganhei desde as 00h (Diferença entre o Global e o passado acumulado)
-            pnlChart.data.datasets[0].data[9] = currentGlobalPnL - sumPast;
+            // HOJE = Capital Atual - Lucro do Passado. Se Passado é 0, Hoje = Global.
+            pnlChart.data.datasets[0].data[9] = currentTotalPnL - sumPast;
             pnlChart.update('none');
         }
 
