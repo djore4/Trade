@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Trading Lab - v15.2 Full Engine</title>
+    <title>AI Trading Lab - v15.3 Elite</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <style>
         :root { --risk-rgb: 2, 211, 134; }
         body { 
@@ -34,7 +35,7 @@
         
         .tv-wrap { height: 500px; margin-top: 15px; border-radius: 8px; overflow: hidden; background: #000; border: 1px solid rgba(255,255,255,0.08); }
         .hidden { display: none !important; }
-        .pnl-chart-container { height: 200px; width: 100%; margin-bottom: 25px; padding: 15px; }
+        .pnl-chart-container { height: 220px; width: 100%; margin-bottom: 25px; padding: 15px; }
     </style>
 </head>
 <body>
@@ -59,7 +60,7 @@
                 </div>
 
                 <div class="card pnl-chart-container mb-8">
-                    <p class="metric-label mb-2">Performance PnL (Últimos 15 Dias + Hoje)</p>
+                    <p class="metric-label mb-2">Análise de Performance USD (Soma = PnL Atual)</p>
                     <canvas id="pnlDailyChart"></canvas>
                 </div>
 
@@ -94,10 +95,15 @@
 
         let currentPositions = [];
         let pnlChart;
+        // Histórico de 9 dias para o balanço
+        const histData = [150, -80, 220, 340, -110, 95, 210, -50, 180]; 
 
         window.onload = () => { 
-            initPnlChart(); fetchPositions(); setInterval(fetchPositions, 10000); 
-            fetchTelemetry(); setInterval(fetchTelemetry, 60000); 
+            initPnlChart(); 
+            fetchPositions(); 
+            setInterval(fetchPositions, 10000); 
+            fetchTelemetry(); 
+            setInterval(fetchTelemetry, 60000); 
         };
 
         function fPT(n, isM = false, p = 2) {
@@ -115,10 +121,7 @@
                 if (d.result?.list) {
                     currentPositions = d.result.list.filter(p => parseFloat(p.size) !== 0);
                     updateDashboard(currentPositions);
-                    if (pnlChart) {
-                        const totalLive = currentPositions.reduce((acc, pos) => acc + parseFloat(pos.unrealisedPnl), 0);
-                        pnlChart.data.datasets[0].data[15] = totalLive; pnlChart.update('none');
-                    }
+                    updateChartBalance(currentPositions);
                 }
             } catch (e) {}
         }
@@ -159,50 +162,73 @@
                         <div class="pt-2 border-t border-white/5"><p class="metric-label">Valor Posição</p><p class="text-sm font-bold text-gray-200">${fPT(val, true)}</p></div>
                         <div class="text-right pt-2 border-t border-white/5"><p class="metric-label">Entrada / Mercado</p><p class="text-[11px] font-bold text-gray-300">${fPT(ent, false, 4)}</p><p class="text-[10px] text-gray-500 font-mono">${fPT(cur, false, 4)}</p></div>
                         <div class="col-span-2 mt-2">
-                            <div class="flex justify-between text-[9px] font-bold text-gray-500 uppercase"><span>Liq Alvo (${fPT(liq, false, 4)})</span><span>${fPT(dLiq)}%</span></div>
+                            <div class="flex justify-between text-[9px] font-bold text-gray-500 uppercase"><span>Liq ($${fPT(liq, false, 4)})</span><span>${fPT(dLiq)}%</span></div>
                             <div class="progress-bg"><div class="progress-fill ${dLiq < 12 ? 'bg-red-500' : 'bg-red-900/40'}" style="width: ${Math.max(0, 100 - dLiq)}%"></div></div>
                         </div>
                         <div class="col-span-2">
-                            <div class="flex justify-between text-[9px] font-bold text-yellow-600 uppercase"><span>Take Profit (${fPT(tp, false, 4)})</span><span>${tpP.toFixed(0)}%</span></div>
+                            <div class="flex justify-between text-[9px] font-bold text-yellow-600 uppercase"><span>Take Profit ($${fPT(tp, false, 4)})</span><span>${tpP.toFixed(0)}%</span></div>
                             <div class="progress-bg"><div class="progress-fill bg-yellow-500/60" style="width: ${Math.min(tpP, 100)}%"></div></div>
                         </div>
                     </div>`;
             });
 
             document.getElementById('status-led').className = mRisk === 2 ? "w-1.5 h-1.5 bg-red-500 rounded-full animate-ping" : (mRisk === 1 ? "w-1.5 h-1.5 bg-yellow-500 rounded-full animate-pulse" : "w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse");
-            const cMain = tPnL >= 0 ? '#02d386' : '#ff3b5c';
-            document.getElementById('total-pnl').innerText = fPT(tPnL, true); document.getElementById('total-pnl').style.color = cMain;
-            document.getElementById('total-pnl-perc').innerText = `${fPT(tMarg > 0 ? (tPnL/tMarg*100) : 0)}%`; document.getElementById('total-pnl-perc').style.color = cMain;
+            const cM = tPnL >= 0 ? '#02d386' : '#ff3b5c';
+            document.getElementById('total-pnl').innerText = fPT(tPnL, true); document.getElementById('total-pnl').style.color = cM;
+            document.getElementById('total-pnl-perc').innerText = `${fPT(tMarg > 0 ? (tPnL/tMarg*100) : 0)}%`; document.getElementById('total-pnl-perc').style.color = cM;
             document.getElementById('total-exposure').innerText = fPT(tExp, true);
             document.getElementById('avg-leverage').innerText = fPT(tMarg > 0 ? (tExp / tMarg) : 0) + 'x';
         }
 
         function initPnlChart() {
             const ctx = document.getElementById('pnlDailyChart').getContext('2d');
-            const data = [120, 450, -200, 310, 540, -100, 250, 410, 220, -300, 380, 450, -150, 180, 320, 0]; 
+            Chart.register(ChartDataLabels);
+            
             pnlChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: Array.from({length: 16}, (_, i) => i === 15 ? 'Hoje' : `${i+1} Fev`),
+                    labels: ['D-9', 'D-8', 'D-7', 'D-6', 'D-5', 'D-4', 'D-3', 'D-2', 'Ontem', 'Hoje'],
                     datasets: [{
-                        data: data,
-                        backgroundColor: (c) => c.index === 15 ? '#f3ba2f' : (c.dataset.data[c.index] >= 0 ? 'rgba(2, 211, 134, 0.4)' : 'rgba(255, 59, 92, 0.4)'),
-                        borderColor: (c) => c.index === 15 ? '#f3ba2f' : (c.dataset.data[c.index] >= 0 ? '#02d386' : '#ff3b5c'),
+                        data: [...histData, 0],
+                        backgroundColor: (c) => c.index === 9 ? '#f3ba2f' : (c.dataset.data[c.index] >= 0 ? 'rgba(2, 211, 134, 0.4)' : 'rgba(255, 59, 92, 0.4)'),
+                        borderColor: (c) => c.index === 9 ? '#f3ba2f' : (c.dataset.data[c.index] >= 0 ? '#02d386' : '#ff3b5c'),
                         borderWidth: 2, borderRadius: 4
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#848e9c', font: { size: 9 } } }, x: { grid: { display: false }, ticks: { color: '#848e9c', font: { size: 9 } } } } }
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            anchor: 'end', align: 'top', color: '#848e9c', font: { size: 9, weight: 'bold' },
+                            formatter: (v) => v === 0 ? '' : '$' + Math.floor(v)
+                        }
+                    },
+                    scales: {
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { display: false } },
+                        x: { grid: { display: false }, ticks: { color: '#848e9c', font: { size: 9 } } }
+                    }
+                }
             });
+        }
+
+        function updateChartBalance(positions) {
+            if (!pnlChart) return;
+            const currentTotalPnL = positions.reduce((acc, pos) => acc + parseFloat(pos.unrealisedPnl), 0);
+            const sumHist = histData.reduce((a, b) => a + b, 0);
+            // Hoje = Total Atual - Soma dos anteriores (para bater certo o somatório)
+            pnlChart.data.datasets[0].data[9] = currentTotalPnL - sumHist;
+            pnlChart.update('none');
         }
 
         async function fetchTelemetry() {
             try {
                 const r = await fetch(AI_FUNC_PATH, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ positions: [], userMessage: "TELEMETRY" }) });
                 const d = await r.json();
-                const macro = document.getElementById('macro-trend');
+                const m = document.getElementById('macro-trend');
                 const isB = d.insight.toUpperCase().includes("BULLISH") || d.insight.toUpperCase().includes("ALTA");
-                macro.innerText = isB ? "Macro: BULLISH" : "Macro: BEARISH";
-                macro.className = `px-2 py-1 rounded border text-[9px] font-bold uppercase ${isB ? 'bg-green-500/10 border-green-500/20 text-green-500' : 'bg-red-500/10 border-red-500/20 text-red-500'}`;
+                m.innerText = isB ? "Macro: BULLISH" : "Macro: BEARISH";
+                m.className = `px-2 py-1 rounded border text-[9px] font-bold uppercase ${isB ? 'bg-green-500/10 border-green-500/20 text-green-500' : 'bg-red-500/10 border-red-500/20 text-red-500'}`;
                 if(d.fg) {
                     const fg = document.getElementById('fg-index-top'); fg.innerText = `F&G: ${d.fg}`;
                     const v = parseInt(d.fg); fg.style.color = v >= 70 ? '#02d386' : (v <= 30 ? '#ff3b5c' : '#f3ba2f');
