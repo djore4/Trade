@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Trading Lab - v18.5 Sniper</title>
+    <title>AI Trading Lab - v18.6 Humanized</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -24,14 +24,17 @@
         #ai-section.open { display: flex; }
         @media (min-width: 1280px) { #ai-section.open { height: calc(100vh - 40px); position: sticky; top: 20px; } }
         
-        .msg { margin-bottom: 12px; padding: 14px; border-radius: 12px; font-size: 0.88rem; line-height: 1.6; }
-        .bot-msg { background: rgba(243, 186, 47, 0.05); border-left: 4px solid #f3ba2f; }
+        .msg { margin-bottom: 12px; padding: 14px; border-radius: 12px; font-size: 0.9rem; line-height: 1.5; }
+        .bot-msg { background: rgba(243, 186, 47, 0.03); border-left: 3px solid #f3ba2f; color: #e2e8f0; }
+        .user-msg { background: rgba(255, 255, 255, 0.05); border-right: 3px solid #848e9c; align-self: flex-end; text-align: right; color: #fff; }
 
         .progress-bg { background-color: #1e2329; height: 6px; border-radius: 3px; width: 100%; margin-top: 4px; overflow: hidden; }
         .progress-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
         
         .tv-wrap { height: 500px; margin-top: 15px; border-radius: 8px; overflow: hidden; background: #000; border: 1px solid rgba(255,255,255,0.08); }
         .hidden { display: none !important; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #1e2329; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -45,17 +48,17 @@
                             <span class="px-2 py-1 bg-white/5 rounded border border-white/10 text-[9px] font-bold text-gray-500 uppercase flex items-center gap-2">
                                 <span id="status-led" class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> Terminal Online
                             </span>
-                            <span id="macro-trend" class="px-2 py-1 bg-white/5 rounded border border-white/10 text-[9px] font-bold text-gray-400 uppercase tracking-widest">Macro: Syncing...</span>
-                            <span id="fg-index-top" class="px-2 py-1 bg-white/5 rounded border border-white/10 text-[9px] font-bold text-gray-400 uppercase tracking-widest">F&G: --</span>
+                            <span id="macro-trend" class="px-2 py-1 bg-white/5 rounded border border-white/10 text-[9px] font-bold text-gray-400 uppercase">Macro: Syncing...</span>
+                            <span id="fg-index-top" class="px-2 py-1 bg-white/5 rounded border border-white/10 text-[9px] font-bold text-gray-400 uppercase">F&G: --</span>
                         </div>
                     </div>
-                    <button onclick="handleBaltazarCall()" class="w-full md:w-auto bg-[#f3ba2f] hover:bg-yellow-400 text-black px-8 py-3 rounded-xl font-black transition-all flex justify-center items-center gap-3 uppercase text-xs shadow-lg">
+                    <button onclick="handleBaltazarCall()" class="w-full md:w-auto bg-[#f3ba2f] hover:bg-yellow-400 text-black px-8 py-3 rounded-xl font-black transition-all uppercase text-xs shadow-lg">
                         Baltazar AI
                     </button>
                 </div>
 
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
-                    <div class="card p-4"><p class="metric-label">PnL Global Acumulado</p><p id="total-pnl" class="text-xl metric-value leading-none">$0</p></div>
+                    <div class="card p-4"><p class="metric-label">PnL Global</p><p id="total-pnl" class="text-xl metric-value leading-none">$0</p></div>
                     <div class="card p-4"><p class="metric-label">ROE Médio</p><p id="total-pnl-perc" class="text-xl metric-value leading-none">0,00%</p></div>
                     <div class="card p-4"><p class="metric-label">Exposição</p><p id="total-exposure" class="text-xl metric-value text-white leading-none">$0</p></div>
                     <div class="card p-4 border-yellow-500/10"><p class="metric-label text-yellow-500 font-bold">Alavancagem</p><p id="avg-leverage" class="text-xl metric-value text-yellow-500 leading-none">0,00x</p></div>
@@ -66,13 +69,13 @@
 
         <aside id="ai-section" class="card p-6 flex flex-col">
             <div class="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
-                <span class="text-white text-xs font-bold tracking-widest uppercase">Estrategista Baltazar</span>
+                <span class="text-white text-xs font-bold tracking-widest uppercase">Baltazar <span class="text-gray-500">(Analista de Mesa)</span></span>
             </div>
-            <div id="ai-content" class="flex-grow overflow-y-auto pr-2 flex flex-col mb-4 scrollbar-hide">
-                <div class="bot-msg msg">Foco total nas posições. Gráfico removido.</div>
+            <div id="ai-content" class="flex-grow overflow-y-auto flex flex-col mb-4">
+                <div class="bot-msg msg">Estou a monitorizar as tuas posições. No que é que te posso ajudar agora?</div>
             </div>
             <div class="pt-4 border-t border-gray-800">
-                <input type="text" id="chat-input" placeholder="Comando..." class="w-full bg-white/5 p-4 rounded-xl text-white outline-none text-sm border border-white/5 focus:border-yellow-500/30" onkeypress="handleChat(event)">
+                <input type="text" id="chat-input" placeholder="Diz-me algo..." class="w-full bg-white/5 p-4 rounded-xl text-white outline-none text-sm border border-white/5 focus:border-yellow-500/30" onkeypress="handleChat(event)">
             </div>
         </aside>
     </div>
@@ -85,12 +88,7 @@
 
         let currentPositions = [];
 
-        window.onload = () => { 
-            fetchPositions(); 
-            setInterval(fetchPositions, 10000); 
-            fetchTelemetry(); 
-            setInterval(fetchTelemetry, 60000); 
-        };
+        window.onload = () => { fetchPositions(); setInterval(fetchPositions, 10000); fetchTelemetry(); setInterval(fetchTelemetry, 60000); };
 
         function fPT(n, isM = false, p = 2) {
             const dec = isM ? 0 : p;
@@ -113,7 +111,7 @@
 
         function updateDashboard(positions) {
             const grid = document.getElementById('dashboard-grid');
-            let tPnL = 0, tMarg = 0, tExp = 0, mRisk = 0;
+            let tPnL = 0, tMarg = 0, tExp = 0;
 
             positions.forEach(pos => {
                 const pnl = parseFloat(pos.unrealisedPnl), val = parseFloat(pos.positionValue);
@@ -134,18 +132,17 @@
                 const dLiq = liq > 0 ? Math.abs((liq - cur) / cur) * 100 : 100;
                 const tpP = tp > 0 ? (Math.abs(cur - ent) / Math.abs(tp - ent)) * 100 : 0;
                 const cPnL = pnl >= 0 ? '#02d386' : '#ff3b5c';
-                if(dLiq < 12) mRisk = 2; else if(dLiq < 25 && mRisk < 2) mRisk = 1;
 
                 card.querySelector('.content-area').innerHTML = `
                     <div class="flex justify-between items-center mb-5">
-                        <h2 class="font-black text-white text-lg uppercase tracking-tighter">${pos.symbol} <span class="text-[10px] text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded ml-1">${lev}x</span></h2>
+                        <h2 class="font-black text-white text-lg uppercase">${pos.symbol} <span class="text-xs text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded">${lev}x</span></h2>
                         <button onclick="handleUniversalToggle('${pos.symbol}')" class="text-gray-500 hover:text-white"><svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke-width="2.5"></path></svg></button>
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div><p class="metric-label">ROE</p><p class="text-2xl font-black" style="color:${cPnL}">${fPT((pnl/marg)*100)}%</p></div>
-                        <div class="text-right"><p class="metric-label">PnL Aberto</p><p class="text-xl font-bold" style="color:${cPnL}">${fPT(pnl, true)}</p></div>
+                        <div class="text-right"><p class="metric-label">PnL</p><p class="text-xl font-bold" style="color:${cPnL}">${fPT(pnl, true)}</p></div>
                         <div class="pt-2 border-t border-white/5"><p class="metric-label">Valor USD</p><p class="text-sm font-bold text-gray-200">${fPT(val, true)}</p></div>
-                        <div class="text-right pt-2 border-t border-white/5"><p class="metric-label">Entrada / Mark</p><p class="text-[11px] font-bold text-gray-300">${fPT(ent, false, 4)}</p><p class="text-[10px] text-gray-500 font-mono">${fPT(cur, false, 4)}</p></div>
+                        <div class="text-right pt-2 border-t border-white/5"><p class="metric-label">Entrada / Mark</p><p class="text-[11px] font-bold text-gray-300">${fPT(ent, false, 4)}</p><p class="text-[10px] text-gray-500">${fPT(cur, false, 4)}</p></div>
                         <div class="col-span-2 mt-2">
                             <div class="flex justify-between text-[9px] font-bold text-gray-500 uppercase"><span>Liq ($${fPT(liq, false, 4)})</span><span>${fPT(dLiq)}%</span></div>
                             <div class="progress-bg"><div class="progress-fill ${dLiq < 12 ? 'bg-red-500' : 'bg-red-900/40'}" style="width: ${Math.max(0, 100 - dLiq)}%"></div></div>
@@ -159,7 +156,6 @@
 
             const cM = tPnL >= 0 ? '#02d386' : '#ff3b5c';
             document.getElementById('total-pnl').innerText = fPT(tPnL, true); 
-            document.getElementById('total-pnl').style.color = cM;
             document.getElementById('total-pnl-perc').innerText = `${fPT(tMarg > 0 ? (tPnL/tMarg*100) : 0)}%`; 
             document.getElementById('total-pnl-perc').style.color = cM;
             document.getElementById('total-exposure').innerText = fPT(tExp, true);
@@ -174,10 +170,7 @@
                 const isB = d.insight.toUpperCase().includes("BULLISH");
                 m.innerText = isB ? "Macro: BULLISH" : "Macro: BEARISH";
                 m.className = `px-2 py-1 rounded border text-[9px] font-bold uppercase ${isB ? 'bg-green-500/10 border-green-500/20 text-green-500' : 'bg-red-500/10 border-red-500/20 text-red-500'}`;
-                if(d.fg) {
-                    const fg = document.getElementById('fg-index-top'); fg.innerText = `F&G: ${d.fg}`;
-                    const v = parseInt(d.fg); fg.style.color = v >= 70 ? '#02d386' : (v <= 30 ? '#ff3b5c' : '#f3ba2f');
-                }
+                if(d.fg) { document.getElementById('fg-index-top').innerText = `F&G: ${d.fg}`; }
             } catch (e) {}
         }
 
@@ -215,9 +208,19 @@
             if (userQuery) {
                 const uMsg = document.createElement('div'); uMsg.className = 'msg user-msg'; uMsg.innerText = userQuery;
                 aiContent.appendChild(uMsg);
+                aiContent.scrollTop = aiContent.scrollHeight;
             }
             try {
-                const r = await fetch(AI_FUNC_PATH, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ positions: currentPositions, userMessage: userQuery }) });
+                // Adicionamos a instrução de tom (Analista de Mesa) diretamente no payload
+                const r = await fetch(AI_FUNC_PATH, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ 
+                        positions: currentPositions, 
+                        userMessage: userQuery,
+                        tone: "Analista de Mesa: humano, fundamentado, sem bullet points excessivos, conversa direta."
+                    }) 
+                });
                 const d = await r.json();
                 const nMsg = document.createElement('div'); nMsg.className = 'msg bot-msg';
                 nMsg.innerHTML = d.insight.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
