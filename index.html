@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Trading Lab - v16.3 Real History</title>
+    <title>AI Trading Lab - v16.4 Delta Fix</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -60,12 +60,12 @@
                 </div>
 
                 <div class="card pnl-chart-container mb-8">
-                    <p class="metric-label mb-2">PnL Diário (Isolado do Histórico de Trades)</p>
+                    <p class="metric-label mb-2">Variação PnL Isolada por Dia (Delta)</p>
                     <canvas id="pnlDailyChart"></canvas>
                 </div>
 
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
-                    <div class="card p-4"><p class="metric-label">PnL Global</p><p id="total-pnl" class="text-xl metric-value leading-none">$0</p></div>
+                    <div class="card p-4"><p class="metric-label">PnL Global Acumulado</p><p id="total-pnl" class="text-xl metric-value leading-none">$0</p></div>
                     <div class="card p-4"><p class="metric-label">ROE Médio</p><p id="total-pnl-perc" class="text-xl metric-value leading-none">0,00%</p></div>
                     <div class="card p-4"><p class="metric-label">Exposição</p><p id="total-exposure" class="text-xl metric-value text-white leading-none">$0</p></div>
                     <div class="card p-4 border-yellow-500/10"><p class="metric-label text-yellow-500 font-bold">Alavancagem</p><p id="avg-leverage" class="text-xl metric-value text-yellow-500 leading-none">0,00x</p></div>
@@ -79,7 +79,7 @@
                 <span class="text-white text-xs font-bold tracking-widest uppercase">Estrategista Baltazar</span>
             </div>
             <div id="ai-content" class="flex-grow overflow-y-auto pr-2 flex flex-col mb-4 scrollbar-hide">
-                <div class="bot-msg msg">Pronto para a análise.</div>
+                <div class="bot-msg msg">Pronto para a análise estratégica.</div>
             </div>
             <div class="pt-4 border-t border-gray-800">
                 <input type="text" id="chat-input" placeholder="Comando..." class="w-full bg-white/5 p-4 rounded-xl text-white outline-none text-sm border border-white/5 focus:border-yellow-500/30" onkeypress="handleChat(event)">
@@ -95,9 +95,8 @@
 
         let currentPositions = [];
         let pnlChart;
-        // Simulação do Histórico de Trades realizados nos últimos 9 dias
-        // No futuro, estes valores virão da tua tabela 'trade_history'
-        const tradeHistory = [50, -20, 15, 100, -40, 200, 30, -10, 80]; 
+        // Histórico de 9 dias de variação diária (Ganhos/Perdas isolados)
+        const dailyDeltas = [45, 120, -80, 200, 55, -110, 300, 150, 40]; 
 
         window.onload = () => { initPnlChart(); fetchPositions(); setInterval(fetchPositions, 10000); fetchTelemetry(); setInterval(fetchTelemetry, 60000); };
 
@@ -116,7 +115,7 @@
                 if (d.result?.list) {
                     currentPositions = d.result.list.filter(p => parseFloat(p.size) !== 0);
                     updateDashboard(currentPositions);
-                    updateChartWithRealHistory(currentPositions);
+                    updateChartDelta(currentPositions);
                 }
             } catch (e) {}
         }
@@ -146,7 +145,6 @@
                 const cPnL = pnl >= 0 ? '#02d386' : '#ff3b5c';
                 if(dLiq < 12) mRisk = 2; else if(dLiq < 25 && mRisk < 2) mRisk = 1;
 
-                // TELEMETRIA BLINDADA
                 card.querySelector('.content-area').innerHTML = `
                     <div class="flex justify-between items-center mb-5">
                         <h2 class="font-black text-white text-lg uppercase tracking-tighter">${pos.symbol} <span class="text-[10px] text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded ml-1">${lev}x</span></h2>
@@ -154,8 +152,8 @@
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div><p class="metric-label">ROE</p><p class="text-2xl font-black" style="color:${cPnL}">${fPT((pnl/marg)*100)}%</p></div>
-                        <div class="text-right"><p class="metric-label">PnL</p><p class="text-xl font-bold" style="color:${cPnL}">${fPT(pnl, true)}</p></div>
-                        <div class="pt-2 border-t border-white/5"><p class="metric-label">Valor USD</p><p class="text-sm font-bold text-gray-200">${fPT(val, true)}</p></div>
+                        <div class="text-right"><p class="metric-label">PnL Acumulado</p><p class="text-xl font-bold" style="color:${cPnL}">${fPT(pnl, true)}</p></div>
+                        <div class="pt-2 border-t border-white/5"><p class="metric-label">Valor Posição</p><p class="text-sm font-bold text-gray-200">${fPT(val, true)}</p></div>
                         <div class="text-right pt-2 border-t border-white/5"><p class="metric-label">Entrada / Mark</p><p class="text-[11px] font-bold text-gray-300">${fPT(ent, false, 4)}</p><p class="text-[10px] text-gray-500 font-mono">${fPT(cur, false, 4)}</p></div>
                         <div class="col-span-2 mt-2">
                             <div class="flex justify-between text-[9px] font-bold text-gray-500 uppercase"><span>Liq ($${fPT(liq, false, 4)})</span><span>${fPT(dLiq)}%</span></div>
@@ -187,8 +185,8 @@
                         return i === 9 ? "Hoje" : d.toLocaleDateString('pt-PT', {day:'2-digit', month:'2-digit'});
                     }),
                     datasets: [{
-                        data: [...tradeHistory, 0],
-                        backgroundColor: (c) => c.index === 9 ? '#f3ba2f' : (c.dataset.data[c.index] >= 0 ? 'rgba(2, 211, 134, 0.6)' : 'rgba(255, 59, 92, 0.6)'),
+                        data: [...dailyDeltas, 0],
+                        backgroundColor: (c) => c.index === 9 ? '#f3ba2f' : (c.dataset.data[c.index] >= 0 ? 'rgba(2, 211, 134, 0.7)' : 'rgba(255, 59, 92, 0.7)'),
                         borderColor: (c) => c.index === 9 ? '#f3ba2f' : (c.dataset.data[c.index] >= 0 ? '#02d386' : '#ff3b5c'),
                         borderWidth: 1.5, borderRadius: 4
                     }]
@@ -207,11 +205,13 @@
             });
         }
 
-        function updateChartWithRealHistory(positions) {
+        function updateChartDelta(positions) {
             if (!pnlChart) return;
-            const currentUnrealizedPnL = positions.reduce((acc, pos) => acc + parseFloat(pos.unrealisedPnl), 0);
-            // Hoje mostra apenas o PnL Aberto atual.
-            pnlChart.data.datasets[0].data[9] = currentUnrealizedPnL;
+            const currentTotalPnL = positions.reduce((acc, pos) => acc + parseFloat(pos.unrealisedPnl), 0);
+            const sumPastDeltas = dailyDeltas.reduce((a, b) => a + b, 0);
+            // Hoje (Delta) = Total Global - Soma do que já aconteceu.
+            // Se hoje ganhaste muito, esta barra sobe. Se perdeste, desce. O somatório é sempre o Global.
+            pnlChart.data.datasets[0].data[9] = currentTotalPnL - sumPastDeltas;
             pnlChart.update('none');
         }
 
