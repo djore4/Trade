@@ -3,27 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Trading Lab - v17.1 Clean History</title>
+    <title>AI Trading Lab - v18.5 Sniper</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <style>
         :root { --risk-rgb: 2, 211, 134; }
-        body { background-color: #080a0c; color: #f0f2f5; font-family: 'Outfit', sans-serif; -webkit-font-smoothing: antialiased; min-height: 100vh; overflow-x: hidden; }
+        body { 
+            background-color: #080a0c; color: #f0f2f5; font-family: 'Outfit', sans-serif; 
+            -webkit-font-smoothing: antialiased; background-image: radial-gradient(circle at top right, rgba(var(--risk-rgb), 0.1), transparent 800px);
+            min-height: 100vh; overflow-x: hidden;
+        }
         .card { background: rgba(24, 26, 32, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; }
         .metric-label { color: #848e9c; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; }
         .metric-value { font-family: 'Roboto Mono', monospace; font-weight: 700; }
+        
         .app-grid { display: grid; grid-template-columns: 1fr; gap: 20px; padding: 15px; max-width: 1800px; margin: 0 auto; transition: all 0.4s ease; }
         @media (min-width: 1280px) { .app-grid.chat-open { grid-template-columns: 1fr 500px; } }
+
         #ai-section { display: none; flex-direction: column; }
         #ai-section.open { display: flex; }
         @media (min-width: 1280px) { #ai-section.open { height: calc(100vh - 40px); position: sticky; top: 20px; } }
+        
+        .msg { margin-bottom: 12px; padding: 14px; border-radius: 12px; font-size: 0.88rem; line-height: 1.6; }
+        .bot-msg { background: rgba(243, 186, 47, 0.05); border-left: 4px solid #f3ba2f; }
+
         .progress-bg { background-color: #1e2329; height: 6px; border-radius: 3px; width: 100%; margin-top: 4px; overflow: hidden; }
         .progress-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
+        
         .tv-wrap { height: 500px; margin-top: 15px; border-radius: 8px; overflow: hidden; background: #000; border: 1px solid rgba(255,255,255,0.08); }
         .hidden { display: none !important; }
-        .pnl-chart-container { height: 220px; width: 100%; margin-bottom: 25px; padding: 15px; }
     </style>
 </head>
 <body>
@@ -33,56 +41,63 @@
                 <div class="flex flex-col md:flex-row justify-between gap-4 border-b border-gray-800/40 pb-6 mb-8">
                     <div>
                         <h1 class="text-4xl font-extrabold text-white tracking-tight mb-2"><span class="text-[#f3ba2f]">AI</span> Trading Lab</h1>
-                        <div class="flex flex-wrap gap-2 text-[10px]">
-                            <span class="px-2 py-1 bg-white/5 rounded border border-white/10 font-bold text-gray-500 uppercase flex items-center gap-2">
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-2 py-1 bg-white/5 rounded border border-white/10 text-[9px] font-bold text-gray-500 uppercase flex items-center gap-2">
                                 <span id="status-led" class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> Terminal Online
                             </span>
-                            <span id="macro-trend" class="px-2 py-1 bg-white/5 rounded border border-white/10 font-bold text-gray-400 uppercase tracking-widest">Macro: Syncing...</span>
-                            <span id="fg-index-top" class="px-2 py-1 bg-white/5 rounded border border-white/10 font-bold text-gray-400 uppercase tracking-widest">F&G: --</span>
+                            <span id="macro-trend" class="px-2 py-1 bg-white/5 rounded border border-white/10 text-[9px] font-bold text-gray-400 uppercase tracking-widest">Macro: Syncing...</span>
+                            <span id="fg-index-top" class="px-2 py-1 bg-white/5 rounded border border-white/10 text-[9px] font-bold text-gray-400 uppercase tracking-widest">F&G: --</span>
                         </div>
                     </div>
-                    <button onclick="handleBaltazarCall()" class="bg-[#f3ba2f] hover:bg-yellow-400 text-black px-8 py-3 rounded-xl font-black uppercase text-xs shadow-lg">Baltazar AI</button>
+                    <button onclick="handleBaltazarCall()" class="w-full md:w-auto bg-[#f3ba2f] hover:bg-yellow-400 text-black px-8 py-3 rounded-xl font-black transition-all flex justify-center items-center gap-3 uppercase text-xs shadow-lg">
+                        Baltazar AI
+                    </button>
                 </div>
 
-                <div class="card pnl-chart-container">
-                    <p class="metric-label mb-2">PnL Diário Isolado (Puro)</p>
-                    <canvas id="pnlDailyChart"></canvas>
-                </div>
-
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-8 mb-8">
-                    <div class="card p-4"><p class="metric-label">PnL Global Acumulado</p><p id="total-pnl" class="text-xl metric-value">$0</p></div>
-                    <div class="card p-4"><p class="metric-label">ROE Médio</p><p id="total-pnl-perc" class="text-xl metric-value">0,00%</p></div>
-                    <div class="card p-4"><p class="metric-label">Exposição</p><p id="total-exposure" class="text-xl metric-value">$0</p></div>
-                    <div class="card p-4 border-yellow-500/10"><p class="metric-label text-yellow-500 font-bold">Alavancagem</p><p id="avg-leverage" class="text-xl metric-value text-yellow-500">0,00x</p></div>
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
+                    <div class="card p-4"><p class="metric-label">PnL Global Acumulado</p><p id="total-pnl" class="text-xl metric-value leading-none">$0</p></div>
+                    <div class="card p-4"><p class="metric-label">ROE Médio</p><p id="total-pnl-perc" class="text-xl metric-value leading-none">0,00%</p></div>
+                    <div class="card p-4"><p class="metric-label">Exposição</p><p id="total-exposure" class="text-xl metric-value text-white leading-none">$0</p></div>
+                    <div class="card p-4 border-yellow-500/10"><p class="metric-label text-yellow-500 font-bold">Alavancagem</p><p id="avg-leverage" class="text-xl metric-value text-yellow-500 leading-none">0,00x</p></div>
                 </div>
             </header>
             <div id="dashboard-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </main>
+
         <aside id="ai-section" class="card p-6 flex flex-col">
-            <div class="mb-6 border-b border-gray-800 pb-4"><span class="text-white text-xs font-bold uppercase">Baltazar Console</span></div>
-            <div id="ai-content" class="flex-grow overflow-y-auto mb-4 scrollbar-hide"></div>
-            <input type="text" id="chat-input" placeholder="Comando..." class="w-full bg-white/5 p-4 rounded-xl text-white border border-white/5 focus:border-yellow-500/30" onkeypress="handleChat(event)">
+            <div class="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
+                <span class="text-white text-xs font-bold tracking-widest uppercase">Estrategista Baltazar</span>
+            </div>
+            <div id="ai-content" class="flex-grow overflow-y-auto pr-2 flex flex-col mb-4 scrollbar-hide">
+                <div class="bot-msg msg">Foco total nas posições. Gráfico removido.</div>
+            </div>
+            <div class="pt-4 border-t border-gray-800">
+                <input type="text" id="chat-input" placeholder="Comando..." class="w-full bg-white/5 p-4 rounded-xl text-white outline-none text-sm border border-white/5 focus:border-yellow-500/30" onkeypress="handleChat(event)">
+            </div>
         </aside>
     </div>
 
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <script>
-        const AI_FUNC_PATH = `https://qjzjxtxrlofnoyaaypbu.supabase.co/functions/v1/trade-advisor`;
         const FUNC_PATH = `https://qjzjxtxrlofnoyaaypbu.supabase.co/functions/v1/get-bybit-positions`;
+        const AI_FUNC_PATH = `https://qjzjxtxrlofnoyaaypbu.supabase.co/functions/v1/trade-advisor`;
         const SUPABASE_KEY = 'sb_publishable_bRa-mZWTaf0g6sNyWL9OmQ_uvo7Ex5H';
 
         let currentPositions = [];
-        let pnlChart;
-        
-        // ZERADO: Nenhum valor fictício. Tudo a zero até haver dados reais.
-        const histIsolado = [0, 0, 0, 0, 0, 0, 0, 0, 0]; 
 
-        window.onload = () => { initPnlChart(); fetchPositions(); setInterval(fetchPositions, 10000); fetchTelemetry(); setInterval(fetchTelemetry, 60000); };
+        window.onload = () => { 
+            fetchPositions(); 
+            setInterval(fetchPositions, 10000); 
+            fetchTelemetry(); 
+            setInterval(fetchTelemetry, 60000); 
+        };
 
         function fPT(n, isM = false, p = 2) {
             const dec = isM ? 0 : p;
-            let res = Math.abs(n).toLocaleString('pt-PT', { minimumFractionDigits: dec, maximumFractionDigits: dec });
-            return (n < 0 ? "-" : "") + (isM ? "$" : "") + res;
+            let parts = n.toFixed(dec).split(".");
+            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            let res = parts.join(",");
+            return (n < 0 ? "-" : "") + (isM ? "$" : "") + (res.startsWith("-") ? res.substring(1) : res);
         }
 
         async function fetchPositions() {
@@ -92,7 +107,6 @@
                 if (d.result?.list) {
                     currentPositions = d.result.list.filter(p => parseFloat(p.size) !== 0);
                     updateDashboard(currentPositions);
-                    updateChartBalance(currentPositions);
                 }
             } catch (e) {}
         }
@@ -100,25 +114,36 @@
         function updateDashboard(positions) {
             const grid = document.getElementById('dashboard-grid');
             let tPnL = 0, tMarg = 0, tExp = 0, mRisk = 0;
+
             positions.forEach(pos => {
-                const pnl = parseFloat(pos.unrealisedPnl), val = parseFloat(pos.positionValue), lev = parseFloat(pos.leverage), cur = parseFloat(pos.markPrice), ent = parseFloat(pos.avgPrice), liq = parseFloat(pos.liqPrice), tp = parseFloat(pos.takeProfit);
-                const marg = val / lev; tPnL += pnl; tMarg += marg; tExp += val;
+                const pnl = parseFloat(pos.unrealisedPnl), val = parseFloat(pos.positionValue);
+                const lev = parseFloat(pos.leverage), cur = parseFloat(pos.markPrice);
+                const ent = parseFloat(pos.avgPrice), liq = parseFloat(pos.liqPrice), tp = parseFloat(pos.takeProfit);
+                const marg = val / lev;
+                tPnL += pnl; tMarg += marg; tExp += val;
+
                 let card = document.getElementById(`card-${pos.symbol}`);
                 if (!card) {
-                    card = document.createElement('div'); card.id = `card-${pos.symbol}`;
+                    card = document.createElement('div');
+                    card.id = `card-${pos.symbol}`;
                     card.className = `card border-l-4 p-5 ${pos.side === 'Buy' ? 'border-l-green-500' : 'border-l-red-500'}`;
                     card.innerHTML = `<div class="content-area"></div><div id="tv-${pos.symbol}" class="tv-wrap hidden"></div>`;
                     grid.appendChild(card);
                 }
+
                 const dLiq = liq > 0 ? Math.abs((liq - cur) / cur) * 100 : 100;
                 const tpP = tp > 0 ? (Math.abs(cur - ent) / Math.abs(tp - ent)) * 100 : 0;
                 const cPnL = pnl >= 0 ? '#02d386' : '#ff3b5c';
                 if(dLiq < 12) mRisk = 2; else if(dLiq < 25 && mRisk < 2) mRisk = 1;
+
                 card.querySelector('.content-area').innerHTML = `
-                    <div class="flex justify-between items-center mb-5"><h2 class="font-black text-white text-lg uppercase">${pos.symbol} <span class="text-[10px] text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded ml-1">${lev}x</span></h2><button onclick="handleUniversalToggle('${pos.symbol}')" class="text-gray-500 hover:text-white"><svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke-width="2.5"></path></svg></button></div>
+                    <div class="flex justify-between items-center mb-5">
+                        <h2 class="font-black text-white text-lg uppercase tracking-tighter">${pos.symbol} <span class="text-[10px] text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded ml-1">${lev}x</span></h2>
+                        <button onclick="handleUniversalToggle('${pos.symbol}')" class="text-gray-500 hover:text-white"><svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke-width="2.5"></path></svg></button>
+                    </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div><p class="metric-label">ROE</p><p class="text-2xl font-black" style="color:${cPnL}">${fPT((pnl/marg)*100)}%</p></div>
-                        <div class="text-right"><p class="metric-label">PnL Acumulado</p><p class="text-xl font-bold" style="color:${cPnL}">${fPT(pnl, true)}</p></div>
+                        <div class="text-right"><p class="metric-label">PnL Aberto</p><p class="text-xl font-bold" style="color:${cPnL}">${fPT(pnl, true)}</p></div>
                         <div class="pt-2 border-t border-white/5"><p class="metric-label">Valor USD</p><p class="text-sm font-bold text-gray-200">${fPT(val, true)}</p></div>
                         <div class="text-right pt-2 border-t border-white/5"><p class="metric-label">Entrada / Mark</p><p class="text-[11px] font-bold text-gray-300">${fPT(ent, false, 4)}</p><p class="text-[10px] text-gray-500 font-mono">${fPT(cur, false, 4)}</p></div>
                         <div class="col-span-2 mt-2">
@@ -131,80 +156,76 @@
                         </div>
                     </div>`;
             });
+
             const cM = tPnL >= 0 ? '#02d386' : '#ff3b5c';
-            document.getElementById('total-pnl').innerText = fPT(tPnL, true); document.getElementById('total-pnl').style.color = cM;
-            document.getElementById('total-pnl-perc').innerText = `${fPT(tMarg > 0 ? (tPnL/tMarg*100) : 0)}%`; document.getElementById('total-pnl-perc').style.color = cM;
+            document.getElementById('total-pnl').innerText = fPT(tPnL, true); 
+            document.getElementById('total-pnl').style.color = cM;
+            document.getElementById('total-pnl-perc').innerText = `${fPT(tMarg > 0 ? (tPnL/tMarg*100) : 0)}%`; 
+            document.getElementById('total-pnl-perc').style.color = cM;
             document.getElementById('total-exposure').innerText = fPT(tExp, true);
             document.getElementById('avg-leverage').innerText = fPT(tMarg > 0 ? (tExp / tMarg) : 0) + 'x';
-        }
-
-        function initPnlChart() {
-            const ctx = document.getElementById('pnlDailyChart').getContext('2d'); Chart.register(ChartDataLabels);
-            pnlChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: Array.from({length: 10}, (_, i) => { const d = new Date(); d.setDate(d.getDate() - (9-i)); return i === 9 ? "Hoje" : d.toLocaleDateString('pt-PT', {day:'2-digit', month:'2-digit'}); }),
-                    datasets: [{
-                        data: [...histIsolado, 0],
-                        backgroundColor: (c) => c.index === 9 ? '#f3ba2f' : 'rgba(255,255,255,0.05)',
-                        borderColor: (c) => c.index === 9 ? '#f3ba2f' : 'rgba(255,255,255,0.1)',
-                        borderWidth: 1.5, borderRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        datalabels: {
-                            anchor: 'end', align: 'start', offset: 4, color: '#fff', font: { size: 10, weight: 'bold' },
-                            textShadowColor: '#000', textShadowBlur: 4, formatter: (v) => v === 0 ? '' : '$' + Math.floor(v)
-                        }
-                    },
-                    scales: { y: { grid: { display: false }, ticks: { display: false } }, x: { grid: { display: false }, ticks: { color: '#848e9c', font: { size: 9 } } } }
-                }
-            });
-        }
-
-        function updateChartBalance(positions) {
-            if (!pnlChart) return;
-            const currentGlobalPnL = positions.reduce((acc, pos) => acc + parseFloat(pos.unrealisedPnl), 0);
-            const sumPast = histIsolado.reduce((a, b) => a + b, 0);
-            // HOJE = Global Atual - Passado (que agora é zero). Assim, Hoje = PnL Acumulado Real.
-            pnlChart.data.datasets[0].data[9] = currentGlobalPnL - sumPast;
-            pnlChart.update('none');
         }
 
         async function fetchTelemetry() {
             try {
                 const r = await fetch(AI_FUNC_PATH, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ positions: currentPositions, userMessage: "TELEMETRY" }) });
                 const d = await r.json();
-                if(d.fg) { const fg = document.getElementById('fg-index-top'); fg.innerText = `F&G: ${d.fg}`; const v = parseInt(d.fg); fg.style.color = v >= 70 ? '#02d386' : (v <= 30 ? '#ff3b5c' : '#f3ba2f'); }
+                const m = document.getElementById('macro-trend');
+                const isB = d.insight.toUpperCase().includes("BULLISH");
+                m.innerText = isB ? "Macro: BULLISH" : "Macro: BEARISH";
+                m.className = `px-2 py-1 rounded border text-[9px] font-bold uppercase ${isB ? 'bg-green-500/10 border-green-500/20 text-green-500' : 'bg-red-500/10 border-red-500/20 text-red-500'}`;
+                if(d.fg) {
+                    const fg = document.getElementById('fg-index-top'); fg.innerText = `F&G: ${d.fg}`;
+                    const v = parseInt(d.fg); fg.style.color = v >= 70 ? '#02d386' : (v <= 30 ? '#ff3b5c' : '#f3ba2f');
+                }
             } catch (e) {}
         }
 
         function handleUniversalToggle(s) {
-            const wraps = Array.from(document.querySelectorAll('.tv-wrap')); const anyO = wraps.some(el => !el.classList.contains('hidden'));
-            if (window.innerWidth >= 1280) { currentPositions.forEach(pos => { const el = document.getElementById(`tv-${pos.symbol}`); if (anyO) el.classList.add('hidden'); else { el.classList.remove('hidden'); loadChart(pos.symbol); } }); }
-            else { const el = document.getElementById(`tv-${s}`); el.classList.toggle('hidden'); if (!el.classList.contains('hidden')) loadChart(s); }
+            const isD = window.innerWidth >= 1280;
+            const wraps = Array.from(document.querySelectorAll('.tv-wrap'));
+            const anyO = wraps.some(el => !el.classList.contains('hidden'));
+            if (isD) {
+                currentPositions.forEach(pos => {
+                    const el = document.getElementById(`tv-${pos.symbol}`);
+                    if (anyO) el.classList.add('hidden'); else { el.classList.remove('hidden'); loadChart(pos.symbol); }
+                });
+            } else {
+                const el = document.getElementById(`tv-${s}`); el.classList.toggle('hidden');
+                if (!el.classList.contains('hidden')) loadChart(s);
+            }
         }
 
         function loadChart(s) {
-            const el = document.getElementById(`tv-${s}`); if (!el.dataset.loaded || el.innerHTML === "") {
-                el.innerHTML = ""; new TradingView.widget({ "autosize": true, "symbol": `BYBIT:${s}.P`, "interval": "15", "theme": "dark", "container_id": `tv-${s}`, "hide_side_toolbar": true, "library_path": "https://s3.tradingview.com/tv.js" });
+            const el = document.getElementById(`tv-${s}`);
+            if (!el.dataset.loaded || el.innerHTML === "") {
+                el.innerHTML = "";
+                new TradingView.widget({ "autosize": true, "symbol": `BYBIT:${s}.P`, "interval": "15", "theme": "dark", "container_id": `tv-${s}`, "hide_side_toolbar": true, "library_path": "https://s3.tradingview.com/tv.js" });
                 el.dataset.loaded = "true";
             }
         }
 
-        function handleBaltazarCall() { document.getElementById('ai-section').classList.add('open'); document.getElementById('main-grid').classList.add('chat-open'); if (currentPositions.length > 0) fetchAIIntelligence(); }
+        function handleBaltazarCall() {
+            document.getElementById('ai-section').classList.add('open');
+            document.getElementById('main-grid').classList.add('chat-open');
+        }
+
         async function fetchAIIntelligence(userQuery = null) {
-            const aiContent = document.getElementById('ai-content'); if (userQuery) { const uMsg = document.createElement('div'); uMsg.className = 'msg user-msg'; uMsg.innerText = userQuery; aiContent.appendChild(uMsg); aiContent.scrollTop = aiContent.scrollHeight; }
+            const aiContent = document.getElementById('ai-content');
+            if (userQuery) {
+                const uMsg = document.createElement('div'); uMsg.className = 'msg user-msg'; uMsg.innerText = userQuery;
+                aiContent.appendChild(uMsg);
+            }
             try {
                 const r = await fetch(AI_FUNC_PATH, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ positions: currentPositions, userMessage: userQuery }) });
-                const d = await r.json(); const nMsg = document.createElement('div'); nMsg.className = 'msg bot-msg'; aiContent.appendChild(nMsg);
-                const cl = d.insight.replace(/<\/?[^>]+(>|$)/g, (m) => ["<strong>", "</strong>", "<br>"].includes(m) ? m : "").replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
-                let i = 0; function type() { if (i < cl.length) { if (cl.substring(i, i+4) === '<br>') { nMsg.innerHTML += '<br>'; i += 4; } else if (cl.substring(i, i+8) === '<strong>') { let end = cl.indexOf('</strong>', i); nMsg.innerHTML += cl.substring(i, end + 9); i = end + 9; } else { nMsg.innerHTML += cl.charAt(i); i++; } aiContent.scrollTop = aiContent.scrollHeight; setTimeout(type, 5); } } type();
+                const d = await r.json();
+                const nMsg = document.createElement('div'); nMsg.className = 'msg bot-msg';
+                nMsg.innerHTML = d.insight.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                aiContent.appendChild(nMsg);
+                aiContent.scrollTop = aiContent.scrollHeight;
             } catch (err) {}
         }
+
         function handleChat(e) { if (e.key === 'Enter' && e.target.value.trim() !== "") { fetchAIIntelligence(e.target.value); e.target.value = ''; } }
     </script>
 </body>
