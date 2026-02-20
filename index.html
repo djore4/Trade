@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Trading Lab - v14.5 Final Fix</title>
+    <title>AI Trading Lab - v15.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --risk-rgb: 2, 211, 134; }
         body { 
@@ -26,19 +27,22 @@
         
         .msg { margin-bottom: 12px; padding: 14px; border-radius: 12px; font-size: 0.88rem; line-height: 1.6; }
         .user-msg { background: rgba(30, 144, 255, 0.15); border-right: 4px solid #1e90ff; align-self: flex-end; margin-left: auto; }
-        .bot-msg { background: rgba(243, 186, 47, 0.05); border-left: 4px solid #f3ba2f; }
+        .bot-msg { background: rgba(243, 186, 47, 0.05); border-left: 3px solid #f3ba2f; }
 
         .progress-bg { background-color: #1e2329; height: 6px; border-radius: 3px; width: 100%; margin-top: 4px; overflow: hidden; }
         .progress-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
         
         .tv-wrap { height: 500px; margin-top: 15px; border-radius: 8px; overflow: hidden; background: #000; border: 1px solid rgba(255,255,255,0.08); }
-        .hidden { display: none; }
+        .hidden { display: none !important; }
+
+        /* Estilo do Gráfico PnL */
+        .pnl-chart-container { height: 180px; width: 100%; margin-bottom: 25px; padding: 15px; }
     </style>
 </head>
 <body>
     <div id="main-grid" class="app-grid">
         <main>
-            <header class="mb-8">
+            <header class="mb-4">
                 <div class="flex flex-col md:flex-row justify-between gap-4 border-b border-gray-800/40 pb-6 mb-8">
                     <div>
                         <h1 class="text-4xl font-extrabold text-white tracking-tight mb-2"><span class="text-[#f3ba2f]">AI</span> Trading Lab</h1>
@@ -53,6 +57,11 @@
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                         Baltazar AI
                     </button>
+                </div>
+
+                <div class="card pnl-chart-container mb-8">
+                    <p class="metric-label mb-2">Performance PnL Diária (USD)</p>
+                    <canvas id="pnlDailyChart"></canvas>
                 </div>
 
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
@@ -86,8 +95,14 @@
         const SUPABASE_KEY = 'sb_publishable_bRa-mZWTaf0g6sNyWL9OmQ_uvo7Ex5H';
 
         let currentPositions = [];
+        let pnlChart;
 
-        window.onload = () => { fetchPositions(); setInterval(fetchPositions, 10000); fetchMacroOnly(); };
+        window.onload = () => { 
+            initPnlChart();
+            fetchPositions(); 
+            setInterval(fetchPositions, 10000); 
+            fetchMacroOnly(); 
+        };
 
         function handleBaltazarCall() {
             document.getElementById('ai-section').classList.add('open');
@@ -96,16 +111,11 @@
             if (window.innerWidth < 1280) document.getElementById('ai-section').scrollIntoView({ behavior: 'smooth' });
         }
 
-        // FORMATAÇÃO MANUAL BLINDADA (FORÇA PONTO NOS MILHARES E VÍRGULA NOS DECIMAIS)
         function fPT(n, isM = false, p = 2) {
             const dec = isM ? 0 : p;
             let parts = n.toFixed(dec).split(".");
-            // Substitui o separador de milhar por ponto
             parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-            // Junta com a vírgula se houver decimais
             let res = parts.join(",");
-            
-            // Remove o "-" do valor absoluto para formatar o sinal manualmente no início
             let final = res.startsWith("-") ? res.substring(1) : res;
             return (n < 0 ? "-" : "") + (isM ? "$" : "") + final;
         }
@@ -117,6 +127,7 @@
                 if (d.result?.list) {
                     currentPositions = d.result.list.filter(p => parseFloat(p.size) !== 0);
                     updateDashboard(currentPositions);
+                    updateChartWithLivePnl(currentPositions);
                 }
             } catch (e) {}
         }
@@ -138,6 +149,8 @@
                     card.id = `card-${pos.symbol}`;
                     card.className = `card border-l-4 p-5 ${pos.side === 'Buy' ? 'border-l-green-500' : 'border-l-red-500'}`;
                     grid.appendChild(card);
+                    // Importante: Iniciar conteúdo vazio para o innerHTML não resetar o estado do gráfico
+                    card.innerHTML = `<div class="content-area"></div><div id="tv-${pos.symbol}" class="tv-wrap hidden"></div>`;
                 }
 
                 const dLiq = liq > 0 ? Math.abs((liq - cur) / cur) * 100 : 100;
@@ -145,7 +158,9 @@
                 const cPnL = pnl >= 0 ? '#02d386' : '#ff3b5c';
                 if(dLiq < 12) mRisk = 2; else if(dLiq < 25 && mRisk < 2) mRisk = 1;
 
-                card.innerHTML = `
+                // Atualizar apenas a área de métricas para não interferir com o iframe do TradingView
+                const contentArea = card.querySelector('.content-area') || card;
+                contentArea.innerHTML = `
                     <div class="flex justify-between items-center mb-5">
                         <h2 class="font-black text-white text-lg uppercase tracking-tighter">${pos.symbol} <span class="text-[10px] text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded ml-1">${lev}x</span></h2>
                         <button onclick="handleUniversalToggle('${pos.symbol}')" class="text-gray-500 hover:text-white"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke-width="2.5" stroke-linecap="round"></path></svg></button>
@@ -163,8 +178,7 @@
                             <div class="flex justify-between text-[9px] font-bold text-yellow-600 uppercase"><span>Take Profit (${fPT(tp, false, 4)})</span><span>${tpP.toFixed(0)}%</span></div>
                             <div class="progress-bg"><div class="progress-fill bg-yellow-500/60" style="width: ${Math.min(tpP, 100)}%"></div></div>
                         </div>
-                    </div>
-                    <div id="tv-${pos.symbol}" class="tv-wrap hidden"></div>`;
+                    </div>`;
             });
 
             const led = document.getElementById('status-led');
@@ -177,6 +191,95 @@
             document.getElementById('total-pnl-perc').style.color = mainPnLCol;
             document.getElementById('total-exposure').innerText = fPT(tExp, true);
             document.getElementById('avg-leverage').innerText = fPT(tMarg > 0 ? (tExp / tMarg) : 0) + 'x';
+        }
+
+        /* LÓGICA DO GRÁFICO PNL DIÁRIO */
+        function initPnlChart() {
+            const ctx = document.getElementById('pnlDailyChart').getContext('2d');
+            // Dados fictícios para o histórico (Dias anteriores) + Espaço para o dia atual
+            const labels = ['16 Fev', '17 Fev', '18 Fev', '19 Fev', 'Hoje'];
+            const data = [450, -200, 120, 310, 0]; 
+
+            pnlChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'PnL Diário',
+                        data: data,
+                        backgroundColor: (context) => {
+                            const index = context.dataIndex;
+                            const value = context.dataset.data[index];
+                            if (index === 4) return '#f3ba2f'; // Dourado para HOJE
+                            return value >= 0 ? 'rgba(2, 211, 134, 0.4)' : 'rgba(255, 59, 92, 0.4)';
+                        },
+                        borderColor: (context) => {
+                            const index = context.dataIndex;
+                            if (index === 4) return '#f3ba2f';
+                            return context.dataset.data[index] >= 0 ? '#02d386' : '#ff3b5c';
+                        },
+                        borderWidth: 2,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#848e9c', font: { size: 10 } } },
+                        x: { grid: { display: false }, ticks: { color: '#848e9c', font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+
+        function updateChartWithLivePnl(positions) {
+            if (!pnlChart) return;
+            const currentTotalPnL = positions.reduce((acc, pos) => acc + parseFloat(pos.unrealisedPnl), 0);
+            pnlChart.data.datasets[0].data[4] = currentTotalPnL;
+            pnlChart.update('none'); // Update sem animação para performance
+        }
+
+        /* CORREÇÃO DOS GRÁFICOS: handleUniversalToggle modificado para persistência */
+        function handleUniversalToggle(s) {
+            const isD = window.innerWidth >= 1280;
+            if (isD) {
+                const wraps = Array.from(document.querySelectorAll('.tv-wrap'));
+                const anyO = wraps.some(el => !el.classList.contains('hidden'));
+                
+                currentPositions.forEach(pos => {
+                    const el = document.getElementById(`tv-${pos.symbol}`);
+                    if (anyO) {
+                        el.classList.add('hidden');
+                    } else {
+                        el.classList.remove('hidden');
+                        loadChart(pos.symbol);
+                    }
+                });
+            } else {
+                const el = document.getElementById(`tv-${s}`);
+                el.classList.toggle('hidden');
+                if (!el.classList.contains('hidden')) loadChart(s);
+            }
+        }
+
+        function loadChart(s) {
+            const el = document.getElementById(`tv-${s}`);
+            // Apenas carrega se o iframe ainda não existir para evitar resets no loop de 10s
+            if (!el.dataset.loaded || el.innerHTML === "") {
+                el.innerHTML = ""; // Limpa antes de carregar
+                new TradingView.widget({
+                    "autosize": true,
+                    "symbol": `BYBIT:${s}.P`,
+                    "interval": "15",
+                    "theme": "dark",
+                    "container_id": `tv-${s}`,
+                    "hide_side_toolbar": true,
+                    "library_path": "https://s3.tradingview.com/tv.js"
+                });
+                el.dataset.loaded = "true";
+            }
         }
 
         async function fetchMacroOnly() {
@@ -214,31 +317,6 @@
                 }
                 type();
             } catch (err) {}
-        }
-
-        function handleUniversalToggle(s) {
-            const isD = window.innerWidth >= 1280;
-            if (isD) {
-                const wraps = Array.from(document.querySelectorAll('.tv-wrap'));
-                const anyO = wraps.some(el => !el.classList.contains('hidden'));
-                currentPositions.forEach(pos => {
-                    const el = document.getElementById(`tv-${pos.symbol}`);
-                    if (anyO) el.classList.add('hidden');
-                    else { el.classList.remove('hidden'); loadChart(pos.symbol); }
-                });
-            } else {
-                const el = document.getElementById(`tv-${s}`);
-                el.classList.toggle('hidden');
-                if (!el.classList.contains('hidden')) loadChart(s);
-            }
-        }
-
-        function loadChart(s) {
-            const el = document.getElementById(`tv-${s}`);
-            if (!el.dataset.loaded) {
-                new TradingView.widget({ "autosize": true, "symbol": `BYBIT:${s}.P`, "interval": "15", "theme": "dark", "container_id": `tv-${s}`, "hide_side_toolbar": true });
-                el.dataset.loaded = "true";
-            }
         }
 
         function handleChat(e) { if (e.key === 'Enter' && e.target.value.trim() !== "") { fetchAIIntelligence(e.target.value); e.target.value = ''; } }
