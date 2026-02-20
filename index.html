@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Trading Lab - v16.0 Elite</title>
+    <title>AI Trading Lab - v16.3 Real History</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -45,12 +45,12 @@
                 <div class="flex flex-col md:flex-row justify-between gap-4 border-b border-gray-800/40 pb-6 mb-8">
                     <div>
                         <h1 class="text-4xl font-extrabold text-white tracking-tight mb-2"><span class="text-[#f3ba2f]">AI</span> Trading Lab</h1>
-                        <div class="flex flex-wrap gap-2">
-                            <span class="px-2 py-1 bg-white/5 rounded border border-white/10 text-[9px] font-bold text-gray-500 uppercase flex items-center gap-2">
+                        <div class="flex flex-wrap gap-2 text-[10px]">
+                            <span class="px-2 py-1 bg-white/5 rounded border border-white/10 font-bold text-gray-500 uppercase flex items-center gap-2">
                                 <span id="status-led" class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> Terminal Online
                             </span>
-                            <span id="macro-trend" class="px-2 py-1 bg-white/5 rounded border border-white/10 text-[9px] font-bold text-gray-400 uppercase tracking-widest">Macro: Syncing...</span>
-                            <span id="fg-index-top" class="px-2 py-1 bg-white/5 rounded border border-white/10 text-[9px] font-bold text-gray-400 uppercase tracking-widest">F&G: --</span>
+                            <span id="macro-trend" class="px-2 py-1 bg-white/5 rounded border border-white/10 font-bold text-gray-400 uppercase tracking-widest">Macro: Syncing...</span>
+                            <span id="fg-index-top" class="px-2 py-1 bg-white/5 rounded border border-white/10 font-bold text-gray-400 uppercase tracking-widest">F&G: --</span>
                         </div>
                     </div>
                     <button onclick="handleBaltazarCall()" class="w-full md:w-auto bg-[#f3ba2f] hover:bg-yellow-400 text-black px-8 py-3 rounded-xl font-black transition-all flex justify-center items-center gap-3 uppercase text-xs shadow-lg">
@@ -60,7 +60,7 @@
                 </div>
 
                 <div class="card pnl-chart-container mb-8">
-                    <p class="metric-label mb-2">PnL Isolado por Dia (Soma Total = PnL Global)</p>
+                    <p class="metric-label mb-2">PnL Diário (Isolado do Histórico de Trades)</p>
                     <canvas id="pnlDailyChart"></canvas>
                 </div>
 
@@ -79,7 +79,7 @@
                 <span class="text-white text-xs font-bold tracking-widest uppercase">Estrategista Baltazar</span>
             </div>
             <div id="ai-content" class="flex-grow overflow-y-auto pr-2 flex flex-col mb-4 scrollbar-hide">
-                <div class="bot-msg msg">Pronto para a análise tática.</div>
+                <div class="bot-msg msg">Pronto para a análise.</div>
             </div>
             <div class="pt-4 border-t border-gray-800">
                 <input type="text" id="chat-input" placeholder="Comando..." class="w-full bg-white/5 p-4 rounded-xl text-white outline-none text-sm border border-white/5 focus:border-yellow-500/30" onkeypress="handleChat(event)">
@@ -95,16 +95,11 @@
 
         let currentPositions = [];
         let pnlChart;
-        // Histórico de 9 dias ISOLADOS (Exemplo: Ganhei 100 no dia 1, perdi 50 no dia 2)
-        const histDataIsolado = [150, 200, -100, 300, 150, -50, 400, 100, 100]; 
+        // Simulação do Histórico de Trades realizados nos últimos 9 dias
+        // No futuro, estes valores virão da tua tabela 'trade_history'
+        const tradeHistory = [50, -20, 15, 100, -40, 200, 30, -10, 80]; 
 
-        window.onload = () => { 
-            initPnlChart(); 
-            fetchPositions(); 
-            setInterval(fetchPositions, 10000); 
-            fetchTelemetry(); 
-            setInterval(fetchTelemetry, 60000); 
-        };
+        window.onload = () => { initPnlChart(); fetchPositions(); setInterval(fetchPositions, 10000); fetchTelemetry(); setInterval(fetchTelemetry, 60000); };
 
         function fPT(n, isM = false, p = 2) {
             const dec = isM ? 0 : p;
@@ -121,7 +116,7 @@
                 if (d.result?.list) {
                     currentPositions = d.result.list.filter(p => parseFloat(p.size) !== 0);
                     updateDashboard(currentPositions);
-                    updateChartIsolado(currentPositions);
+                    updateChartWithRealHistory(currentPositions);
                 }
             } catch (e) {}
         }
@@ -151,6 +146,7 @@
                 const cPnL = pnl >= 0 ? '#02d386' : '#ff3b5c';
                 if(dLiq < 12) mRisk = 2; else if(dLiq < 25 && mRisk < 2) mRisk = 1;
 
+                // TELEMETRIA BLINDADA
                 card.querySelector('.content-area').innerHTML = `
                     <div class="flex justify-between items-center mb-5">
                         <h2 class="font-black text-white text-lg uppercase tracking-tighter">${pos.symbol} <span class="text-[10px] text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded ml-1">${lev}x</span></h2>
@@ -186,12 +182,15 @@
             pnlChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: ['D-9', 'D-8', 'D-7', 'D-6', 'D-5', 'D-4', 'D-3', 'D-2', 'Ontem', 'Hoje'],
+                    labels: Array.from({length: 10}, (_, i) => {
+                        const d = new Date(); d.setDate(d.getDate() - (9-i));
+                        return i === 9 ? "Hoje" : d.toLocaleDateString('pt-PT', {day:'2-digit', month:'2-digit'});
+                    }),
                     datasets: [{
-                        data: [...histDataIsolado, 0],
-                        backgroundColor: (c) => c.index === 9 ? '#f3ba2f' : (c.dataset.data[c.index] >= 0 ? 'rgba(2, 211, 134, 0.4)' : 'rgba(255, 59, 92, 0.4)'),
+                        data: [...tradeHistory, 0],
+                        backgroundColor: (c) => c.index === 9 ? '#f3ba2f' : (c.dataset.data[c.index] >= 0 ? 'rgba(2, 211, 134, 0.6)' : 'rgba(255, 59, 92, 0.6)'),
                         borderColor: (c) => c.index === 9 ? '#f3ba2f' : (c.dataset.data[c.index] >= 0 ? '#02d386' : '#ff3b5c'),
-                        borderWidth: 2, borderRadius: 4
+                        borderWidth: 1.5, borderRadius: 4
                     }]
                 },
                 options: {
@@ -199,24 +198,20 @@
                     plugins: {
                         legend: { display: false },
                         datalabels: {
-                            anchor: 'end', align: 'start', offset: 10, color: '#fff', font: { size: 10, weight: '900' },
-                            formatter: (v) => '$' + Math.floor(v)
+                            anchor: 'end', align: 'start', offset: 4, color: '#ffffff', font: { size: 10, weight: 'bold' },
+                            textShadowColor: '#000', textShadowBlur: 4, formatter: (v) => '$' + Math.floor(v)
                         }
                     },
-                    scales: {
-                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { display: false } },
-                        x: { grid: { display: false }, ticks: { color: '#848e9c', font: { size: 9 } } }
-                    }
+                    scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { display: false } }, x: { grid: { display: false }, ticks: { color: '#848e9c', font: { size: 9 } } } }
                 }
             });
         }
 
-        function updateChartIsolado(positions) {
+        function updateChartWithRealHistory(positions) {
             if (!pnlChart) return;
-            const currentTotalPnL = positions.reduce((acc, pos) => acc + parseFloat(pos.unrealisedPnl), 0);
-            const sumHist = histDataIsolado.reduce((a, b) => a + b, 0);
-            // Hoje ISOLADO = Total Global Atual - Soma dos dias anteriores isolados
-            pnlChart.data.datasets[0].data[9] = currentTotalPnL - sumHist;
+            const currentUnrealizedPnL = positions.reduce((acc, pos) => acc + parseFloat(pos.unrealisedPnl), 0);
+            // Hoje mostra apenas o PnL Aberto atual.
+            pnlChart.data.datasets[0].data[9] = currentUnrealizedPnL;
             pnlChart.update('none');
         }
 
