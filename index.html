@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Trading Lab - v23.2 Pro</title>
+    <title>AI Trading Lab - v23.3 X-Ray</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -202,7 +202,7 @@
                 <span id="ai-loading" class="text-[9px] text-yellow-500 animate-pulse hidden font-bold uppercase">A analisar...</span>
             </div>
             <div id="ai-content" class="flex-grow overflow-y-auto mb-4 pr-2 flex flex-col scrollbar-hide">
-                <div class="bot-msg msg">Operação ativa e protegida.</div>
+                <div class="bot-msg msg">Sistemas em modo diagnóstico. Testa a comunicação.</div>
             </div>
             <input type="text" id="chat-input" placeholder="Comando..." class="w-full bg-white/5 p-4 md:p-5 rounded-2xl text-white outline-none text-xs md:text-sm border border-white/5 focus:border-[#f3ba2f] transition-all" onkeypress="handleChat(event)">
         </aside>
@@ -267,7 +267,6 @@
                 if (!card) {
                     card = document.createElement('div'); card.id = `card-${pos.symbol}`;
                     card.className = `card border-l-4 p-4 lg:p-5 ${pos.side === 'Buy' ? 'border-l-green-500' : 'border-l-red-500'}`;
-                    // Dashboard TV Chart - H: 400px mobile, 560px desktop
                     card.innerHTML = `
                         <div class="content-area"></div>
                         <div id="tv-wrapper-${pos.symbol}" class="grid grid-cols-1 gap-4 mt-4 hidden" data-loaded="false">
@@ -511,16 +510,24 @@
             }
         }
 
-        // CHAVE DA AUTORIZAÇÃO RESTAURADA. Sem estes Headers o CORS da Supabase bloqueia os pedidos Edge.
         async function fetchTelemetry() {
             try {
+                // ADDED X-RAY Error Catching
                 const headers = { 
                     'Content-Type': 'application/json', 
                     'Authorization': `Bearer ${SUPABASE_KEY}`,
                     'apikey': SUPABASE_KEY
                 };
                 const r = await fetch(AI_FUNC_PATH, { method: 'POST', headers: headers, body: JSON.stringify({ positions: currentPositions, userMessage: "TELEMETRY" }) });
+                
                 const d = await r.json();
+
+                if (d.error) {
+                    console.error("Supabase Internal Error:", d.error);
+                    document.getElementById('macro-trend').innerText = `Macro: ERRO TÉCNICO`;
+                    document.getElementById('fg-index-top').innerText = `F&G: REJEITADO`;
+                    return;
+                }
                 
                 if(d && d.insight) {
                     const isB = d.insight.toUpperCase().includes('BULLISH');
@@ -535,9 +542,9 @@
                     fg.className = `bg-white/5 px-2 md:px-3 py-1.5 rounded-md border text-[9px] md:text-[10px] font-black uppercase ${v >= 70 ? 'border-green-500/20 text-green-500' : (v <= 30 ? 'border-red-500/20 text-red-500' : 'border-yellow-500/20 text-yellow-500')}`;
                 }
             } catch (e) {
-                console.error("Erro Telemetria:", e);
-                document.getElementById('macro-trend').innerText = "Macro: N/D";
-                document.getElementById('fg-index-top').innerText = "F&G: N/D";
+                console.error("Erro Telemetria Frontend:", e);
+                document.getElementById('macro-trend').innerText = "Macro: FALHA REDE";
+                document.getElementById('fg-index-top').innerText = "F&G: FALHA REDE";
             }
         }
 
@@ -555,17 +562,26 @@
                     'apikey': SUPABASE_KEY
                 };
                 const r = await fetch(AI_FUNC_PATH, { method: 'POST', headers: headers, body: JSON.stringify({ positions: currentPositions, userMessage: userQuery }) });
+                
                 const d = await r.json();
                 
-                let responseText = "Sem dados.";
-                if(d && d.insight) {
+                let responseText = "";
+
+                if (d.error) {
+                    // RAIO X: ERRO DO SUPABASE
+                    responseText = `**Erro Crítico Supabase:** ${d.error}`;
+                } else if(d && d.insight) {
+                    // SUCESSO OU ERRO DO DENO/GEMINI (Apanhado no Try/Catch do backend)
                     responseText = d.insight.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+                } else {
+                    responseText = `**Erro Estranho:** O servidor respondeu, mas o formato é desconhecido: ${JSON.stringify(d)}`;
                 }
 
                 aiContent.innerHTML += `<div class="bot-msg msg">${responseText}</div>`;
                 aiContent.scrollTop = aiContent.scrollHeight;
             } catch (err) {
-                aiContent.innerHTML += `<div class="bot-msg msg text-red-500">Erro de comunicação com os servidores da Inteligência Artificial.</div>`;
+                // ERRO DE REDE PURO
+                aiContent.innerHTML += `<div class="bot-msg msg text-red-500">**Falha Total de Rede:** ${err.message}</div>`;
                 console.error(err);
             } finally { loader.classList.add('hidden'); }
         }
