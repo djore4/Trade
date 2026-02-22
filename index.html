@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Trading Lab - v24.0 UI Elite</title>
+    <title>AI Trading Lab - v24.1 UI Elite</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -26,17 +26,34 @@
         .progress-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
 
         .app-grid { display: grid; grid-template-columns: 1fr; gap: 20px; padding: 20px; max-width: 1800px; margin: 0 auto; transition: all 0.4s ease; }
-        @media (min-width: 1280px) { .app-grid.chat-open { grid-template-columns: 1fr 450px; } #ai-section { height: calc(100vh - 120px); position: sticky; top: 100px; } }
         
+        /* LAYOUT DESKTOP DO CHAT */
+        @media (min-width: 1280px) { 
+            .app-grid.chat-open { grid-template-columns: 1fr 450px; } 
+            #ai-section { height: calc(100vh - 120px); position: sticky; top: 100px; } 
+        }
+        
+        /* FIX MOBILE DO CHAT (Painel Flutuante) */
+        @media (max-width: 1279px) {
+            #ai-section.open {
+                position: fixed;
+                top: 85px; /* Fica logo abaixo do header sticky */
+                left: 10px;
+                right: 10px;
+                height: calc(100vh - 100px);
+                z-index: 100;
+                box-shadow: 0 20px 50px rgba(0,0,0,0.9);
+                border: 1px solid rgba(243, 186, 47, 0.3);
+            }
+        }
+
         #ai-section { display: none; flex-direction: column; }
         #ai-section.open { display: flex; }
+        
         .msg { margin-bottom: 20px; padding: 16px; border-radius: 14px; font-size: 0.92rem; line-height: 1.7; }
         .bot-msg { background: rgba(243, 186, 47, 0.04); border-left: 4px solid var(--yellow-binance); }
-        
-        /* NOVO: Azul Vivo para o User */
         .user-msg { background: rgba(0, 170, 255, 0.1); border-right: 4px solid #00aaff; align-self: flex-end; text-align: right; color: #e6f4ff; }
         
-        /* NOVO: Animação dos 3 Pontos */
         .typing-indicator { display: flex; gap: 6px; padding: 6px 4px; align-items: center; }
         .typing-dot { width: 6px; height: 6px; background: var(--yellow-binance); border-radius: 50%; animation: typing 1.4s infinite ease-in-out both; }
         .typing-dot:nth-child(1) { animation-delay: -0.32s; }
@@ -72,7 +89,7 @@
                     <span id="macro-trend" class="bg-white/5 px-2 md:px-3 py-1.5 rounded-md border border-white/10">Macro: --</span>
                     <span id="fg-index-top" class="bg-white/5 px-2 md:px-3 py-1.5 rounded-md border border-white/10">F&G: --</span>
                 </div>
-                <button onclick="handleBaltazarCall()" class="bg-[#f3ba2f] text-black px-4 md:px-6 py-2.5 rounded-xl font-black uppercase text-[10px] shadow-[0_4px_15px_rgba(243,186,47,0.2)] hover:scale-105 transition-all whitespace-nowrap">Baltazar AI</button>
+                <button onclick="handleBaltazarCall()" class="bg-[#f3ba2f] text-black px-4 md:px-6 py-2.5 rounded-xl font-black uppercase text-[10px] shadow-[0_4px_15px_rgba(243,186,47,0.2)] hover:scale-105 transition-all whitespace-nowrap relative z-[110]">Baltazar AI</button>
             </div>
         </div>
     </header>
@@ -544,17 +561,14 @@
 
         function handleBaltazarCall() { document.getElementById('ai-section').classList.toggle('open'); document.getElementById('main-grid').classList.toggle('chat-open'); }
 
-        // NOVA FUNÇÃO COM LOADING E TYPEWRITER
         async function fetchAIIntelligence(userQuery = null) {
             const aiContent = document.getElementById('ai-content');
             
             if (userQuery) { 
-                // Insere mensagem do user e faz scroll
                 aiContent.insertAdjacentHTML('beforeend', `<div class="user-msg msg">${userQuery}</div>`); 
                 aiContent.scrollTop = aiContent.scrollHeight;
             }
             
-            // Adiciona a animação dos 3 pontos
             const loadingId = "load-" + Date.now();
             aiContent.insertAdjacentHTML('beforeend', `
                 <div id="${loadingId}" class="bot-msg msg">
@@ -577,17 +591,14 @@
                 if (d.error) {
                     responseText = `**Erro:** ${d.error}`;
                 } else if(d && d.insight) {
-                    // Prepara o texto para a formatação HTML
                     responseText = d.insight.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
                 } else {
                     responseText = `Erro de formatação.`;
                 }
 
-                // Remove a animação de loading
                 const loadEl = document.getElementById(loadingId);
                 if(loadEl) loadEl.remove();
 
-                // Cria contentor para o Typewriter
                 const msgId = "msg-" + Date.now();
                 aiContent.insertAdjacentHTML('beforeend', `<div id="${msgId}" class="bot-msg msg"></div>`);
                 const msgEl = document.getElementById(msgId);
@@ -596,7 +607,6 @@
                 let isTag = false;
                 let textBuffer = "";
                 
-                // Lógica da Máquina de Escrever
                 function type() {
                     if (i < responseText.length) {
                         let char = responseText.charAt(i);
@@ -607,13 +617,12 @@
                         msgEl.innerHTML = textBuffer;
                         i++;
                         
-                        // Scroll acompanha o texto a ser gerado
                         aiContent.scrollTop = aiContent.scrollHeight;
                         
                         if (isTag) {
-                            type(); // Passa as tags HTML sem atraso
+                            type();
                         } else {
-                            setTimeout(type, 10); // Velocidade (10ms)
+                            setTimeout(type, 10);
                         }
                     }
                 }
