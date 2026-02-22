@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Trading Lab - v22.4</title>
+    <title>AI Trading Lab - v22.5 Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -83,52 +83,67 @@
                             <label class="metric-label block mb-3">Posição Ativa</label>
                             <select id="sim-select-pos" onchange="loadPositionToSim()"></select>
                         </div>
-                        <div class="md:col-span-3 grid grid-cols-3 gap-4">
+                        <div class="md:col-span-3 grid grid-cols-2 gap-4">
                             <div class="bg-white/5 p-4 rounded-xl border border-white/5"><p class="metric-label">Mark Price</p><p id="sim-mark-price" class="metric-value text-xl text-[#f3ba2f]">0,0000</p></div>
-                            <div class="bg-white/5 p-4 rounded-xl border border-white/5"><p class="metric-label">Entrada Atual</p><p id="sim-current-avg" class="metric-value text-xl text-white">0,0000</p></div>
-                            <div class="bg-white/5 p-4 rounded-xl border border-white/5"><p class="metric-label">Tamanho (Qtd)</p><p id="sim-current-qty" class="metric-value text-xl text-gray-400">0,00</p></div>
+                            <div class="bg-white/5 p-4 rounded-xl border border-white/5"><p class="metric-label">Tamanho da Posição (Qtd)</p><p id="sim-current-qty" class="metric-value text-xl text-white">0,00</p></div>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
                         <div class="card bg-black/50 border-white/5 p-2">
-                            <div id="tv-sim-container" class="h-[450px] w-full rounded-lg overflow-hidden flex items-center justify-center text-gray-600 font-bold text-xs uppercase">
+                            <div id="tv-sim-container" class="h-[400px] w-full rounded-lg overflow-hidden flex items-center justify-center text-gray-600 font-bold text-xs uppercase">
                                 Selecione uma posição
                             </div>
                         </div>
+                        
                         <div class="flex flex-col gap-4">
-                            <h3 class="metric-label">Níveis Críticos da Posição</h3>
-                            <div class="bg-red-500/10 border border-red-500/20 p-4 rounded-xl flex justify-between items-center">
-                                <div><span class="text-xs font-black text-red-500 uppercase">Liquidação (Atual)</span></div>
-                                <div class="font-mono font-bold text-red-500" id="sim-level-liq">0,0000</div>
-                            </div>
-                            <div class="bg-[#02d386]/10 border border-[#02d386]/20 p-4 rounded-xl flex justify-between items-center">
-                                <div><span class="text-xs font-black text-[#02d386] uppercase">Nova Liquidação Estimada</span></div>
-                                <div class="font-mono font-bold text-[#02d386]" id="sim-level-new-liq">---</div>
-                            </div>
-                            <div class="bg-white/5 border border-white/10 p-4 rounded-xl flex justify-between items-center">
-                                <div><span class="text-xs font-black text-gray-300 uppercase">Novo Preço Médio (Entrada)</span></div>
-                                <div class="font-mono font-bold text-white text-xl" id="res-new-avg">---</div>
-                            </div>
-                            <div class="bg-yellow-500/10 border border-yellow-500/20 p-4 rounded-xl flex justify-between items-center">
-                                <div><span class="text-xs font-black text-yellow-500 uppercase">Take Profit Alvo</span></div>
-                                <div class="font-mono font-bold text-yellow-500" id="sim-level-tp">0,0000</div>
-                            </div>
-                            <div class="mt-auto bg-[#02d386] text-black p-4 rounded-xl flex justify-between items-center shadow-lg">
-                                <span class="font-black uppercase text-xs">Afastamento do Risco (Liq)</span>
-                                <span class="font-mono font-black text-lg" id="res-dist-text">0,00%</span>
+                            <h3 class="metric-label">Comparativo de Níveis Críticos</h3>
+                            <div class="grid grid-cols-2 gap-4 h-full">
+                                
+                                <div class="bg-white/5 border border-white/10 p-5 rounded-xl flex flex-col gap-6">
+                                    <h4 class="text-gray-500 font-bold text-[11px] uppercase tracking-widest border-b border-gray-800 pb-3">Posição Atual</h4>
+                                    <div>
+                                        <p class="text-[10px] uppercase text-gray-400 mb-1">Preço de Entrada</p>
+                                        <p class="font-mono font-bold text-white text-xl" id="sim-panel-current-entry">0,0000</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-[10px] uppercase text-gray-400 mb-1">Preço de Liquidação</p>
+                                        <p class="font-mono font-bold text-red-500 text-xl" id="sim-panel-current-liq">0,0000</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-[#02d386]/5 border border-[#02d386]/20 p-5 rounded-xl flex flex-col gap-6 relative overflow-hidden">
+                                    <div class="absolute top-0 right-0 bg-[#02d386] text-black text-[9px] font-black px-3 py-1 rounded-bl-lg uppercase tracking-widest">Projeção</div>
+                                    <h4 class="text-[#02d386] font-bold text-[11px] uppercase tracking-widest border-b border-[#02d386]/20 pb-3">Nova Posição</h4>
+                                    <div>
+                                        <p class="text-[10px] uppercase text-[#02d386]/70 mb-1">Nova Entrada</p>
+                                        <div class="flex items-baseline gap-2 flex-wrap">
+                                            <p class="font-mono font-black text-white text-2xl leading-none" id="res-new-avg">---</p>
+                                            <span class="hidden" id="res-entry-diff"></span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p class="text-[10px] uppercase text-[#02d386]/70 mb-1">Nova Liquidação</p>
+                                        <div class="flex items-baseline gap-2 flex-wrap">
+                                            <p class="font-mono font-black text-red-400 text-2xl leading-none" id="sim-level-new-liq">---</p>
+                                            <span class="hidden" id="res-liq-diff"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
                             </div>
                         </div>
                     </div>
 
                     <div class="mt-8">
                         <h3 class="metric-label mb-4">Adicionar Margem (DCA)</h3>
-                        <div class="grid grid-cols-[1fr_1fr_60px] gap-4 mb-3 px-2 text-[10px] uppercase text-gray-500 font-bold border-b border-gray-800 pb-2">
+                        <div class="grid grid-cols-[60px_1fr_1fr] gap-4 mb-3 px-2 text-[10px] uppercase text-gray-500 font-bold border-b border-gray-800 pb-2">
+                            <div class="text-center">Ativo</div>
                             <div>Valor a Adicionar (USD)</div>
                             <div>Preço de Execução DCA</div>
-                            <div class="text-center">Ativo</div>
                         </div>
-                        <div id="sim-slots-body" class="space-y-3"></div>
+                        <div id="sim-slots-body" class="space-y-3">
+                            </div>
                         <div class="mt-6 flex justify-between items-center bg-white/5 p-4 rounded-xl border border-white/10">
                             <span class="metric-label">Custo Total Simulação</span>
                             <span id="res-total-cost" class="text-xl font-bold text-white">$0,00</span>
@@ -145,7 +160,7 @@
                 <span id="ai-loading" class="text-[10px] text-yellow-500 animate-pulse hidden font-bold uppercase">A processar...</span>
             </div>
             <div id="ai-content" class="flex-grow overflow-y-auto mb-6 pr-2 flex flex-col scrollbar-hide">
-                <div class="bot-msg msg">Sistemas operacionais. Pede a análise quando precisares.</div>
+                <div class="bot-msg msg">Sistemas operacionais. Aguardo instruções para analisar.</div>
             </div>
             <input type="text" id="chat-input" placeholder="Comando..." class="w-full bg-white/5 p-5 rounded-2xl text-white outline-none text-sm border border-white/5 focus:border-[#f3ba2f] transition-all" onkeypress="handleChat(event)">
         </aside>
@@ -176,12 +191,10 @@
         function fPT(n, isM = false, p = 2) {
             let num = Number(n);
             if(isNaN(num) || num === 0) return isM ? "$0,00" : "0,00";
-            
             let absNum = Math.abs(num);
             let parts = absNum.toFixed(p).split(".");
             parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
             let res = parts.join(",");
-            
             return (num < 0 ? "-" : "") + (isM ? "$" : "") + res;
         }
 
@@ -216,10 +229,11 @@
                     card = document.createElement('div'); card.id = `card-${pos.symbol}`;
                     card.className = `card border-l-4 p-6 ${pos.side === 'Buy' ? 'border-l-green-500' : 'border-l-red-500'}`;
                     
-                    // Apenas UM contentor de gráfico por moeda
                     card.innerHTML = `
                         <div class="content-area"></div>
-                        <div id="tv-${pos.symbol}" class="tv-wrap mt-6 hidden" data-loaded="false"></div>`;
+                        <div id="tv-wrapper-${pos.symbol}" class="grid grid-cols-1 gap-4 mt-6 hidden" data-loaded="false">
+                            <div id="tv-1-${pos.symbol}" class="tv-wrap h-[400px]"></div>
+                        </div>`;
                     grid.appendChild(card);
                 }
                 
@@ -256,52 +270,45 @@
             document.getElementById('avg-leverage').innerText = fPT(tMarg > 0 ? (tExp / tMarg) : 0, false, 2) + "x";
         }
 
-        // Toggle Universal: Desktop abre todas as posições, Mobile abre a clicada. (Lógica Reposta da v19.2)
+        // Universal Toggle Toggle 
         function handleUniversalToggle(s) {
             const isDesktop = window.innerWidth >= 1024;
             if (isDesktop) {
-                const wraps = Array.from(document.querySelectorAll('.tv-wrap'));
-                // Verifica se há algum aberto
-                const isAnyOpen = wraps.some(el => !el.classList.contains('hidden'));
+                const wrappers = Array.from(document.querySelectorAll('[id^="tv-wrapper-"]'));
+                const isAnyOpen = wrappers.some(el => !el.classList.contains('hidden'));
                 
                 currentPositions.forEach(pos => {
-                    const el = document.getElementById(`tv-${pos.symbol}`);
+                    const el = document.getElementById(`tv-wrapper-${pos.symbol}`);
                     if (isAnyOpen) {
                         el.classList.add('hidden');
                     } else {
                         el.classList.remove('hidden');
-                        loadChart(pos.symbol);
+                        if(el.getAttribute('data-loaded') === 'false') {
+                            new TradingView.widget({ "autosize": true, "symbol": `BYBIT:${pos.symbol}.P`, "interval": "15", "theme": "dark", "style": "1", "toolbar_bg": "#1e2329", "enable_publishing": false, "hide_side_toolbar": false, "container_id": `tv-1-${pos.symbol}`, "library_path": "https://s3.tradingview.com/tv.js" });
+                            el.setAttribute('data-loaded', 'true');
+                        }
                     }
                 });
             } else {
-                const el = document.getElementById(`tv-${s}`);
+                const el = document.getElementById(`tv-wrapper-${s}`);
                 el.classList.toggle('hidden');
-                if (!el.classList.contains('hidden')) loadChart(s);
+                if (!el.classList.contains('hidden') && el.getAttribute('data-loaded') === 'false') {
+                    new TradingView.widget({ "autosize": true, "symbol": `BYBIT:${s}.P`, "interval": "15", "theme": "dark", "style": "1", "toolbar_bg": "#1e2329", "enable_publishing": false, "hide_side_toolbar": false, "container_id": `tv-1-${s}`, "library_path": "https://s3.tradingview.com/tv.js" });
+                    el.setAttribute('data-loaded', 'true');
+                }
             }
         }
 
-        // Função isolada de carregamento para evitar recarregamento desnecessário
-        function loadChart(symbol) {
-            const el = document.getElementById(`tv-${symbol}`);
-            if (el.getAttribute('data-loaded') === 'false') {
-                new TradingView.widget({
-                    "autosize": true, "symbol": `BYBIT:${symbol}.P`, "interval": "15", "theme": "dark", "style": "1", 
-                    "toolbar_bg": "#1e2329", "enable_publishing": false, "hide_side_toolbar": false, 
-                    "container_id": `tv-${symbol}`, "library_path": "https://s3.tradingview.com/tv.js"
-                });
-                el.setAttribute('data-loaded', 'true');
-            }
-        }
-
+        // NOVO: Checkboxes na Esquerda
         function generateSimSlots() {
             const b = document.getElementById('sim-slots-body');
             for(let i=0; i<10; i++) {
                 const r = document.createElement('div');
-                r.className = 'grid grid-cols-[1fr_1fr_60px] gap-4 items-center';
+                r.className = 'grid grid-cols-[60px_1fr_1fr] gap-4 items-center';
                 r.innerHTML = `
+                    <div class="text-center flex justify-center"><input type="checkbox" checked class="sim-checkbox w-5 h-5 accent-[#f3ba2f]" onchange="runSimulation()"></div>
                     <input type="number" class="sim-input-val" placeholder="Ex: 500" oninput="runSimulation()">
                     <input type="number" class="sim-input-price" placeholder="Preço" oninput="runSimulation()">
-                    <div class="text-center flex justify-center"><input type="checkbox" checked class="sim-checkbox w-5 h-5 accent-[#f3ba2f]" onchange="runSimulation()"></div>
                 `;
                 b.appendChild(r);
             }
@@ -318,11 +325,13 @@
             const sym = document.getElementById('sim-select-pos').value;
             const p = currentPositions.find(x => x.symbol === sym);
             if(p) {
-                document.getElementById('sim-current-avg').innerText = fPT(p.avgPrice, false, 4);
+                // Info base
                 document.getElementById('sim-mark-price').innerText = fPT(p.markPrice, false, 4);
                 document.getElementById('sim-current-qty').innerText = fPT(Math.abs(parseFloat(p.size)), false, 2);
-                document.getElementById('sim-level-liq').innerText = fPT(p.liqPrice, false, 4);
-                document.getElementById('sim-level-tp').innerText = parseFloat(p.takeProfit) > 0 ? fPT(p.takeProfit, false, 4) : "N/D";
+                
+                // Info Painel Atual
+                document.getElementById('sim-panel-current-entry').innerText = fPT(p.avgPrice, false, 4);
+                document.getElementById('sim-panel-current-liq').innerText = fPT(p.liqPrice, false, 4);
                 
                 document.getElementById('tv-sim-container').innerHTML = `<div id="tv-sim-${sym}" class="w-full h-full"></div>`;
                 new TradingView.widget({ "autosize": true, "symbol": `BYBIT:${sym}.P`, "interval": "15", "theme": "dark", "style": "1", "hide_side_toolbar": false, "container_id": `tv-sim-${sym}`, "library_path": "https://s3.tradingview.com/tv.js" });
@@ -351,30 +360,46 @@
                 }
             });
 
+            // Cálculos da Nova Posição
             const nAvg = totalWPrice / totalQty;
-            document.getElementById('res-new-avg').innerText = fPT(nAvg, false, 4);
+            document.getElementById('res-new-avg').innerText = totalCost > 0 ? fPT(nAvg, false, 4) : "---";
             document.getElementById('res-total-cost').innerText = fPT(totalCost, true, 2);
             
-            let newLiq = 0;
-            if(p.side === 'Buy') newLiq = nAvg * (1 - 1/lev + 0.005);
-            else newLiq = nAvg * (1 + 1/lev - 0.005);
+            let newLiqCalc = 0;
+            if(p.side === 'Buy') newLiqCalc = nAvg * (1 - 1/lev + 0.005);
+            else newLiqCalc = nAvg * (1 + 1/lev - 0.005);
             
-            document.getElementById('sim-level-new-liq').innerText = totalCost > 0 ? fPT(newLiq, false, 4) : "---";
+            document.getElementById('sim-level-new-liq').innerText = totalCost > 0 ? fPT(newLiqCalc, false, 4) : "---";
 
-            const oldLiqDist = Math.abs(parseFloat(p.liqPrice) - mkPrice) / mkPrice * 100;
-            const newLiqDist = Math.abs(newLiq - mkPrice) / mkPrice * 100;
-            const improvement = totalCost > 0 ? (newLiqDist - oldLiqDist) : 0;
+            // Cálculos de Diferença Percentual (Variações)
+            const oldLiq = parseFloat(p.liqPrice) > 0 ? parseFloat(p.liqPrice) : 0;
             
-            document.getElementById('res-dist-text').innerText = improvement > 0 ? "+" + fPT(improvement, false, 2) + "% Segurança" : "0,00%";
+            const elEntryDiff = document.getElementById('res-entry-diff');
+            const elLiqDiff = document.getElementById('res-liq-diff');
+
+            if(totalCost > 0) {
+                // Diferença Entrada %
+                const entryDiffPerc = ((nAvg - curAvg) / curAvg) * 100;
+                const isEntryBetter = p.side === 'Buy' ? entryDiffPerc < 0 : entryDiffPerc > 0;
+                elEntryDiff.innerText = (entryDiffPerc > 0 ? "+" : "") + fPT(entryDiffPerc, false, 2) + "%";
+                elEntryDiff.className = `text-[10px] font-bold px-2 py-0.5 rounded-md ${isEntryBetter ? 'bg-[#02d386]/20 text-[#02d386]' : 'bg-red-500/20 text-red-500'}`;
+                
+                // Diferença Liq %
+                if(oldLiq > 0) {
+                    const liqDiffPerc = ((newLiqCalc - oldLiq) / oldLiq) * 100;
+                    const isLiqBetter = p.side === 'Buy' ? liqDiffPerc < 0 : liqDiffPerc > 0;
+                    elLiqDiff.innerText = (liqDiffPerc > 0 ? "+" : "") + fPT(liqDiffPerc, false, 2) + "%";
+                    elLiqDiff.className = `text-[10px] font-bold px-2 py-0.5 rounded-md ${isLiqBetter ? 'bg-[#02d386]/20 text-[#02d386]' : 'bg-red-500/20 text-red-500'}`;
+                }
+            } else {
+                elEntryDiff.className = "hidden";
+                elLiqDiff.className = "hidden";
+            }
         }
 
         async function fetchTelemetry() {
             try {
-                // Header RESTAURADO 
-                const headers = { 
-                    'Content-Type': 'application/json', 
-                    'Authorization': `Bearer ${SUPABASE_KEY}` 
-                };
+                const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}` };
                 const r = await fetch(AI_FUNC_PATH, { method: 'POST', headers: headers, body: JSON.stringify({ positions: currentPositions, userMessage: "TELEMETRY" }) });
                 const d = await r.json();
                 
