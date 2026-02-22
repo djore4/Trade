@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Trading Lab - v21.0 Final</title>
+    <title>AI Trading Lab - v21.1</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -11,60 +11,61 @@
         body { 
             background-color: #080a0c; color: #f0f2f5; font-family: 'Outfit', sans-serif; 
             -webkit-font-smoothing: antialiased; background-image: radial-gradient(circle at top right, rgba(var(--risk-rgb), 0.1), transparent 800px);
-            min-height: 100vh; overflow-x: hidden;
+            min-height: 100vh;
         }
-        .card { background: rgba(24, 26, 32, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; transition: all 0.3s ease; }
+        .card { background: rgba(24, 26, 32, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; }
         .metric-label { color: #848e9c; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.15em; font-weight: 700; }
         .metric-value { font-family: 'Roboto Mono', monospace; font-weight: 700; }
         
-        /* Navigation */
-        .nav-btn { padding: 12px 24px; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: #848e9c; border-bottom: 2px solid transparent; transition: 0.3s; }
+        /* Nav */
+        .nav-btn { padding: 12px 16px; font-weight: 800; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: #848e9c; border-bottom: 2px solid transparent; transition: 0.3s; }
         .nav-btn.active { color: var(--yellow-binance); border-bottom-color: var(--yellow-binance); }
         .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
 
-        /* Bars & Visuals */
-        .progress-bg { background-color: #1e2329; height: 6px; border-radius: 3px; width: 100%; margin-top: 4px; overflow: hidden; }
-        .progress-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
-        
-        .price-line { position: relative; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin: 60px 20px; }
-        .price-marker { position: absolute; top: -35px; transform: translateX(-50%); font-size: 9px; font-weight: 800; text-transform: uppercase; white-space: nowrap; text-align: center; }
-        .price-dot { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 12px; height: 12px; border-radius: 50%; border: 2px solid #080a0c; z-index: 10; }
+        /* Mobile Fixes */
+        @media (max-width: 640px) {
+            .app-grid { padding: 10px; gap: 15px; }
+            .metric-value { font-size: 1.1rem; }
+            #ai-section { height: 60vh; position: relative; top: 0; }
+        }
+
+        /* Dropdown Dark Fix */
+        select { background-color: #1e2329 !important; color: white !important; border: 1px solid rgba(255,255,255,0.1) !important; padding: 12px; border-radius: 8px; width: 100%; cursor: pointer; }
+        option { background-color: #1e2329; color: white; }
+
+        /* Price Map Ruler */
+        .price-line { position: relative; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin: 70px 20px; }
+        .price-marker { position: absolute; top: -45px; transform: translateX(-50%); font-size: 8px; font-weight: 800; text-transform: uppercase; text-align: center; line-height: 1.2; }
+        .price-dot { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 10px; height: 10px; border-radius: 50%; border: 2px solid #080a0c; z-index: 10; }
 
         .app-grid { display: grid; grid-template-columns: 1fr; gap: 20px; padding: 20px; max-width: 1800px; margin: 0 auto; transition: all 0.4s ease; }
-        @media (min-width: 1280px) { .app-grid.chat-open { grid-template-columns: 1fr 500px; } }
+        @media (min-width: 1280px) { .app-grid.chat-open { grid-template-columns: 1fr 450px; } #ai-section { height: calc(100vh - 140px); position: sticky; top: 110px; } }
         
-        #ai-section { display: none; flex-direction: column; height: calc(100vh - 140px); position: sticky; top: 110px; }
-        #ai-section.open { display: flex; }
-        .msg { margin-bottom: 20px; padding: 16px; border-radius: 14px; font-size: 0.92rem; line-height: 1.7; }
+        .progress-bg { background-color: #1e2329; height: 6px; border-radius: 3px; overflow: hidden; }
+        .progress-fill { height: 100%; transition: width 0.8s ease; }
         .bot-msg { background: rgba(243, 186, 47, 0.03); border-left: 4px solid var(--yellow-binance); }
-        .user-msg { background: rgba(255, 255, 255, 0.05); border-right: 4px solid #848e9c; align-self: flex-end; text-align: right; }
-        
-        select { background-color: #1e2329 !important; color: white !important; border: 1px solid rgba(255,255,255,0.1) !important; padding: 12px; border-radius: 8px; width: 100%; outline: none; }
-        input[type="number"] { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; padding: 8px; font-family: 'Roboto Mono'; font-size: 0.85rem; width: 100%; }
-        
-        .tv-wrap { height: 500px; margin-top: 15px; border-radius: 12px; overflow: hidden; background: #000; border: 1px solid rgba(255,255,255,0.08); }
+        .tv-wrap { height: 450px; margin-top: 15px; border-radius: 12px; overflow: hidden; background: #000; }
         .hidden { display: none !important; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
 
     <header class="border-b border-gray-800/40 bg-[#080a0c]/90 backdrop-blur-md sticky top-0 z-50">
-        <div class="max-w-[1800px] mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center">
-            <div class="flex items-center gap-8">
-                <h1 class="text-3xl font-black text-white tracking-tighter">AI <span class="text-[#f3ba2f]">Trading Lab</span></h1>
+        <div class="max-w-[1800px] mx-auto px-4 md:px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-4 md:gap-8">
+                <h1 class="text-xl md:text-2xl font-black text-white">AI <span class="text-[#f3ba2f]">Lab</span></h1>
                 <nav class="flex">
-                    <button onclick="switchTab('dashboard')" id="btn-dashboard" class="nav-btn active">Dashboard</button>
-                    <button onclick="switchTab('simulator')" id="btn-simulator" class="nav-btn">Simulador DCA</button>
+                    <button onclick="switchTab('dashboard')" id="btn-dashboard" class="nav-btn active">Dash</button>
+                    <button onclick="switchTab('simulator')" id="btn-simulator" class="nav-btn">Simulador</button>
                 </nav>
             </div>
-            <div class="flex items-center gap-6 mt-4 md:mt-0">
-                <div class="flex gap-4 text-[10px] font-bold uppercase tracking-widest text-gray-500">
+            <div class="flex items-center gap-4">
+                <div class="flex gap-3 text-[9px] font-bold text-gray-400 uppercase tracking-widest">
                     <span id="macro-trend">Macro: --</span>
                     <span id="fg-index-top">F&G: --</span>
                 </div>
-                <button onclick="handleBaltazarCall()" class="bg-[#f3ba2f] text-black px-8 py-3 rounded-2xl font-black uppercase text-[10px] shadow-xl transition-all">Baltazar AI</button>
+                <button onclick="handleBaltazarCall()" class="bg-[#f3ba2f] text-black px-4 py-2 rounded-lg font-black uppercase text-[10px]">Baltazar AI</button>
             </div>
         </div>
     </header>
@@ -72,65 +73,57 @@
     <div id="main-grid" class="app-grid">
         <main>
             <section id="tab-dashboard" class="tab-content active">
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                    <div class="card p-5"><p class="metric-label">PnL Global</p><p id="total-pnl" class="text-2xl metric-value">$0</p></div>
-                    <div class="card p-5"><p class="metric-label">ROE Médio</p><p id="total-pnl-perc" class="text-2xl metric-value">0%</p></div>
-                    <div class="card p-5"><p class="metric-label">Exposição</p><p id="total-exposure" class="text-2xl metric-value text-white">$0</p></div>
-                    <div class="card p-5 border-yellow-500/10"><p class="metric-label text-yellow-500 font-bold">Alavancagem</p><p id="avg-leverage" class="text-2xl metric-value text-yellow-500">0x</p></div>
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+                    <div class="card p-4"><p class="metric-label">PnL Global</p><p id="total-pnl" class="metric-value">$0</p></div>
+                    <div class="card p-4"><p class="metric-label">ROE Médio</p><p id="total-pnl-perc" class="metric-value">0%</p></div>
+                    <div class="card p-4 hidden md:block"><p class="metric-label">Exposição</p><p id="total-exposure" class="metric-value">$0</p></div>
+                    <div class="card p-4"><p class="metric-label text-yellow-500">Alavancagem</p><p id="avg-leverage" class="metric-value text-yellow-500">0x</p></div>
                 </div>
-                <div id="dashboard-grid" class="grid grid-cols-1 md:grid-cols-2 gap-5"></div>
+                <div id="dashboard-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </section>
 
             <section id="tab-simulator" class="tab-content">
-                <div class="card p-6 md:p-8">
-                    <div class="mb-8 flex flex-col md:flex-row gap-6 border-b border-gray-800 pb-8 items-end">
-                        <div class="w-full md:w-1/3">
-                            <label class="metric-label block mb-3">Escolher Posição para DCA</label>
-                            <select id="sim-select-pos" onchange="loadPositionToSim()"></select>
-                        </div>
-                        <div class="flex-grow grid grid-cols-3 gap-4">
-                            <div class="bg-white/5 p-4 rounded-xl"><p class="metric-label">Entrada</p><p id="sim-current-avg" class="metric-value">0.0000</p></div>
-                            <div class="bg-white/5 p-4 rounded-xl"><p class="metric-label">Preço Mark</p><p id="sim-mark-price" class="metric-value text-[#f3ba2f]">0.0000</p></div>
-                            <div class="bg-white/5 p-4 rounded-xl"><p class="metric-label">Contratos</p><p id="sim-current-qty" class="metric-value">0.00</p></div>
-                        </div>
+                <div class="card p-4 md:p-8">
+                    <div class="mb-10">
+                        <label class="metric-label block mb-2">Posição para Simulação</label>
+                        <select id="sim-select-pos" onchange="loadPositionToSim()"></select>
                     </div>
 
-                    <div class="mb-16 overflow-x-auto">
+                    <div class="mb-16 overflow-x-auto pb-6">
                         <div id="price-map" class="price-line"></div>
                     </div>
 
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                        <div class="lg:col-span-2 overflow-x-auto">
-                            <table class="w-full text-left text-[11px]">
-                                <thead class="text-gray-500 uppercase font-black border-b border-gray-800">
-                                    <tr><th class="pb-4 px-2">Valor (USD)</th><th class="pb-4 px-2">Preço DCA</th><th class="pb-4 px-2 text-center">On</th></tr>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2">
+                            <table class="w-full text-[11px] text-left">
+                                <thead class="text-gray-500 uppercase border-b border-gray-800">
+                                    <tr><th class="pb-3">Adicionar (USD)</th><th class="pb-3 px-2">Preço DCA</th><th class="pb-3 text-center">On</th></tr>
                                 </thead>
                                 <tbody id="sim-slots-body"></tbody>
                             </table>
                         </div>
-                        <div class="card bg-white/5 p-6 border-l-4 border-l-[#f3ba2f]">
-                            <h3 class="metric-label mb-6 text-white">Impacto Estimado</h3>
-                            <div class="mb-6"><p class="metric-label">Novo Preço Médio</p><p id="res-new-avg" class="text-4xl font-black text-[#02d386]">---</p></div>
-                            <div class="space-y-4 border-t border-gray-800 pt-6">
-                                <div class="flex justify-between"><span class="metric-label">Custo Total Sim.</span><span id="res-total-cost" class="font-bold text-white">$0,00</span></div>
-                                <div class="flex justify-between"><span class="metric-label">Melhoria Médio</span><span id="res-dist-text" class="text-[#02d386] font-bold">0%</span></div>
+                        <div class="card bg-white/5 p-5 border-l-4 border-l-[#f3ba2f]">
+                            <h3 class="metric-label mb-5 text-white">Impacto DCA</h3>
+                            <div class="mb-4"><p class="metric-label">Preço Atual (Mark)</p><p id="sim-ref-price" class="text-lg font-bold text-yellow-500">0.0000</p></div>
+                            <div class="mb-4"><p class="metric-label">Novo Preço Médio</p><p id="res-new-avg" class="text-3xl font-black text-[#02d386]">---</p></div>
+                            <div class="pt-5 border-t border-gray-800 space-y-2">
+                                <div class="flex justify-between"><span class="metric-label">Custo Extra</span><span id="res-total-cost" class="font-bold">$0,00</span></div>
+                                <div class="flex justify-between"><span class="metric-label">Melhoria Entrada</span><span id="res-dist-text" class="text-[#02d386] font-bold">0%</span></div>
                             </div>
-                            <button onclick="resetSim()" class="w-full mt-8 py-3 border border-white/10 rounded-xl text-[10px] font-bold uppercase hover:bg-white/10">Limpar Tudo</button>
+                            <button onclick="resetSim()" class="w-full mt-6 py-3 border border-white/10 rounded-xl text-[10px] font-bold uppercase hover:bg-white/5 transition-all">Limpar</button>
                         </div>
                     </div>
                 </div>
             </section>
         </main>
 
-        <aside id="ai-section" class="card p-8 flex flex-col">
-            <div class="flex justify-between items-center mb-8 border-b border-gray-800 pb-5">
-                <span class="text-white text-xs font-black uppercase tracking-widest text-yellow-500/80">Baltazar AI</span>
-                <span id="ai-loading" class="text-[10px] text-yellow-500 animate-pulse hidden uppercase font-bold">A analisar...</span>
+        <aside id="ai-section" class="card p-6 flex flex-col">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-800 pb-3">
+                <span class="text-white text-[10px] font-black uppercase tracking-widest text-yellow-500/80">Baltazar</span>
+                <span id="ai-loading" class="text-[9px] text-yellow-500 animate-pulse hidden">ANALISANDO</span>
             </div>
-            <div id="ai-content" class="flex-grow overflow-y-auto mb-6 pr-2 flex flex-col scrollbar-hide">
-                <div class="bot-msg msg">Dados sincronizados. Dashboard e Simulador prontos. Como posso ajudar?</div>
-            </div>
-            <input type="text" id="chat-input" placeholder="Comando..." class="w-full bg-white/5 p-5 rounded-2xl text-white outline-none text-sm border border-white/5 focus:border-[#f3ba2f]" onkeypress="handleChat(event)">
+            <div id="ai-content" class="flex-grow overflow-y-auto mb-4 text-sm flex flex-col scrollbar-hide"></div>
+            <input type="text" id="chat-input" placeholder="Diz-me algo..." class="w-full bg-white/5 p-4 rounded-xl text-white outline-none text-xs border border-white/5 focus:border-[#f3ba2f]" onkeypress="handleChat(event)">
         </aside>
     </div>
 
@@ -141,7 +134,7 @@
         const SUPABASE_KEY = 'sb_publishable_bRa-mZWTaf0g6sNyWL9OmQ_uvo7Ex5H';
         let currentPositions = [];
 
-        window.onload = () => { generateSimSlots(); fetchPositions(); setInterval(fetchPositions, 10000); fetchTelemetry(); setInterval(fetchTelemetry, 60000); };
+        window.onload = () => { generateSimSlots(); fetchPositions(); setInterval(fetchPositions, 10000); fetchTelemetry(); };
 
         function switchTab(t) {
             document.querySelectorAll('.tab-content, .nav-btn').forEach(el => el.classList.remove('active'));
@@ -175,30 +168,24 @@
                 const lev = parseFloat(pos.leverage), cur = parseFloat(pos.markPrice);
                 const ent = parseFloat(pos.avgPrice), liq = parseFloat(pos.liqPrice), tp = parseFloat(pos.takeProfit);
                 const marg = val / lev; tPnL += pnl; tMarg += marg; tExp += val;
+                
                 let card = document.getElementById(`card-${pos.symbol}`);
                 if (!card) {
                     card = document.createElement('div'); card.id = `card-${pos.symbol}`;
-                    card.className = `card border-l-4 p-6 ${pos.side === 'Buy' ? 'border-l-green-500' : 'border-l-red-500'}`;
+                    card.className = `card border-l-4 p-4 ${pos.side === 'Buy' ? 'border-l-green-500' : 'border-l-red-500'}`;
                     card.innerHTML = `<div class="content-area"></div><div id="tv-${pos.symbol}" class="tv-wrap hidden"></div>`;
                     grid.appendChild(card);
                 }
                 const dLiq = liq > 0 ? Math.abs((liq - cur) / cur) * 100 : 100;
                 const tpP = tp > 0 ? (Math.abs(cur - ent) / Math.abs(tp - ent)) * 100 : 0;
                 card.querySelector('.content-area').innerHTML = `
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="font-black text-white text-xl uppercase tracking-tighter">${pos.symbol} <span class="text-xs text-yellow-500 ml-1">${lev}x</span></h2>
-                        <button onclick="handleUniversalToggle('${pos.symbol}')" class="text-gray-500"><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke-width="2.5"></path></svg></button>
-                    </div>
-                    <div class="grid grid-cols-2 gap-6">
-                        <div><p class="metric-label">ROE</p><p class="text-3xl font-black ${pnl >= 0 ? 'text-green-500' : 'text-red-500'}">${((pnl/marg)*100).toFixed(2)}%</p></div>
-                        <div class="text-right"><p class="metric-label">PnL USD</p><p class="text-2xl font-bold ${pnl >= 0 ? 'text-green-500' : 'text-red-500'}">${fPT(pnl, true)}</p></div>
-                        <div class="col-span-2 mt-2">
-                            <div class="flex justify-between text-[10px] font-bold text-gray-500 uppercase mb-1"><span>Liq ($${fPT(liq, false, 4)})</span><span>${dLiq.toFixed(1)}%</span></div>
-                            <div class="progress-bg"><div class="progress-fill ${dLiq < 12 ? 'bg-red-500 animate-pulse' : 'bg-red-900/40'}" style="width: ${Math.max(0, 100 - dLiq)}%"></div></div>
-                        </div>
+                    <div class="flex justify-between items-center mb-4"><h2 class="font-black text-sm uppercase">${pos.symbol} <span class="text-[10px] opacity-50">${lev}x</span></h2><button onclick="handleUniversalToggle('${pos.symbol}')" class="text-gray-500"><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke-width="2.5"></path></svg></button></div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><p class="metric-label">ROE</p><p class="font-black ${pnl >= 0 ? 'text-green-500' : 'text-red-500'}">${((pnl/marg)*100).toFixed(2)}%</p></div>
+                        <div class="text-right"><p class="metric-label">PnL</p><p class="font-bold ${pnl >= 0 ? 'text-green-500' : 'text-red-500'}">${fPT(pnl, true)}</p></div>
                         <div class="col-span-2">
-                            <div class="flex justify-between text-[10px] font-bold text-yellow-600 uppercase mb-1"><span>Take Profit ($${fPT(tp, false, 4)})</span><span>${tpP.toFixed(0)}%</span></div>
-                            <div class="progress-bg"><div class="progress-fill bg-yellow-500/60" style="width: ${Math.min(tpP, 100)}%"></div></div>
+                            <div class="flex justify-between text-[9px] font-bold uppercase mb-1"><span>Dist: ${dLiq.toFixed(1)}%</span><span>TP: ${tpP.toFixed(0)}%</span></div>
+                            <div class="progress-bg"><div class="progress-fill ${dLiq < 12 ? 'bg-red-500' : 'bg-green-500/30'}" style="width: ${Math.max(0, 100 - dLiq)}%"></div></div>
                         </div>
                     </div>`;
             });
@@ -212,11 +199,7 @@
             const b = document.getElementById('sim-slots-body');
             for(let i=0; i<10; i++) {
                 const r = document.createElement('tr');
-                r.className = 'border-b border-white/5';
-                r.innerHTML = `
-                    <td class="py-3"><input type="number" class="sim-input-val" placeholder="USD" oninput="runSimulation()"></td>
-                    <td class="py-3 px-2"><input type="number" class="sim-input-price" placeholder="Preço" oninput="runSimulation()"></td>
-                    <td class="py-3 text-center"><input type="checkbox" checked class="sim-checkbox accent-[#f3ba2f]" onchange="runSimulation()"></td>`;
+                r.innerHTML = `<td class="py-2"><input type="number" class="sim-input-val" oninput="runSimulation()"></td><td class="px-1"><input type="number" class="sim-input-price" oninput="runSimulation()"></td><td class="text-center"><input type="checkbox" checked class="sim-checkbox accent-[#f3ba2f]" onchange="runSimulation()"></td>`;
                 b.appendChild(r);
             }
         }
@@ -231,12 +214,7 @@
         function loadPositionToSim() {
             const sym = document.getElementById('sim-select-pos').value;
             const p = currentPositions.find(x => x.symbol === sym);
-            if(p) {
-                document.getElementById('sim-current-avg').innerText = parseFloat(p.avgPrice).toFixed(4);
-                document.getElementById('sim-mark-price').innerText = parseFloat(p.markPrice).toFixed(4);
-                document.getElementById('sim-current-qty').innerText = Math.abs(parseFloat(p.size));
-                runSimulation();
-            }
+            if(p) { document.getElementById('sim-ref-price').innerText = parseFloat(p.markPrice).toFixed(4); runSimulation(); }
         }
 
         function runSimulation() {
@@ -247,11 +225,10 @@
             let curQty = Math.abs(parseFloat(p.size)), curAvg = parseFloat(p.avgPrice), mkPrice = parseFloat(p.markPrice);
             let totalQty = curQty, totalWPrice = curQty * curAvg, totalCost = 0;
 
-            const vals = document.querySelectorAll('.sim-input-val'), prices = document.querySelectorAll('.sim-input-price'), checks = document.querySelectorAll('.sim-checkbox');
-
-            vals.forEach((v, i) => {
-                if(checks[i].checked && v.value && prices[i].value) {
-                    const usd = parseFloat(v.value), price = parseFloat(prices[i].value);
+            document.querySelectorAll('.sim-input-val').forEach((v, i) => {
+                const pr = document.querySelectorAll('.sim-input-price')[i], ch = document.querySelectorAll('.sim-checkbox')[i];
+                if(ch.checked && v.value && pr.value) {
+                    const usd = parseFloat(v.value), price = parseFloat(pr.value);
                     const qty = usd / price; totalQty += qty; totalWPrice += (qty * price); totalCost += usd;
                 }
             });
@@ -261,7 +238,6 @@
             document.getElementById('res-total-cost').innerText = fPT(totalCost, true);
             const oldD = Math.abs(curAvg - mkPrice), newD = Math.abs(nAvg - mkPrice);
             document.getElementById('res-dist-text').innerText = oldD > 0 ? (((oldD - newD)/oldD)*100).toFixed(1) + "%" : "0%";
-
             renderPriceMap(mkPrice, curAvg, nAvg, parseFloat(p.liqPrice), parseFloat(p.takeProfit));
         }
 
@@ -275,15 +251,15 @@
                 const x = ((val - min) / range) * 100;
                 map.innerHTML += `<div class="price-marker" style="left: ${x}%; color: ${color}">${label}<br>${val.toFixed(4)}</div><div class="price-dot" style="left: ${x}%; background: ${color}"></div>`;
             };
-            addPoint(liq, 'LIQ', '#ff3b5c'); addPoint(oldAvg, 'ENTRY', '#848e9c'); addPoint(nAvg, 'DCA', '#02d386'); addPoint(mark, 'MARK', '#f3ba2f'); addPoint(tp, 'TP', '#02d386');
+            addPoint(liq, 'LIQ', '#ff3b5c'); addPoint(oldAvg, 'ANTIGA', '#848e9c'); addPoint(nAvg, 'NOVA', '#02d386'); addPoint(mark, 'MARK', '#f3ba2f'); addPoint(tp, 'TAKE PROFIT', '#02d386');
         }
 
         async function fetchTelemetry() {
             try {
                 const r = await fetch(AI_FUNC_PATH, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ positions: currentPositions, userMessage: "TELEMETRY" }) });
                 const d = await r.json();
-                document.getElementById('macro-trend').innerText = `Macro: ${d.insight.toUpperCase().includes('BULLISH') ? 'BULLISH' : 'BEARISH'}`;
-                document.getElementById('fg-index-top').innerText = `F&G: ${d.fg || '--'}`;
+                if(d.insight) document.getElementById('macro-trend').innerText = `Macro: ${d.insight.toUpperCase().includes('BULLISH') ? 'BULLISH' : 'BEARISH'}`;
+                if(d.fg) document.getElementById('fg-index-top').innerText = `F&G: ${d.fg}`;
             } catch (e) {}
         }
 
@@ -292,15 +268,16 @@
         async function fetchAIIntelligence(userQuery = null) {
             const aiContent = document.getElementById('ai-content');
             const loader = document.getElementById('ai-loading');
-            if (userQuery) { aiContent.innerHTML += `<div class="user-msg msg">${userQuery}</div>`; }
+            if (userQuery) { aiContent.innerHTML += `<div class="user-msg self-end bg-white/10 p-2 rounded-lg mb-2">${userQuery}</div>`; }
             loader.classList.remove('hidden');
             try {
                 const r = await fetch(AI_FUNC_PATH, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ positions: currentPositions, userMessage: userQuery }) });
                 const d = await r.json();
-                aiContent.innerHTML += `<div class="bot-msg msg">${d.insight.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>')}</div>`;
+                aiContent.innerHTML += `<div class="bot-msg p-3 rounded-lg mb-2">${d.insight.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>')}</div>`;
                 aiContent.scrollTop = aiContent.scrollHeight;
             } catch (err) {} finally { loader.classList.add('hidden'); }
         }
+
         function handleChat(e) { if (e.key === 'Enter' && e.target.value.trim() !== "") { fetchAIIntelligence(e.target.value); e.target.value = ''; } }
         function handleUniversalToggle(s) {
             const el = document.getElementById(`tv-${s}`); el.classList.toggle('hidden');
