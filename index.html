@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Trading Lab - v21.2 Total Recovery</title>
+    <title>AI Trading Lab</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -20,17 +20,17 @@
         .nav-btn { padding: 12px 16px; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: #848e9c; border-bottom: 2px solid transparent; transition: 0.3s; }
         .nav-btn.active { color: var(--yellow-binance); border-bottom-color: var(--yellow-binance); }
         .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
 
         .progress-bg { background-color: #1e2329; height: 6px; border-radius: 3px; width: 100%; margin-top: 4px; overflow: hidden; }
         .progress-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
         
         .price-line { position: relative; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin: 70px 20px; }
-        .price-marker { position: absolute; top: -45px; transform: translateX(-50%); font-size: 8px; font-weight: 800; text-transform: uppercase; text-align: center; }
+        .price-marker { position: absolute; top: -45px; transform: translateX(-50%); font-size: 8px; font-weight: 800; text-transform: uppercase; text-align: center; white-space: nowrap; }
         .price-dot { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 10px; height: 10px; border-radius: 50%; border: 2px solid #080a0c; z-index: 10; }
 
-        .app-grid { display: grid; grid-template-columns: 1fr; gap: 20px; padding: 20px; max-width: 1800px; margin: 0 auto; transition: all 0.4s ease; }
-        @media (min-width: 1280px) { .app-grid.chat-open { grid-template-columns: 1fr 450px; } #ai-section { height: calc(100vh - 140px); position: sticky; top: 110px; } }
+        .app-grid { display: grid; grid-template-columns: 1fr; gap: 20px; padding: 20px; max-width: 1850px; margin: 0 auto; }
+        @media (min-width: 1280px) { .app-grid.chat-open { grid-template-columns: 1fr 500px; } }
         
         #ai-section { display: none; flex-direction: column; }
         #ai-section.open { display: flex; }
@@ -43,26 +43,25 @@
         
         .tv-wrap { height: 500px; margin-top: 15px; border-radius: 12px; overflow: hidden; background: #000; border: 1px solid rgba(255,255,255,0.08); }
         .hidden { display: none !important; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
 
     <header class="border-b border-gray-800/40 bg-[#080a0c]/90 backdrop-blur-md sticky top-0 z-50">
-        <div class="max-w-[1800px] mx-auto px-4 md:px-6 py-4 flex justify-between items-center">
-            <div class="flex items-center gap-4 md:gap-8">
-                <h1 class="text-xl md:text-2xl font-black text-white uppercase tracking-tighter">AI <span class="text-[#f3ba2f]">Trading Lab</span></h1>
+        <div class="max-w-[1850px] mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center">
+            <div class="flex items-center gap-8">
+                <h1 class="text-3xl font-black text-white tracking-tighter"><span class="text-[#f3ba2f]">AI</span> Trading Lab</h1>
                 <nav class="flex">
-                    <button onclick="switchTab('dashboard')" id="btn-dashboard" class="nav-btn active">Dash</button>
-                    <button onclick="switchTab('simulator')" id="btn-simulator" class="nav-btn">Simulador</button>
+                    <button onclick="switchTab('dashboard')" id="btn-dashboard" class="nav-btn active">Dashboard</button>
+                    <button onclick="switchTab('simulator')" id="btn-simulator" class="nav-btn">Simulador DCA</button>
                 </nav>
             </div>
-            <div class="flex items-center gap-4">
-                <div class="flex gap-4 text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+            <div class="flex items-center gap-6 mt-4 md:mt-0">
+                <div class="flex gap-4 text-[10px] font-bold uppercase tracking-widest text-gray-500">
                     <span id="macro-trend">Macro: --</span>
                     <span id="fg-index-top">F&G: --</span>
                 </div>
-                <button onclick="handleBaltazarCall()" class="bg-[#f3ba2f] text-black px-6 py-2 rounded-xl font-black uppercase text-[10px]">Baltazar AI</button>
+                <button onclick="handleBaltazarCall()" class="bg-[#f3ba2f] text-black px-8 py-3 rounded-2xl font-black uppercase text-[10px] shadow-xl transition-all hover:scale-105">Baltazar AI</button>
             </div>
         </div>
     </header>
@@ -73,32 +72,28 @@
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                     <div class="card p-5"><p class="metric-label">PnL Global</p><p id="total-pnl" class="text-2xl metric-value">$0</p></div>
                     <div class="card p-5"><p class="metric-label">ROE Médio</p><p id="total-pnl-perc" class="text-2xl metric-value">0%</p></div>
-                    <div class="card p-5 hidden md:block"><p class="metric-label">Exposição</p><p id="total-exposure" class="text-2xl metric-value text-white">$0</p></div>
+                    <div class="card p-5"><p class="metric-label">Exposição</p><p id="total-exposure" class="text-2xl metric-value text-white">$0</p></div>
                     <div class="card p-5 border-yellow-500/10"><p class="metric-label text-yellow-500 font-bold">Lev. Real</p><p id="avg-leverage" class="text-2xl metric-value text-yellow-500">0x</p></div>
                 </div>
                 <div id="dashboard-grid" class="grid grid-cols-1 md:grid-cols-2 gap-5"></div>
             </section>
 
             <section id="tab-simulator" class="tab-content">
-                <div class="card p-4 md:p-8">
+                <div class="card p-8">
                     <div class="mb-8 flex flex-col md:flex-row gap-6 border-b border-gray-800 pb-8 items-end">
                         <div class="w-full md:w-1/3">
-                            <label class="metric-label block mb-3">Posição para Simulação</label>
+                            <label class="metric-label block mb-3">Escolher Posição</label>
                             <select id="sim-select-pos" onchange="loadPositionToSim()"></select>
                         </div>
                         <div class="flex-grow grid grid-cols-3 gap-4">
-                            <div class="bg-white/5 p-4 rounded-xl"><p class="metric-label">Preço Mark</p><p id="sim-mark-price" class="metric-value text-[#f3ba2f]">0.0000</p></div>
+                            <div class="bg-white/5 p-4 rounded-xl"><p class="metric-label">Mark Price</p><p id="sim-mark-price" class="metric-value text-[#f3ba2f]">0.0000</p></div>
                             <div class="bg-white/5 p-4 rounded-xl"><p class="metric-label">Entrada</p><p id="sim-current-avg" class="metric-value">0.0000</p></div>
                             <div class="bg-white/5 p-4 rounded-xl"><p class="metric-label">Contratos</p><p id="sim-current-qty" class="metric-value">0.00</p></div>
                         </div>
                     </div>
-
-                    <div class="mb-16 overflow-x-auto pb-6">
-                        <div id="price-map" class="price-line"></div>
-                    </div>
-
+                    <div class="mb-16"><div id="price-map" class="price-line"></div></div>
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                        <div class="lg:col-span-2 overflow-x-auto">
+                        <div class="lg:col-span-2">
                             <table class="w-full text-left text-[11px]">
                                 <thead class="text-gray-500 uppercase font-black border-b border-gray-800">
                                     <tr><th class="pb-4 px-2">Valor (USD)</th><th class="pb-4 px-2">Preço DCA</th><th class="pb-4 px-2 text-center">On</th></tr>
@@ -111,24 +106,21 @@
                             <div class="mb-6"><p class="metric-label">Novo Preço Médio</p><p id="res-new-avg" class="text-4xl font-black text-[#02d386]">---</p></div>
                             <div class="space-y-4 border-t border-gray-800 pt-6">
                                 <div class="flex justify-between"><span class="metric-label">Custo Extra</span><span id="res-total-cost" class="font-bold text-white">$0,00</span></div>
-                                <div class="flex justify-between"><span class="metric-label">Aproximação</span><span id="res-dist-text" class="text-[#02d386] font-bold">0%</span></div>
+                                <div class="flex justify-between"><span class="metric-label">Melhoria</span><span id="res-dist-text" class="text-[#02d386] font-bold">0%</span></div>
                             </div>
-                            <button onclick="resetSim()" class="w-full mt-8 py-4 border border-white/10 rounded-xl text-[10px] font-bold uppercase hover:bg-white/10 transition-all">Limpar Simulador</button>
+                            <button onclick="resetSim()" class="w-full mt-8 py-4 border border-white/10 rounded-xl text-[10px] font-bold uppercase hover:bg-white/10">Limpar</button>
                         </div>
                     </div>
                 </div>
             </section>
         </main>
-
         <aside id="ai-section" class="card p-8 flex flex-col">
             <div class="flex justify-between items-center mb-8 border-b border-gray-800 pb-5">
-                <span class="text-white text-xs font-black uppercase tracking-widest text-yellow-500/80">Baltazar AI</span>
-                <span id="ai-loading" class="text-[10px] text-yellow-500 animate-pulse hidden uppercase font-bold">Analisando</span>
+                <span class="text-white text-xs font-black uppercase tracking-widest text-yellow-500/80">Baltazar</span>
+                <span id="ai-loading" class="text-[10px] text-yellow-500 animate-pulse hidden uppercase">Analisando</span>
             </div>
-            <div id="ai-content" class="flex-grow overflow-y-auto mb-6 pr-2 flex flex-col scrollbar-hide">
-                <div class="bot-msg msg">Operação sincronizada. Dashboard e Simulador ativos.</div>
-            </div>
-            <input type="text" id="chat-input" placeholder="Diz-me algo..." class="w-full bg-white/5 p-5 rounded-2xl text-white outline-none text-sm border border-white/5 focus:border-[#f3ba2f] transition-all" onkeypress="handleChat(event)">
+            <div id="ai-content" class="flex-grow overflow-y-auto mb-6 pr-2 flex flex-col scrollbar-hide"></div>
+            <input type="text" id="chat-input" placeholder="Comando..." class="w-full bg-white/5 p-5 rounded-2xl text-white outline-none text-sm border border-white/5 focus:border-[#f3ba2f]" onkeypress="handleChat(event)">
         </aside>
     </div>
 
@@ -148,8 +140,9 @@
         }
 
         function fPT(n, isM = false, p = 2) {
-            if(!n) return isM ? "$0,00" : "0,00";
-            return (isM ? "$" : "") + n.toLocaleString('pt-PT', { minimumFractionDigits: p, maximumFractionDigits: p });
+            if(!n && n !== 0) return isM ? "$0,00" : "0,00";
+            const val = n.toLocaleString('pt-PT', { minimumFractionDigits: p, maximumFractionDigits: p });
+            return (isM ? "$" : "") + val;
         }
 
         async function fetchPositions() {
@@ -184,26 +177,31 @@
                 }
                 const dLiq = liq > 0 ? Math.abs((liq - cur) / cur) * 100 : 100;
                 const tpP = tp > 0 ? (Math.abs(cur - ent) / Math.abs(tp - ent)) * 100 : 0;
+                const cPnL = pnl >= 0 ? 'text-green-500' : 'text-red-500';
                 card.querySelector('.content-area').innerHTML = `
                     <div class="flex justify-between items-center mb-6">
                         <h2 class="font-black text-white text-xl uppercase tracking-tighter">${pos.symbol} <span class="text-xs text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded ml-1">${lev}x</span></h2>
-                        <button onclick="handleUniversalToggle('${pos.symbol}')" class="text-gray-500 hover:text-white transition-all"><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke-width="2.5"></path></svg></button>
+                        <button onclick="handleUniversalToggle('${pos.symbol}')" class="text-gray-500 hover:text-white"><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke-width="2.5"></path></svg></button>
                     </div>
                     <div class="grid grid-cols-2 gap-6">
-                        <div><p class="metric-label">ROE</p><p class="text-3xl font-black ${pnl >= 0 ? 'text-green-500' : 'text-red-500'}">${((pnl/marg)*100).toFixed(2)}%</p></div>
-                        <div class="text-right"><p class="metric-label">PnL USD</p><p class="text-2xl font-bold ${pnl >= 0 ? 'text-green-500' : 'text-red-500'}">${fPT(pnl, true)}</p></div>
+                        <div><p class="metric-label">ROE</p><p class="text-3xl font-black ${cPnL}">${((pnl/marg)*100).toFixed(2)}%</p></div>
+                        <div class="text-right"><p class="metric-label">PnL USD</p><p class="text-2xl font-bold ${cPnL}">${fPT(pnl, true)}</p></div>
+                        <div class="pt-3 border-t border-white/5"><p class="metric-label">Valor USD</p><p class="text-md font-bold text-gray-200">${fPT(val, true)}</p></div>
+                        <div class="text-right pt-3 border-t border-white/5"><p class="metric-label">Entrada / Mark</p><p class="text-[11px] font-bold text-gray-300 font-mono">${ent.toFixed(4)} → ${cur.toFixed(4)}</p></div>
                         <div class="col-span-2 mt-2">
-                            <div class="flex justify-between text-[10px] font-bold text-gray-500 uppercase mb-1"><span>Liq ($${fPT(liq, false, 4)}) / SL ($${fPT(sl, false, 4)})</span><span>${dLiq.toFixed(1)}%</span></div>
+                            <div class="flex justify-between text-[10px] font-bold text-gray-500 uppercase mb-1"><span>Liq ($${liq.toFixed(4)}) / SL ($${sl.toFixed(4)})</span><span>${dLiq.toFixed(1)}%</span></div>
                             <div class="progress-bg"><div class="progress-fill ${dLiq < 12 ? 'bg-red-500 animate-pulse' : 'bg-red-900/40'}" style="width: ${Math.max(0, 100 - dLiq)}%"></div></div>
                         </div>
                         <div class="col-span-2">
-                            <div class="flex justify-between text-[10px] font-bold text-yellow-600 uppercase mb-1"><span>Take Profit ($${fPT(tp, false, 4)})</span><span>${tpP.toFixed(0)}%</span></div>
+                            <div class="flex justify-between text-[10px] font-bold text-yellow-600 uppercase mb-1"><span>Take Profit ($${tp.toFixed(4)})</span><span>${tpP.toFixed(0)}%</span></div>
                             <div class="progress-bg"><div class="progress-fill bg-yellow-500/60" style="width: ${Math.min(tpP, 100)}%"></div></div>
                         </div>
                     </div>`;
             });
             document.getElementById('total-pnl').innerText = fPT(tPnL, true);
+            document.getElementById('total-pnl').className = `text-2xl metric-value ${tPnL >= 0 ? 'text-green-500' : 'text-red-500'}`;
             document.getElementById('total-pnl-perc').innerText = (tMarg > 0 ? (tPnL/tMarg*100) : 0).toFixed(2) + "%";
+            document.getElementById('total-pnl-perc').className = `text-2xl metric-value ${tPnL >= 0 ? 'text-green-500' : 'text-red-500'}`;
             document.getElementById('total-exposure').innerText = fPT(tExp, true);
             document.getElementById('avg-leverage').innerText = (tMarg > 0 ? (tExp / tMarg) : 0).toFixed(2) + "x";
         }
@@ -220,7 +218,7 @@
 
         function updateSimDropdown(positions) {
             const s = document.getElementById('sim-select-pos');
-            const v = s.value; s.innerHTML = '<option value="">Escolher...</option>';
+            const v = s.value; s.innerHTML = '<option value="">Selecionar Posição...</option>';
             positions.forEach(p => { const o = document.createElement('option'); o.value = p.symbol; o.innerText = `${p.symbol} (${p.side})`; s.appendChild(o); });
             if(v) s.value = v;
         }
@@ -240,25 +238,20 @@
             const sym = document.getElementById('sim-select-pos').value;
             const p = currentPositions.find(x => x.symbol === sym);
             if(!p) return;
-
             let curQty = Math.abs(parseFloat(p.size)), curAvg = parseFloat(p.avgPrice), mkPrice = parseFloat(p.markPrice);
             let totalQty = curQty, totalWPrice = curQty * curAvg, totalCost = 0;
-
-            const vals = document.querySelectorAll('.sim-input-val'), prices = document.querySelectorAll('.sim-input-price'), checks = document.querySelectorAll('.sim-checkbox');
-
-            vals.forEach((v, i) => {
-                if(checks[i].checked && v.value && prices[i].value) {
-                    const usd = parseFloat(v.value), price = parseFloat(prices[i].value);
+            document.querySelectorAll('.sim-input-val').forEach((v, i) => {
+                const pr = document.querySelectorAll('.sim-input-price')[i], ch = document.querySelectorAll('.sim-checkbox')[i];
+                if(ch.checked && v.value && pr.value) {
+                    const usd = parseFloat(v.value), price = parseFloat(pr.value);
                     const qty = usd / price; totalQty += qty; totalWPrice += (qty * price); totalCost += usd;
                 }
             });
-
             const nAvg = totalWPrice / totalQty;
             document.getElementById('res-new-avg').innerText = nAvg.toFixed(4);
             document.getElementById('res-total-cost').innerText = fPT(totalCost, true);
             const oldD = Math.abs(curAvg - mkPrice), newD = Math.abs(nAvg - mkPrice);
-            document.getElementById('res-dist-text').innerText = oldD > 0 ? (((oldD - newD)/oldD)*100).toFixed(1) + "% Aproximação" : "0%";
-
+            document.getElementById('res-dist-text').innerText = oldD > 0 ? (((oldD - newD)/oldD)*100).toFixed(1) + "%" : "0%";
             renderPriceMap(mkPrice, curAvg, nAvg, parseFloat(p.liqPrice), parseFloat(p.takeProfit));
         }
 
@@ -279,8 +272,8 @@
             try {
                 const r = await fetch(AI_FUNC_PATH, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ positions: currentPositions, userMessage: "TELEMETRY" }) });
                 const d = await r.json();
-                document.getElementById('macro-trend').innerText = `Macro: ${d.insight.toUpperCase().includes('BULLISH') ? 'BULLISH' : 'BEARISH'}`;
-                document.getElementById('fg-index-top').innerText = `F&G: ${d.fg || '--'}`;
+                if(d.insight) document.getElementById('macro-trend').innerText = `Macro: ${d.insight.toUpperCase().includes('BULLISH') ? 'BULLISH' : 'BEARISH'}`;
+                if(d.fg) document.getElementById('fg-index-top').innerText = `F&G: ${d.fg}`;
             } catch (e) {}
         }
 
@@ -300,9 +293,14 @@
         }
 
         function handleChat(e) { if (e.key === 'Enter' && e.target.value.trim() !== "") { fetchAIIntelligence(e.target.value); e.target.value = ''; } }
+        
         function handleUniversalToggle(s) {
             const el = document.getElementById(`tv-${s}`); el.classList.toggle('hidden');
-            if(!el.classList.contains('hidden')) { new TradingView.widget({ "autosize": true, "symbol": `BYBIT:${s}.P`, "interval": "15", "theme": "dark", "container_id": `tv-${s}`, "hide_side_toolbar": true, "library_path": "https://s3.tradingview.com/tv.js" }); }
+            if(!el.classList.contains('hidden')) {
+                new TradingView.widget({
+                    "autosize": true, "symbol": `BYBIT:${s}.P`, "interval": "15", "theme": "dark", "style": "1", "locale": "pt", "toolbar_bg": "#f1f3f6", "enable_publishing": false, "hide_side_toolbar": false, "allow_symbol_change": true, "container_id": `tv-${s}`
+                });
+            }
         }
         function resetSim() { document.querySelectorAll('.sim-input-val, .sim-input-price').forEach(i => i.value = ''); runSimulation(); }
     </script>
