@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Trading Lab - v22.6</title>
+    <title>AI Trading Lab - v23.0 Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -17,7 +17,7 @@
         .metric-label { color: #848e9c; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.15em; font-weight: 800; }
         .metric-value { font-family: 'Roboto Mono', monospace; font-weight: 700; }
         
-        .nav-btn { padding: 10px 16px; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: #848e9c; border-bottom: 2px solid transparent; transition: 0.3s; }
+        .nav-btn { padding: 12px 20px; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: #848e9c; border-bottom: 2px solid transparent; transition: 0.3s; white-space: nowrap; }
         .nav-btn.active { color: var(--yellow-binance); border-bottom-color: var(--yellow-binance); }
         .tab-content { display: none; }
         .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
@@ -38,14 +38,12 @@
         input[type="number"] { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; padding: 12px; font-family: 'Roboto Mono'; font-size: 0.9rem; width: 100%; outline: none; transition: border 0.2s; }
         input[type="number"]:focus { border-color: var(--yellow-binance); }
         
-        .tv-wrap { border-radius: 12px; overflow: hidden; background: #000; border: 1px solid rgba(255,255,255,0.08); width: 100%; height: 450px; }
+        .tv-wrap { border-radius: 12px; overflow: hidden; background: #000; border: 1px solid rgba(255,255,255,0.08); width: 100%; height: 350px; }
         .hidden { display: none !important; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* Mobile specific fixes */
         @media (max-width: 768px) {
             .nav-btn { padding: 10px; font-size: 0.65rem; }
-            .metric-value { font-size: 1.25rem !important; }
         }
     </style>
 </head>
@@ -53,15 +51,13 @@
 
     <header class="border-b border-gray-800/40 bg-[#080a0c]/90 backdrop-blur-md sticky top-0 z-50">
         <div class="max-w-[1800px] mx-auto px-4 md:px-6 py-4 flex flex-col lg:flex-row justify-between items-center gap-4">
-            
             <div class="flex items-center justify-between w-full lg:w-auto gap-4">
                 <h1 class="text-xl md:text-3xl font-black text-white tracking-tighter whitespace-nowrap"><span class="text-[#f3ba2f]">AI</span> Trading Lab</h1>
-                <nav class="flex gap-1">
-                    <button onclick="switchTab('dashboard')" id="btn-dashboard" class="nav-btn active">Dash</button>
-                    <button onclick="switchTab('simulator')" id="btn-simulator" class="nav-btn">Simulador</button>
+                <nav class="flex gap-2">
+                    <button onclick="switchTab('dashboard')" id="btn-dashboard" class="nav-btn active">Dashboard</button>
+                    <button onclick="switchTab('simulator')" id="btn-simulator" class="nav-btn">Simulador DCA</button>
                 </nav>
             </div>
-
             <div class="flex items-center justify-between w-full lg:w-auto gap-4">
                 <div class="flex gap-3 text-[9px] md:text-[10px] font-black uppercase tracking-widest text-gray-500">
                     <span id="macro-trend" class="bg-white/5 px-2 md:px-3 py-1.5 rounded-md border border-white/10">Macro: --</span>
@@ -69,7 +65,6 @@
                 </div>
                 <button onclick="handleBaltazarCall()" class="bg-[#f3ba2f] text-black px-4 md:px-6 py-2.5 rounded-xl font-black uppercase text-[10px] shadow-[0_4px_15px_rgba(243,186,47,0.2)] hover:scale-105 transition-all whitespace-nowrap">Baltazar AI</button>
             </div>
-
         </div>
     </header>
 
@@ -77,24 +72,29 @@
         <main>
             <section id="tab-dashboard" class="tab-content active">
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-8">
-                    <div class="card p-4 md:p-5"><p class="metric-label">PnL Global</p><p id="total-pnl" class="text-xl md:text-2xl metric-value">$0</p></div>
-                    <div class="card p-4 md:p-5"><p class="metric-label">ROE Médio</p><p id="total-pnl-perc" class="text-xl md:text-2xl metric-value">0,00%</p></div>
-                    <div class="card p-4 md:p-5"><p class="metric-label">Exposição Total</p><p id="total-exposure" class="text-xl md:text-2xl metric-value text-white">$0,00</p></div>
-                    <div class="card p-4 md:p-5 border-yellow-500/10"><p class="metric-label text-yellow-500">Alavancagem Real</p><p id="avg-leverage" class="text-xl md:text-2xl metric-value text-yellow-500">0x</p></div>
+                    <div class="card p-4"><p class="metric-label">PnL Global</p><p id="total-pnl" class="text-xl lg:text-2xl metric-value">$0</p></div>
+                    <div class="card p-4"><p class="metric-label">ROE Médio</p><p id="total-pnl-perc" class="text-xl lg:text-2xl metric-value">0,00%</p></div>
+                    <div class="card p-4"><p class="metric-label">Exposição Total</p><p id="total-exposure" class="text-xl lg:text-2xl metric-value text-white">$0,00</p></div>
+                    <div class="card p-4 border-yellow-500/10"><p class="metric-label text-yellow-500">Alavancagem Real</p><p id="avg-leverage" class="text-xl lg:text-2xl metric-value text-yellow-500">0x</p></div>
                 </div>
                 <div id="dashboard-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-6"></div>
             </section>
 
             <section id="tab-simulator" class="tab-content">
                 <div class="card p-4 md:p-8">
-                    <div class="mb-8 border-b border-gray-800 pb-8 grid grid-cols-1 lg:grid-cols-4 gap-6 items-end">
+                    <div class="mb-8 border-b border-gray-800 pb-8 grid grid-cols-1 lg:grid-cols-5 gap-6 items-end">
                         <div class="lg:col-span-1">
                             <label class="metric-label block mb-3">Posição Ativa</label>
                             <select id="sim-select-pos" onchange="loadPositionToSim()"></select>
                         </div>
-                        <div class="lg:col-span-3 grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+                        <div class="lg:col-span-4 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
                             <div class="bg-white/5 p-3 md:p-4 rounded-xl border border-white/5"><p class="metric-label">Mark Price</p><p id="sim-mark-price" class="metric-value text-lg md:text-xl text-[#f3ba2f]">0,0000</p></div>
                             <div class="bg-white/5 p-3 md:p-4 rounded-xl border border-white/5"><p class="metric-label">Tamanho (Qtd)</p><p id="sim-current-qty" class="metric-value text-lg md:text-xl text-white">0,00</p></div>
+                            <div class="bg-white/5 p-3 md:p-4 rounded-xl border border-white/5"><p class="metric-label">Margem Atual</p><p id="sim-current-margin" class="metric-value text-lg md:text-xl text-gray-400">$0,00</p></div>
+                            <div class="bg-white/5 p-3 md:p-4 rounded-xl border border-[#f3ba2f]/30">
+                                <p class="metric-label text-yellow-500">Alavancagem (x)</p>
+                                <input type="number" id="sim-input-leverage" class="bg-transparent text-lg md:text-xl font-black text-yellow-500 w-full outline-none p-0 border-none h-auto" oninput="runSimulation()" placeholder="Ex: 10">
+                            </div>
                         </div>
                     </div>
 
@@ -145,19 +145,28 @@
                     </div>
 
                     <div class="mt-8">
-                        <h3 class="metric-label mb-4">Adicionar Margem (DCA)</h3>
+                        <div class="flex justify-between items-end mb-4">
+                            <h3 class="metric-label">Adicionar Posição / Valor (DCA)</h3>
+                        </div>
                         <div class="grid grid-cols-[50px_1fr_1fr] md:grid-cols-[60px_1fr_1fr] gap-2 md:gap-4 mb-3 px-1 md:px-2 text-[9px] md:text-[10px] uppercase text-gray-500 font-bold border-b border-gray-800 pb-2">
                             <div class="text-center">Ativo</div>
-                            <div>Adicionar (USD)</div>
-                            <div>Preço de DCA</div>
+                            <div>Valor da Posição (USD)</div>
+                            <div>Preço de Execução DCA</div>
                         </div>
-                        <div id="sim-slots-body" class="space-y-2 md:space-y-3">
+                        <div id="sim-slots-body" class="space-y-2 md:space-y-3"></div>
+                        
+                        <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-white/5 p-4 rounded-xl border border-white/10 flex justify-between items-center">
+                                <span class="metric-label">Valor Adicionado (DCA)</span>
+                                <span id="res-total-cost" class="text-xl md:text-2xl font-bold text-gray-300">$0</span>
                             </div>
-                        <div class="mt-6 flex justify-between items-center bg-white/5 p-4 rounded-xl border border-white/10">
-                            <span class="metric-label">Custo Total Simulação</span>
-                            <span id="res-total-cost" class="text-xl md:text-2xl font-bold text-white">$0</span>
+                            <div id="margin-adjustment-panel" class="p-4 rounded-xl border flex justify-between items-center bg-gray-900 border-gray-700">
+                                <span class="metric-label text-white">Ajuste na Margem</span>
+                                <span id="res-margin-adj" class="text-xl md:text-2xl font-black text-white">S/ Alteração</span>
+                            </div>
                         </div>
-                        <button onclick="resetSim()" class="w-full mt-4 py-4 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-white hover:bg-white/5 transition-all">Limpar Simulador</button>
+
+                        <button onclick="resetSim()" class="w-full mt-6 py-4 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-white hover:bg-white/5 transition-all">Limpar Simulador</button>
                     </div>
                 </div>
             </section>
@@ -169,7 +178,7 @@
                 <span id="ai-loading" class="text-[9px] text-yellow-500 animate-pulse hidden font-bold uppercase">A analisar...</span>
             </div>
             <div id="ai-content" class="flex-grow overflow-y-auto mb-4 pr-2 flex flex-col scrollbar-hide">
-                <div class="bot-msg msg">Sistemas operacionais. Aguardo instruções.</div>
+                <div class="bot-msg msg">Sistemas operacionais e otimizados. Aguardo instruções.</div>
             </div>
             <input type="text" id="chat-input" placeholder="Diz-me algo..." class="w-full bg-white/5 p-4 md:p-5 rounded-2xl text-white outline-none text-xs md:text-sm border border-white/5 focus:border-[#f3ba2f] transition-all" onkeypress="handleChat(event)">
         </aside>
@@ -196,17 +205,13 @@
             document.getElementById('btn-' + t).classList.add('active');
         }
 
-        // FORMATADOR NUMÉRICO BLINDADO
-        // Se p=0, remove as casas decimais completamente (usado para PnL)
         function fPT(n, isM = false, p = 2) {
             let num = Number(n);
             if(isNaN(num) || num === 0) return isM ? "$0" + (p>0?",00":"") : "0" + (p>0?",00":"");
-            
             let absNum = Math.abs(num);
             let parts = absNum.toFixed(p).split(".");
             parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
             let res = p > 0 ? parts.join(",") : parts[0];
-            
             return (num < 0 ? "-" : "") + (isM ? "$" : "") + res;
         }
 
@@ -220,9 +225,7 @@
                     updateSimDropdown(currentPositions);
                     runSimulation();
                 }
-            } catch (e) {
-                console.error("Erro Posições:", e);
-            }
+            } catch (e) { console.error("Erro Posições:", e); }
         }
 
         function updateDashboard(positions) {
@@ -239,11 +242,12 @@
                 let card = document.getElementById(`card-${pos.symbol}`);
                 if (!card) {
                     card = document.createElement('div'); card.id = `card-${pos.symbol}`;
-                    card.className = `card border-l-4 p-5 md:p-6 ${pos.side === 'Buy' ? 'border-l-green-500' : 'border-l-red-500'}`;
+                    // Padding reduzido para Desktop (p-4)
+                    card.className = `card border-l-4 p-4 lg:p-5 ${pos.side === 'Buy' ? 'border-l-green-500' : 'border-l-red-500'}`;
                     card.innerHTML = `
                         <div class="content-area"></div>
-                        <div id="tv-wrapper-${pos.symbol}" class="grid grid-cols-1 gap-4 mt-6 hidden" data-loaded="false">
-                            <div id="tv-1-${pos.symbol}" class="tv-wrap h-[300px] md:h-[400px]"></div>
+                        <div id="tv-wrapper-${pos.symbol}" class="grid grid-cols-1 gap-4 mt-4 hidden" data-loaded="false">
+                            <div id="tv-1-${pos.symbol}" class="tv-wrap"></div>
                         </div>`;
                     grid.appendChild(card);
                 }
@@ -252,38 +256,36 @@
                 const tpP = tp > 0 ? (Math.abs(cur - ent) / Math.abs(tp - ent)) * 100 : 0;
                 const cPnL = pnl >= 0 ? 'text-green-500' : 'text-red-500';
                 
-                // NOTA: PnL usa p=0 (sem decimais)
+                // Fontes e margens reduzidas para melhor visualização
                 card.querySelector('.content-area').innerHTML = `
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="font-black text-white text-xl md:text-2xl uppercase tracking-tighter">${pos.symbol} <span class="text-[10px] md:text-sm font-bold text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded-md ml-2">${lev}x</span></h2>
-                        <button onclick="handleUniversalToggle('${pos.symbol}')" class="bg-white/5 border border-white/10 px-3 md:px-4 py-2 rounded-lg text-[10px] md:text-xs font-bold text-gray-400 hover:text-white transition-all uppercase tracking-widest">Gráfico</button>
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="font-black text-white text-xl uppercase tracking-tighter">${pos.symbol} <span class="text-xs font-bold text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded-md ml-2">${lev}x</span></h2>
+                        <button onclick="handleUniversalToggle('${pos.symbol}')" class="bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg text-[10px] font-bold text-gray-400 hover:text-white transition-all uppercase tracking-widest">Gráfico</button>
                     </div>
-                    <div class="grid grid-cols-2 gap-6 md:gap-8">
-                        <div><p class="metric-label">ROE</p><p class="text-3xl md:text-4xl font-black ${cPnL}">${fPT((pnl/marg)*100, false, 2)}%</p></div>
-                        <div class="text-right"><p class="metric-label">PnL USD</p><p class="text-2xl md:text-3xl font-bold ${cPnL}">${fPT(pnl, true, 0)}</p></div>
-                        <div class="pt-4 border-t border-white/5"><p class="metric-label">Valor da Posição</p><p class="text-md md:text-lg font-bold text-gray-200">${fPT(val, true, 2)}</p></div>
-                        <div class="text-right pt-4 border-t border-white/5"><p class="metric-label">Entrada / Mark</p><p class="text-[11px] md:text-sm font-bold text-gray-300 font-mono">${fPT(ent, false, 4)} → ${fPT(cur, false, 4)}</p></div>
-                        <div class="col-span-2 mt-2">
-                            <div class="flex justify-between text-[9px] md:text-[11px] font-bold text-gray-500 uppercase mb-2"><span>Liq ($${fPT(liq, false, 4)}) / Stop Loss ($${fPT(sl, false, 4)})</span><span>${fPT(dLiq, false, 1)}% Distância</span></div>
-                            <div class="progress-bg"><div class="progress-fill ${dLiq < 12 ? 'bg-red-500 animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'bg-red-900/40'}" style="width: ${Math.max(0, 100 - dLiq)}%"></div></div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><p class="metric-label">ROE</p><p class="text-2xl lg:text-3xl font-black ${cPnL}">${fPT((pnl/marg)*100, false, 2)}%</p></div>
+                        <div class="text-right"><p class="metric-label">PnL USD</p><p class="text-2xl lg:text-3xl font-bold ${cPnL}">${fPT(pnl, true, 0)}</p></div>
+                        <div class="pt-3 border-t border-white/5"><p class="metric-label">Valor Posição</p><p class="text-sm lg:text-md font-bold text-gray-200">${fPT(val, true, 2)}</p></div>
+                        <div class="text-right pt-3 border-t border-white/5"><p class="metric-label">Entrada / Mark</p><p class="text-[10px] lg:text-xs font-bold text-gray-300 font-mono">${fPT(ent, false, 4)} → ${fPT(cur, false, 4)}</p></div>
+                        <div class="col-span-2 mt-1">
+                            <div class="flex justify-between text-[9px] font-bold text-gray-500 uppercase mb-1"><span>Liq ($${fPT(liq, false, 4)}) / SL ($${fPT(sl, false, 4)})</span><span>${fPT(dLiq, false, 1)}% Distância</span></div>
+                            <div class="progress-bg"><div class="progress-fill ${dLiq < 12 ? 'bg-red-500 animate-pulse' : 'bg-red-900/40'}" style="width: ${Math.max(0, 100 - dLiq)}%"></div></div>
                         </div>
                         <div class="col-span-2">
-                            <div class="flex justify-between text-[9px] md:text-[11px] font-bold text-yellow-600 uppercase mb-2"><span>Take Profit Alvo ($${fPT(tp, false, 4)})</span><span>${fPT(tpP, false, 0)}%</span></div>
+                            <div class="flex justify-between text-[9px] font-bold text-yellow-600 uppercase mb-1"><span>Take Profit ($${fPT(tp, false, 4)})</span><span>${fPT(tpP, false, 0)}%</span></div>
                             <div class="progress-bg"><div class="progress-fill bg-yellow-500/60" style="width: ${Math.min(tpP, 100)}%"></div></div>
                         </div>
                     </div>`;
             });
             
-            // ATUALIZAÇÃO DO PNL GLOBAL SEM CASAS DECIMAIS
             document.getElementById('total-pnl').innerText = fPT(tPnL, true, 0);
-            document.getElementById('total-pnl').className = `text-xl md:text-2xl metric-value ${tPnL >= 0 ? 'text-green-500' : 'text-red-500'}`;
+            document.getElementById('total-pnl').className = `text-xl lg:text-2xl metric-value ${tPnL >= 0 ? 'text-green-500' : 'text-red-500'}`;
             document.getElementById('total-pnl-perc').innerText = fPT(tMarg > 0 ? (tPnL/tMarg*100) : 0, false, 2) + "%";
-            document.getElementById('total-pnl-perc').className = `text-xl md:text-2xl metric-value ${tPnL >= 0 ? 'text-green-500' : 'text-red-500'}`;
+            document.getElementById('total-pnl-perc').className = `text-xl lg:text-2xl metric-value ${tPnL >= 0 ? 'text-green-500' : 'text-red-500'}`;
             document.getElementById('total-exposure').innerText = fPT(tExp, true, 2);
             document.getElementById('avg-leverage').innerText = fPT(tMarg > 0 ? (tExp / tMarg) : 0, false, 2) + "x";
         }
 
-        // Toggle Universal: Abre apenas UM gráfico correspondente ao cartão
         function handleUniversalToggle(s) {
             const isDesktop = window.innerWidth >= 1024;
             if (isDesktop) {
@@ -337,9 +339,14 @@
             const sym = document.getElementById('sim-select-pos').value;
             const p = currentPositions.find(x => x.symbol === sym);
             if(p) {
+                const curMargin = parseFloat(p.positionValue) / parseFloat(p.leverage);
                 document.getElementById('sim-mark-price').innerText = fPT(p.markPrice, false, 4);
                 document.getElementById('sim-current-qty').innerText = fPT(Math.abs(parseFloat(p.size)), false, 2);
+                document.getElementById('sim-current-margin').innerText = fPT(curMargin, true, 2);
                 
+                // Set initial leverage input to current position leverage
+                document.getElementById('sim-input-leverage').value = p.leverage;
+
                 document.getElementById('sim-panel-current-entry').innerText = fPT(p.avgPrice, false, 4);
                 document.getElementById('sim-panel-current-liq').innerText = fPT(p.liqPrice, false, 4);
                 
@@ -357,40 +364,59 @@
             const p = currentPositions.find(x => x.symbol === sym);
             if(!p) return;
 
-            let curQty = Math.abs(parseFloat(p.size)), curAvg = parseFloat(p.avgPrice), mkPrice = parseFloat(p.markPrice);
-            let lev = parseFloat(p.leverage);
+            let curQty = Math.abs(parseFloat(p.size));
+            let curAvg = parseFloat(p.avgPrice);
+            let mkPrice = parseFloat(p.markPrice);
+            let origLev = parseFloat(p.leverage);
+            
+            // Lê nova alavancagem. Se vazio, usa a original.
+            let newLev = parseFloat(document.getElementById('sim-input-leverage').value);
+            if(isNaN(newLev) || newLev <= 0) newLev = origLev;
+
             let totalQty = curQty, totalWPrice = curQty * curAvg, totalCost = 0;
 
-            const vals = document.querySelectorAll('.sim-input-val'), prices = document.querySelectorAll('.sim-input-price'), checks = document.querySelectorAll('.sim-checkbox');
+            const vals = document.querySelectorAll('.sim-input-val');
+            const prices = document.querySelectorAll('.sim-input-price');
+            const checks = document.querySelectorAll('.sim-checkbox');
 
             vals.forEach((v, i) => {
                 if(checks[i].checked && v.value && prices[i].value) {
-                    const usd = parseFloat(v.value), price = parseFloat(prices[i].value);
-                    const qty = usd / price; totalQty += qty; totalWPrice += (qty * price); totalCost += usd;
+                    const usdPosVal = parseFloat(v.value);
+                    const price = parseFloat(prices[i].value);
+                    const qty = usdPosVal / price; 
+                    totalQty += qty; 
+                    totalWPrice += (qty * price); 
+                    totalCost += usdPosVal; // Soma do valor total da posição adicionada
                 }
             });
 
             const nAvg = totalWPrice / totalQty;
-            document.getElementById('res-new-avg').innerText = totalCost > 0 ? fPT(nAvg, false, 4) : "---";
-            // PnL e Custo Total do Sim: Retirados as casas decimais (p=0)
+            document.getElementById('res-new-avg').innerText = totalWPrice !== (curQty * curAvg) ? fPT(nAvg, false, 4) : "---";
             document.getElementById('res-total-cost').innerText = fPT(totalCost, true, 0);
             
+            // Recálculo da Liquidação baseado na NOVA alavancagem
             let newLiqCalc = 0;
-            if(p.side === 'Buy') newLiqCalc = nAvg * (1 - 1/lev + 0.005);
-            else newLiqCalc = nAvg * (1 + 1/lev - 0.005);
+            if(p.side === 'Buy') newLiqCalc = nAvg * (1 - 1/newLev + 0.005);
+            else newLiqCalc = nAvg * (1 + 1/newLev - 0.005);
             
-            document.getElementById('sim-level-new-liq').innerText = totalCost > 0 ? fPT(newLiqCalc, false, 4) : "---";
+            document.getElementById('sim-level-new-liq').innerText = fPT(newLiqCalc, false, 4);
 
             const oldLiq = parseFloat(p.liqPrice) > 0 ? parseFloat(p.liqPrice) : 0;
             const elEntryDiff = document.getElementById('res-entry-diff');
             const elLiqDiff = document.getElementById('res-liq-diff');
 
-            if(totalCost > 0) {
-                const entryDiffPerc = ((nAvg - curAvg) / curAvg) * 100;
-                const isEntryBetter = p.side === 'Buy' ? entryDiffPerc < 0 : entryDiffPerc > 0;
-                elEntryDiff.innerText = (entryDiffPerc > 0 ? "+" : "") + fPT(entryDiffPerc, false, 2) + "%";
-                elEntryDiff.className = `text-[10px] font-bold px-2 py-0.5 rounded-md ${isEntryBetter ? 'bg-[#02d386]/20 text-[#02d386]' : 'bg-red-500/20 text-red-500'}`;
+            if(totalCost > 0 || newLev !== origLev) {
+                // Entry Diff
+                if(totalCost > 0) {
+                    const entryDiffPerc = ((nAvg - curAvg) / curAvg) * 100;
+                    const isEntryBetter = p.side === 'Buy' ? entryDiffPerc < 0 : entryDiffPerc > 0;
+                    elEntryDiff.innerText = (entryDiffPerc > 0 ? "+" : "") + fPT(entryDiffPerc, false, 2) + "%";
+                    elEntryDiff.className = `text-[10px] font-bold px-2 py-0.5 rounded-md ${isEntryBetter ? 'bg-[#02d386]/20 text-[#02d386]' : 'bg-red-500/20 text-red-500'}`;
+                } else {
+                    elEntryDiff.className = "hidden";
+                }
                 
+                // Liq Diff (afetada pelo DCA e/ou Lev)
                 if(oldLiq > 0) {
                     const liqDiffPerc = ((newLiqCalc - oldLiq) / oldLiq) * 100;
                     const isLiqBetter = p.side === 'Buy' ? liqDiffPerc < 0 : liqDiffPerc > 0;
@@ -401,9 +427,32 @@
                 elEntryDiff.className = "hidden";
                 elLiqDiff.className = "hidden";
             }
+
+            // ==========================================
+            // CÁLCULO DE AJUSTE DE MARGEM REAL
+            // ==========================================
+            const curMargin = (curQty * curAvg) / origLev;
+            const newRequiredMargin = (totalQty * nAvg) / newLev;
+            const marginDiff = newRequiredMargin - curMargin;
+
+            const marginPanel = document.getElementById('margin-adjustment-panel');
+            const marginText = document.getElementById('res-margin-adj');
+
+            if (Math.abs(marginDiff) < 1) { // Sem alteração significativa
+                marginPanel.className = "p-4 rounded-xl border flex justify-between items-center bg-gray-900 border-gray-700";
+                marginText.innerText = "S/ Alteração";
+                marginText.className = "text-xl md:text-2xl font-black text-gray-400";
+            } else if (marginDiff > 0) { // Precisa adicionar margem
+                marginPanel.className = "p-4 rounded-xl border flex justify-between items-center bg-red-500/10 border-red-500/30";
+                marginText.innerText = "Adicionar " + fPT(marginDiff, true, 2);
+                marginText.className = "text-xl md:text-2xl font-black text-red-500";
+            } else { // Liberta margem
+                marginPanel.className = "p-4 rounded-xl border flex justify-between items-center bg-[#02d386]/10 border-[#02d386]/30";
+                marginText.innerText = "Liberta " + fPT(Math.abs(marginDiff), true, 2);
+                marginText.className = "text-xl md:text-2xl font-black text-[#02d386]";
+            }
         }
 
-        // REMOVIDO o Header "Authorization" na chamada à Inteligência Artificial. O CORS bloqueava a chamada por isso.
         async function fetchTelemetry() {
             try {
                 const r = await fetch(AI_FUNC_PATH, { 
@@ -440,7 +489,6 @@
             if (userQuery) { aiContent.innerHTML += `<div class="user-msg msg">${userQuery}</div>`; }
             loader.classList.remove('hidden');
             try {
-                // REMOVIDO O HEADER DE AUTORIZAÇÃO PARA EVITAR FALHA DE CORS.
                 const r = await fetch(AI_FUNC_PATH, { 
                     method: 'POST', 
                     headers: { 'Content-Type': 'application/json' }, 
@@ -457,12 +505,17 @@
                 aiContent.scrollTop = aiContent.scrollHeight;
             } catch (err) {
                 aiContent.innerHTML += `<div class="bot-msg msg text-red-500">Erro de comunicação com os servidores. Verifica a consola.</div>`;
-                console.error(err);
             } finally { loader.classList.add('hidden'); }
         }
 
         function handleChat(e) { if (e.key === 'Enter' && e.target.value.trim() !== "") { fetchAIIntelligence(e.target.value); e.target.value = ''; } }
-        function resetSim() { document.querySelectorAll('.sim-input-val, .sim-input-price').forEach(i => i.value = ''); runSimulation(); }
+        function resetSim() { 
+            document.querySelectorAll('.sim-input-val, .sim-input-price').forEach(i => i.value = ''); 
+            const sym = document.getElementById('sim-select-pos').value;
+            const p = currentPositions.find(x => x.symbol === sym);
+            if(p) document.getElementById('sim-input-leverage').value = p.leverage;
+            runSimulation(); 
+        }
     </script>
 </body>
 </html>
