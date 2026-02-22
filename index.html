@@ -3,67 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Trading Lab</title>
+    <title>AI Trading Lab - v20.0 Full</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root { --risk-rgb: 2, 211, 134; }
+        :root { --risk-rgb: 2, 211, 134; --yellow-binance: #f3ba2f; }
         body { 
             background-color: #080a0c; color: #f0f2f5; font-family: 'Outfit', sans-serif; 
             -webkit-font-smoothing: antialiased; background-image: radial-gradient(circle at top right, rgba(var(--risk-rgb), 0.1), transparent 800px);
-            min-height: 100vh; overflow-x: hidden;
+            min-height: 100vh;
         }
         .card { background: rgba(24, 26, 32, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; }
         .metric-label { color: #848e9c; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.15em; font-weight: 700; }
         .metric-value { font-family: 'Roboto Mono', monospace; font-weight: 700; }
-        .app-grid { display: grid; grid-template-columns: 1fr; gap: 20px; padding: 20px; max-width: 1800px; margin: 0 auto; transition: all 0.3s ease; }
-        @media (min-width: 1280px) { .app-grid.chat-open { grid-template-columns: 1fr 500px; } }
-        #ai-section { display: none; flex-direction: column; }
-        #ai-section.open { display: flex; animation: slideIn 0.3s ease-out; }
-        @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
-        .msg { margin-bottom: 20px; padding: 16px; border-radius: 14px; font-size: 0.92rem; line-height: 1.7; }
-        .bot-msg { background: rgba(243, 186, 47, 0.03); border-left: 4px solid #f3ba2f; color: #e2e8f0; }
-        .user-msg { background: rgba(255, 255, 255, 0.05); border-right: 4px solid #848e9c; align-self: flex-end; text-align: right; }
+        
+        /* Nav */
+        .nav-btn { padding: 12px 24px; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: #848e9c; border-bottom: 2px solid transparent; transition: 0.3s; }
+        .nav-btn.active { color: var(--yellow-binance); border-bottom-color: var(--yellow-binance); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+
+        /* Bars */
         .progress-bg { background-color: #1e2329; height: 6px; border-radius: 3px; width: 100%; margin-top: 4px; overflow: hidden; }
         .progress-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
+        
+        .app-grid { display: grid; grid-template-columns: 1fr; gap: 20px; padding: 20px; max-width: 1800px; margin: 0 auto; transition: all 0.4s ease; }
+        @media (min-width: 1280px) { .app-grid.chat-open { grid-template-columns: 1fr 500px; } }
+        
+        #ai-section { display: none; flex-direction: column; height: calc(100vh - 140px); position: sticky; top: 110px; }
+        #ai-section.open { display: flex; }
+        .msg { margin-bottom: 20px; padding: 16px; border-radius: 14px; font-size: 0.92rem; line-height: 1.7; }
+        .bot-msg { background: rgba(243, 186, 47, 0.03); border-left: 4px solid var(--yellow-binance); }
+        
         .tv-wrap { height: 500px; margin-top: 15px; border-radius: 12px; overflow: hidden; background: #000; border: 1px solid rgba(255,255,255,0.08); }
+        input[type="number"] { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: white; padding: 6px 10px; font-family: 'Roboto Mono'; font-size: 0.85rem; width: 100%; outline: none; }
+        input:focus { border-color: var(--yellow-binance); }
         .hidden { display: none !important; }
-        hr { border: 0; border-top: 1px solid rgba(255,255,255,0.08); margin: 15px 0; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
+
+    <header class="border-b border-gray-800/40 bg-[#080a0c]/90 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-[1800px] mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center">
+            <div class="flex items-center gap-8">
+                <h1 class="text-3xl font-black text-white tracking-tighter"><span class="text-[#f3ba2f]">AI</span> Trading Lab</h1>
+                <nav class="flex">
+                    <button onclick="switchTab('dashboard')" id="btn-dashboard" class="nav-btn active">Dashboard</button>
+                    <button onclick="switchTab('simulator')" id="btn-simulator" class="nav-btn">Simulador DCA</button>
+                </nav>
+            </div>
+            <div class="flex items-center gap-6 mt-4 md:mt-0">
+                <div class="flex gap-4 text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                    <span id="macro-trend">Macro: --</span>
+                    <span id="fg-index-top">F&G: --</span>
+                </div>
+                <button onclick="handleBaltazarCall()" class="bg-[#f3ba2f] text-black px-8 py-3 rounded-2xl font-black uppercase text-[10px] shadow-xl hover:scale-105 transition-all">Baltazar AI</button>
+            </div>
+        </div>
+    </header>
+
     <div id="main-grid" class="app-grid">
         <main>
-            <header class="mb-6 border-b border-gray-800/40 pb-8">
-                <div class="flex flex-col md:flex-row justify-between gap-4 mb-10">
-                    <div>
-                        <h1 class="text-4xl font-extrabold text-white tracking-tight mb-2"><span class="text-[#f3ba2f]">AI</span> Trading Lab</h1>
-                        <div class="flex flex-wrap gap-3 text-[10px] font-bold uppercase tracking-wider">
-                            <span class="px-3 py-1 bg-white/5 rounded-full border border-white/10 text-gray-400 flex items-center gap-2"><span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Online</span>
-                            <span id="macro-trend" class="px-3 py-1 bg-white/5 rounded-full border border-white/10">Macro: --</span>
-                            <span id="fg-index-top" class="px-3 py-1 bg-white/5 rounded-full border border-white/10">F&G: --</span>
+            <section id="tab-dashboard" class="tab-content active">
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    <div class="card p-5"><p class="metric-label">PnL Global</p><p id="total-pnl" class="text-2xl metric-value">$0</p></div>
+                    <div class="card p-5"><p class="metric-label">ROE Médio</p><p id="total-pnl-perc" class="text-2xl metric-value">0%</p></div>
+                    <div class="card p-5"><p class="metric-label">Exposição</p><p id="total-exposure" class="text-2xl metric-value text-white">$0</p></div>
+                    <div class="card p-5 border-yellow-500/10"><p class="metric-label text-yellow-500 font-bold">Alavancagem</p><p id="avg-leverage" class="text-2xl metric-value text-yellow-500">0x</p></div>
+                </div>
+                <div id="dashboard-grid" class="grid grid-cols-1 md:grid-cols-2 gap-5"></div>
+            </section>
+
+            <section id="tab-simulator" class="tab-content">
+                <div class="card p-8">
+                    <div class="mb-8 flex flex-col md:flex-row gap-6 border-b border-gray-800 pb-8 items-end">
+                        <div class="w-full md:w-1/3">
+                            <label class="metric-label block mb-3">Escolher Posição para DCA</label>
+                            <select id="sim-select-pos" onchange="loadPositionToSim()" class="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white font-bold outline-none focus:border-[#f3ba2f] appearance-none">
+                                <option value="">A carregar posições...</option>
+                            </select>
+                        </div>
+                        <div class="flex-grow grid grid-cols-3 gap-4">
+                            <div class="bg-white/5 p-4 rounded-xl"><p class="metric-label">Entrada Atual</p><p id="sim-current-avg" class="metric-value text-xl">0.0000</p></div>
+                            <div class="bg-white/5 p-4 rounded-xl"><p class="metric-label">Contratos</p><p id="sim-current-qty" class="metric-value text-xl">0.00</p></div>
+                            <div class="bg-white/5 p-4 rounded-xl"><p class="metric-label">Preço Mark</p><p id="sim-mark-price" class="metric-value text-xl text-[#f3ba2f]">0.0000</p></div>
                         </div>
                     </div>
-                    <button onclick="handleBaltazarCall()" class="bg-[#f3ba2f] text-black px-10 py-4 rounded-2xl font-black uppercase text-xs shadow-lg hover:scale-105 transition-all">Baltazar AI</button>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                        <div class="lg:col-span-2 overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="text-gray-500 text-[10px] uppercase font-black border-b border-gray-800">
+                                    <tr><th class="pb-4 px-2">Slot</th><th class="pb-4 px-2">Adicionar (USD)</th><th class="pb-4 px-2">Preço Estimado</th><th class="pb-4 px-2 text-center">Ativar</th></tr>
+                                </thead>
+                                <tbody id="sim-slots-body"></tbody>
+                            </table>
+                        </div>
+                        <div class="card bg-white/5 p-6 h-fit border-l-4 border-l-[#f3ba2f]">
+                            <h3 class="text-white font-black uppercase text-sm mb-6 tracking-widest">Resultado Simulado</h3>
+                            <div class="mb-6"><p class="metric-label">Novo Preço Médio</p><p id="res-new-avg" class="text-4xl font-black text-[#02d386]">---</p></div>
+                            <div class="mb-6">
+                                <p class="metric-label">Redução de Distância para Mark</p>
+                                <div class="progress-bg mt-3"><div id="res-dist-fill" class="progress-fill bg-[#02d386]" style="width: 0%"></div></div>
+                                <p id="res-dist-text" class="text-[10px] font-bold mt-2 text-gray-500 uppercase">0% de aproximação</p>
+                            </div>
+                            <div class="space-y-3 border-t border-gray-800 pt-6">
+                                <div class="flex justify-between"><span class="metric-label">Custo Total Sim.</span><span id="res-total-cost" class="text-white font-bold">$0.00</span></div>
+                                <div class="flex justify-between"><span class="metric-label">Qtd Total Final</span><span id="res-new-qty" class="text-white font-bold">0.00</span></div>
+                            </div>
+                            <button onclick="resetSim()" class="w-full mt-8 py-4 border border-white/10 rounded-2xl text-[10px] font-bold uppercase hover:bg-white/10 transition-all">Limpar Tudo</button>
+                        </div>
+                    </div>
                 </div>
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div class="card p-5"><p class="metric-label">PnL Global</p><p id="total-pnl" class="text-2xl metric-value leading-tight">$0</p></div>
-                    <div class="card p-5"><p class="metric-label">ROE Médio</p><p id="total-pnl-perc" class="text-2xl metric-value leading-tight">0%</p></div>
-                    <div class="card p-5"><p class="metric-label">Exposição</p><p id="total-exposure" class="text-2xl metric-value text-white leading-tight">$0</p></div>
-                    <div class="card p-5 border-yellow-500/10"><p class="metric-label text-yellow-500 font-bold">Alavancagem</p><p id="avg-leverage" class="text-2xl metric-value text-yellow-500 leading-tight">0x</p></div>
-                </div>
-            </header>
-            <div id="dashboard-grid" class="grid grid-cols-1 md:grid-cols-2 gap-5"></div>
+            </section>
         </main>
+
         <aside id="ai-section" class="card p-8 flex flex-col">
             <div class="flex justify-between items-center mb-8 border-b border-gray-800 pb-5">
                 <span class="text-white text-xs font-black uppercase tracking-widest text-yellow-500/80">Baltazar</span>
-                <span id="ai-loading" class="text-[10px] text-yellow-500 animate-pulse hidden uppercase">A analisar...</span>
+                <span id="ai-loading" class="text-[10px] text-yellow-500 animate-pulse hidden uppercase font-bold">A analisar...</span>
             </div>
             <div id="ai-content" class="flex-grow overflow-y-auto mb-6 pr-2 flex flex-col scrollbar-hide">
-                <div class="bot-msg msg">Dados sincronizados. Pronto para o diagnóstico.</div>
+                <div class="bot-msg msg">Operação ativa. No Dashboard vês os riscos, no Simulador planeias as recuperações. O que pretendes analisar?</div>
             </div>
-            <input type="text" id="chat-input" placeholder="Comando..." class="w-full bg-white/5 p-5 rounded-2xl text-white outline-none text-sm border border-white/5 focus:border-yellow-500/30 transition-all" onkeypress="handleChat(event)">
+            <input type="text" id="chat-input" placeholder="Comando..." class="w-full bg-white/5 p-5 rounded-2xl text-white outline-none text-sm border border-white/5 focus:border-[#f3ba2f] transition-all" onkeypress="handleChat(event)">
         </aside>
     </div>
 
@@ -74,7 +138,13 @@
         const SUPABASE_KEY = 'sb_publishable_bRa-mZWTaf0g6sNyWL9OmQ_uvo7Ex5H';
         let currentPositions = [];
 
-        window.onload = () => { fetchPositions(); setInterval(fetchPositions, 10000); fetchTelemetry(); setInterval(fetchTelemetry, 60000); };
+        window.onload = () => { generateSimSlots(); fetchPositions(); setInterval(fetchPositions, 10000); fetchTelemetry(); setInterval(fetchTelemetry, 60000); };
+
+        function switchTab(t) {
+            document.querySelectorAll('.tab-content, .nav-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + t).classList.add('active');
+            document.getElementById('btn-' + t).classList.add('active');
+        }
 
         function fPT(n, isM = false, p = 2) {
             const dec = isM ? 0 : p;
@@ -91,6 +161,7 @@
                 if (d.result?.list) {
                     currentPositions = d.result.list.filter(p => parseFloat(p.size) !== 0);
                     updateDashboard(currentPositions);
+                    updateSimDropdown(currentPositions);
                 }
             } catch (e) {}
         }
@@ -125,7 +196,7 @@
                         <div class="text-right pt-3 border-t border-white/5"><p class="metric-label">Entrada / Mark</p><p class="text-[11px] font-bold text-gray-300 font-mono">${fPT(ent, false, 4)} → ${fPT(cur, false, 4)}</p></div>
                         <div class="col-span-2 mt-2">
                             <div class="flex justify-between text-[10px] font-bold text-gray-500 uppercase mb-1"><span>Liquidação ($${fPT(liq, false, 4)})</span><span>${fPT(dLiq)}%</span></div>
-                            <div class="progress-bg"><div class="progress-fill ${dLiq < 12 ? 'bg-red-500' : 'bg-red-900/40'}" style="width: ${Math.max(0, 100 - dLiq)}%"></div></div>
+                            <div class="progress-bg"><div class="progress-fill ${dLiq < 12 ? 'bg-red-500 animate-pulse' : 'bg-red-900/40'}" style="width: ${Math.max(0, 100 - dLiq)}%"></div></div>
                         </div>
                         <div class="col-span-2">
                             <div class="flex justify-between text-[10px] font-bold text-yellow-600 uppercase mb-1"><span>Take Profit ($${fPT(tp, false, 4)})</span><span>${tpP.toFixed(0)}%</span></div>
@@ -141,41 +212,93 @@
             document.getElementById('avg-leverage').innerText = fPT(tMarg > 0 ? (tExp / tMarg) : 0) + 'x';
         }
 
+        // SIMULATOR LOGIC
+        function generateSimSlots() {
+            const b = document.getElementById('sim-slots-body');
+            for(let i=1; i<=10; i++) {
+                const r = document.createElement('tr');
+                r.className = 'border-b border-white/5 hover:bg-white/[0.02] transition-colors';
+                r.innerHTML = `
+                    <td class="py-5 px-2 text-gray-600 font-mono text-xs">${i}</td>
+                    <td class="py-5 px-2"><input type="number" class="sim-input-val" oninput="runSimulation()"></td>
+                    <td class="py-5 px-2"><input type="number" class="sim-input-price" oninput="runSimulation()"></td>
+                    <td class="py-5 px-2 text-center"><input type="checkbox" checked class="sim-checkbox accent-[#f3ba2f] w-4 h-4" onchange="runSimulation()"></td>
+                `;
+                b.appendChild(r);
+            }
+        }
+
+        function updateSimDropdown(positions) {
+            const s = document.getElementById('sim-select-pos');
+            const v = s.value;
+            s.innerHTML = '<option value="">Selecionar Posição Ativa...</option>';
+            positions.forEach(p => {
+                const o = document.createElement('option');
+                o.value = p.symbol; o.innerText = `${p.symbol} (${p.side})`;
+                s.appendChild(o);
+            });
+            s.value = v;
+        }
+
+        function loadPositionToSim() {
+            const sym = document.getElementById('sim-select-pos').value;
+            const p = currentPositions.find(x => x.symbol === sym);
+            if(p) {
+                document.getElementById('sim-current-avg').innerText = fPT(parseFloat(p.avgPrice), false, 4);
+                document.getElementById('sim-current-qty').innerText = Math.abs(parseFloat(p.size));
+                document.getElementById('sim-mark-price').innerText = fPT(parseFloat(p.markPrice), false, 4);
+                runSimulation();
+            }
+        }
+
+        function runSimulation() {
+            const sym = document.getElementById('sim-select-pos').value;
+            const p = currentPositions.find(x => x.symbol === sym);
+            if(!p) return;
+
+            let curQty = Math.abs(parseFloat(p.size));
+            let curAvg = parseFloat(p.avgPrice);
+            let mkPrice = parseFloat(p.markPrice);
+            let totalQty = curQty, totalWPrice = curQty * curAvg, totalCost = 0;
+
+            const vals = document.querySelectorAll('.sim-input-val'), 
+                  prices = document.querySelectorAll('.sim-input-price'),
+                  checks = document.querySelectorAll('.sim-checkbox');
+
+            vals.forEach((v, i) => {
+                if(checks[i].checked && v.value && prices[i].value) {
+                    const addUSD = parseFloat(v.value), execP = parseFloat(prices[i].value);
+                    const addQty = addUSD / execP;
+                    totalQty += addQty; totalWPrice += (addQty * execP); totalCost += addUSD;
+                }
+            });
+
+            const nAvg = totalWPrice / totalQty;
+            document.getElementById('res-new-avg').innerText = fPT(nAvg, false, 4);
+            document.getElementById('res-total-cost').innerText = fPT(totalCost, true);
+            document.getElementById('res-new-qty').innerText = totalQty.toFixed(2);
+
+            const oldD = Math.abs(curAvg - mkPrice), newD = Math.abs(nAvg - mkPrice);
+            const red = oldD > 0 ? Math.max(0, ((oldD - newD)/oldD)*100) : 0;
+            document.getElementById('res-dist-fill').style.width = red + '%';
+            document.getElementById('res-dist-text').innerText = red.toFixed(1) + '% de aproximação ao mark price';
+        }
+
+        function resetSim() { document.querySelectorAll('.sim-input-val, .sim-input-price').forEach(i => i.value = ''); runSimulation(); }
+
         async function fetchTelemetry() {
             try {
                 const r = await fetch(AI_FUNC_PATH, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ positions: currentPositions, userMessage: "TELEMETRY" }) });
-                const d = await r.json(); const m = document.getElementById('macro-trend');
-                const isB = d.insight.toUpperCase().includes("BULLISH");
-                m.innerText = isB ? "Macro: BULLISH" : "Macro: BEARISH";
-                m.className = `px-3 py-1 rounded-full border text-[10px] font-bold uppercase ${isB ? 'bg-green-500/10 border-green-500/20 text-green-500' : 'bg-red-500/10 border-red-500/20 text-red-500'}`;
-                if(d.fg) { const fg = document.getElementById('fg-index-top'); fg.innerText = `F&G: ${d.fg}`; const v = parseInt(d.fg); fg.style.color = v >= 70 ? '#02d386' : (v <= 30 ? '#ff3b5c' : '#f3ba2f'); }
+                const d = await r.json();
+                document.getElementById('macro-trend').innerText = `Macro: ${d.insight.includes('BULLISH') ? 'BULLISH' : 'BEARISH'}`;
+                document.getElementById('fg-index-top').innerText = `F&G: ${d.fg || '--'}`;
             } catch (e) {}
         }
 
-        function handleUniversalToggle(s) {
-            if (window.innerWidth >= 1280) {
-                const wraps = Array.from(document.querySelectorAll('.tv-wrap'));
-                const anyO = wraps.some(el => !el.classList.contains('hidden'));
-                currentPositions.forEach(pos => {
-                    const el = document.getElementById(`tv-${pos.symbol}`);
-                    if (anyO) el.classList.add('hidden'); else { el.classList.remove('hidden'); loadChart(pos.symbol); }
-                });
-            } else {
-                const el = document.getElementById(`tv-${s}`); el.classList.toggle('hidden');
-                if (!el.classList.contains('hidden')) loadChart(s);
-            }
+        function handleBaltazarCall() {
+            document.getElementById('ai-section').classList.toggle('open');
+            document.getElementById('main-grid').classList.toggle('chat-open');
         }
-
-        function loadChart(s) {
-            const el = document.getElementById(`tv-${s}`);
-            if (!el.dataset.loaded || el.innerHTML === "") {
-                el.innerHTML = "";
-                new TradingView.widget({ "autosize": true, "symbol": `BYBIT:${s}.P`, "interval": "15", "theme": "dark", "container_id": `tv-${s}`, "hide_side_toolbar": true, "library_path": "https://s3.tradingview.com/tv.js" });
-                el.dataset.loaded = "true";
-            }
-        }
-
-        function handleBaltazarCall() { document.getElementById('ai-section').classList.add('open'); document.getElementById('main-grid').classList.add('chat-open'); fetchAIIntelligence(); }
 
         async function fetchAIIntelligence(userQuery = null) {
             const aiContent = document.getElementById('ai-content');
@@ -194,6 +317,14 @@
             } catch (err) {} finally { loader.classList.add('hidden'); }
         }
         function handleChat(e) { if (e.key === 'Enter' && e.target.value.trim() !== "") { fetchAIIntelligence(e.target.value); e.target.value = ''; } }
+        
+        function handleUniversalToggle(s) {
+            const el = document.getElementById(`tv-${s}`);
+            el.classList.toggle('hidden');
+            if(!el.classList.contains('hidden')) {
+                new TradingView.widget({ "autosize": true, "symbol": `BYBIT:${s}.P`, "interval": "15", "theme": "dark", "container_id": `tv-${s}`, "hide_side_toolbar": true, "library_path": "https://s3.tradingview.com/tv.js" });
+            }
+        }
     </script>
 </body>
 </html>
