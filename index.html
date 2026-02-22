@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Trading Lab - v23.3 X-Ray</title>
+    <title>AI Trading Lab - v24.0 UI Elite</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -32,8 +32,17 @@
         #ai-section.open { display: flex; }
         .msg { margin-bottom: 20px; padding: 16px; border-radius: 14px; font-size: 0.92rem; line-height: 1.7; }
         .bot-msg { background: rgba(243, 186, 47, 0.04); border-left: 4px solid var(--yellow-binance); }
-        .user-msg { background: rgba(255, 255, 255, 0.05); border-right: 4px solid #848e9c; align-self: flex-end; text-align: right; }
         
+        /* NOVO: Azul Vivo para o User */
+        .user-msg { background: rgba(0, 170, 255, 0.1); border-right: 4px solid #00aaff; align-self: flex-end; text-align: right; color: #e6f4ff; }
+        
+        /* NOVO: Animação dos 3 Pontos */
+        .typing-indicator { display: flex; gap: 6px; padding: 6px 4px; align-items: center; }
+        .typing-dot { width: 6px; height: 6px; background: var(--yellow-binance); border-radius: 50%; animation: typing 1.4s infinite ease-in-out both; }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes typing { 0%, 80%, 100% { transform: scale(0); opacity: 0.5; } 40% { transform: scale(1); opacity: 1; } }
+
         select { background-color: #1e2329 !important; color: white !important; border: 1px solid rgba(255,255,255,0.1) !important; padding: 14px; border-radius: 8px; width: 100%; outline: none; cursor: pointer; }
         input[type="number"] { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; padding: 12px; font-family: 'Roboto Mono'; font-size: 0.9rem; width: 100%; outline: none; transition: border 0.2s; }
         input[type="number"]:focus { border-color: var(--yellow-binance); }
@@ -202,7 +211,7 @@
                 <span id="ai-loading" class="text-[9px] text-yellow-500 animate-pulse hidden font-bold uppercase">A analisar...</span>
             </div>
             <div id="ai-content" class="flex-grow overflow-y-auto mb-4 pr-2 flex flex-col scrollbar-hide">
-                <div class="bot-msg msg">Sistemas em modo diagnóstico. Testa a comunicação.</div>
+                <div class="bot-msg msg">Operação ativa. Conectado ao mercado global.</div>
             </div>
             <input type="text" id="chat-input" placeholder="Comando..." class="w-full bg-white/5 p-4 md:p-5 rounded-2xl text-white outline-none text-xs md:text-sm border border-white/5 focus:border-[#f3ba2f] transition-all" onkeypress="handleChat(event)">
         </aside>
@@ -512,22 +521,11 @@
 
         async function fetchTelemetry() {
             try {
-                // ADDED X-RAY Error Catching
-                const headers = { 
-                    'Content-Type': 'application/json', 
-                    'Authorization': `Bearer ${SUPABASE_KEY}`,
-                    'apikey': SUPABASE_KEY
-                };
+                const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}`, 'apikey': SUPABASE_KEY };
                 const r = await fetch(AI_FUNC_PATH, { method: 'POST', headers: headers, body: JSON.stringify({ positions: currentPositions, userMessage: "TELEMETRY" }) });
-                
                 const d = await r.json();
 
-                if (d.error) {
-                    console.error("Supabase Internal Error:", d.error);
-                    document.getElementById('macro-trend').innerText = `Macro: ERRO TÉCNICO`;
-                    document.getElementById('fg-index-top').innerText = `F&G: REJEITADO`;
-                    return;
-                }
+                if (d.error) return;
                 
                 if(d && d.insight) {
                     const isB = d.insight.toUpperCase().includes('BULLISH');
@@ -541,49 +539,92 @@
                     const v = parseInt(d.fg);
                     fg.className = `bg-white/5 px-2 md:px-3 py-1.5 rounded-md border text-[9px] md:text-[10px] font-black uppercase ${v >= 70 ? 'border-green-500/20 text-green-500' : (v <= 30 ? 'border-red-500/20 text-red-500' : 'border-yellow-500/20 text-yellow-500')}`;
                 }
-            } catch (e) {
-                console.error("Erro Telemetria Frontend:", e);
-                document.getElementById('macro-trend').innerText = "Macro: FALHA REDE";
-                document.getElementById('fg-index-top').innerText = "F&G: FALHA REDE";
-            }
+            } catch (e) {}
         }
 
         function handleBaltazarCall() { document.getElementById('ai-section').classList.toggle('open'); document.getElementById('main-grid').classList.toggle('chat-open'); }
 
+        // NOVA FUNÇÃO COM LOADING E TYPEWRITER
         async function fetchAIIntelligence(userQuery = null) {
             const aiContent = document.getElementById('ai-content');
-            const loader = document.getElementById('ai-loading');
-            if (userQuery) { aiContent.innerHTML += `<div class="user-msg msg">${userQuery}</div>`; }
-            loader.classList.remove('hidden');
+            
+            if (userQuery) { 
+                // Insere mensagem do user e faz scroll
+                aiContent.insertAdjacentHTML('beforeend', `<div class="user-msg msg">${userQuery}</div>`); 
+                aiContent.scrollTop = aiContent.scrollHeight;
+            }
+            
+            // Adiciona a animação dos 3 pontos
+            const loadingId = "load-" + Date.now();
+            aiContent.insertAdjacentHTML('beforeend', `
+                <div id="${loadingId}" class="bot-msg msg">
+                    <div class="typing-indicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            `);
+            aiContent.scrollTop = aiContent.scrollHeight;
+
             try {
-                const headers = { 
-                    'Content-Type': 'application/json', 
-                    'Authorization': `Bearer ${SUPABASE_KEY}`,
-                    'apikey': SUPABASE_KEY
-                };
+                const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}`, 'apikey': SUPABASE_KEY };
                 const r = await fetch(AI_FUNC_PATH, { method: 'POST', headers: headers, body: JSON.stringify({ positions: currentPositions, userMessage: userQuery }) });
                 
                 const d = await r.json();
-                
                 let responseText = "";
 
                 if (d.error) {
-                    // RAIO X: ERRO DO SUPABASE
-                    responseText = `**Erro Crítico Supabase:** ${d.error}`;
+                    responseText = `**Erro:** ${d.error}`;
                 } else if(d && d.insight) {
-                    // SUCESSO OU ERRO DO DENO/GEMINI (Apanhado no Try/Catch do backend)
+                    // Prepara o texto para a formatação HTML
                     responseText = d.insight.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
                 } else {
-                    responseText = `**Erro Estranho:** O servidor respondeu, mas o formato é desconhecido: ${JSON.stringify(d)}`;
+                    responseText = `Erro de formatação.`;
                 }
 
-                aiContent.innerHTML += `<div class="bot-msg msg">${responseText}</div>`;
-                aiContent.scrollTop = aiContent.scrollHeight;
+                // Remove a animação de loading
+                const loadEl = document.getElementById(loadingId);
+                if(loadEl) loadEl.remove();
+
+                // Cria contentor para o Typewriter
+                const msgId = "msg-" + Date.now();
+                aiContent.insertAdjacentHTML('beforeend', `<div id="${msgId}" class="bot-msg msg"></div>`);
+                const msgEl = document.getElementById(msgId);
+                
+                let i = 0;
+                let isTag = false;
+                let textBuffer = "";
+                
+                // Lógica da Máquina de Escrever
+                function type() {
+                    if (i < responseText.length) {
+                        let char = responseText.charAt(i);
+                        if (char === '<') isTag = true;
+                        textBuffer += char;
+                        if (char === '>') isTag = false;
+                        
+                        msgEl.innerHTML = textBuffer;
+                        i++;
+                        
+                        // Scroll acompanha o texto a ser gerado
+                        aiContent.scrollTop = aiContent.scrollHeight;
+                        
+                        if (isTag) {
+                            type(); // Passa as tags HTML sem atraso
+                        } else {
+                            setTimeout(type, 10); // Velocidade (10ms)
+                        }
+                    }
+                }
+                type();
+
             } catch (err) {
-                // ERRO DE REDE PURO
-                aiContent.innerHTML += `<div class="bot-msg msg text-red-500">**Falha Total de Rede:** ${err.message}</div>`;
-                console.error(err);
-            } finally { loader.classList.add('hidden'); }
+                const loadEl = document.getElementById(loadingId);
+                if(loadEl) loadEl.remove();
+                aiContent.insertAdjacentHTML('beforeend', `<div class="bot-msg msg text-red-500">Erro de rede.</div>`);
+                aiContent.scrollTop = aiContent.scrollHeight;
+            }
         }
 
         function handleChat(e) { if (e.key === 'Enter' && e.target.value.trim() !== "") { fetchAIIntelligence(e.target.value); e.target.value = ''; } }
