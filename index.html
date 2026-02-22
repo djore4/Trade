@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Trading Lab - v22.0 Pro</title>
+    <title>AI Trading Lab - v22.1</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -17,33 +17,28 @@
         .metric-label { color: #848e9c; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.15em; font-weight: 800; }
         .metric-value { font-family: 'Roboto Mono', monospace; font-weight: 700; }
         
-        /* Nav */
         .nav-btn { padding: 12px 20px; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: #848e9c; border-bottom: 2px solid transparent; transition: 0.3s; }
         .nav-btn.active { color: var(--yellow-binance); border-bottom-color: var(--yellow-binance); }
         .tab-content { display: none; }
         .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
 
-        /* Progress Bars */
         .progress-bg { background-color: #1e2329; height: 6px; border-radius: 3px; width: 100%; margin-top: 6px; overflow: hidden; }
         .progress-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
 
-        /* Layout & Mobile */
         .app-grid { display: grid; grid-template-columns: 1fr; gap: 20px; padding: 20px; max-width: 1800px; margin: 0 auto; transition: all 0.4s ease; }
         @media (min-width: 1280px) { .app-grid.chat-open { grid-template-columns: 1fr 450px; } #ai-section { height: calc(100vh - 120px); position: sticky; top: 100px; } }
         
-        /* Chat UI */
         #ai-section { display: none; flex-direction: column; }
         #ai-section.open { display: flex; }
         .msg { margin-bottom: 20px; padding: 16px; border-radius: 14px; font-size: 0.92rem; line-height: 1.7; }
         .bot-msg { background: rgba(243, 186, 47, 0.04); border-left: 4px solid var(--yellow-binance); }
         .user-msg { background: rgba(255, 255, 255, 0.05); border-right: 4px solid #848e9c; align-self: flex-end; text-align: right; }
         
-        /* Inputs & Selects */
         select { background-color: #1e2329 !important; color: white !important; border: 1px solid rgba(255,255,255,0.1) !important; padding: 14px; border-radius: 8px; width: 100%; outline: none; cursor: pointer; }
         input[type="number"] { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; padding: 12px; font-family: 'Roboto Mono'; font-size: 0.9rem; width: 100%; outline: none; transition: border 0.2s; }
         input[type="number"]:focus { border-color: var(--yellow-binance); }
         
-        .tv-wrap { border-radius: 12px; overflow: hidden; background: #000; border: 1px solid rgba(255,255,255,0.08); }
+        .tv-wrap { border-radius: 12px; overflow: hidden; background: #000; border: 1px solid rgba(255,255,255,0.08); width: 100%; }
         .hidden { display: none !important; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
@@ -78,7 +73,7 @@
                     <div class="card p-5"><p class="metric-label">Exposição Total</p><p id="total-exposure" class="text-2xl metric-value text-white">$0,00</p></div>
                     <div class="card p-5 border-yellow-500/10"><p class="metric-label text-yellow-500">Alavancagem Real</p><p id="avg-leverage" class="text-2xl metric-value text-yellow-500">0x</p></div>
                 </div>
-                <div id="dashboard-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+                <div id="dashboard-grid" class="grid grid-cols-1 xl:grid-cols-2 gap-6"></div>
             </section>
 
             <section id="tab-simulator" class="tab-content">
@@ -97,8 +92,8 @@
 
                     <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
                         <div class="card bg-black/50 border-white/5 p-2">
-                            <div id="tv-sim-container" class="h-[400px] w-full rounded-lg overflow-hidden">
-                                <div class="w-full h-full flex items-center justify-center text-gray-600 font-bold text-xs uppercase">Selecione uma posição para carregar o gráfico</div>
+                            <div id="tv-sim-container" class="h-[400px] w-full rounded-lg overflow-hidden flex items-center justify-center text-gray-600 font-bold text-xs uppercase">
+                                Selecione uma posição
                             </div>
                         </div>
                         <div class="flex flex-col gap-4">
@@ -133,8 +128,7 @@
                             <div>Preço de Execução DCA</div>
                             <div class="text-center">Ativo</div>
                         </div>
-                        <div id="sim-slots-body" class="space-y-3">
-                            </div>
+                        <div id="sim-slots-body" class="space-y-3"></div>
                         <div class="mt-6 flex justify-between items-center bg-white/5 p-4 rounded-xl border border-white/10">
                             <span class="metric-label">Custo Total Simulação</span>
                             <span id="res-total-cost" class="text-xl font-bold text-white">$0,00</span>
@@ -151,7 +145,7 @@
                 <span id="ai-loading" class="text-[10px] text-yellow-500 animate-pulse hidden font-bold uppercase">A processar...</span>
             </div>
             <div id="ai-content" class="flex-grow overflow-y-auto mb-6 pr-2 flex flex-col scrollbar-hide">
-                <div class="bot-msg msg">Operação ativa. Lado a lado com os teus dados em tempo real. Pede a análise quando precisares.</div>
+                <div class="bot-msg msg">Sistemas restaurados e blindados. Dashboard e telemetria 100% funcionais. Como procedemos?</div>
             </div>
             <input type="text" id="chat-input" placeholder="Comando..." class="w-full bg-white/5 p-5 rounded-2xl text-white outline-none text-sm border border-white/5 focus:border-[#f3ba2f] transition-all" onkeypress="handleChat(event)">
         </aside>
@@ -172,12 +166,17 @@
             document.getElementById('btn-' + t).classList.add('active');
         }
 
-        // Rigorous Formatter for Thousands and Decimals
+        // Formatação garantida: Força Ponto nos Milhares e Vírgula nas Decimais
         function fPT(n, isM = false, p = 2) {
             let num = Number(n);
-            if(isNaN(num) || num === 0) return isM ? "$0,00" : "0,00";
-            let formatted = num.toLocaleString('pt-PT', { minimumFractionDigits: p, maximumFractionDigits: p });
-            return (isM ? "$" : "") + formatted;
+            if (isNaN(num)) num = 0;
+            
+            let absNum = Math.abs(num);
+            let parts = absNum.toFixed(p).split(".");
+            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            let res = parts.join(",");
+            
+            return (num < 0 ? "-" : "") + (isM ? "$" : "") + res;
         }
 
         async function fetchPositions() {
@@ -196,6 +195,7 @@
         function updateDashboard(positions) {
             const grid = document.getElementById('dashboard-grid');
             let tPnL = 0, tMarg = 0, tExp = 0;
+            
             positions.forEach(pos => {
                 const pnl = parseFloat(pos.unrealisedPnl), val = parseFloat(pos.positionValue);
                 const lev = parseFloat(pos.leverage), cur = parseFloat(pos.markPrice);
@@ -207,15 +207,17 @@
                 if (!card) {
                     card = document.createElement('div'); card.id = `card-${pos.symbol}`;
                     card.className = `card border-l-4 p-6 ${pos.side === 'Buy' ? 'border-l-green-500' : 'border-l-red-500'}`;
-                    // Injecting two chart containers inside the card
+                    
+                    // Dois contentores CSS Grid 
                     card.innerHTML = `
                         <div class="content-area"></div>
-                        <div id="tv-container-${pos.symbol}" class="grid grid-cols-2 gap-4 mt-6 hidden">
+                        <div id="tv-container-${pos.symbol}" class="grid grid-cols-1 xl:grid-cols-2 gap-4 mt-6 hidden">
                             <div id="tv-1-${pos.symbol}" class="tv-wrap h-[400px]"></div>
                             <div id="tv-2-${pos.symbol}" class="tv-wrap h-[400px]"></div>
                         </div>`;
                     grid.appendChild(card);
                 }
+                
                 const dLiq = liq > 0 ? Math.abs((liq - cur) / cur) * 100 : 100;
                 const tpP = tp > 0 ? (Math.abs(cur - ent) / Math.abs(tp - ent)) * 100 : 0;
                 const cPnL = pnl >= 0 ? 'text-green-500' : 'text-red-500';
@@ -240,6 +242,7 @@
                         </div>
                     </div>`;
             });
+            
             document.getElementById('total-pnl').innerText = fPT(tPnL, true, 2);
             document.getElementById('total-pnl').className = `text-3xl metric-value ${tPnL >= 0 ? 'text-green-500' : 'text-red-500'}`;
             document.getElementById('total-pnl-perc').innerText = fPT(tMarg > 0 ? (tPnL/tMarg*100) : 0, false, 2) + "%";
@@ -248,18 +251,24 @@
             document.getElementById('avg-leverage').innerText = fPT(tMarg > 0 ? (tExp / tMarg) : 0, false, 2) + "x";
         }
 
-        // Two charts implementation
         function handleUniversalToggle(s) {
             const cont = document.getElementById(`tv-container-${s}`);
             cont.classList.toggle('hidden');
             if(!cont.classList.contains('hidden')) {
-                cont.innerHTML = `<div id="tv-1-${s}" class="tv-wrap h-[400px]"></div><div id="tv-2-${s}" class="tv-wrap h-[400px]"></div>`;
-                new TradingView.widget({ "autosize": true, "symbol": `BYBIT:${s}.P`, "interval": "15", "theme": "dark", "style": "1", "toolbar_bg": "#1e2329", "enable_publishing": false, "hide_side_toolbar": false, "container_id": `tv-1-${s}`, "library_path": "https://s3.tradingview.com/tv.js" });
-                new TradingView.widget({ "autosize": true, "symbol": `BYBIT:${s}.P`, "interval": "240", "theme": "dark", "style": "1", "toolbar_bg": "#1e2329", "enable_publishing": false, "hide_side_toolbar": false, "container_id": `tv-2-${s}`, "library_path": "https://s3.tradingview.com/tv.js" });
+                // Esvaziar e reconstruir para garantir que o TV Widget amarra aos IDs correctos
+                cont.innerHTML = `
+                    <div id="tv-1-${s}" class="tv-wrap h-[400px] w-full"></div>
+                    <div id="tv-2-${s}" class="tv-wrap h-[400px] w-full"></div>
+                `;
+                setTimeout(() => {
+                    new TradingView.widget({ "autosize": true, "symbol": `BYBIT:${s}.P`, "interval": "15", "theme": "dark", "style": "1", "toolbar_bg": "#1e2329", "enable_publishing": false, "hide_side_toolbar": false, "container_id": `tv-1-${s}`, "library_path": "https://s3.tradingview.com/tv.js" });
+                    new TradingView.widget({ "autosize": true, "symbol": `BYBIT:${s}.P`, "interval": "240", "theme": "dark", "style": "1", "toolbar_bg": "#1e2329", "enable_publishing": false, "hide_side_toolbar": false, "container_id": `tv-2-${s}`, "library_path": "https://s3.tradingview.com/tv.js" });
+                }, 50);
+            } else {
+                cont.innerHTML = ''; // Limpar para poupar memória do browser
             }
         }
 
-        // Simulator CSS Grid alignment
         function generateSimSlots() {
             const b = document.getElementById('sim-slots-body');
             for(let i=0; i<10; i++) {
@@ -291,11 +300,12 @@
                 document.getElementById('sim-level-liq').innerText = fPT(p.liqPrice, false, 4);
                 document.getElementById('sim-level-tp').innerText = parseFloat(p.takeProfit) > 0 ? fPT(p.takeProfit, false, 4) : "N/D";
                 
-                // Load TV Chart for Simulator
                 document.getElementById('tv-sim-container').innerHTML = `<div id="tv-sim-${sym}" class="w-full h-full"></div>`;
                 new TradingView.widget({ "autosize": true, "symbol": `BYBIT:${sym}.P`, "interval": "15", "theme": "dark", "style": "1", "hide_side_toolbar": false, "container_id": `tv-sim-${sym}`, "library_path": "https://s3.tradingview.com/tv.js" });
                 
                 runSimulation();
+            } else {
+                document.getElementById('tv-sim-container').innerHTML = `<div class="w-full h-full flex items-center justify-center text-gray-600 font-bold text-xs uppercase">Selecione uma posição</div>`;
             }
         }
 
@@ -321,24 +331,23 @@
             document.getElementById('res-new-avg').innerText = fPT(nAvg, false, 4);
             document.getElementById('res-total-cost').innerText = fPT(totalCost, true, 2);
             
-            // Calc New Liquidation (Approximation based on Leverage)
             let newLiq = 0;
             if(p.side === 'Buy') newLiq = nAvg * (1 - 1/lev + 0.005);
             else newLiq = nAvg * (1 + 1/lev - 0.005);
             
             document.getElementById('sim-level-new-liq').innerText = totalCost > 0 ? fPT(newLiq, false, 4) : "---";
 
-            // Calc improvement distance from mark to liquidation
             const oldLiqDist = Math.abs(parseFloat(p.liqPrice) - mkPrice) / mkPrice * 100;
             const newLiqDist = Math.abs(newLiq - mkPrice) / mkPrice * 100;
             const improvement = totalCost > 0 ? (newLiqDist - oldLiqDist) : 0;
             
-            document.getElementById('res-dist-text').innerText = improvement > 0 ? "+" + fPT(improvement, false, 2) + "% Seguro" : "0,00%";
+            document.getElementById('res-dist-text').innerText = improvement > 0 ? "+" + fPT(improvement, false, 2) + "% Segurança" : "0,00%";
         }
 
         async function fetchTelemetry() {
             try {
-                const r = await fetch(AI_FUNC_PATH, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ positions: currentPositions, userMessage: "TELEMETRY" }) });
+                const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}` };
+                const r = await fetch(AI_FUNC_PATH, { method: 'POST', headers: headers, body: JSON.stringify({ positions: currentPositions, userMessage: "TELEMETRY" }) });
                 const d = await r.json();
                 if(d && d.insight) {
                     const isB = d.insight.toUpperCase().includes('BULLISH');
@@ -366,7 +375,8 @@
             if (userQuery) { aiContent.innerHTML += `<div class="user-msg msg">${userQuery}</div>`; }
             loader.classList.remove('hidden');
             try {
-                const r = await fetch(AI_FUNC_PATH, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ positions: currentPositions, userMessage: userQuery }) });
+                const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}` };
+                const r = await fetch(AI_FUNC_PATH, { method: 'POST', headers: headers, body: JSON.stringify({ positions: currentPositions, userMessage: userQuery }) });
                 const d = await r.json();
                 aiContent.innerHTML += `<div class="bot-msg msg">${d.insight.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>')}</div>`;
                 aiContent.scrollTop = aiContent.scrollHeight;
