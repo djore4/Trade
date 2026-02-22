@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Trading Lab - v23.1 Elite</title>
+    <title>AI Trading Lab - v23.2 Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -87,11 +87,12 @@
                             <label class="metric-label block mb-3">Posição Ativa</label>
                             <select id="sim-select-pos" onchange="loadPositionToSim()"></select>
                         </div>
-                        <div class="lg:col-span-4 grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+                        <div class="lg:col-span-4 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
                             <div class="bg-white/5 p-3 md:p-4 rounded-xl border border-white/5"><p class="metric-label">Mark Price</p><p id="sim-mark-price" class="metric-value text-lg md:text-xl text-[#f3ba2f]">0,0000</p></div>
                             <div class="bg-white/5 p-3 md:p-4 rounded-xl border border-white/5"><p class="metric-label">Tamanho (Qtd)</p><p id="sim-current-qty" class="metric-value text-lg md:text-xl text-white">0,00</p></div>
+                            <div class="bg-white/5 p-3 md:p-4 rounded-xl border border-white/5"><p class="metric-label">Margem Atual</p><p id="sim-current-margin" class="metric-value text-lg md:text-xl text-gray-400">$0,00</p></div>
                             <div class="bg-white/5 p-3 md:p-4 rounded-xl border border-[#f3ba2f]/30">
-                                <p class="metric-label text-yellow-500">Alavancagem Ajustável (x)</p>
+                                <p class="metric-label text-yellow-500">Alavancagem (x)</p>
                                 <input type="number" id="sim-input-leverage" class="bg-transparent text-lg md:text-xl font-black text-yellow-500 w-full outline-none p-0 border-none h-auto" oninput="runSimulation()" placeholder="Ex: 10">
                             </div>
                         </div>
@@ -106,58 +107,58 @@
                         
                         <div class="flex flex-col gap-4">
                             <h3 class="metric-label">Comparativo de Níveis Críticos e Margem</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
+                            <div class="grid grid-cols-2 gap-2 md:gap-4 h-full">
                                 
-                                <div class="bg-white/5 border border-white/10 p-5 rounded-xl flex flex-col gap-5">
-                                    <h4 class="text-gray-500 font-bold text-[11px] uppercase tracking-widest border-b border-gray-800 pb-2">Posição Atual</h4>
+                                <div class="bg-white/5 border border-white/10 p-3 md:p-5 rounded-xl flex flex-col gap-3 md:gap-5">
+                                    <h4 class="text-gray-500 font-bold text-[9px] md:text-[11px] uppercase tracking-widest border-b border-gray-800 pb-2">Atual</h4>
                                     <div>
-                                        <p class="text-[10px] uppercase text-gray-400 mb-1">Preço de Entrada</p>
-                                        <p class="font-mono font-bold text-white text-xl" id="sim-panel-current-entry">0,0000</p>
+                                        <p class="text-[8px] md:text-[10px] uppercase text-gray-400 mb-1">Preço Entrada</p>
+                                        <p class="font-mono font-bold text-white text-sm md:text-xl" id="sim-panel-current-entry">0,0000</p>
                                     </div>
                                     <div>
-                                        <p class="text-[10px] uppercase text-gray-400 mb-1">Preço de Liquidação</p>
-                                        <p class="font-mono font-bold text-red-500 text-xl" id="sim-panel-current-liq">0,0000</p>
+                                        <p class="text-[8px] md:text-[10px] uppercase text-gray-400 mb-1">Liquidação</p>
+                                        <p class="font-mono font-bold text-red-500 text-sm md:text-xl" id="sim-panel-current-liq">0,0000</p>
                                     </div>
                                     <div>
-                                        <p class="text-[10px] uppercase text-gray-400 mb-1">Take Profit (PnL Estimado)</p>
-                                        <p class="font-mono font-bold text-yellow-500 text-xl" id="sim-panel-current-tp">0,0000</p>
-                                        <p class="text-[10px] text-gray-500 font-bold mt-1" id="sim-panel-current-tp-pnl">PnL: $0,00</p>
+                                        <p class="text-[8px] md:text-[10px] uppercase text-gray-400 mb-1">Take Profit</p>
+                                        <p class="font-mono font-bold text-yellow-500 text-sm md:text-xl" id="sim-panel-current-tp">0,0000</p>
+                                        <p class="text-[8px] md:text-[10px] text-gray-500 font-bold mt-1" id="sim-panel-current-tp-pnl">PnL: $0,00</p>
                                     </div>
                                     <div>
-                                        <p class="text-[10px] uppercase text-gray-400 mb-1">Margem Alocada</p>
-                                        <p class="font-mono font-bold text-gray-300 text-xl" id="sim-panel-current-margin">$0,00</p>
+                                        <p class="text-[8px] md:text-[10px] uppercase text-gray-400 mb-1">Margem</p>
+                                        <p class="font-mono font-bold text-gray-300 text-sm md:text-xl" id="sim-panel-current-margin">$0,00</p>
                                     </div>
                                 </div>
                                 
-                                <div class="bg-[#02d386]/5 border border-[#02d386]/20 p-5 rounded-xl flex flex-col gap-5 relative overflow-hidden">
-                                    <div class="absolute top-0 right-0 bg-[#02d386] text-black text-[9px] font-black px-3 py-1 rounded-bl-lg uppercase tracking-widest">Projeção</div>
-                                    <h4 class="text-[#02d386] font-bold text-[11px] uppercase tracking-widest border-b border-[#02d386]/20 pb-2">Nova Posição</h4>
+                                <div class="bg-[#02d386]/5 border border-[#02d386]/20 p-3 md:p-5 rounded-xl flex flex-col gap-3 md:gap-5 relative overflow-hidden">
+                                    <div class="absolute top-0 right-0 bg-[#02d386] text-black text-[7px] md:text-[9px] font-black px-2 py-1 rounded-bl-lg uppercase tracking-widest">Nova</div>
+                                    <h4 class="text-[#02d386] font-bold text-[9px] md:text-[11px] uppercase tracking-widest border-b border-[#02d386]/20 pb-2">Projeção</h4>
                                     <div>
-                                        <p class="text-[10px] uppercase text-[#02d386]/70 mb-1">Nova Entrada</p>
-                                        <div class="flex items-baseline gap-2 flex-wrap">
-                                            <p class="font-mono font-black text-white text-xl leading-none" id="res-new-avg">---</p>
+                                        <p class="text-[8px] md:text-[10px] uppercase text-[#02d386]/70 mb-1">Nova Entrada</p>
+                                        <div class="flex items-baseline gap-1 md:gap-2 flex-wrap">
+                                            <p class="font-mono font-black text-white text-sm md:text-xl leading-none" id="res-new-avg">---</p>
                                             <span class="hidden" id="res-entry-diff"></span>
                                         </div>
                                     </div>
                                     <div>
-                                        <p class="text-[10px] uppercase text-[#02d386]/70 mb-1">Nova Liquidação</p>
-                                        <div class="flex items-baseline gap-2 flex-wrap">
-                                            <p class="font-mono font-black text-red-400 text-xl leading-none" id="sim-level-new-liq">---</p>
+                                        <p class="text-[8px] md:text-[10px] uppercase text-[#02d386]/70 mb-1">Nova Liq.</p>
+                                        <div class="flex items-baseline gap-1 md:gap-2 flex-wrap">
+                                            <p class="font-mono font-black text-red-400 text-sm md:text-xl leading-none" id="sim-level-new-liq">---</p>
                                             <span class="hidden" id="res-liq-diff"></span>
                                         </div>
                                     </div>
                                     <div>
-                                        <p class="text-[10px] uppercase text-[#02d386]/70 mb-1">Take Profit Alvo (Novo PnL)</p>
-                                        <div class="flex items-baseline gap-2 flex-wrap">
-                                            <p class="font-mono font-black text-yellow-500 text-xl leading-none" id="sim-level-new-tp">---</p>
+                                        <p class="text-[8px] md:text-[10px] uppercase text-[#02d386]/70 mb-1">Take Profit</p>
+                                        <div class="flex items-baseline gap-1 md:gap-2 flex-wrap">
+                                            <p class="font-mono font-black text-yellow-500 text-sm md:text-xl leading-none" id="sim-level-new-tp">---</p>
                                             <span class="hidden" id="res-tp-diff"></span>
                                         </div>
-                                        <p class="text-[10px] text-gray-400 font-bold mt-1 hidden" id="sim-panel-new-tp-pnl">PnL: $0,00</p>
+                                        <p class="text-[8px] md:text-[10px] text-gray-400 font-bold mt-1 hidden" id="sim-panel-new-tp-pnl">PnL: $0,00</p>
                                     </div>
                                     <div>
-                                        <p class="text-[10px] uppercase text-[#02d386]/70 mb-1">Nova Margem (Ajuste)</p>
-                                        <div class="flex items-baseline gap-2 flex-wrap">
-                                            <p class="font-mono font-black text-white text-xl leading-none" id="sim-level-new-margin">---</p>
+                                        <p class="text-[8px] md:text-[10px] uppercase text-[#02d386]/70 mb-1">Nova Margem</p>
+                                        <div class="flex items-baseline gap-1 md:gap-2 flex-wrap">
+                                            <p class="font-mono font-black text-white text-sm md:text-xl leading-none" id="sim-level-new-margin">---</p>
                                             <span class="hidden" id="res-margin-diff"></span>
                                         </div>
                                     </div>
@@ -171,18 +172,25 @@
                         <div class="flex justify-between items-end mb-4">
                             <h3 class="metric-label">Adicionar Posição / Valor (DCA)</h3>
                         </div>
-                        <div class="grid grid-cols-[50px_1fr_1fr] md:grid-cols-[60px_1fr_1fr] gap-2 md:gap-4 mb-3 px-1 md:px-2 text-[9px] md:text-[10px] uppercase text-gray-500 font-bold border-b border-gray-800 pb-2">
-                            <div class="text-center">Ativo</div>
-                            <div>Valor da Posição (USD)</div>
-                            <div>Preço de Execução DCA</div>
+                        <div class="grid grid-cols-[40px_1fr_1fr] md:grid-cols-[60px_1fr_1fr] gap-2 md:gap-4 mb-3 px-1 md:px-2 text-[8px] md:text-[10px] uppercase text-gray-500 font-bold border-b border-gray-800 pb-2">
+                            <div class="text-center">On</div>
+                            <div>Adicionar (USD)</div>
+                            <div>Preço Execução</div>
                         </div>
                         <div id="sim-slots-body" class="space-y-2 md:space-y-3"></div>
                         
-                        <div class="mt-6 flex justify-between items-center bg-white/5 p-4 rounded-xl border border-white/10">
-                            <span class="metric-label">Valor Adicionado (DCA)</span>
-                            <span id="res-total-cost" class="text-xl md:text-2xl font-bold text-gray-300">$0</span>
+                        <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-white/5 p-4 rounded-xl border border-white/10 flex justify-between items-center">
+                                <span class="metric-label">Valor DCA</span>
+                                <span id="res-total-cost" class="text-xl md:text-2xl font-bold text-gray-300">$0</span>
+                            </div>
+                            <div id="margin-adjustment-panel" class="p-4 rounded-xl border flex justify-between items-center bg-gray-900 border-gray-700">
+                                <span class="metric-label text-white">Ajuste na Margem</span>
+                                <span id="res-margin-adj" class="text-xl md:text-2xl font-black text-white">S/ Alteração</span>
+                            </div>
                         </div>
-                        <button onclick="resetSim()" class="w-full mt-4 py-4 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-white hover:bg-white/5 transition-all">Limpar Simulador</button>
+
+                        <button onclick="resetSim()" class="w-full mt-6 py-4 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-white hover:bg-white/5 transition-all">Limpar Simulador</button>
                     </div>
                 </div>
             </section>
@@ -194,9 +202,9 @@
                 <span id="ai-loading" class="text-[9px] text-yellow-500 animate-pulse hidden font-bold uppercase">A analisar...</span>
             </div>
             <div id="ai-content" class="flex-grow overflow-y-auto mb-4 pr-2 flex flex-col scrollbar-hide">
-                <div class="bot-msg msg">Sistemas operacionais. Aguardo instruções.</div>
+                <div class="bot-msg msg">Operação ativa e protegida.</div>
             </div>
-            <input type="text" id="chat-input" placeholder="Diz-me algo..." class="w-full bg-white/5 p-4 md:p-5 rounded-2xl text-white outline-none text-xs md:text-sm border border-white/5 focus:border-[#f3ba2f] transition-all" onkeypress="handleChat(event)">
+            <input type="text" id="chat-input" placeholder="Comando..." class="w-full bg-white/5 p-4 md:p-5 rounded-2xl text-white outline-none text-xs md:text-sm border border-white/5 focus:border-[#f3ba2f] transition-all" onkeypress="handleChat(event)">
         </aside>
     </div>
 
@@ -221,7 +229,6 @@
             document.getElementById('btn-' + t).classList.add('active');
         }
 
-        // FORMATADOR: Mantém a regra do Ponto nos milhares e vírgula nas casas decimais
         function fPT(n, isM = false, p = 2) {
             let num = Number(n);
             if(isNaN(num) || num === 0) return isM ? "$0" + (p>0?",00":"") : "0" + (p>0?",00":"");
@@ -260,11 +267,11 @@
                 if (!card) {
                     card = document.createElement('div'); card.id = `card-${pos.symbol}`;
                     card.className = `card border-l-4 p-4 lg:p-5 ${pos.side === 'Buy' ? 'border-l-green-500' : 'border-l-red-500'}`;
-                    // Gráfico Aumentado na Versão Desktop (lg:h-[560px])
+                    // Dashboard TV Chart - H: 400px mobile, 560px desktop
                     card.innerHTML = `
                         <div class="content-area"></div>
                         <div id="tv-wrapper-${pos.symbol}" class="grid grid-cols-1 gap-4 mt-4 hidden" data-loaded="false">
-                            <div id="tv-1-${pos.symbol}" class="tv-wrap h-[300px] lg:h-[560px]"></div>
+                            <div id="tv-1-${pos.symbol}" class="tv-wrap h-[400px] lg:h-[560px]"></div>
                         </div>`;
                     grid.appendChild(card);
                 }
@@ -331,7 +338,7 @@
             const b = document.getElementById('sim-slots-body');
             for(let i=0; i<10; i++) {
                 const r = document.createElement('div');
-                r.className = 'grid grid-cols-[50px_1fr_1fr] md:grid-cols-[60px_1fr_1fr] gap-2 md:gap-4 items-center';
+                r.className = 'grid grid-cols-[40px_1fr_1fr] md:grid-cols-[60px_1fr_1fr] gap-2 md:gap-4 items-center';
                 r.innerHTML = `
                     <div class="text-center flex justify-center"><input type="checkbox" checked class="sim-checkbox w-4 h-4 md:w-5 md:h-5 accent-[#f3ba2f]" onchange="runSimulation()"></div>
                     <input type="number" class="sim-input-val" placeholder="Ex: 500" oninput="runSimulation()">
@@ -355,10 +362,8 @@
                 const curMargin = parseFloat(p.positionValue) / parseFloat(p.leverage);
                 document.getElementById('sim-mark-price').innerText = fPT(p.markPrice, false, 4);
                 document.getElementById('sim-current-qty').innerText = fPT(Math.abs(parseFloat(p.size)), false, 2);
-                
                 document.getElementById('sim-input-leverage').value = p.leverage;
 
-                // Populating "Posição Atual" Panel
                 document.getElementById('sim-panel-current-entry').innerText = fPT(p.avgPrice, false, 4);
                 document.getElementById('sim-panel-current-liq').innerText = fPT(p.liqPrice, false, 4);
                 document.getElementById('sim-panel-current-margin').innerText = fPT(curMargin, true, 2);
@@ -418,7 +423,6 @@
             else newLiqCalc = nAvg * (1 + 1/newLev - 0.005);
             document.getElementById('sim-level-new-liq').innerText = (totalCost > 0 || newLev !== origLev) ? fPT(newLiqCalc, false, 4) : "---";
 
-            // Calculando Variações e Margem
             const oldLiq = parseFloat(p.liqPrice) > 0 ? parseFloat(p.liqPrice) : 0;
             const curMargin = (curQty * curAvg) / origLev;
             const newMargin = (totalQty * nAvg) / newLev;
@@ -434,35 +438,32 @@
             const elTpPnlNew = document.getElementById('sim-panel-new-tp-pnl');
 
             if(totalCost > 0 || newLev !== origLev) {
-                // Entrada
                 if(totalCost > 0) {
                     const entryDiffPerc = ((nAvg - curAvg) / curAvg) * 100;
                     const isEntryBetter = p.side === 'Buy' ? entryDiffPerc < 0 : entryDiffPerc > 0;
                     elEntryDiff.innerText = (entryDiffPerc > 0 ? "+" : "") + fPT(entryDiffPerc, false, 2) + "%";
-                    elEntryDiff.className = `text-[10px] font-bold px-2 py-0.5 rounded-md ${isEntryBetter ? 'bg-[#02d386]/20 text-[#02d386]' : 'bg-red-500/20 text-red-500'}`;
+                    elEntryDiff.className = `text-[8px] md:text-[10px] font-bold px-1.5 md:px-2 py-0.5 rounded-md ${isEntryBetter ? 'bg-[#02d386]/20 text-[#02d386]' : 'bg-red-500/20 text-red-500'}`;
                 } else { elEntryDiff.className = "hidden"; }
                 
-                // Liquidação
                 if(oldLiq > 0) {
                     const liqDiffPerc = ((newLiqCalc - oldLiq) / oldLiq) * 100;
                     const isLiqBetter = p.side === 'Buy' ? liqDiffPerc < 0 : liqDiffPerc > 0;
                     elLiqDiff.innerText = (liqDiffPerc > 0 ? "+" : "") + fPT(liqDiffPerc, false, 2) + "%";
-                    elLiqDiff.className = `text-[10px] font-bold px-2 py-0.5 rounded-md ${isLiqBetter ? 'bg-[#02d386]/20 text-[#02d386]' : 'bg-red-500/20 text-red-500'}`;
+                    elLiqDiff.className = `text-[8px] md:text-[10px] font-bold px-1.5 md:px-2 py-0.5 rounded-md ${isLiqBetter ? 'bg-[#02d386]/20 text-[#02d386]' : 'bg-red-500/20 text-red-500'}`;
                 } else { elLiqDiff.className = "hidden"; }
 
-                // Margem
                 elMarginNew.innerText = fPT(newMargin, true, 2);
-                elMarginDiff.className = `text-[10px] font-bold px-2 py-0.5 rounded-md ${marginDiff <= 0 ? 'bg-[#02d386]/20 text-[#02d386]' : 'bg-red-500/20 text-red-500'}`;
+                elMarginDiff.className = `text-[8px] md:text-[10px] font-bold px-1.5 md:px-2 py-0.5 rounded-md ${marginDiff <= 0 ? 'bg-[#02d386]/20 text-[#02d386]' : 'bg-red-500/20 text-red-500'}`;
+                
                 if (Math.abs(marginDiff) < 0.01) {
-                    elMarginDiff.innerText = "S/ Alteração";
-                    elMarginDiff.className = "text-[10px] font-bold px-2 py-0.5 rounded-md bg-gray-700/50 text-gray-400";
+                    elMarginDiff.innerText = "S/ Alt.";
+                    elMarginDiff.className = "text-[8px] md:text-[10px] font-bold px-1.5 md:px-2 py-0.5 rounded-md bg-gray-700/50 text-gray-400";
                 } else if (marginDiff > 0) {
-                    elMarginDiff.innerText = "Adicionar " + fPT(marginDiff, true, 2);
+                    elMarginDiff.innerText = "Add " + fPT(marginDiff, true, 2);
                 } else {
-                    elMarginDiff.innerText = "Libertar " + fPT(Math.abs(marginDiff), true, 2);
+                    elMarginDiff.innerText = "Lib. " + fPT(Math.abs(marginDiff), true, 2);
                 }
 
-                // Take Profit
                 if (tp > 0) {
                     elTpNew.innerText = fPT(tp, false, 4);
                     const oldEstPnl = p.side === 'Buy' ? (tp - curAvg) * curQty : (curAvg - tp) * curQty;
@@ -470,16 +471,32 @@
                     const pnlDiff = newEstPnl - oldEstPnl;
                     
                     elTpPnlNew.innerText = `PnL: ${fPT(newEstPnl, true, 2)}`;
-                    elTpPnlNew.className = "text-[10px] text-gray-400 font-bold mt-1 block";
+                    elTpPnlNew.className = "text-[8px] md:text-[10px] text-gray-400 font-bold mt-1 block";
                     
                     elTpDiff.innerText = (pnlDiff > 0 ? "+" : "") + fPT(pnlDiff, true, 2);
-                    elTpDiff.className = `text-[10px] font-bold px-2 py-0.5 rounded-md ${pnlDiff >= 0 ? 'bg-[#02d386]/20 text-[#02d386]' : 'bg-red-500/20 text-red-500'}`;
+                    elTpDiff.className = `text-[8px] md:text-[10px] font-bold px-1.5 md:px-2 py-0.5 rounded-md ${pnlDiff >= 0 ? 'bg-[#02d386]/20 text-[#02d386]' : 'bg-red-500/20 text-red-500'}`;
                 } else {
                     elTpNew.innerText = "N/D";
                     elTpDiff.className = "hidden";
                     elTpPnlNew.className = "hidden";
                 }
                 
+                const marginPanel = document.getElementById('margin-adjustment-panel');
+                const marginText = document.getElementById('res-margin-adj');
+                if (Math.abs(marginDiff) < 1) {
+                    marginPanel.className = "p-4 rounded-xl border flex justify-between items-center bg-gray-900 border-gray-700";
+                    marginText.innerText = "S/ Alteração";
+                    marginText.className = "text-xl md:text-2xl font-black text-gray-400";
+                } else if (marginDiff > 0) {
+                    marginPanel.className = "p-4 rounded-xl border flex justify-between items-center bg-red-500/10 border-red-500/30";
+                    marginText.innerText = "Adicionar " + fPT(marginDiff, true, 2);
+                    marginText.className = "text-xl md:text-2xl font-black text-red-500";
+                } else {
+                    marginPanel.className = "p-4 rounded-xl border flex justify-between items-center bg-[#02d386]/10 border-[#02d386]/30";
+                    marginText.innerText = "Liberta " + fPT(Math.abs(marginDiff), true, 2);
+                    marginText.className = "text-xl md:text-2xl font-black text-[#02d386]";
+                }
+
             } else {
                 elEntryDiff.className = "hidden";
                 elLiqDiff.className = "hidden";
@@ -488,13 +505,23 @@
                 elTpNew.innerText = "---";
                 elTpDiff.className = "hidden";
                 elTpPnlNew.className = "hidden";
+                document.getElementById('margin-adjustment-panel').className = "p-4 rounded-xl border flex justify-between items-center bg-gray-900 border-gray-700";
+                document.getElementById('res-margin-adj').innerText = "S/ Alteração";
+                document.getElementById('res-margin-adj').className = "text-xl md:text-2xl font-black text-gray-400";
             }
         }
 
+        // CHAVE DA AUTORIZAÇÃO RESTAURADA. Sem estes Headers o CORS da Supabase bloqueia os pedidos Edge.
         async function fetchTelemetry() {
             try {
-                const r = await fetch(AI_FUNC_PATH, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ positions: currentPositions, userMessage: "TELEMETRY" }) });
+                const headers = { 
+                    'Content-Type': 'application/json', 
+                    'Authorization': `Bearer ${SUPABASE_KEY}`,
+                    'apikey': SUPABASE_KEY
+                };
+                const r = await fetch(AI_FUNC_PATH, { method: 'POST', headers: headers, body: JSON.stringify({ positions: currentPositions, userMessage: "TELEMETRY" }) });
                 const d = await r.json();
+                
                 if(d && d.insight) {
                     const isB = d.insight.toUpperCase().includes('BULLISH');
                     const m = document.getElementById('macro-trend');
@@ -508,6 +535,7 @@
                     fg.className = `bg-white/5 px-2 md:px-3 py-1.5 rounded-md border text-[9px] md:text-[10px] font-black uppercase ${v >= 70 ? 'border-green-500/20 text-green-500' : (v <= 30 ? 'border-red-500/20 text-red-500' : 'border-yellow-500/20 text-yellow-500')}`;
                 }
             } catch (e) {
+                console.error("Erro Telemetria:", e);
                 document.getElementById('macro-trend').innerText = "Macro: N/D";
                 document.getElementById('fg-index-top').innerText = "F&G: N/D";
             }
@@ -521,17 +549,35 @@
             if (userQuery) { aiContent.innerHTML += `<div class="user-msg msg">${userQuery}</div>`; }
             loader.classList.remove('hidden');
             try {
-                const r = await fetch(AI_FUNC_PATH, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ positions: currentPositions, userMessage: userQuery }) });
+                const headers = { 
+                    'Content-Type': 'application/json', 
+                    'Authorization': `Bearer ${SUPABASE_KEY}`,
+                    'apikey': SUPABASE_KEY
+                };
+                const r = await fetch(AI_FUNC_PATH, { method: 'POST', headers: headers, body: JSON.stringify({ positions: currentPositions, userMessage: userQuery }) });
                 const d = await r.json();
+                
                 let responseText = "Sem dados.";
-                if(d && d.insight) responseText = d.insight.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+                if(d && d.insight) {
+                    responseText = d.insight.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+                }
+
                 aiContent.innerHTML += `<div class="bot-msg msg">${responseText}</div>`;
                 aiContent.scrollTop = aiContent.scrollHeight;
-            } catch (err) { aiContent.innerHTML += `<div class="bot-msg msg text-red-500">Erro de servidor.</div>`; } finally { loader.classList.add('hidden'); }
+            } catch (err) {
+                aiContent.innerHTML += `<div class="bot-msg msg text-red-500">Erro de comunicação com os servidores da Inteligência Artificial.</div>`;
+                console.error(err);
+            } finally { loader.classList.add('hidden'); }
         }
 
         function handleChat(e) { if (e.key === 'Enter' && e.target.value.trim() !== "") { fetchAIIntelligence(e.target.value); e.target.value = ''; } }
-        function resetSim() { document.querySelectorAll('.sim-input-val, .sim-input-price').forEach(i => i.value = ''); const p = currentPositions.find(x => x.symbol === document.getElementById('sim-select-pos').value); if(p) document.getElementById('sim-input-leverage').value = p.leverage; runSimulation(); }
+        function resetSim() { 
+            document.querySelectorAll('.sim-input-val, .sim-input-price').forEach(i => i.value = ''); 
+            const sym = document.getElementById('sim-select-pos').value;
+            const p = currentPositions.find(x => x.symbol === sym);
+            if(p) document.getElementById('sim-input-leverage').value = p.leverage;
+            runSimulation(); 
+        }
     </script>
 </body>
 </html>
