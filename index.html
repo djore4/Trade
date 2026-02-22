@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Trading Lab - v22.1</title>
+    <title>AI Trading Lab - v22.3 Fixed</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -73,7 +73,7 @@
                     <div class="card p-5"><p class="metric-label">Exposição Total</p><p id="total-exposure" class="text-2xl metric-value text-white">$0,00</p></div>
                     <div class="card p-5 border-yellow-500/10"><p class="metric-label text-yellow-500">Alavancagem Real</p><p id="avg-leverage" class="text-2xl metric-value text-yellow-500">0x</p></div>
                 </div>
-                <div id="dashboard-grid" class="grid grid-cols-1 xl:grid-cols-2 gap-6"></div>
+                <div id="dashboard-grid" class="grid grid-cols-1 gap-6"></div>
             </section>
 
             <section id="tab-simulator" class="tab-content">
@@ -145,7 +145,7 @@
                 <span id="ai-loading" class="text-[10px] text-yellow-500 animate-pulse hidden font-bold uppercase">A processar...</span>
             </div>
             <div id="ai-content" class="flex-grow overflow-y-auto mb-6 pr-2 flex flex-col scrollbar-hide">
-                <div class="bot-msg msg">Sistemas restaurados e blindados. Dashboard e telemetria 100% funcionais. Como procedemos?</div>
+                <div class="bot-msg msg">Sistemas operacionais. Aguardo instruções.</div>
             </div>
             <input type="text" id="chat-input" placeholder="Comando..." class="w-full bg-white/5 p-5 rounded-2xl text-white outline-none text-sm border border-white/5 focus:border-[#f3ba2f] transition-all" onkeypress="handleChat(event)">
         </aside>
@@ -158,7 +158,13 @@
         const SUPABASE_KEY = 'sb_publishable_bRa-mZWTaf0g6sNyWL9OmQ_uvo7Ex5H';
         let currentPositions = [];
 
-        window.onload = () => { generateSimSlots(); fetchPositions(); setInterval(fetchPositions, 10000); fetchTelemetry(); setInterval(fetchTelemetry, 60000); };
+        window.onload = async () => { 
+            generateSimSlots(); 
+            await fetchPositions(); 
+            fetchTelemetry(); 
+            setInterval(fetchPositions, 10000); 
+            setInterval(fetchTelemetry, 60000); 
+        };
 
         function switchTab(t) {
             document.querySelectorAll('.tab-content, .nav-btn').forEach(el => el.classList.remove('active'));
@@ -166,15 +172,15 @@
             document.getElementById('btn-' + t).classList.add('active');
         }
 
-        // Formatação garantida: Força Ponto nos Milhares e Vírgula nas Decimais
+        // FORMATADOR: Força Ponto(Milhares) e Vírgula(Decimais) independentemente do Browser
         function fPT(n, isM = false, p = 2) {
             let num = Number(n);
-            if (isNaN(num)) num = 0;
+            if(isNaN(num) || num === 0) return isM ? "$0,00" : "0,00";
             
             let absNum = Math.abs(num);
             let parts = absNum.toFixed(p).split(".");
-            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-            let res = parts.join(",");
+            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, "."); // Milhares com ponto
+            let res = parts.join(","); // Decimais com vírgula
             
             return (num < 0 ? "-" : "") + (isM ? "$" : "") + res;
         }
@@ -189,7 +195,9 @@
                     updateSimDropdown(currentPositions);
                     runSimulation();
                 }
-            } catch (e) {}
+            } catch (e) {
+                console.error("Erro Posições:", e);
+            }
         }
 
         function updateDashboard(positions) {
@@ -208,10 +216,10 @@
                     card = document.createElement('div'); card.id = `card-${pos.symbol}`;
                     card.className = `card border-l-4 p-6 ${pos.side === 'Buy' ? 'border-l-green-500' : 'border-l-red-500'}`;
                     
-                    // Dois contentores CSS Grid 
+                    // Container PRÉ-CRIADO para alojar os 2 gráficos (Display Grid)
                     card.innerHTML = `
                         <div class="content-area"></div>
-                        <div id="tv-container-${pos.symbol}" class="grid grid-cols-1 xl:grid-cols-2 gap-4 mt-6 hidden">
+                        <div id="tv-wrapper-${pos.symbol}" class="grid grid-cols-1 xl:grid-cols-2 gap-4 mt-6 hidden" data-loaded="false">
                             <div id="tv-1-${pos.symbol}" class="tv-wrap h-[400px]"></div>
                             <div id="tv-2-${pos.symbol}" class="tv-wrap h-[400px]"></div>
                         </div>`;
@@ -251,21 +259,15 @@
             document.getElementById('avg-leverage').innerText = fPT(tMarg > 0 ? (tExp / tMarg) : 0, false, 2) + "x";
         }
 
+        // Exibe o wrapper e inicializa os 2 gráficos APENAS UMA VEZ para não bugar a biblioteca
         function handleUniversalToggle(s) {
-            const cont = document.getElementById(`tv-container-${s}`);
-            cont.classList.toggle('hidden');
-            if(!cont.classList.contains('hidden')) {
-                // Esvaziar e reconstruir para garantir que o TV Widget amarra aos IDs correctos
-                cont.innerHTML = `
-                    <div id="tv-1-${s}" class="tv-wrap h-[400px] w-full"></div>
-                    <div id="tv-2-${s}" class="tv-wrap h-[400px] w-full"></div>
-                `;
-                setTimeout(() => {
-                    new TradingView.widget({ "autosize": true, "symbol": `BYBIT:${s}.P`, "interval": "15", "theme": "dark", "style": "1", "toolbar_bg": "#1e2329", "enable_publishing": false, "hide_side_toolbar": false, "container_id": `tv-1-${s}`, "library_path": "https://s3.tradingview.com/tv.js" });
-                    new TradingView.widget({ "autosize": true, "symbol": `BYBIT:${s}.P`, "interval": "240", "theme": "dark", "style": "1", "toolbar_bg": "#1e2329", "enable_publishing": false, "hide_side_toolbar": false, "container_id": `tv-2-${s}`, "library_path": "https://s3.tradingview.com/tv.js" });
-                }, 50);
-            } else {
-                cont.innerHTML = ''; // Limpar para poupar memória do browser
+            const wrapper = document.getElementById(`tv-wrapper-${s}`);
+            wrapper.classList.toggle('hidden');
+            
+            if(!wrapper.classList.contains('hidden') && wrapper.getAttribute('data-loaded') === 'false') {
+                new TradingView.widget({ "autosize": true, "symbol": `BYBIT:${s}.P`, "interval": "15", "theme": "dark", "style": "1", "toolbar_bg": "#1e2329", "enable_publishing": false, "hide_side_toolbar": false, "container_id": `tv-1-${s}`, "library_path": "https://s3.tradingview.com/tv.js" });
+                new TradingView.widget({ "autosize": true, "symbol": `BYBIT:${s}.P`, "interval": "240", "theme": "dark", "style": "1", "toolbar_bg": "#1e2329", "enable_publishing": false, "hide_side_toolbar": false, "container_id": `tv-2-${s}`, "library_path": "https://s3.tradingview.com/tv.js" });
+                wrapper.setAttribute('data-loaded', 'true');
             }
         }
 
@@ -346,24 +348,30 @@
 
         async function fetchTelemetry() {
             try {
-                const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}` };
+                // Header RESTAURADO para garantir que o Supabase aceita o pedido e devolve Macro/F&G
+                const headers = { 
+                    'Content-Type': 'application/json', 
+                    'Authorization': `Bearer ${SUPABASE_KEY}` 
+                };
                 const r = await fetch(AI_FUNC_PATH, { method: 'POST', headers: headers, body: JSON.stringify({ positions: currentPositions, userMessage: "TELEMETRY" }) });
                 const d = await r.json();
+                
                 if(d && d.insight) {
                     const isB = d.insight.toUpperCase().includes('BULLISH');
                     const m = document.getElementById('macro-trend');
                     m.innerText = `Macro: ${isB ? 'BULLISH' : 'BEARISH'}`;
-                    m.className = `px-3 py-1 rounded-md border text-[10px] font-black uppercase ${isB ? 'bg-green-500/10 border-green-500/20 text-green-500' : 'bg-red-500/10 border-red-500/20 text-red-500'}`;
+                    m.className = `bg-white/5 px-3 py-1 rounded-md border text-[10px] font-black uppercase ${isB ? 'border-green-500/20 text-green-500' : 'border-red-500/20 text-red-500'}`;
                 }
                 if(d && d.fg) {
                     const fg = document.getElementById('fg-index-top');
                     fg.innerText = `F&G: ${d.fg}`;
                     const v = parseInt(d.fg);
-                    fg.className = `px-3 py-1 rounded-md border text-[10px] font-black uppercase ${v >= 70 ? 'bg-green-500/10 border-green-500/20 text-green-500' : (v <= 30 ? 'bg-red-500/10 border-red-500/20 text-red-500' : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-500')}`;
+                    fg.className = `bg-white/5 px-3 py-1 rounded-md border text-[10px] font-black uppercase ${v >= 70 ? 'border-green-500/20 text-green-500' : (v <= 30 ? 'border-red-500/20 text-red-500' : 'border-yellow-500/20 text-yellow-500')}`;
                 }
             } catch (e) {
-                document.getElementById('macro-trend').innerText = "Macro: N/D";
-                document.getElementById('fg-index-top').innerText = "F&G: N/D";
+                console.error("Erro Telemetria:", e);
+                document.getElementById('macro-trend').innerText = "Macro: ERRO";
+                document.getElementById('fg-index-top').innerText = "F&G: ERRO";
             }
         }
 
