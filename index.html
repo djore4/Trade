@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Trading Lab - v24.3 UI Elite</title>
+    <title>AI Trading Lab - v24.4 UI Elite</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -303,6 +303,7 @@
                 const tpP = tp > 0 ? (Math.abs(cur - ent) / Math.abs(tp - ent)) * 100 : 0;
                 const cPnL = pnl >= 0 ? 'text-green-500' : 'text-red-500';
                 
+                // NOVO: Adicionado "marg" (posição sem alavancagem) entre parênteses à frente do valor
                 card.querySelector('.content-area').innerHTML = `
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="font-black text-white text-xl uppercase tracking-tighter">${pos.symbol} <span class="text-[10px] font-bold text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded-md ml-2">${lev}x</span></h2>
@@ -311,7 +312,10 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div><p class="metric-label">ROE</p><p class="text-2xl lg:text-3xl font-black ${cPnL}">${fPT((pnl/marg)*100, false, 2)}%</p></div>
                         <div class="text-right"><p class="metric-label">PnL USD</p><p class="text-2xl lg:text-3xl font-bold ${cPnL}">${fPT(pnl, true, 0)}</p></div>
-                        <div class="pt-3 border-t border-white/5"><p class="metric-label">Valor Posição</p><p class="text-sm lg:text-md font-bold text-gray-200">${fPT(val, true, 2)}</p></div>
+                        <div class="pt-3 border-t border-white/5">
+                            <p class="metric-label">Valor Posição</p>
+                            <p class="text-sm lg:text-md font-bold text-gray-200">${fPT(val, true, 2)} <span class="text-[10px] text-gray-500 font-normal ml-1">(${fPT(marg, true, 2)})</span></p>
+                        </div>
                         <div class="text-right pt-3 border-t border-white/5"><p class="metric-label">Entrada / Mark</p><p class="text-[10px] lg:text-xs font-bold text-gray-300 font-mono">${fPT(ent, false, 4)} → ${fPT(cur, false, 4)}</p></div>
                         <div class="col-span-2 mt-1">
                             <div class="flex justify-between text-[9px] font-bold text-gray-500 uppercase mb-1"><span>Liq ($${fPT(liq, false, 4)}) / SL ($${fPT(sl, false, 4)})</span><span>${fPT(dLiq, false, 1)}% Distância</span></div>
@@ -557,7 +561,6 @@
             } catch (e) {}
         }
 
-        // VARIÁVEL DE CONTROLO DO AUTO-RUN
         let hasAutoRun = false;
 
         function handleAICall() { 
@@ -565,26 +568,21 @@
             section.classList.toggle('open'); 
             document.getElementById('main-grid').classList.toggle('chat-open'); 
 
-            // Se o painel acabou de abrir e é a 1ª vez na sessão, dispara a auto-análise
             if (section.classList.contains('open') && !hasAutoRun) {
                 hasAutoRun = true;
-                document.getElementById('ai-content').innerHTML = ''; // Limpa a mensagem genérica
-                // Executa uma query invisível para o utilizador (não imprime o balão azul de pergunta)
+                document.getElementById('ai-content').innerHTML = ''; 
                 fetchAIIntelligence(null, "Faz um resumo direto do meu portefólio correlacionando rapidamente as posições com a macroeconomia e liquidez atual.");
             }
         }
 
-        // NOVA FUNÇÃO COM SCROLL INTELIGENTE E QUERY OCULTA
         async function fetchAIIntelligence(userQuery = null, hiddenQuery = null) {
             const aiContent = document.getElementById('ai-content');
             
-            // Só imprime a bolha azul do user se ele tiver escrito algo ativamente
             if (userQuery) { 
                 aiContent.insertAdjacentHTML('beforeend', `<div class="user-msg msg">${userQuery}</div>`); 
                 aiContent.scrollTop = aiContent.scrollHeight;
             }
 
-            // O que vai para o servidor é a query invisível (auto-run) ou o texto do utilizador
             const queryToSend = hiddenQuery || userQuery;
             
             const loadingId = "load-" + Date.now();
@@ -632,14 +630,11 @@
                         textBuffer += char;
                         if (char === '>') isTag = false;
                         
-                        // LÓGICA DO SCROLL INTELIGENTE
-                        // Verifica se o scroll está colado ao fundo (margem de erro de 60px) ANTES de injetar o novo texto
                         const isAtBottom = Math.abs(aiContent.scrollHeight - aiContent.scrollTop - aiContent.clientHeight) < 60;
 
                         msgEl.innerHTML = textBuffer;
                         i++;
                         
-                        // Se o utilizador não mexeu, puxa para baixo. Se mexeu (scroll up), deixa-o ler em paz.
                         if (isAtBottom) {
                             aiContent.scrollTop = aiContent.scrollHeight;
                         }
