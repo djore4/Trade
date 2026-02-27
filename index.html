@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Trading Lab - v24.2 UI Elite</title>
+    <title>AI Trading Lab - v24.3 UI Elite</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -87,7 +87,7 @@
                     <span id="macro-trend" class="bg-white/5 px-2 md:px-3 py-1.5 rounded-md border border-white/10">Macro: --</span>
                     <span id="fg-index-top" class="bg-white/5 px-2 md:px-3 py-1.5 rounded-md border border-white/10">F&G: --</span>
                 </div>
-                <button onclick="handleBaltazarCall()" class="bg-[#f3ba2f] text-black px-4 md:px-6 py-2.5 rounded-xl font-black uppercase text-[10px] shadow-[0_4px_15px_rgba(243,186,47,0.2)] hover:scale-105 transition-all whitespace-nowrap relative z-[110]">Baltazar AI</button>
+                <button onclick="handleAICall()" class="bg-[#f3ba2f] text-black px-4 md:px-6 py-2.5 rounded-xl font-black uppercase text-[10px] shadow-[0_4px_15px_rgba(243,186,47,0.2)] hover:scale-105 transition-all whitespace-nowrap relative z-[110]">AI Analysis</button>
             </div>
         </div>
     </header>
@@ -222,11 +222,11 @@
 
         <aside id="ai-section" class="card p-6 md:p-8 flex flex-col">
             <div class="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
-                <span class="text-white text-[10px] md:text-xs font-black uppercase tracking-widest text-yellow-500">Baltazar AI</span>
-                <span id="ai-loading" class="text-[9px] text-yellow-500 animate-pulse hidden font-bold uppercase">A analisar...</span>
+                <span class="text-white text-[10px] md:text-xs font-black uppercase tracking-widest text-yellow-500">AI Analysis</span>
+                <span id="ai-loading" class="text-[9px] text-yellow-500 animate-pulse hidden font-bold uppercase">A processar...</span>
             </div>
             <div id="ai-content" class="flex-grow overflow-y-auto mb-4 pr-2 flex flex-col scrollbar-hide">
-                <div class="bot-msg msg">Operação ativa. Conectado ao mercado global.</div>
+                <div class="bot-msg msg text-gray-500 text-xs text-center">Aguardar inicialização do motor analítico...</div>
             </div>
             <input type="text" id="chat-input" placeholder="Comando..." class="w-full bg-white/5 p-4 md:p-5 rounded-2xl text-white outline-none text-xs md:text-sm border border-white/5 focus:border-[#f3ba2f] transition-all" onkeypress="handleChat(event)">
         </aside>
@@ -557,15 +557,35 @@
             } catch (e) {}
         }
 
-        function handleBaltazarCall() { document.getElementById('ai-section').classList.toggle('open'); document.getElementById('main-grid').classList.toggle('chat-open'); }
+        // VARIÁVEL DE CONTROLO DO AUTO-RUN
+        let hasAutoRun = false;
 
-        async function fetchAIIntelligence(userQuery = null) {
+        function handleAICall() { 
+            const section = document.getElementById('ai-section');
+            section.classList.toggle('open'); 
+            document.getElementById('main-grid').classList.toggle('chat-open'); 
+
+            // Se o painel acabou de abrir e é a 1ª vez na sessão, dispara a auto-análise
+            if (section.classList.contains('open') && !hasAutoRun) {
+                hasAutoRun = true;
+                document.getElementById('ai-content').innerHTML = ''; // Limpa a mensagem genérica
+                // Executa uma query invisível para o utilizador (não imprime o balão azul de pergunta)
+                fetchAIIntelligence(null, "Faz um resumo direto do meu portefólio correlacionando rapidamente as posições com a macroeconomia e liquidez atual.");
+            }
+        }
+
+        // NOVA FUNÇÃO COM SCROLL INTELIGENTE E QUERY OCULTA
+        async function fetchAIIntelligence(userQuery = null, hiddenQuery = null) {
             const aiContent = document.getElementById('ai-content');
             
+            // Só imprime a bolha azul do user se ele tiver escrito algo ativamente
             if (userQuery) { 
                 aiContent.insertAdjacentHTML('beforeend', `<div class="user-msg msg">${userQuery}</div>`); 
                 aiContent.scrollTop = aiContent.scrollHeight;
             }
+
+            // O que vai para o servidor é a query invisível (auto-run) ou o texto do utilizador
+            const queryToSend = hiddenQuery || userQuery;
             
             const loadingId = "load-" + Date.now();
             aiContent.insertAdjacentHTML('beforeend', `
@@ -581,7 +601,7 @@
 
             try {
                 const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}`, 'apikey': SUPABASE_KEY };
-                const r = await fetch(AI_FUNC_PATH, { method: 'POST', headers: headers, body: JSON.stringify({ positions: currentPositions, userMessage: userQuery }) });
+                const r = await fetch(AI_FUNC_PATH, { method: 'POST', headers: headers, body: JSON.stringify({ positions: currentPositions, userMessage: queryToSend }) });
                 
                 const d = await r.json();
                 let responseText = "";
@@ -612,13 +632,14 @@
                         textBuffer += char;
                         if (char === '>') isTag = false;
                         
-                        // ANTES de escrever a próxima letra, verificar se o utilizador está no fundo do chat (margem de 50px)
-                        const isAtBottom = Math.abs(aiContent.scrollHeight - aiContent.scrollTop - aiContent.clientHeight) < 50;
+                        // LÓGICA DO SCROLL INTELIGENTE
+                        // Verifica se o scroll está colado ao fundo (margem de erro de 60px) ANTES de injetar o novo texto
+                        const isAtBottom = Math.abs(aiContent.scrollHeight - aiContent.scrollTop - aiContent.clientHeight) < 60;
 
                         msgEl.innerHTML = textBuffer;
                         i++;
                         
-                        // Só puxa para baixo se o utilizador não tiver feito scroll manual para cima
+                        // Se o utilizador não mexeu, puxa para baixo. Se mexeu (scroll up), deixa-o ler em paz.
                         if (isAtBottom) {
                             aiContent.scrollTop = aiContent.scrollHeight;
                         }
