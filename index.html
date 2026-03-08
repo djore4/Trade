@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt">
 <head>
@@ -96,11 +95,27 @@
     <div id="main-grid" class="app-grid">
         <main>
             <section id="tab-dashboard" class="tab-content active">
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-8">
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
                     <div class="card p-4"><p class="metric-label">PnL Global</p><p id="total-pnl" class="text-xl lg:text-2xl metric-value">$0</p></div>
                     <div class="card p-4"><p class="metric-label">ROE Médio</p><p id="total-pnl-perc" class="text-xl lg:text-2xl metric-value">0,00%</p></div>
                     <div class="card p-4"><p class="metric-label">Exposição Total</p><p id="total-exposure" class="text-xl lg:text-2xl metric-value text-white">$0,00</p></div>
                     <div class="card p-4 border-yellow-500/10"><p class="metric-label text-yellow-500">Alavancagem Real</p><p id="avg-leverage" class="text-xl lg:text-2xl metric-value text-yellow-500">0x</p></div>
+                </div>
+
+                <div id="crypto-intelligence-hub" class="card p-4 md:p-6 mb-8 border-l-4 border-l-[#f3ba2f]">
+                    <div class="flex justify-between items-center mb-4 border-b border-white/5 pb-3">
+                        <h2 class="text-[#f3ba2f] text-[10px] md:text-xs font-black uppercase tracking-widest flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                            Central de Inteligência (Alpha Feed)
+                        </h2>
+                        <span class="text-[9px] text-gray-500 font-bold uppercase tracking-widest">Última Atualização: <span id="last-update" class="text-gray-300">7 de Março de 2026</span></span>
+                    </div>
+                    <div id="ai-summary-content" class="text-xs font-mono text-gray-400 whitespace-pre-wrap leading-relaxed">
+[COLA AQUI O RESUMO DO GROK OU WHALE ALERT]
+
+Aguardando introdução de dados on-chain, análise macroeconómica ou feeds de risco...
+(Nota: O texto inserido aqui será lido nativamente pela IA na barra lateral para cálculo de risco das posições.)
+                    </div>
                 </div>
                 <div id="dashboard-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-6"></div>
             </section>
@@ -304,7 +319,6 @@
                 const tpP = tp > 0 ? (Math.abs(cur - ent) / Math.abs(tp - ent)) * 100 : 0;
                 const cPnL = pnl >= 0 ? 'text-green-500' : 'text-red-500';
                 
-                // NOVO: Adicionado "marg" (posição sem alavancagem) entre parênteses à frente do valor
                 card.querySelector('.content-area').innerHTML = `
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="font-black text-white text-xl uppercase tracking-tighter">${pos.symbol} <span class="text-[10px] font-bold text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded-md ml-2">${lev}x</span></h2>
@@ -572,7 +586,12 @@
             if (section.classList.contains('open') && !hasAutoRun) {
                 hasAutoRun = true;
                 document.getElementById('ai-content').innerHTML = ''; 
-                fetchAIIntelligence(null, "Faz um resumo direto do meu portefólio correlacionando rapidamente as posições com a macroeconomia e liquidez atual.");
+                
+                // NOVO: Lê a "Intelligence Hub" e envia para a IA inicial
+                const intelligenceText = document.getElementById('ai-summary-content').innerText;
+                const contextQuery = `Faz um resumo do meu portefólio considerando este contexto macroeconómico: ${intelligenceText}`;
+                
+                fetchAIIntelligence(null, contextQuery);
             }
         }
 
@@ -580,6 +599,10 @@
             const aiContent = document.getElementById('ai-content');
             
             if (userQuery) { 
+                // NOVO: Lê a "Intelligence Hub" e junta à query do user
+                const intelligenceText = document.getElementById('ai-summary-content').innerText;
+                hiddenQuery = `Contexto atual do mercado: ${intelligenceText}. Responde à seguinte pergunta do utilizador com base nisto: ${userQuery}`;
+                
                 aiContent.insertAdjacentHTML('beforeend', `<div class="user-msg msg">${userQuery}</div>`); 
                 aiContent.scrollTop = aiContent.scrollHeight;
             }
