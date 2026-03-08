@@ -59,8 +59,8 @@
         @keyframes typing { 0%, 80%, 100% { transform: scale(0); opacity: 0.5; } 40% { transform: scale(1); opacity: 1; } }
 
         select { background-color: #1e2329 !important; color: white !important; border: 1px solid rgba(255,255,255,0.1) !important; padding: 14px; border-radius: 8px; width: 100%; outline: none; cursor: pointer; }
-        input[type="number"] { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; padding: 12px; font-family: 'Roboto Mono'; font-size: 0.9rem; width: 100%; outline: none; transition: border 0.2s; }
-        input[type="number"]:focus { border-color: var(--yellow-binance); }
+        input[type="number"], textarea { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; padding: 12px; font-family: 'Roboto Mono'; font-size: 0.9rem; width: 100%; outline: none; transition: border 0.2s; }
+        input[type="number"]:focus, textarea:focus { border-color: var(--yellow-binance); }
         
         .tv-wrap { border-radius: 12px; overflow: hidden; background: #000; border: 1px solid rgba(255,255,255,0.08); width: 100%; }
         .hidden { display: none !important; }
@@ -80,6 +80,7 @@
                 <nav class="flex gap-2">
                     <button onclick="switchTab('dashboard')" id="btn-dashboard" class="nav-btn active">Dashboard</button>
                     <button onclick="switchTab('simulator')" id="btn-simulator" class="nav-btn">Simulador DCA</button>
+                    <button onclick="switchTab('intel')" id="btn-intel" class="nav-btn">Alpha Intel</button>
                 </nav>
             </div>
             <div class="flex items-center justify-between w-full lg:w-auto gap-4">
@@ -102,21 +103,6 @@
                     <div class="card p-4 border-yellow-500/10"><p class="metric-label text-yellow-500">Alavancagem Real</p><p id="avg-leverage" class="text-xl lg:text-2xl metric-value text-yellow-500">0x</p></div>
                 </div>
 
-                <div id="crypto-intelligence-hub" class="card p-4 md:p-6 mb-8 border-l-4 border-l-[#f3ba2f]">
-                    <div class="flex justify-between items-center mb-4 border-b border-white/5 pb-3">
-                        <h2 class="text-[#f3ba2f] text-[10px] md:text-xs font-black uppercase tracking-widest flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                            Central de Inteligência (Alpha Feed)
-                        </h2>
-                        <span class="text-[9px] text-gray-500 font-bold uppercase tracking-widest">Última Atualização: <span id="last-update" class="text-gray-300">7 de Março de 2026</span></span>
-                    </div>
-                    <div id="ai-summary-content" class="text-xs font-mono text-gray-400 whitespace-pre-wrap leading-relaxed">
-[COLA AQUI O RESUMO DO GROK OU WHALE ALERT]
-
-Aguardando introdução de dados on-chain, análise macroeconómica ou feeds de risco...
-(Nota: O texto inserido aqui será lido nativamente pela IA na barra lateral para cálculo de risco das posições.)
-                    </div>
-                </div>
                 <div id="dashboard-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-6"></div>
             </section>
 
@@ -234,6 +220,30 @@ Aguardando introdução de dados on-chain, análise macroeconómica ou feeds de 
                     </div>
                 </div>
             </section>
+
+            <section id="tab-intel" class="tab-content">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="card p-6 lg:col-span-1 h-fit">
+                        <h2 class="text-[#f3ba2f] text-sm md:text-base font-black uppercase tracking-widest flex items-center gap-2 mb-4">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                            Nova Análise / Feeds
+                        </h2>
+                        <p class="text-xs text-gray-400 mb-6">Insere aqui os relatórios do Grok, Whale Alert, alertas Lookonchain ou sentimento macroeconómico. O assistente IA lerá estes dados para ajustar a estratégia das tuas posições ativas.</p>
+                        
+                        <textarea id="intel-input" rows="6" placeholder="Cole o texto ou alertas aqui..." class="mb-4 text-xs md:text-sm"></textarea>
+                        <button onclick="addIntel()" class="w-full bg-[#f3ba2f] text-black py-3 rounded-lg font-black uppercase text-xs tracking-widest hover:bg-yellow-400 transition-colors">Guardar Registo</button>
+                    </div>
+                    
+                    <div class="card p-6 lg:col-span-2">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="metric-label">Histórico Operacional</h3>
+                            <button onclick="clearIntelHistory()" class="text-[10px] text-red-500 uppercase font-bold hover:underline">Limpar Tudo</button>
+                        </div>
+                        <div id="intel-history-container" class="space-y-4 max-h-[600px] overflow-y-auto pr-2 scrollbar-hide">
+                            </div>
+                    </div>
+                </div>
+            </section>
         </main>
 
         <aside id="ai-section" class="card p-6 md:p-8 flex flex-col">
@@ -254,9 +264,11 @@ Aguardando introdução de dados on-chain, análise macroeconómica ou feeds de 
         const AI_FUNC_PATH = `https://qjzjxtxrlofnoyaaypbu.supabase.co/functions/v1/trade-advisor`;
         const SUPABASE_KEY = 'sb_publishable_bRa-mZWTaf0g6sNyWL9OmQ_uvo7Ex5H';
         let currentPositions = [];
+        let intelHistory = []; // NOVO: Armazena o histórico de inteligência
 
         window.onload = async () => { 
             generateSimSlots(); 
+            loadIntelHistory(); // NOVO: Carrega os dados guardados
             await fetchPositions(); 
             fetchTelemetry(); 
             setInterval(fetchPositions, 10000); 
@@ -268,6 +280,70 @@ Aguardando introdução de dados on-chain, análise macroeconómica ou feeds de 
             document.getElementById('tab-' + t).classList.add('active');
             document.getElementById('btn-' + t).classList.add('active');
         }
+
+        // --- INÍCIO LÓGICA ALPHA INTEL ---
+        function loadIntelHistory() {
+            const saved = localStorage.getItem('ai_trading_intel_history');
+            if(saved) {
+                try {
+                    intelHistory = JSON.parse(saved);
+                } catch(e) { intelHistory = []; }
+            }
+            renderIntelHistory();
+        }
+
+        function saveIntelHistory() {
+            localStorage.setItem('ai_trading_intel_history', JSON.stringify(intelHistory));
+        }
+
+        function addIntel() {
+            const input = document.getElementById('intel-input');
+            const text = input.value.trim();
+            if(!text) return;
+
+            const entry = {
+                id: Date.now(),
+                date: new Date().toLocaleString('pt-PT'),
+                text: text
+            };
+
+            intelHistory.unshift(entry); // Adiciona no topo
+            saveIntelHistory();
+            renderIntelHistory();
+            input.value = '';
+        }
+
+        function clearIntelHistory() {
+            if(confirm('Tem a certeza que deseja limpar todo o histórico de dados? A IA perderá este contexto.')) {
+                intelHistory = [];
+                saveIntelHistory();
+                renderIntelHistory();
+            }
+        }
+
+        function renderIntelHistory() {
+            const container = document.getElementById('intel-history-container');
+            if(intelHistory.length === 0) {
+                container.innerHTML = '<div class="text-center py-10 text-gray-500 text-xs uppercase tracking-widest font-bold">Nenhum registo disponível.</div>';
+                return;
+            }
+
+            container.innerHTML = intelHistory.map(item => `
+                <div class="bg-white/5 border border-white/10 rounded-xl p-5 relative group">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-[10px] text-[#f3ba2f] font-bold uppercase tracking-widest">${item.date}</span>
+                    </div>
+                    <div class="text-sm text-gray-300 whitespace-pre-wrap font-mono">${item.text}</div>
+                </div>
+            `).join('');
+        }
+
+        function getIntelContextForAI() {
+            if(intelHistory.length === 0) return "Sem contexto macroeconómico reportado.";
+            // Pega nos últimos 5 registos para não estourar o limite de tokens da API
+            return intelHistory.slice(0, 5).map(h => `[Data: ${h.date}] Relatório: ${h.text}`).join('\n\n');
+        }
+        // --- FIM LÓGICA ALPHA INTEL ---
 
         function fPT(n, isM = false, p = 2) {
             let num = Number(n);
@@ -587,9 +663,9 @@ Aguardando introdução de dados on-chain, análise macroeconómica ou feeds de 
                 hasAutoRun = true;
                 document.getElementById('ai-content').innerHTML = ''; 
                 
-                // NOVO: Lê a "Intelligence Hub" e envia para a IA inicial
-                const intelligenceText = document.getElementById('ai-summary-content').innerText;
-                const contextQuery = `Faz um resumo do meu portefólio considerando este contexto macroeconómico: ${intelligenceText}`;
+                // NOVO: Lê a "Intelligence Hub" usando a nova função de contexto do array history
+                const intelligenceText = getIntelContextForAI();
+                const contextQuery = `Faz um resumo do meu portefólio considerando este contexto macroeconómico reportado: ${intelligenceText}`;
                 
                 fetchAIIntelligence(null, contextQuery);
             }
@@ -599,9 +675,9 @@ Aguardando introdução de dados on-chain, análise macroeconómica ou feeds de 
             const aiContent = document.getElementById('ai-content');
             
             if (userQuery) { 
-                // NOVO: Lê a "Intelligence Hub" e junta à query do user
-                const intelligenceText = document.getElementById('ai-summary-content').innerText;
-                hiddenQuery = `Contexto atual do mercado: ${intelligenceText}. Responde à seguinte pergunta do utilizador com base nisto: ${userQuery}`;
+                // NOVO: Lê a "Intelligence Hub" via history
+                const intelligenceText = getIntelContextForAI();
+                hiddenQuery = `Contexto atual do mercado (Histórico): ${intelligenceText}. Responde à seguinte pergunta do utilizador com base nisto: ${userQuery}`;
                 
                 aiContent.insertAdjacentHTML('beforeend', `<div class="user-msg msg">${userQuery}</div>`); 
                 aiContent.scrollTop = aiContent.scrollHeight;
