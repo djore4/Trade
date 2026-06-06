@@ -15,7 +15,7 @@
         .mono { font-family: 'Roboto Mono', monospace; font-weight: 700; }
 
         /* Navigation */
-        .nav-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; flex-shrink: 0; }
+        .nav-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; min-width: 0; flex: 1 1 0; }
         .nav-wrap::-webkit-scrollbar { display: none; }
         .nav-btn { padding: 8px 12px; font-weight: 800; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: #6b7280; border-bottom: 2px solid transparent; transition: 0.25s; white-space: nowrap; cursor: pointer; display: inline-block; }
         .nav-btn.active { color: var(--btc); border-bottom-color: var(--btc); }
@@ -32,7 +32,7 @@
         /* App grid */
         .app-grid { display: grid; grid-template-columns: 1fr; gap: 16px; padding: 12px; max-width: 1900px; margin: 0 auto; transition: grid-template-columns 0.4s ease; }
         @media (min-width: 640px) { .app-grid { padding: 16px; } }
-        @media (min-width: 1280px) { .app-grid.chat-open { grid-template-columns: 1fr 400px; } #ai-section { height: calc(100vh - 88px); position: sticky; top: 72px; } }
+        @media (min-width: 1280px) { .app-grid.chat-open { grid-template-columns: 1fr 400px; } #ai-section { height: calc(100vh - 60px); position: sticky; top: 56px; } }
 
         /* AI Sidebar */
         #ai-section { display: none; flex-direction: column; }
@@ -112,7 +112,7 @@
         <!-- Logo + Nav -->
         <div class="flex items-center gap-2 sm:gap-4 min-w-0">
             <h1 class="text-base sm:text-xl font-black tracking-tighter whitespace-nowrap flex-shrink-0">
-                <span style="color:#f7931a">₿</span><span class="hidden xs:inline">TC</span>
+                <span style="color:#f7931a">₿</span><span class="hidden sm:inline">TC</span>
             </h1>
             <div class="nav-wrap">
                 <nav class="flex">
@@ -135,8 +135,8 @@
                 <span class="lbl">Fund</span>
                 <span id="hdr-funding" class="mono text-xs text-white">--</span>
             </div>
-            <span id="macro-trend" class="hidden lg:block lbl bg-white/5 px-2 py-1.5 rounded-md border border-white/10 text-gray-500 min-h-[36px] flex items-center">Macro: --</span>
-            <span id="fg-index-top" class="hidden lg:block lbl bg-white/5 px-2 py-1.5 rounded-md border border-white/10 text-gray-500 min-h-[36px] flex items-center">F&G: --</span>
+            <span id="macro-trend" class="hidden lg:flex items-center lbl bg-white/5 px-2 py-1.5 rounded-md border border-white/10 text-gray-500 min-h-[36px]">Macro: --</span>
+            <span id="fg-index-top" class="hidden lg:flex items-center lbl bg-white/5 px-2 py-1.5 rounded-md border border-white/10 text-gray-500 min-h-[36px]">F&G: --</span>
             <button onclick="handleAICall()" class="px-3 sm:px-5 py-2 rounded-xl font-black uppercase text-[10px] sm:text-xs hover:scale-105 transition-all whitespace-nowrap text-black min-h-[36px]" style="background:#f7931a">AI</button>
         </div>
     </div>
