@@ -2,165 +2,238 @@
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <title>BTC Command Center</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --btc: #f7931a; --green: #02d386; --red: #f6465d; --bg: #080a0c; }
-        body { background: var(--bg); color: #f0f2f5; font-family: 'Outfit', sans-serif; -webkit-font-smoothing: antialiased; background-image: radial-gradient(circle at top right, rgba(247,147,26,0.06), transparent 700px); min-height: 100vh; overflow-x: hidden; }
-        .card { background: rgba(24,26,32,0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; }
-        .lbl { color: #848e9c; font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.15em; font-weight: 800; }
+        * { box-sizing: border-box; }
+        body { background: var(--bg); color: #f0f2f5; font-family: 'Outfit', sans-serif; -webkit-font-smoothing: antialiased; background-image: radial-gradient(circle at top right, rgba(247,147,26,0.06), transparent 600px); min-height: 100vh; overflow-x: hidden; }
+        .card { background: rgba(24,26,32,0.9); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; }
+        .lbl { color: #848e9c; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 800; }
         .mono { font-family: 'Roboto Mono', monospace; font-weight: 700; }
-        .nav-btn { padding: 10px 14px; font-weight: 800; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.1em; color: #848e9c; border-bottom: 2px solid transparent; transition: 0.3s; white-space: nowrap; cursor: pointer; }
+
+        /* Navigation */
+        .nav-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; flex-shrink: 0; }
+        .nav-wrap::-webkit-scrollbar { display: none; }
+        .nav-btn { padding: 8px 12px; font-weight: 800; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: #6b7280; border-bottom: 2px solid transparent; transition: 0.25s; white-space: nowrap; cursor: pointer; display: inline-block; }
         .nav-btn.active { color: var(--btc); border-bottom-color: var(--btc); }
+        @media (min-width: 640px) { .nav-btn { padding: 10px 16px; font-size: 0.7rem; } }
+
+        /* Tabs */
         .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; animation: fadeIn 0.25s ease; }
+
+        /* Progress */
         .prog-bg { background: #1e2329; height: 5px; border-radius: 3px; overflow: hidden; margin-top: 5px; }
-        .prog-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
-        .app-grid { display: grid; grid-template-columns: 1fr; gap: 20px; padding: 16px; max-width: 1900px; margin: 0 auto; transition: all 0.4s ease; }
-        @media (min-width: 1280px) { .app-grid.chat-open { grid-template-columns: 1fr 420px; } #ai-section { height: calc(100vh - 90px); position: sticky; top: 74px; } }
-        @media (max-width: 1279px) { #ai-section.open { position: fixed; top: 74px; left: 10px; right: 10px; height: calc(100vh - 88px); z-index: 100; box-shadow: 0 20px 50px rgba(0,0,0,0.95); border: 1px solid rgba(247,147,26,0.3); } }
+        .prog-fill { height: 100%; border-radius: 3px; transition: width 0.7s ease; }
+
+        /* App grid */
+        .app-grid { display: grid; grid-template-columns: 1fr; gap: 16px; padding: 12px; max-width: 1900px; margin: 0 auto; transition: grid-template-columns 0.4s ease; }
+        @media (min-width: 640px) { .app-grid { padding: 16px; } }
+        @media (min-width: 1280px) { .app-grid.chat-open { grid-template-columns: 1fr 400px; } #ai-section { height: calc(100vh - 88px); position: sticky; top: 72px; } }
+
+        /* AI Sidebar */
         #ai-section { display: none; flex-direction: column; }
         #ai-section.open { display: flex; }
-        .msg { margin-bottom: 14px; padding: 13px; border-radius: 12px; font-size: 0.86rem; line-height: 1.75; }
+        @media (max-width: 1279px) {
+            #ai-section.open { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 200; border-radius: 0; }
+        }
+
+        /* Messages */
+        .msg { margin-bottom: 12px; padding: 12px 14px; border-radius: 12px; font-size: 0.88rem; line-height: 1.75; }
         .bot-msg { background: rgba(247,147,26,0.04); border-left: 3px solid var(--btc); }
         .user-msg { background: rgba(0,170,255,0.08); border-right: 3px solid #00aaff; text-align: right; color: #e6f4ff; }
         .typing-indicator { display: flex; gap: 5px; padding: 4px; align-items: center; }
         .typing-dot { width: 5px; height: 5px; background: var(--btc); border-radius: 50%; animation: typing 1.4s infinite ease-in-out both; }
-        .typing-dot:nth-child(1) { animation-delay: -0.32s; } .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
         @keyframes typing { 0%,80%,100% { transform: scale(0); opacity: 0.5; } 40% { transform: scale(1); opacity: 1; } }
-        .ob-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; padding: 3px 8px; font-size: 0.7rem; font-family: 'Roboto Mono', monospace; position: relative; }
+
+        /* Order Book */
+        .ob-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; padding: 3px 6px; font-size: 0.68rem; font-family: 'Roboto Mono', monospace; position: relative; }
+        @media (min-width: 640px) { .ob-row { font-size: 0.72rem; gap: 4px; padding: 3px 8px; } }
         .ob-bar-bid { position: absolute; right: 0; top: 0; bottom: 0; background: rgba(2,211,134,0.08); z-index: 0; }
         .ob-bar-ask { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(246,70,93,0.08); z-index: 0; }
         .ob-row span { position: relative; z-index: 1; }
-        ::-webkit-scrollbar { width: 3px; } ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
-        select, input[type="number"], textarea { background: rgba(255,255,255,0.05) !important; border: 1px solid rgba(255,255,255,0.1) !important; border-radius: 8px; color: white !important; padding: 10px 12px; outline: none; width: 100%; transition: border 0.2s; font-family: 'Roboto Mono', monospace; font-size: 0.85rem; }
+
+        /* Scrollbars */
+        ::-webkit-scrollbar { width: 3px; height: 3px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+
+        /* Inputs — 44px minimum touch target */
+        select, input[type="number"], textarea {
+            background: rgba(255,255,255,0.05) !important;
+            border: 1px solid rgba(255,255,255,0.1) !important;
+            border-radius: 8px; color: white !important;
+            padding: 11px 12px; outline: none; width: 100%;
+            transition: border 0.2s; font-family: 'Roboto Mono', monospace;
+            font-size: 0.88rem; min-height: 44px;
+        }
         input[type="number"]:focus, textarea:focus, select:focus { border-color: var(--btc) !important; }
-        .quick-btn { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; padding: 8px 10px; font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #6b7280; cursor: pointer; transition: all 0.2s; text-align: left; width: 100%; }
+
+        /* Quick buttons — 44px touch target */
+        .quick-btn { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; padding: 10px 12px; min-height: 44px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #6b7280; cursor: pointer; transition: all 0.2s; text-align: left; width: 100%; display: flex; align-items: center; }
         .quick-btn:hover { background: rgba(247,147,26,0.08); border-color: rgba(247,147,26,0.25); color: var(--btc); }
-        .badge { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 4px; font-size: 0.58rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; }
+
+        /* Badges */
+        .badge { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 4px; font-size: 0.62rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; }
+
+        /* Risk bar */
         .risk-bar { height: 7px; border-radius: 4px; background: linear-gradient(90deg, #02d386, #f3ba2f 50%, #f6465d); position: relative; }
-        .risk-dot { width: 12px; height: 12px; border-radius: 50%; background: white; border: 2px solid var(--bg); position: absolute; top: -2.5px; transition: left 0.5s ease; box-shadow: 0 0 6px rgba(255,255,255,0.4); }
-        .news-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 10px; padding: 13px; transition: all 0.2s; cursor: pointer; }
+        .risk-dot { width: 13px; height: 13px; border-radius: 50%; background: white; border: 2px solid var(--bg); position: absolute; top: -3px; transition: left 0.5s ease; box-shadow: 0 0 6px rgba(255,255,255,0.3); }
+
+        /* News */
+        .news-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 10px; padding: 12px; transition: all 0.2s; cursor: pointer; word-break: break-word; }
         .news-card:hover { background: rgba(247,147,26,0.04); border-color: rgba(247,147,26,0.15); }
-        .chart-btn { font-size: 0.65rem; font-weight: 700; padding: 4px 8px; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
+
+        /* Chart buttons */
+        .chart-btn { font-size: 0.7rem; font-weight: 700; padding: 5px 9px; border-radius: 6px; cursor: pointer; transition: all 0.15s; min-height: 32px; }
         .chart-btn.active { background: rgba(255,255,255,0.12); color: white; }
         .chart-btn:not(.active) { background: rgba(255,255,255,0.04); color: #6b7280; }
+
+        /* AI close overlay */
+        #ai-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 199; }
+        #ai-overlay.open { display: block; }
+
         .hidden { display: none !important; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
 
+<!-- AI backdrop (mobile) -->
+<div id="ai-overlay" onclick="handleAICall()"></div>
+
+<!-- HEADER -->
 <header class="border-b border-gray-800/40 bg-[#080a0c]/95 backdrop-blur-md sticky top-0 z-50">
-    <div class="max-w-[1900px] mx-auto px-3 md:px-5 py-2.5 flex items-center justify-between gap-3">
-        <div class="flex items-center gap-3 md:gap-5">
-            <h1 class="text-base md:text-xl font-black tracking-tighter whitespace-nowrap" style="color:white">
-                <span style="color:#f7931a">₿</span>TC Command
+    <div class="max-w-[1900px] mx-auto px-3 sm:px-5 py-2.5 flex items-center justify-between gap-2">
+        <!-- Logo + Nav -->
+        <div class="flex items-center gap-2 sm:gap-4 min-w-0">
+            <h1 class="text-base sm:text-xl font-black tracking-tighter whitespace-nowrap flex-shrink-0">
+                <span style="color:#f7931a">₿</span><span class="hidden xs:inline">TC</span>
             </h1>
-            <nav class="flex">
-                <button onclick="switchTab('dashboard')" id="btn-dashboard" class="nav-btn active">Dashboard</button>
-                <button onclick="switchTab('mercados')" id="btn-mercados" class="nav-btn">Mercados</button>
-                <button onclick="switchTab('simulator')" id="btn-simulator" class="nav-btn">Simulador</button>
-                <button onclick="switchTab('noticias')" id="btn-noticias" class="nav-btn hidden md:block">Notícias</button>
-                <button onclick="switchTab('intel')" id="btn-intel" class="nav-btn">Intel</button>
-            </nav>
+            <div class="nav-wrap">
+                <nav class="flex">
+                    <button onclick="switchTab('dashboard')" id="btn-dashboard" class="nav-btn active">Dashboard</button>
+                    <button onclick="switchTab('mercados')" id="btn-mercados" class="nav-btn">Mercados</button>
+                    <button onclick="switchTab('simulator')" id="btn-simulator" class="nav-btn">Simulador</button>
+                    <button onclick="switchTab('noticias')" id="btn-noticias" class="nav-btn">Notícias</button>
+                    <button onclick="switchTab('intel')" id="btn-intel" class="nav-btn">Intel</button>
+                </nav>
+            </div>
         </div>
-        <div class="flex items-center gap-2">
-            <div class="flex items-center gap-1.5 bg-white/5 px-2.5 py-1.5 rounded-lg border border-white/10">
+        <!-- Indicators + AI -->
+        <div class="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+            <div class="flex items-center gap-1 bg-white/5 px-2 py-1.5 rounded-lg border border-white/10 min-h-[36px]">
                 <span class="text-xs font-black" style="color:#f7931a">₿</span>
                 <span id="btc-price" class="mono text-sm text-white">--</span>
-                <span id="btc-change" class="text-[9px] font-bold text-gray-500">--</span>
+                <span id="btc-change" class="text-[10px] font-bold text-gray-500 hidden sm:inline">--</span>
             </div>
             <div class="hidden sm:flex items-center gap-1 bg-white/5 px-2 py-1.5 rounded-lg border border-white/10">
                 <span class="lbl">Fund</span>
                 <span id="hdr-funding" class="mono text-xs text-white">--</span>
             </div>
-            <span id="macro-trend" class="hidden md:block lbl bg-white/5 px-2 py-1.5 rounded-md border border-white/10 text-gray-500">Macro: --</span>
-            <span id="fg-index-top" class="hidden md:block lbl bg-white/5 px-2 py-1.5 rounded-md border border-white/10 text-gray-500">F&G: --</span>
-            <button onclick="handleAICall()" class="px-3 md:px-5 py-2 rounded-xl font-black uppercase text-[10px] hover:scale-105 transition-all whitespace-nowrap relative z-[110] text-black" style="background:#f7931a">AI Agent</button>
+            <span id="macro-trend" class="hidden lg:block lbl bg-white/5 px-2 py-1.5 rounded-md border border-white/10 text-gray-500 min-h-[36px] flex items-center">Macro: --</span>
+            <span id="fg-index-top" class="hidden lg:block lbl bg-white/5 px-2 py-1.5 rounded-md border border-white/10 text-gray-500 min-h-[36px] flex items-center">F&G: --</span>
+            <button onclick="handleAICall()" class="px-3 sm:px-5 py-2 rounded-xl font-black uppercase text-[10px] sm:text-xs hover:scale-105 transition-all whitespace-nowrap text-black min-h-[36px]" style="background:#f7931a">AI</button>
         </div>
     </div>
 </header>
 
 <div id="main-grid" class="app-grid">
-<main>
+<main class="min-w-0">
 
 <!-- DASHBOARD -->
 <section id="tab-dashboard" class="tab-content active">
-    <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
-        <div class="card p-3.5"><p class="lbl mb-1">PnL Global</p><p id="total-pnl" class="text-xl lg:text-2xl mono text-white">$0</p></div>
-        <div class="card p-3.5"><p class="lbl mb-1">ROE Médio</p><p id="total-pnl-perc" class="text-xl lg:text-2xl mono text-white">0,00%</p></div>
-        <div class="card p-3.5"><p class="lbl mb-1">Exposição</p><p id="total-exposure" class="text-xl lg:text-2xl mono text-white">$0</p></div>
-        <div class="card p-3.5" style="border-color:rgba(247,147,26,0.15)"><p class="lbl mb-1" style="color:#f7931a">Alavancagem</p><p id="avg-leverage" class="text-xl lg:text-2xl mono" style="color:#f7931a">0x</p></div>
-        <div class="card p-3.5"><p class="lbl mb-1">Margem Usada</p><p id="total-margin" class="text-xl lg:text-2xl mono text-white">$0</p></div>
+    <!-- KPI Cards -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3 mb-4">
+        <div class="card p-3 sm:p-3.5"><p class="lbl mb-1">PnL Global</p><p id="total-pnl" class="text-lg sm:text-2xl mono text-white">$0</p></div>
+        <div class="card p-3 sm:p-3.5"><p class="lbl mb-1">ROE Médio</p><p id="total-pnl-perc" class="text-lg sm:text-2xl mono text-white">0%</p></div>
+        <div class="card p-3 sm:p-3.5 col-span-2 sm:col-span-1"><p class="lbl mb-1">Exposição</p><p id="total-exposure" class="text-lg sm:text-2xl mono text-white">$0</p></div>
+        <div class="card p-3 sm:p-3.5" style="border-color:rgba(247,147,26,0.15)"><p class="lbl mb-1" style="color:#f7931a">Alavancagem</p><p id="avg-leverage" class="text-lg sm:text-2xl mono" style="color:#f7931a">0x</p></div>
+        <div class="card p-3 sm:p-3.5"><p class="lbl mb-1">Margem</p><p id="total-margin" class="text-lg sm:text-2xl mono text-white">$0</p></div>
     </div>
-    <div class="card p-4 mb-4">
-        <div class="flex justify-between items-center mb-2">
+    <!-- Risk Score -->
+    <div class="card p-3.5 sm:p-4 mb-4">
+        <div class="flex justify-between items-center mb-2.5">
             <p class="lbl">Risco do Portefólio</p>
-            <span id="risk-label" class="badge bg-gray-700/40 text-gray-400">Calculando...</span>
+            <span id="risk-label" class="badge bg-gray-700/40 text-gray-400">--</span>
         </div>
         <div class="risk-bar"><div id="risk-dot" class="risk-dot" style="left:0%"></div></div>
-        <div class="flex justify-between mt-1.5"><span class="text-[9px] text-green-400 font-bold">Baixo</span><span class="text-[9px] text-yellow-500 font-bold">Moderado</span><span class="text-[9px] text-red-500 font-bold">Crítico</span></div>
+        <div class="flex justify-between mt-2">
+            <span class="text-[9px] text-green-400 font-bold uppercase">Baixo</span>
+            <span class="text-[9px] text-yellow-500 font-bold uppercase">Moderado</span>
+            <span class="text-[9px] text-red-500 font-bold uppercase">Crítico</span>
+        </div>
     </div>
+    <!-- Positions -->
     <div id="dashboard-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
-    <div id="no-pos" class="hidden card p-14 text-center"><p class="text-gray-500 font-bold uppercase text-xs tracking-widest">Sem posições abertas na Bybit</p></div>
+    <div id="no-pos" class="hidden card p-12 text-center">
+        <p class="text-gray-500 font-bold uppercase text-xs tracking-widest">Sem posições abertas na Bybit</p>
+    </div>
 </section>
 
 <!-- MERCADOS -->
 <section id="tab-mercados" class="tab-content">
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <!-- Chart col -->
         <div class="xl:col-span-2 flex flex-col gap-4">
             <div class="card overflow-hidden">
-                <div class="px-4 pt-3 pb-2 border-b border-white/5 flex justify-between items-center">
-                    <span class="font-black text-white text-xs uppercase tracking-widest">₿TC / USD — Gráfico Live</span>
-                    <div class="flex gap-1.5">
+                <div class="px-3 sm:px-4 pt-3 pb-2 border-b border-white/5 flex justify-between items-center gap-2">
+                    <span class="font-black text-white text-xs uppercase tracking-widest">₿TC/USD Live</span>
+                    <div class="flex gap-1">
                         <button class="chart-btn active" onclick="setChartInterval('15',this)">15m</button>
                         <button class="chart-btn" onclick="setChartInterval('60',this)">1h</button>
                         <button class="chart-btn" onclick="setChartInterval('240',this)">4h</button>
                         <button class="chart-btn" onclick="setChartInterval('D',this)">1D</button>
                     </div>
                 </div>
-                <div id="tv-market-wrap" class="h-[440px] md:h-[540px]"></div>
+                <div id="tv-market-wrap" class="h-[280px] sm:h-[420px] md:h-[520px]"></div>
             </div>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div class="card p-3.5"><p class="lbl mb-1">Mark Price</p><p id="m-mark" class="mono text-lg text-white">--</p></div>
-                <div class="card p-3.5"><p class="lbl mb-1">24h Alto/Baixo</p><p id="m-hl" class="mono text-sm text-white">--</p></div>
-                <div class="card p-3.5"><p class="lbl mb-1">Volume 24h</p><p id="m-vol" class="mono text-sm text-white">--</p></div>
-                <div class="card p-3.5" style="border-color:rgba(247,147,26,0.2)"><p class="lbl mb-1" style="color:#f7931a">Open Interest</p><p id="m-oi" class="mono text-sm" style="color:#f7931a">--</p></div>
+            <!-- Market stats -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div class="card p-3"><p class="lbl mb-1">Mark Price</p><p id="m-mark" class="mono text-base sm:text-lg text-white">--</p></div>
+                <div class="card p-3"><p class="lbl mb-1">24h Alto/Baixo</p><p id="m-hl" class="mono text-xs sm:text-sm text-white">--</p></div>
+                <div class="card p-3"><p class="lbl mb-1">Volume 24h</p><p id="m-vol" class="mono text-xs sm:text-sm text-white">--</p></div>
+                <div class="card p-3" style="border-color:rgba(247,147,26,0.2)"><p class="lbl mb-1" style="color:#f7931a">Open Interest</p><p id="m-oi" class="mono text-xs sm:text-sm" style="color:#f7931a">--</p></div>
             </div>
         </div>
+        <!-- Right: funding + OB + dom -->
         <div class="flex flex-col gap-4">
+            <!-- Funding -->
             <div class="card p-4">
                 <div class="flex justify-between items-center mb-2">
                     <p class="lbl">Funding Rate — BTCUSD</p>
                     <span id="fund-badge" class="badge bg-gray-700/40 text-gray-400">--</span>
                 </div>
-                <p id="fund-big" class="mono text-3xl text-white mb-0.5">--</p>
-                <p class="text-[9px] text-gray-500 font-bold uppercase">Próximo ciclo: <span id="fund-countdown" class="text-gray-300">--</span></p>
+                <p id="fund-big" class="mono text-3xl sm:text-4xl text-white mb-1">--</p>
+                <p class="text-[10px] text-gray-500 font-bold uppercase">Próximo: <span id="fund-countdown" class="text-gray-300">--</span></p>
                 <div class="mt-3 pt-3 border-t border-white/5">
-                    <p class="text-[9px] text-gray-500 mb-1 uppercase font-bold">Impacto na posição (próximo ciclo)</p>
+                    <p class="lbl mb-1">Impacto na posição</p>
                     <p id="fund-impact" class="mono text-sm text-gray-400">--</p>
                 </div>
             </div>
-            <div class="card p-4 flex-1">
+            <!-- Order Book -->
+            <div class="card p-3 sm:p-4 flex-1">
                 <div class="flex justify-between items-center mb-2">
                     <p class="lbl">Order Book — BTCUSD</p>
                     <span class="text-[9px] text-gray-600 font-bold">Top 12</span>
                 </div>
-                <div class="grid grid-cols-3 gap-1 px-2 mb-1">
-                    <span class="text-[9px] font-bold text-gray-600">Preço</span>
-                    <span class="text-[9px] font-bold text-gray-600 text-center">Qtd</span>
-                    <span class="text-[9px] font-bold text-gray-600 text-right">Total</span>
+                <div class="grid grid-cols-3 gap-1 px-1.5 sm:px-2 mb-1.5">
+                    <span class="lbl">Preço</span>
+                    <span class="lbl text-center">Qtd</span>
+                    <span class="lbl text-right">Total</span>
                 </div>
-                <div id="ob-asks" class="mb-1 flex flex-col-reverse"></div>
+                <div id="ob-asks" class="mb-0.5 flex flex-col-reverse"></div>
                 <div class="py-1.5 px-2 border-y border-white/5 flex justify-between items-center my-0.5">
-                    <span class="text-[9px] text-gray-500 font-bold uppercase">Spread</span>
+                    <span class="lbl">Spread</span>
                     <span id="ob-spread" class="mono text-xs text-white">--</span>
                 </div>
-                <div id="ob-bids" class="mt-1"></div>
+                <div id="ob-bids" class="mt-0.5"></div>
             </div>
+            <!-- Dominance -->
             <div class="card p-4">
                 <p class="lbl mb-2">BTC Dominance</p>
                 <p id="btc-dom" class="mono text-2xl text-white">--</p>
@@ -173,66 +246,109 @@
 <!-- SIMULADOR -->
 <section id="tab-simulator" class="tab-content">
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        <div class="card p-5 md:p-6">
-            <h2 class="font-black text-white text-xs uppercase tracking-widest mb-5 flex items-center gap-2"><span style="color:#f7931a">◈</span> Simulador DCA</h2>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-                <div><p class="lbl mb-1.5">Posição</p><select id="sim-select-pos" onchange="loadPositionToSim()" class="text-xs"></select></div>
-                <div class="bg-white/5 p-3 rounded-xl border border-white/5"><p class="lbl">Mark Price</p><p id="sim-mark-price" class="mono text-lg" style="color:#f7931a">--</p></div>
-                <div class="bg-white/5 p-3 rounded-xl border border-white/5"><p class="lbl">Tamanho</p><p id="sim-current-qty" class="mono text-lg text-white">--</p></div>
-                <div class="bg-white/5 p-3 rounded-xl" style="border:1px solid rgba(247,147,26,0.2)"><p class="lbl" style="color:#f7931a">Alavancagem</p><input type="number" id="sim-input-leverage" class="bg-transparent text-lg font-black w-full outline-none p-0 border-none" style="color:#f7931a" oninput="runSimulation()" placeholder="Ex: 10"></div>
+        <!-- DCA -->
+        <div class="card p-4 sm:p-6">
+            <h2 class="font-black text-white text-xs uppercase tracking-widest mb-4 flex items-center gap-2">
+                <span style="color:#f7931a">◈</span> Simulador DCA
+            </h2>
+            <!-- Position selector row -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                <div><p class="lbl mb-1.5">Posição Ativa</p><select id="sim-select-pos" onchange="loadPositionToSim()" class="text-sm"></select></div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="bg-white/5 p-3 rounded-xl border border-white/5 flex flex-col justify-center">
+                        <p class="lbl">Mark Price</p>
+                        <p id="sim-mark-price" class="mono text-base sm:text-lg" style="color:#f7931a">--</p>
+                    </div>
+                    <div class="bg-white/5 p-3 rounded-xl border border-white/5 flex flex-col justify-center">
+                        <p class="lbl">Tamanho</p>
+                        <p id="sim-current-qty" class="mono text-base sm:text-lg text-white">--</p>
+                    </div>
+                </div>
             </div>
-            <div class="grid grid-cols-2 gap-3 mb-5">
-                <div class="bg-white/5 border border-white/10 p-4 rounded-xl space-y-3">
+            <div class="mb-4">
+                <p class="lbl mb-1.5" style="color:#f7931a">Alavancagem</p>
+                <input type="number" id="sim-input-leverage" oninput="runSimulation()" placeholder="Ex: 10" class="text-base" style="color:#f7931a;font-weight:900">
+            </div>
+            <!-- Comparison panels -->
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <div class="bg-white/5 border border-white/10 p-3 sm:p-4 rounded-xl space-y-3">
                     <h4 class="text-gray-500 text-[9px] font-black uppercase tracking-widest border-b border-gray-800 pb-2">Atual</h4>
                     <div><p class="lbl">Entrada</p><p class="mono text-white text-sm" id="sim-panel-current-entry">--</p></div>
                     <div><p class="lbl">Liquidação</p><p class="mono text-red-400 text-sm" id="sim-panel-current-liq">--</p></div>
                     <div><p class="lbl">Take Profit</p><p class="mono text-yellow-500 text-sm" id="sim-panel-current-tp">--</p><p class="text-[9px] text-gray-500 mt-0.5" id="sim-panel-current-tp-pnl"></p></div>
                     <div><p class="lbl">Margem</p><p class="mono text-gray-300 text-sm" id="sim-panel-current-margin">--</p></div>
                 </div>
-                <div class="p-4 rounded-xl space-y-3 relative overflow-hidden" style="background:rgba(2,211,134,0.04);border:1px solid rgba(2,211,134,0.18)">
-                    <div class="absolute top-0 right-0 text-black text-[7px] font-black px-2 py-0.5 rounded-bl-lg uppercase" style="background:#02d386">Projeção</div>
-                    <h4 class="text-[10px] font-black uppercase tracking-widest border-b pb-2" style="color:#02d386;border-color:rgba(2,211,134,0.15)">Nova</h4>
+                <div class="p-3 sm:p-4 rounded-xl space-y-3 relative overflow-hidden" style="background:rgba(2,211,134,0.04);border:1px solid rgba(2,211,134,0.18)">
+                    <div class="absolute top-0 right-0 text-black text-[7px] font-black px-2 py-0.5 rounded-bl-lg uppercase" style="background:#02d386">Nova</div>
+                    <h4 class="text-[9px] font-black uppercase tracking-widest border-b pb-2" style="color:#02d386;border-color:rgba(2,211,134,0.15)">Projeção</h4>
                     <div><p class="lbl" style="color:rgba(2,211,134,0.6)">Entrada</p><p class="mono text-white text-sm" id="res-new-avg">---</p></div>
                     <div><p class="lbl" style="color:rgba(2,211,134,0.6)">Liquidação</p><p class="mono text-red-400 text-sm" id="sim-level-new-liq">---</p></div>
                     <div><p class="lbl" style="color:rgba(2,211,134,0.6)">Take Profit</p><p class="mono text-yellow-500 text-sm" id="sim-level-new-tp">---</p><p class="text-[9px] text-gray-400 mt-0.5 hidden" id="sim-panel-new-tp-pnl"></p></div>
                     <div><p class="lbl" style="color:rgba(2,211,134,0.6)">Margem</p><p class="mono text-white text-sm" id="sim-level-new-margin">---</p></div>
                 </div>
             </div>
+            <!-- DCA Slots -->
             <div class="mb-4">
-                <div class="grid grid-cols-[32px_1fr_1fr] gap-2 mb-2 px-1 text-[9px] uppercase text-gray-600 font-bold border-b border-gray-800 pb-1">
-                    <div class="text-center">On</div><div>Valor USD</div><div>Preço</div>
+                <div class="grid grid-cols-[36px_1fr_1fr] gap-2 mb-2 px-1 border-b border-gray-800 pb-1.5">
+                    <div class="lbl text-center">On</div>
+                    <div class="lbl">USD</div>
+                    <div class="lbl">Preço</div>
                 </div>
-                <div id="sim-slots-body" class="space-y-1.5"></div>
+                <div id="sim-slots-body" class="space-y-2"></div>
             </div>
-            <div class="grid grid-cols-2 gap-3 mb-3">
-                <div class="bg-white/5 p-3 rounded-xl border border-white/10 flex justify-between items-center"><span class="lbl">Custo DCA</span><span id="res-total-cost" class="text-lg font-bold text-gray-300">$0</span></div>
-                <div id="margin-adj-panel" class="p-3 rounded-xl border border-gray-700 bg-gray-900 flex justify-between items-center"><span class="lbl text-white">Margem</span><span id="res-margin-adj" class="text-lg font-black text-gray-400">S/ Alt.</span></div>
+            <div class="grid grid-cols-2 gap-2.5 mb-3">
+                <div class="bg-white/5 p-3 rounded-xl border border-white/10 flex justify-between items-center min-h-[52px]">
+                    <span class="lbl">Custo DCA</span>
+                    <span id="res-total-cost" class="text-base sm:text-lg font-bold text-gray-300">$0</span>
+                </div>
+                <div id="margin-adj-panel" class="p-3 rounded-xl border border-gray-700 bg-gray-900 flex justify-between items-center min-h-[52px]">
+                    <span class="lbl text-white">Margem</span>
+                    <span id="res-margin-adj" class="text-base sm:text-lg font-black text-gray-400">S/ Alt.</span>
+                </div>
             </div>
-            <button onclick="resetSim()" class="w-full py-2.5 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest text-gray-500 hover:text-white hover:bg-white/5 transition-all">Limpar</button>
+            <button onclick="resetSim()" class="w-full py-3 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-white hover:bg-white/5 transition-all min-h-[44px]">Limpar</button>
         </div>
-        <div class="card p-5 md:p-6">
-            <h2 class="font-black text-white text-xs uppercase tracking-widest mb-5 flex items-center gap-2"><span style="color:#f7931a">◈</span> Calculadora de Risco</h2>
+        <!-- Risk Calc -->
+        <div class="card p-4 sm:p-6">
+            <h2 class="font-black text-white text-xs uppercase tracking-widest mb-4 flex items-center gap-2">
+                <span style="color:#f7931a">◈</span> Calculadora de Risco
+            </h2>
             <div class="space-y-3">
                 <div><p class="lbl mb-1.5">Saldo da Conta (USD)</p><input type="number" id="rc-balance" placeholder="Ex: 1000" oninput="calcRisk()"></div>
                 <div><p class="lbl mb-1.5">Risco por Trade (%)</p><input type="number" id="rc-risk" placeholder="Ex: 2" oninput="calcRisk()"></div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div><p class="lbl mb-1.5">Entrada</p><input type="number" id="rc-entry" placeholder="Ex: 100000" oninput="calcRisk()"></div>
-                    <div><p class="lbl mb-1.5">Stop Loss</p><input type="number" id="rc-sl" placeholder="Ex: 97000" oninput="calcRisk()"></div>
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div><p class="lbl mb-1.5">Entrada</p><input type="number" id="rc-entry" placeholder="100000" oninput="calcRisk()"></div>
+                    <div><p class="lbl mb-1.5">Stop Loss</p><input type="number" id="rc-sl" placeholder="97000" oninput="calcRisk()"></div>
                 </div>
                 <div><p class="lbl mb-1.5">Alavancagem</p><input type="number" id="rc-lev" placeholder="Ex: 10" oninput="calcRisk()"></div>
-                <div class="grid grid-cols-2 gap-3 pt-2 border-t border-white/5">
-                    <div class="bg-white/5 p-3 rounded-xl border border-white/10"><p class="lbl">Risco USD</p><p id="rc-out-risk" class="mono text-xl text-red-400 mt-1">$--</p></div>
-                    <div class="bg-white/5 p-3 rounded-xl border border-white/10"><p class="lbl">Tamanho Posição</p><p id="rc-out-size" class="mono text-xl text-white mt-1">$--</p></div>
-                    <div class="bg-white/5 p-3 rounded-xl border border-white/10"><p class="lbl">Margem Necessária</p><p id="rc-out-margin" class="mono text-xl mt-1" style="color:#f7931a">$--</p></div>
-                    <div class="bg-white/5 p-3 rounded-xl border border-white/10"><p class="lbl">TP Mínimo (2:1)</p><p id="rc-out-tp" class="mono text-xl text-green-400 mt-1">--</p></div>
+                <div class="grid grid-cols-2 gap-2.5 pt-2 border-t border-white/5">
+                    <div class="bg-white/5 p-3 rounded-xl border border-white/10">
+                        <p class="lbl">Risco USD</p>
+                        <p id="rc-out-risk" class="mono text-lg sm:text-xl text-red-400 mt-1">$--</p>
+                    </div>
+                    <div class="bg-white/5 p-3 rounded-xl border border-white/10">
+                        <p class="lbl">Tamanho Posição</p>
+                        <p id="rc-out-size" class="mono text-lg sm:text-xl text-white mt-1">$--</p>
+                    </div>
+                    <div class="bg-white/5 p-3 rounded-xl border border-white/10">
+                        <p class="lbl">Margem</p>
+                        <p id="rc-out-margin" class="mono text-lg sm:text-xl mt-1" style="color:#f7931a">$--</p>
+                    </div>
+                    <div class="bg-white/5 p-3 rounded-xl border border-white/10">
+                        <p class="lbl">TP Mín. (2:1)</p>
+                        <p id="rc-out-tp" class="mono text-lg sm:text-xl text-green-400 mt-1">--</p>
+                    </div>
                 </div>
                 <div class="pt-3 border-t border-white/5">
                     <p class="lbl mb-3">Custo Funding Estimado</p>
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="grid grid-cols-2 gap-2.5">
                         <div><p class="lbl mb-1.5">Taxa (%)</p><input type="number" id="rc-fund-rate" placeholder="0.01" oninput="calcFunding()"></div>
                         <div><p class="lbl mb-1.5">Dias</p><input type="number" id="rc-fund-days" placeholder="7" oninput="calcFunding()"></div>
                     </div>
-                    <div class="mt-3 bg-white/5 p-3 rounded-xl border border-white/10"><p class="lbl">Total Estimado</p><p id="rc-fund-out" class="mono text-lg text-red-400 mt-1">--</p></div>
+                    <div class="mt-3 bg-white/5 p-3 rounded-xl border border-white/10">
+                        <p class="lbl">Total Estimado</p>
+                        <p id="rc-fund-out" class="mono text-base sm:text-lg text-red-400 mt-1">--</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -242,40 +358,46 @@
 <!-- NOTÍCIAS -->
 <section id="tab-noticias" class="tab-content">
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div class="lg:col-span-2 card p-5">
+        <div class="lg:col-span-2 card p-4 sm:p-5">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="font-black text-white text-xs uppercase tracking-widest">₿ Bitcoin News</h2>
-                <button onclick="fetchNews()" class="text-[9px] font-black uppercase border px-3 py-1 rounded-lg transition-all" style="color:#f7931a;border-color:rgba(247,147,26,0.3)">Atualizar</button>
+                <button onclick="fetchNews()" class="text-[10px] font-black uppercase border px-3 py-2 rounded-lg transition-all min-h-[36px]" style="color:#f7931a;border-color:rgba(247,147,26,0.3)">Atualizar</button>
             </div>
-            <div id="news-container" class="space-y-2.5 max-h-[620px] overflow-y-auto pr-1">
+            <div id="news-container" class="space-y-2.5 max-h-[65vh] sm:max-h-[600px] overflow-y-auto pr-1">
                 <div class="text-center py-8 text-gray-500 text-xs uppercase font-bold">A carregar...</div>
             </div>
         </div>
         <div class="flex flex-col gap-4">
+            <!-- Sentiment -->
             <div class="card p-4">
-                <p class="lbl mb-3">Sentimento de Mercado</p>
+                <p class="lbl mb-3">Sentimento</p>
                 <div class="text-center mb-3">
                     <p id="fg-big" class="text-4xl font-black mono text-white">--</p>
                     <p id="fg-text" class="text-[10px] text-gray-500 font-bold uppercase mt-1">Fear & Greed</p>
                 </div>
                 <div class="risk-bar"><div id="fg-dot" class="risk-dot" style="left:50%"></div></div>
-                <div class="flex justify-between mt-1.5"><span class="text-[9px] text-red-400 font-bold">Medo Extremo</span><span class="text-[9px] text-green-400 font-bold">Ganância</span></div>
+                <div class="flex justify-between mt-2">
+                    <span class="text-[9px] text-red-400 font-bold">Medo</span>
+                    <span class="text-[9px] text-green-400 font-bold">Ganância</span>
+                </div>
                 <div class="mt-3 pt-3 border-t border-white/5 flex justify-between items-center">
                     <span class="lbl">Macro</span>
                     <span id="macro-badge" class="badge bg-gray-700/40 text-gray-400">--</span>
                 </div>
             </div>
+            <!-- Quick intel -->
             <div class="card p-4">
                 <h3 class="text-xs font-black uppercase tracking-widest mb-3" style="color:#f7931a">Guardar Intel</h3>
-                <textarea id="intel-news-input" rows="4" placeholder="Cola alertas Grok, Whale Alert, Lookonchain..." class="mb-3 text-xs"></textarea>
-                <button onclick="addIntelFrom('intel-news-input')" class="w-full py-2.5 rounded-lg font-black uppercase text-xs text-black" style="background:#f7931a">Guardar</button>
+                <textarea id="intel-news-input" rows="4" placeholder="Cola alertas Grok, Whale Alert..." class="mb-3 text-sm"></textarea>
+                <button onclick="addIntelFrom('intel-news-input')" class="w-full py-3 rounded-lg font-black uppercase text-xs text-black min-h-[44px]" style="background:#f7931a">Guardar</button>
             </div>
+            <!-- AI briefings -->
             <div class="card p-4">
-                <p class="lbl mb-3">Briefings Rápidos IA</p>
+                <p class="lbl mb-3">Briefings Rápidos</p>
                 <div class="space-y-2">
-                    <button class="quick-btn" onclick="quickPrompt('Gera um briefing completo do mercado BTC: tendência, níveis chave, sentimento e o que esperar nas próximas horas.')">📊 Briefing Mercado BTC</button>
+                    <button class="quick-btn" onclick="quickPrompt('Gera um briefing completo do mercado BTC: tendência, níveis chave, sentimento e o que esperar nas próximas horas.')">📊 Briefing Mercado</button>
                     <button class="quick-btn" onclick="quickPrompt('Analisa o risco das minhas posições abertas. Distância de liquidação, ROE, e devo reduzir exposição?')">⚡ Analisar Risco</button>
-                    <button class="quick-btn" onclick="quickPrompt('Qual é o suporte e resistência mais próximos do preço atual de BTC? Onde o mercado está a testar?')">🎯 Suportes & Resistências</button>
+                    <button class="quick-btn" onclick="quickPrompt('Quais os suportes e resistências mais importantes de BTC? Onde o mercado está a testar?')">🎯 Suportes/Resistências</button>
                 </div>
             </div>
         </div>
@@ -285,18 +407,18 @@
 <!-- INTEL -->
 <section id="tab-intel" class="tab-content">
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div class="card p-5">
-            <h2 class="text-xs font-black uppercase tracking-widest flex items-center gap-2 mb-4" style="color:#f7931a">⚡ Novo Registo</h2>
-            <p class="text-xs text-gray-400 mb-4">Relatórios Grok, alertas Whale Alert / Lookonchain ou contexto macro. O agente IA usa estes dados nas análises.</p>
-            <textarea id="intel-main-input" rows="6" placeholder="Cola o texto aqui..." class="mb-3 text-xs"></textarea>
-            <button onclick="addIntelFrom('intel-main-input')" class="w-full py-2.5 rounded-lg font-black uppercase text-xs text-black" style="background:#f7931a">Guardar Registo</button>
+        <div class="card p-4 sm:p-5">
+            <h2 class="text-xs font-black uppercase tracking-widest flex items-center gap-2 mb-3" style="color:#f7931a">⚡ Novo Registo</h2>
+            <p class="text-sm text-gray-400 mb-4 leading-relaxed">Relatórios Grok, alertas Whale Alert / Lookonchain ou contexto macro. O agente IA usa estes dados nas análises.</p>
+            <textarea id="intel-main-input" rows="5" placeholder="Cola o texto aqui..." class="mb-3 text-sm"></textarea>
+            <button onclick="addIntelFrom('intel-main-input')" class="w-full py-3 rounded-lg font-black uppercase text-sm text-black min-h-[48px]" style="background:#f7931a">Guardar Registo</button>
         </div>
-        <div class="card p-5 lg:col-span-2">
+        <div class="card p-4 sm:p-5 lg:col-span-2">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="lbl">Histórico Operacional (<span id="intel-count">0</span>)</h3>
-                <button onclick="clearIntelHistory()" class="text-[9px] text-red-500 uppercase font-bold hover:underline">Limpar Tudo</button>
+                <h3 class="lbl">Histórico (<span id="intel-count">0</span>)</h3>
+                <button onclick="clearIntelHistory()" class="text-[10px] text-red-500 uppercase font-bold hover:underline min-h-[44px] px-2">Limpar Tudo</button>
             </div>
-            <div id="intel-history-container" class="space-y-3 max-h-[600px] overflow-y-auto pr-1"></div>
+            <div id="intel-history-container" class="space-y-3 max-h-[60vh] sm:max-h-[560px] overflow-y-auto pr-1"></div>
         </div>
     </div>
 </section>
@@ -304,28 +426,35 @@
 </main>
 
 <!-- AI SIDEBAR -->
-<aside id="ai-section" class="card p-5 flex flex-col">
-    <div class="flex justify-between items-center mb-4 border-b border-gray-800 pb-3">
-        <span class="text-xs font-black uppercase tracking-widest" style="color:#f7931a">₿ AI Agent</span>
-        <div class="flex items-center gap-2">
-            <span id="ai-loading" class="text-[9px] animate-pulse hidden font-bold uppercase" style="color:#f7931a">A processar...</span>
-            <button onclick="handleAICall()" class="text-gray-500 hover:text-white text-xl leading-none transition-colors">×</button>
+<aside id="ai-section" class="card flex flex-col" style="border-radius:0">
+    <!-- Mobile: full screen with close button -->
+    <div class="p-4 sm:p-5 border-b border-gray-800 flex justify-between items-center flex-shrink-0">
+        <span class="text-sm font-black uppercase tracking-widest" style="color:#f7931a">₿ AI Agent</span>
+        <div class="flex items-center gap-3">
+            <span id="ai-loading" class="text-[10px] animate-pulse hidden font-bold uppercase" style="color:#f7931a">A processar...</span>
+            <button onclick="handleAICall()" class="text-gray-400 hover:text-white text-2xl leading-none transition-colors w-10 h-10 flex items-center justify-center">×</button>
         </div>
     </div>
-    <div class="grid grid-cols-2 gap-1.5 mb-3">
-        <button class="quick-btn" onclick="quickPrompt('Analisa o risco atual das minhas posições. Distância de liquidação, exposição e recomendação.')">⚡ Analisar Risco</button>
-        <button class="quick-btn" onclick="quickPrompt('Devo fazer DCA agora? Qual o melhor nível de entrada para reforçar BTC?')">📈 DCA Ideal?</button>
-        <button class="quick-btn" onclick="quickPrompt('Quais são os suportes e resistências mais importantes de BTC agora? Onde está o mercado?')">🎯 Níveis S/R</button>
-        <button class="quick-btn" onclick="quickPrompt('Resume o sentimento atual do mercado BTC. Bulls ou bears no controlo?')">🧠 Sentimento</button>
-        <button class="quick-btn" onclick="quickPrompt('Qual a melhor estratégia de take profit para as minhas posições abertas?')">💰 Take Profit</button>
-        <button class="quick-btn" onclick="quickPrompt('Qual o impacto do funding rate atual nas minhas posições e devo preocupar-me?')">💸 Funding</button>
-    </div>
-    <div id="ai-content" class="flex-grow overflow-y-auto mb-3 flex flex-col">
-        <div class="bot-msg msg text-gray-500 text-xs text-center">Agente pronto. Usa os atalhos ou escreve a tua pergunta.</div>
-    </div>
-    <div class="flex gap-2">
-        <input type="text" id="chat-input" placeholder="Pergunta ao agente..." class="flex-1 bg-white/5 p-3 rounded-xl text-white outline-none text-xs border border-white/5 transition-all" style="width:auto" onkeypress="if(event.key==='Enter')sendChat()">
-        <button onclick="sendChat()" class="px-4 rounded-xl font-black text-black text-sm hover:scale-105 transition-all" style="background:#f7931a">→</button>
+    <!-- Desktop: styled card -->
+    <div class="p-4 sm:p-5 flex flex-col flex-1 min-h-0">
+        <!-- Quick prompts -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+            <button class="quick-btn" onclick="quickPrompt('Analisa o risco atual das minhas posições. Distância de liquidação, exposição e recomendação.')">⚡ Analisar Risco</button>
+            <button class="quick-btn" onclick="quickPrompt('Devo fazer DCA agora? Qual o melhor nível de entrada para reforçar BTC?')">📈 DCA Ideal?</button>
+            <button class="quick-btn" onclick="quickPrompt('Quais são os suportes e resistências mais importantes de BTC agora?')">🎯 Níveis S/R</button>
+            <button class="quick-btn" onclick="quickPrompt('Resume o sentimento atual do mercado BTC. Bulls ou bears no controlo?')">🧠 Sentimento</button>
+            <button class="quick-btn" onclick="quickPrompt('Qual a melhor estratégia de take profit para as minhas posições abertas?')">💰 Take Profit</button>
+            <button class="quick-btn" onclick="quickPrompt('Qual o impacto do funding rate atual nas minhas posições? Devo preocupar-me?')">💸 Funding</button>
+        </div>
+        <!-- Messages -->
+        <div id="ai-content" class="flex-1 overflow-y-auto mb-4 flex flex-col" style="min-height:120px">
+            <div class="bot-msg msg text-gray-500 text-sm text-center">Agente pronto. Usa os atalhos ou escreve a tua pergunta.</div>
+        </div>
+        <!-- Input -->
+        <div class="flex gap-2 flex-shrink-0">
+            <input type="text" id="chat-input" placeholder="Pergunta ao agente..." class="flex-1 bg-white/5 rounded-xl text-white outline-none text-sm border border-white/5 transition-all" style="width:auto;min-height:48px;padding:12px 16px;font-family:'Outfit',sans-serif" onkeypress="if(event.key==='Enter')sendChat()">
+            <button onclick="sendChat()" class="px-4 rounded-xl font-black text-black text-base hover:scale-105 transition-all flex-shrink-0 min-h-[48px] min-w-[48px]" style="background:#f7931a">→</button>
+        </div>
     </div>
 </aside>
 </div>
@@ -356,20 +485,21 @@ function switchTab(t) {
     document.querySelectorAll('.tab-content,.nav-btn').forEach(e => e.classList.remove('active'));
     document.getElementById('tab-'+t).classList.add('active');
     document.getElementById('btn-'+t).classList.add('active');
+    // Scroll tab into view on mobile
+    document.getElementById('btn-'+t).scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
     if (t === 'mercados' && !mktChart) initMarketChart();
 }
 
 // ── Format ──
 function fPT(n, isM=false, p=2) {
-    let num = Number(n);
-    if (isNaN(num)||num===0) return isM ? '$0'+(p>0?',00':'') : '0'+(p>0?',00':'');
-    let abs = Math.abs(num), parts = abs.toFixed(p).split('.');
-    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.');
-    return (num<0?'-':'') + (isM?'$':'') + (p>0?parts.join(','):parts[0]);
+    const num = Number(n);
+    if (isNaN(num)||num===0) return isM?'$0'+(p>0?',00':''):'0'+(p>0?',00':'');
+    const abs = Math.abs(num), parts = abs.toFixed(p).split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return (num<0?'-':'')+(isM?'$':'')+(p>0?parts.join(','):parts[0]);
 }
 function fK(n) {
-    const v = Number(n);
-    if (isNaN(v)) return '--';
+    const v = Number(n); if (isNaN(v)) return '--';
     if (Math.abs(v)>=1e9) return fPT(v/1e9,false,2)+'B';
     if (Math.abs(v)>=1e6) return fPT(v/1e6,false,2)+'M';
     if (Math.abs(v)>=1e3) return fPT(v/1e3,false,1)+'K';
@@ -379,6 +509,7 @@ function timeAgo(d) {
     const m = Math.floor((Date.now()-new Date(d).getTime())/60000);
     if (m<60) return m+'m'; if (m<1440) return Math.floor(m/60)+'h'; return Math.floor(m/1440)+'d';
 }
+function setText(id, val) { const el=document.getElementById(id); if(el) el.innerText=val; }
 
 // ── Market Data ──
 async function fetchMarketData() {
@@ -394,17 +525,15 @@ async function fetchMarketData() {
             const up = price > btcPrev && btcPrev > 0, dn = price < btcPrev && btcPrev > 0;
             priceEl.innerText = fPT(price,false,0);
             priceEl.className = `mono text-sm ${up?'text-green-400':dn?'text-red-400':'text-white'} transition-colors`;
-            setTimeout(()=>priceEl.className='mono text-sm text-white transition-colors',700);
+            setTimeout(()=>priceEl.className='mono text-sm text-white transition-colors', 700);
             const chEl = document.getElementById('btc-change');
-            chEl.innerText = (ch>=0?'+':'')+fPT(ch,false,2)+'%';
-            chEl.className = `text-[9px] font-bold ${ch>=0?'text-green-400':'text-red-400'}`;
+            if (chEl) { chEl.innerText=(ch>=0?'+':'')+fPT(ch,false,2)+'%'; chEl.className=`text-[10px] font-bold ${ch>=0?'text-green-400':'text-red-400'} hidden sm:inline`; }
             btcPrev = price;
             const fr = parseFloat(t.fundingRate)*100;
             const frStr = (fr>=0?'+':'')+fr.toFixed(4)+'%';
-            setText('hdr-funding', frStr);
-            setText('fund-big', frStr);
+            setText('hdr-funding', frStr); setText('fund-big', frStr);
             const fb = document.getElementById('fund-badge');
-            if (fb) { if (fr>0.02){fb.innerText='Longs pagam';fb.className='badge bg-red-500/20 text-red-400';}else if(fr<-0.01){fb.innerText='Shorts pagam';fb.className='badge bg-green-500/20 text-green-400';}else{fb.innerText='Neutro';fb.className='badge bg-gray-700/40 text-gray-400';} }
+            if (fb) { if(fr>0.02){fb.innerText='Longs pagam';fb.className='badge bg-red-500/20 text-red-400';}else if(fr<-0.01){fb.innerText='Shorts pagam';fb.className='badge bg-green-500/20 text-green-400';}else{fb.innerText='Neutro';fb.className='badge bg-gray-700/40 text-gray-400';} }
             setFundingImpact(fr);
             if (t.nextFundingTime) startFundingCountdown(parseInt(t.nextFundingTime));
             setText('m-mark', fPT(parseFloat(t.markPrice),false,0));
@@ -417,31 +546,28 @@ async function fetchMarketData() {
     } catch(e){}
 }
 
-function setText(id, val) { const el=document.getElementById(id); if(el) el.innerText=val; }
-
 function setFundingImpact(fr) {
     const el = document.getElementById('fund-impact');
     if (!el || !currentPositions.length) return;
     let total = 0;
     currentPositions.forEach(p => {
         if (p.symbol.includes('BTC')) {
-            const v = parseFloat(p.positionValue);
-            const imp = v*(fr/100);
+            const v = parseFloat(p.positionValue), imp = v*(fr/100);
             total += p.side==='Buy' ? -imp : imp;
         }
     });
-    el.innerText = (total>=0?'+':'')+fPT(total,true,4);
+    el.innerText = (total>=0?'+':'')+fPT(total,true,4)+' (próximo ciclo)';
     el.className = `mono text-sm ${total>=0?'text-green-400':'text-red-400'}`;
 }
 
 function startFundingCountdown(ts) {
     if (fundingTimer) clearInterval(fundingTimer);
-    fundingTimer = setInterval(()=>{
+    fundingTimer = setInterval(() => {
         const diff = ts - Date.now();
         if (diff<=0){clearInterval(fundingTimer);return;}
         const h=Math.floor(diff/3600000), m=Math.floor((diff%3600000)/60000), s=Math.floor((diff%60000)/1000);
-        setText('fund-countdown',`${h}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`);
-    },1000);
+        setText('fund-countdown', `${h}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`);
+    }, 1000);
 }
 
 function renderOrderBook(ob) {
@@ -449,11 +575,22 @@ function renderOrderBook(ob) {
     const mxA=asks.length?Math.max(...asks.map(a=>parseFloat(a[1]))):1;
     const mxB=bids.length?Math.max(...bids.map(b=>parseFloat(b[1]))):1;
     let ac=0, bc=0;
-    const asksHtml=asks.slice().reverse().map(([p,q])=>{ac+=parseFloat(q);const pct=(parseFloat(q)/mxA*100).toFixed(0);return`<div class="ob-row"><div class="ob-bar-ask" style="width:${pct}%"></div><span class="text-red-400">${fPT(parseFloat(p),false,0)}</span><span class="text-gray-300 text-center">${fK(parseFloat(q))}</span><span class="text-gray-500 text-right">${fK(ac)}</span></div>`;}).join('');
-    const bidsHtml=bids.map(([p,q])=>{bc+=parseFloat(q);const pct=(parseFloat(q)/mxB*100).toFixed(0);return`<div class="ob-row"><div class="ob-bar-bid" style="width:${pct}%"></div><span class="text-green-400">${fPT(parseFloat(p),false,0)}</span><span class="text-gray-300 text-center">${fK(parseFloat(q))}</span><span class="text-gray-500 text-right">${fK(bc)}</span></div>`;}).join('');
+    const asksHtml = asks.slice().reverse().map(([p,q]) => {
+        ac+=parseFloat(q);
+        const pct=(parseFloat(q)/mxA*100).toFixed(0);
+        return `<div class="ob-row"><div class="ob-bar-ask" style="width:${pct}%"></div><span class="text-red-400">${fPT(parseFloat(p),false,0)}</span><span class="text-gray-300 text-center">${fK(parseFloat(q))}</span><span class="text-gray-500 text-right">${fK(ac)}</span></div>`;
+    }).join('');
+    const bidsHtml = bids.map(([p,q]) => {
+        bc+=parseFloat(q);
+        const pct=(parseFloat(q)/mxB*100).toFixed(0);
+        return `<div class="ob-row"><div class="ob-bar-bid" style="width:${pct}%"></div><span class="text-green-400">${fPT(parseFloat(p),false,0)}</span><span class="text-gray-300 text-center">${fK(parseFloat(q))}</span><span class="text-gray-500 text-right">${fK(bc)}</span></div>`;
+    }).join('');
     const ea=document.getElementById('ob-asks'), eb=document.getElementById('ob-bids'), es=document.getElementById('ob-spread');
-    if(ea)ea.innerHTML=asksHtml; if(eb)eb.innerHTML=bidsHtml;
-    if(es&&asks.length&&bids.length){const sp=Math.abs(parseFloat(asks[asks.length-1]?.[0]??0)-parseFloat(bids[0]?.[0]??0));es.innerText=fPT(sp,false,1)+' USD';}
+    if(ea) ea.innerHTML=asksHtml; if(eb) eb.innerHTML=bidsHtml;
+    if(es&&asks.length&&bids.length){
+        const sp=Math.abs(parseFloat(asks[asks.length-1]?.[0]??0)-parseFloat(bids[0]?.[0]??0));
+        es.innerText=fPT(sp,false,1)+' USD';
+    }
 }
 
 async function fetchDominance() {
@@ -468,38 +605,33 @@ async function fetchDominance() {
 // ── Chart ──
 function initMarketChart() {
     if (mktChart) return;
-    const c=document.getElementById('tv-market-wrap');
-    if(!c)return;
+    const c=document.getElementById('tv-market-wrap'); if(!c)return;
     c.innerHTML='<div id="tv-mkt" class="w-full h-full"></div>';
     mktChart=new TradingView.widget({autosize:true,symbol:'BYBIT:BTCUSD',interval:'15',theme:'dark',style:'1',toolbar_bg:'#080a0c',enable_publishing:false,hide_side_toolbar:false,studies:['RSI@tv-basicstudies','MASimple@tv-basicstudies'],container_id:'tv-mkt'});
 }
 function setChartInterval(interval, btn) {
-    document.querySelectorAll('.chart-btn').forEach(b=>{b.className=b===btn?'chart-btn active':'chart-btn';});
-    const c=document.getElementById('tv-market-wrap');
-    if(!c)return;
+    document.querySelectorAll('.chart-btn').forEach(b=>b.className=b===btn?'chart-btn active':'chart-btn');
+    const c=document.getElementById('tv-market-wrap'); if(!c)return;
     c.innerHTML='<div id="tv-mkt" class="w-full h-full"></div>';
     mktChart=new TradingView.widget({autosize:true,symbol:'BYBIT:BTCUSD',interval,theme:'dark',style:'1',toolbar_bg:'#080a0c',enable_publishing:false,hide_side_toolbar:false,studies:['RSI@tv-basicstudies'],container_id:'tv-mkt'});
 }
 
 // ── News ──
 async function fetchNews() {
-    const c=document.getElementById('news-container');
-    if(!c)return;
-    // Try RSS via rss2json
+    const c=document.getElementById('news-container'); if(!c)return;
     try {
         const r=await fetch('https://api.rss2json.com/v1/api.json?rss_url=https://cointelegraph.com/rss/tag/bitcoin&count=20');
         const d=await r.json();
         if(d?.items?.length>0){
-            c.innerHTML=d.items.map(item=>`<div class="news-card" onclick="window.open('${item.link}','_blank')"><p class="text-sm font-bold text-white leading-tight mb-1.5">${item.title}</p><div class="flex gap-2 items-center"><span class="lbl">CoinTelegraph</span><span class="lbl">${timeAgo(item.pubDate)}</span></div></div>`).join('');
+            c.innerHTML=d.items.map(item=>`<div class="news-card" onclick="window.open('${item.link}','_blank')"><p class="text-sm font-bold text-white leading-tight mb-2">${item.title}</p><div class="flex gap-2 items-center"><span class="lbl">CoinTelegraph</span><span class="lbl">${timeAgo(item.pubDate)}</span></div></div>`).join('');
             return;
         }
     }catch(e){}
-    // Fallback: Bitcoin Magazine
     try {
         const r=await fetch('https://api.rss2json.com/v1/api.json?rss_url=https://bitcoinmagazine.com/.rss/full&count=15');
         const d=await r.json();
         if(d?.items?.length>0){
-            c.innerHTML=d.items.map(item=>`<div class="news-card" onclick="window.open('${item.link}','_blank')"><p class="text-sm font-bold text-white leading-tight mb-1.5">${item.title}</p><div class="flex gap-2 items-center"><span class="lbl">Bitcoin Magazine</span><span class="lbl">${timeAgo(item.pubDate)}</span></div></div>`).join('');
+            c.innerHTML=d.items.map(item=>`<div class="news-card" onclick="window.open('${item.link}','_blank')"><p class="text-sm font-bold text-white leading-tight mb-2">${item.title}</p><div class="flex gap-2 items-center"><span class="lbl">Bitcoin Magazine</span><span class="lbl">${timeAgo(item.pubDate)}</span></div></div>`).join('');
             return;
         }
     }catch(e){}
@@ -523,17 +655,17 @@ async function fetchPositions() {
 function updateDashboard(positions) {
     const grid=document.getElementById('dashboard-grid');
     const noPos=document.getElementById('no-pos');
-    if(positions.length===0){if(noPos)noPos.classList.remove('hidden');return;}
+    if(!positions.length){if(noPos)noPos.classList.remove('hidden');return;}
     if(noPos)noPos.classList.add('hidden');
-    let tPnL=0,tMarg=0,tExp=0,maxRisk=0;
-    positions.forEach(pos=>{
-        const pnl=parseFloat(pos.unrealisedPnl),val=parseFloat(pos.positionValue),lev=parseFloat(pos.leverage);
-        const cur=parseFloat(pos.markPrice),ent=parseFloat(pos.avgPrice),liq=parseFloat(pos.liqPrice);
-        const tp=parseFloat(pos.takeProfit),sl=parseFloat(pos.stopLoss),marg=val/lev;
-        tPnL+=pnl;tMarg+=marg;tExp+=val;
+    let tPnL=0, tMarg=0, tExp=0, maxRisk=0;
+    positions.forEach(pos => {
+        const pnl=parseFloat(pos.unrealisedPnl), val=parseFloat(pos.positionValue), lev=parseFloat(pos.leverage);
+        const cur=parseFloat(pos.markPrice), ent=parseFloat(pos.avgPrice), liq=parseFloat(pos.liqPrice);
+        const tp=parseFloat(pos.takeProfit), sl=parseFloat(pos.stopLoss), marg=val/lev;
+        tPnL+=pnl; tMarg+=marg; tExp+=val;
         const dLiq=liq>0?Math.abs((liq-cur)/cur)*100:100;
         const risk=Math.max(0,Math.min(100,100-dLiq));
-        if(risk>maxRisk)maxRisk=risk;
+        if(risk>maxRisk) maxRisk=risk;
         const tpP=tp>0?Math.min(Math.abs(cur-ent)/Math.abs(tp-ent)*100,100):0;
         const roe=marg>0?(pnl/marg)*100:0;
         const cPnL=pnl>=0?'text-green-400':'text-red-400';
@@ -542,58 +674,75 @@ function updateDashboard(positions) {
         if(!card){
             card=document.createElement('div');
             card.id=`card-${pos.symbol}`;
-            card.className=`card border-l-4 p-4 lg:p-5 ${pos.side==='Buy'?'border-l-green-500':'border-l-red-500'}`;
-            card.innerHTML=`<div class="content-area"></div><div id="tv-w-${pos.symbol}" class="mt-4 hidden" data-loaded="false"><div id="tv-p-${pos.symbol}" class="rounded-xl overflow-hidden h-[400px] lg:h-[520px]" style="background:#000;border:1px solid rgba(255,255,255,0.06)"></div></div>`;
+            card.className=`card border-l-4 p-4 ${pos.side==='Buy'?'border-l-green-500':'border-l-red-500'}`;
+            card.innerHTML=`<div class="content-area"></div><div id="tv-w-${pos.symbol}" class="mt-4 hidden" data-loaded="false"><div id="tv-p-${pos.symbol}" class="rounded-xl overflow-hidden h-[260px] sm:h-[420px] lg:h-[500px]" style="background:#000;border:1px solid rgba(255,255,255,0.06)"></div></div>`;
             grid.appendChild(card);
         }
         card.querySelector('.content-area').innerHTML=`
-            <div class="flex justify-between items-start mb-3 flex-wrap gap-2">
-                <div class="flex items-center gap-2 flex-wrap">
-                    <h2 class="font-black text-white text-lg uppercase tracking-tighter">${pos.symbol}</h2>
+            <div class="flex justify-between items-start mb-3 gap-2">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                    <h2 class="font-black text-white text-base sm:text-lg uppercase tracking-tighter">${pos.symbol}</h2>
                     <span class="badge bg-yellow-500/10 text-yellow-500">${lev}x</span>
                     <span class="badge ${pos.side==='Buy'?'bg-green-500/10 text-green-400':'bg-red-500/10 text-red-400'}">${pos.side==='Buy'?'LONG':'SHORT'}</span>
-                    <span class="badge ${isInv?'bg-orange-500/10 text-orange-400':'bg-blue-500/10 text-blue-400'}">${isInv?'INVERSE':'LINEAR'}</span>
+                    <span class="badge ${isInv?'bg-orange-500/10 text-orange-400':'bg-blue-500/10 text-blue-400'}">${isInv?'INV':'LIN'}</span>
                 </div>
-                <button onclick="toggleChart('${pos.symbol}')" class="text-[9px] font-bold text-gray-400 border border-white/10 px-3 py-1.5 rounded-lg hover:text-white hover:border-white/20 transition-all uppercase">Gráfico</button>
+                <button onclick="toggleChart('${pos.symbol}')" class="text-[10px] font-bold text-gray-400 border border-white/10 px-3 py-2 rounded-lg hover:text-white transition-all uppercase whitespace-nowrap min-h-[36px]">Gráfico</button>
             </div>
-            <div class="grid grid-cols-2 gap-3 mb-4">
-                <div><p class="lbl mb-0.5">ROE</p><p class="text-2xl lg:text-3xl font-black ${cPnL}">${fPT(roe,false,2)}%</p></div>
-                <div class="text-right"><p class="lbl mb-0.5">PnL USD</p><p class="text-2xl lg:text-3xl font-bold ${cPnL}">${fPT(pnl,true,0)}</p></div>
+            <div class="grid grid-cols-2 gap-3 mb-3">
+                <div><p class="lbl mb-0.5">ROE</p><p class="text-2xl sm:text-3xl font-black ${cPnL}">${fPT(roe,false,2)}%</p></div>
+                <div class="text-right"><p class="lbl mb-0.5">PnL USD</p><p class="text-2xl sm:text-3xl font-bold ${cPnL}">${fPT(pnl,true,0)}</p></div>
             </div>
-            <div class="grid grid-cols-3 gap-3 mb-4 pt-3 border-t border-white/5 text-xs">
-                <div><p class="lbl">Valor / Margem</p><p class="font-bold text-gray-200">${fPT(val,true,0)}</p><p class="text-gray-500">(${fPT(marg,true,2)})</p></div>
-                <div><p class="lbl">Entrada</p><p class="mono text-gray-300">${fPT(ent,false,2)}</p><p class="mono" style="color:#f7931a">${fPT(cur,false,2)}</p></div>
-                <div class="text-right"><p class="lbl">Liq. / SL</p><p class="mono text-red-400">${liq>0?fPT(liq,false,2):'N/D'}</p>${sl>0?`<p class="mono text-orange-400">${fPT(sl,false,2)}</p>`:''}</div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mb-3 pt-3 border-t border-white/5 text-xs">
+                <div>
+                    <p class="lbl">Valor / Margem</p>
+                    <p class="font-bold text-gray-200">${fPT(val,true,0)}</p>
+                    <p class="text-gray-500 text-[10px]">(${fPT(marg,true,2)})</p>
+                </div>
+                <div>
+                    <p class="lbl">Entrada → Mark</p>
+                    <p class="mono text-gray-300">${fPT(ent,false,2)}</p>
+                    <p class="mono" style="color:#f7931a">${fPT(cur,false,2)}</p>
+                </div>
+                <div class="col-span-2 sm:col-span-1 sm:text-right">
+                    <p class="lbl">Liq. / SL</p>
+                    <p class="mono text-red-400">${liq>0?fPT(liq,false,2):'N/D'}</p>
+                    ${sl>0?`<p class="mono text-orange-400">${fPT(sl,false,2)}</p>`:''}
+                </div>
             </div>
             <div class="space-y-2">
                 <div>
-                    <div class="flex justify-between text-[9px] font-bold mb-1">
-                        <span class="text-gray-500">Distância Liquidação</span>
+                    <div class="flex justify-between text-[10px] font-bold mb-1">
+                        <span class="text-gray-500">Dist. Liquidação</span>
                         <span class="${dLiq<10?'text-red-500 animate-pulse':dLiq<20?'text-orange-400':'text-gray-500'}">${fPT(dLiq,false,1)}%</span>
                     </div>
                     <div class="prog-bg"><div class="prog-fill ${dLiq<10?'bg-red-500 animate-pulse':dLiq<20?'bg-orange-500':dLiq<40?'bg-yellow-500/60':'bg-red-900/40'}" style="width:${Math.max(0,100-dLiq)}%"></div></div>
                 </div>
-                ${tp>0?`<div><div class="flex justify-between text-[9px] font-bold mb-1"><span class="text-yellow-600">Take Profit (${fPT(tp,false,0)})</span><span class="text-yellow-600">${fPT(tpP,false,0)}%</span></div><div class="prog-bg"><div class="prog-fill bg-yellow-500/60" style="width:${tpP}%"></div></div></div>`:''}
+                ${tp>0?`<div>
+                    <div class="flex justify-between text-[10px] font-bold mb-1">
+                        <span class="text-yellow-600">Take Profit (${fPT(tp,false,0)})</span>
+                        <span class="text-yellow-600">${fPT(tpP,false,0)}%</span>
+                    </div>
+                    <div class="prog-bg"><div class="prog-fill bg-yellow-500/60" style="width:${tpP}%"></div></div>
+                </div>`:''}
             </div>`;
     });
     document.getElementById('total-pnl').innerText=fPT(tPnL,true,0);
-    document.getElementById('total-pnl').className=`text-xl lg:text-2xl mono ${tPnL>=0?'text-green-400':'text-red-400'}`;
+    document.getElementById('total-pnl').className=`text-lg sm:text-2xl mono ${tPnL>=0?'text-green-400':'text-red-400'}`;
     document.getElementById('total-pnl-perc').innerText=fPT(tMarg>0?(tPnL/tMarg*100):0,false,2)+'%';
-    document.getElementById('total-pnl-perc').className=`text-xl lg:text-2xl mono ${tPnL>=0?'text-green-400':'text-red-400'}`;
-    document.getElementById('total-exposure').innerText=fPT(tExp,true,0);
-    document.getElementById('avg-leverage').innerText=fPT(tMarg>0?(tExp/tMarg):0,false,2)+'x';
-    document.getElementById('total-margin').innerText=fPT(tMarg,true,0);
+    document.getElementById('total-pnl-perc').className=`text-lg sm:text-2xl mono ${tPnL>=0?'text-green-400':'text-red-400'}`;
+    setText('total-exposure', fPT(tExp,true,0));
+    setText('avg-leverage', fPT(tMarg>0?(tExp/tMarg):0,false,2)+'x');
+    setText('total-margin', fPT(tMarg,true,0));
     updateRiskScore(maxRisk);
-    setFundingImpact(parseFloat((document.getElementById('hdr-funding')?.innerText||'0').replace('%',''))||0);
 }
 
 function updateRiskScore(score) {
     const dot=document.getElementById('risk-dot'), lbl=document.getElementById('risk-label');
-    if(!dot||!lbl)return;
+    if(!dot||!lbl) return;
     dot.style.left=Math.min(score,95)+'%';
     if(score<30){lbl.innerText='Risco Baixo';lbl.className='badge bg-green-500/20 text-green-400';}
-    else if(score<60){lbl.innerText='Risco Moderado';lbl.className='badge bg-yellow-500/20 text-yellow-500';}
-    else if(score<80){lbl.innerText='Risco Alto';lbl.className='badge bg-orange-500/20 text-orange-400';}
+    else if(score<60){lbl.innerText='Moderado';lbl.className='badge bg-yellow-500/20 text-yellow-500';}
+    else if(score<80){lbl.innerText='Alto';lbl.className='badge bg-orange-500/20 text-orange-400';}
     else{lbl.innerText='CRÍTICO';lbl.className='badge bg-red-500/20 text-red-400 animate-pulse';}
 }
 
@@ -612,26 +761,24 @@ function toggleChart(s) {
 async function fetchTelemetry() {
     try {
         const r=await fetch(AI_FUNC_PATH,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${SUPABASE_KEY}`,'apikey':SUPABASE_KEY},body:JSON.stringify({positions:currentPositions,userMessage:'TELEMETRY'})});
-        const d=await r.json();
-        if(d.error)return;
+        const d=await r.json(); if(d.error)return;
         if(d?.insight){
             const isB=d.insight.toUpperCase().includes('BULLISH');
-            const m=document.getElementById('macro-trend'),mb=document.getElementById('macro-badge');
+            const m=document.getElementById('macro-trend'), mb=document.getElementById('macro-badge');
             const cls=isB?'border-green-500/20 text-green-500':'border-red-500/20 text-red-500';
-            if(m){m.innerText=`Macro: ${isB?'BULLISH':'BEARISH'}`;m.className=`hidden md:block lbl bg-white/5 px-2 py-1.5 rounded-md border ${cls}`;}
+            if(m){m.innerText=`Macro: ${isB?'BULLISH':'BEARISH'}`;m.className=`hidden lg:flex items-center lbl bg-white/5 px-2 py-1.5 rounded-md border min-h-[36px] ${cls}`;}
             if(mb){mb.innerText=isB?'BULLISH':'BEARISH';mb.className=`badge ${isB?'bg-green-500/20 text-green-400':'bg-red-500/20 text-red-400'}`;}
         }
         if(d?.fg){
             const v=parseInt(d.fg);
             const fg=document.getElementById('fg-index-top');
             const cls=v>=70?'border-green-500/20 text-green-500':v<=30?'border-red-500/20 text-red-500':'border-yellow-500/20 text-yellow-500';
-            if(fg){fg.innerText=`F&G: ${d.fg}`;fg.className=`hidden md:block lbl bg-white/5 px-2 py-1.5 rounded-md border ${cls}`;}
-            setText('fg-big',d.fg);
-            const fgBig=document.getElementById('fg-big');
-            if(fgBig)fgBig.className=`text-4xl font-black mono ${v>=70?'text-green-400':v<=30?'text-red-400':'text-yellow-500'}`;
+            if(fg){fg.innerText=`F&G: ${d.fg}`;fg.className=`hidden lg:flex items-center lbl bg-white/5 px-2 py-1.5 rounded-md border min-h-[36px] ${cls}`;}
+            const fgEl=document.getElementById('fg-big');
+            if(fgEl){fgEl.innerText=d.fg;fgEl.className=`text-4xl font-black mono ${v>=70?'text-green-400':v<=30?'text-red-400':'text-yellow-500'}`;}
             const labels=['Medo Extremo','Medo','Neutro','Ganância','Ganância Extrema'];
-            setText('fg-text',labels[v>=80?4:v>=60?3:v>=40?2:v>=25?1:0]);
-            const dot=document.getElementById('fg-dot');if(dot)dot.style.left=v+'%';
+            setText('fg-text', labels[v>=80?4:v>=60?3:v>=40?2:v>=25?1:0]);
+            const dot=document.getElementById('fg-dot'); if(dot) dot.style.left=v+'%';
         }
     }catch(e){}
 }
@@ -640,47 +787,48 @@ async function fetchTelemetry() {
 function loadIntelHistory(){const s=localStorage.getItem('ai_trading_intel_history');if(s)try{intelHistory=JSON.parse(s);}catch(e){intelHistory=[];}renderIntelHistory();}
 function saveIntelHistory(){localStorage.setItem('ai_trading_intel_history',JSON.stringify(intelHistory));}
 function addIntelFrom(id){
-    const el=document.getElementById(id);
-    const text=el?.value?.trim();
-    if(!text)return;
+    const el=document.getElementById(id); if(!el)return;
+    const text=el.value.trim(); if(!text)return;
     intelHistory.unshift({id:Date.now(),date:new Date().toLocaleString('pt-PT'),text});
-    saveIntelHistory();renderIntelHistory();
-    if(el)el.value='';
+    saveIntelHistory(); renderIntelHistory(); el.value='';
 }
 function clearIntelHistory(){if(confirm('Limpar todo o histórico?')){intelHistory=[];saveIntelHistory();renderIntelHistory();}}
 function deleteIntel(id){intelHistory=intelHistory.filter(i=>i.id!==id);saveIntelHistory();renderIntelHistory();}
 function renderIntelHistory(){
     const c=document.getElementById('intel-history-container');
-    const cnt=document.getElementById('intel-count');
-    if(cnt)cnt.innerText=intelHistory.length;
+    setText('intel-count', String(intelHistory.length));
     if(!c)return;
-    if(intelHistory.length===0){c.innerHTML='<div class="text-center py-8 text-gray-500 text-xs uppercase font-bold tracking-widest">Nenhum registo.</div>';return;}
+    if(!intelHistory.length){c.innerHTML='<div class="text-center py-8 text-gray-500 text-xs uppercase font-bold tracking-widest">Nenhum registo.</div>';return;}
     c.innerHTML=intelHistory.map(item=>`
         <div class="bg-white/3 border border-white/5 rounded-xl p-4">
             <div class="flex justify-between items-center mb-2">
-                <span class="text-[9px] font-bold uppercase" style="color:#f7931a">${item.date}</span>
-                <button onclick="deleteIntel(${item.id})" class="text-[9px] text-gray-600 hover:text-red-500 transition-colors">✕</button>
+                <span class="text-[10px] font-bold uppercase" style="color:#f7931a">${item.date}</span>
+                <button onclick="deleteIntel(${item.id})" class="text-gray-600 hover:text-red-500 transition-colors text-sm w-8 h-8 flex items-center justify-center">✕</button>
             </div>
-            <p class="text-xs text-gray-300 mono whitespace-pre-wrap leading-relaxed">${item.text}</p>
+            <p class="text-sm text-gray-300 mono whitespace-pre-wrap leading-relaxed break-words">${item.text}</p>
         </div>`).join('');
 }
 function getIntelContext(){if(!intelHistory.length)return'Sem contexto adicional.';return intelHistory.slice(0,5).map(h=>`[${h.date}] ${h.text}`).join('\n\n');}
 
 // ── Simulator ──
 function generateSimSlots(){
-    const b=document.getElementById('sim-slots-body');
-    for(let i=0;i<8;i++){const r=document.createElement('div');r.className='grid grid-cols-[32px_1fr_1fr] gap-2 items-center';r.innerHTML=`<div class="flex justify-center"><input type="checkbox" checked class="sim-cb w-4 h-4" style="accent-color:#f7931a" onchange="runSimulation()"></div><input type="number" class="sim-val" placeholder="USD" oninput="runSimulation()"><input type="number" class="sim-px" placeholder="Preço" oninput="runSimulation()">`;b.appendChild(r);}
+    const b=document.getElementById('sim-slots-body'); if(!b)return;
+    for(let i=0;i<8;i++){
+        const r=document.createElement('div');
+        r.className='grid grid-cols-[36px_1fr_1fr] gap-2 items-center';
+        r.innerHTML=`<div class="flex justify-center"><input type="checkbox" checked class="sim-cb w-5 h-5" style="accent-color:#f7931a" onchange="runSimulation()"></div><input type="number" class="sim-val" placeholder="USD" oninput="runSimulation()"><input type="number" class="sim-px" placeholder="Preço" oninput="runSimulation()">`;
+        b.appendChild(r);
+    }
 }
 function updateSimDropdown(positions){
-    const s=document.getElementById('sim-select-pos');if(!s)return;
-    const v=s.value;s.innerHTML='<option value="">Selecionar...</option>';
+    const s=document.getElementById('sim-select-pos'); if(!s)return;
+    const v=s.value; s.innerHTML='<option value="">Selecionar...</option>';
     positions.forEach(p=>{const o=document.createElement('option');o.value=p.symbol;o.innerText=`${p.symbol} (${p.side})`;s.appendChild(o);});
     if(v)s.value=v;
 }
 function loadPositionToSim(){
     const sym=document.getElementById('sim-select-pos').value;
-    const p=currentPositions.find(x=>x.symbol===sym);
-    if(!p)return;
+    const p=currentPositions.find(x=>x.symbol===sym); if(!p)return;
     const marg=parseFloat(p.positionValue)/parseFloat(p.leverage);
     setText('sim-mark-price',fPT(p.markPrice,false,2));
     setText('sim-current-qty',fPT(Math.abs(parseFloat(p.size)),false,4));
@@ -690,38 +838,45 @@ function loadPositionToSim(){
     setText('sim-panel-current-margin',fPT(marg,true,2));
     const tp=parseFloat(p.takeProfit);
     setText('sim-panel-current-tp',tp>0?fPT(tp,false,2):'N/D');
-    if(tp>0){const qty=Math.abs(parseFloat(p.size)),estPnl=p.side==='Buy'?(tp-p.avgPrice)*qty:(p.avgPrice-tp)*qty;setText('sim-panel-current-tp-pnl',`PnL: ${fPT(estPnl,true,2)}`);}
+    if(tp>0){const qty=Math.abs(parseFloat(p.size)),est=p.side==='Buy'?(tp-p.avgPrice)*qty:(p.avgPrice-tp)*qty;setText('sim-panel-current-tp-pnl','PnL: '+fPT(est,true,2));}
     runSimulation();
 }
 function runSimulation(){
     const sym=document.getElementById('sim-select-pos').value;
-    const p=currentPositions.find(x=>x.symbol===sym);if(!p)return;
-    let curQty=Math.abs(parseFloat(p.size)),curAvg=parseFloat(p.avgPrice),origLev=parseFloat(p.leverage);
+    const p=currentPositions.find(x=>x.symbol===sym); if(!p)return;
+    let curQty=Math.abs(parseFloat(p.size)), curAvg=parseFloat(p.avgPrice), origLev=parseFloat(p.leverage);
     let newLev=parseFloat(document.getElementById('sim-input-leverage').value);
     if(isNaN(newLev)||newLev<=0)newLev=origLev;
-    let totalQty=curQty,totalW=curQty*curAvg,totalCost=0;
+    let totalQty=curQty, totalW=curQty*curAvg, totalCost=0;
     document.querySelectorAll('.sim-val').forEach((v,i)=>{
-        const cb=document.querySelectorAll('.sim-cb')[i],px=document.querySelectorAll('.sim-px')[i];
+        const cb=document.querySelectorAll('.sim-cb')[i], px=document.querySelectorAll('.sim-px')[i];
         if(cb.checked&&v.value&&px.value){const usd=parseFloat(v.value),price=parseFloat(px.value),qty=usd/price;totalQty+=qty;totalW+=qty*price;totalCost+=usd;}
     });
     const nAvg=totalW/totalQty;
     setText('res-new-avg',totalCost>0?fPT(nAvg,false,2):'---');
     setText('res-total-cost',fPT(totalCost,true,0));
-    let newLiq=p.side==='Buy'?nAvg*(1-1/newLev+0.005):nAvg*(1+1/newLev-0.005);
+    const newLiq=p.side==='Buy'?nAvg*(1-1/newLev+0.005):nAvg*(1+1/newLev-0.005);
     setText('sim-level-new-liq',(totalCost>0||newLev!==origLev)?fPT(newLiq,false,2):'---');
-    const curMarg=(curQty*curAvg)/origLev,newMarg=(totalQty*nAvg)/newLev,diff=newMarg-curMarg;
+    const curMarg=(curQty*curAvg)/origLev, newMarg=(totalQty*nAvg)/newLev, diff=newMarg-curMarg;
     const tp=parseFloat(p.takeProfit);
-    const elMN=document.getElementById('sim-level-new-margin'),elTN=document.getElementById('sim-level-new-tp'),elTPN=document.getElementById('sim-panel-new-tp-pnl');
+    const elMN=document.getElementById('sim-level-new-margin'), elTN=document.getElementById('sim-level-new-tp'), elTPN=document.getElementById('sim-panel-new-tp-pnl');
     if(totalCost>0||newLev!==origLev){
         if(elMN)elMN.innerText=fPT(newMarg,true,2);
-        if(tp>0&&elTN){elTN.innerText=fPT(tp,false,2);const newEst=p.side==='Buy'?(tp-nAvg)*totalQty:(nAvg-tp)*totalQty;if(elTPN){elTPN.innerText=`PnL: ${fPT(newEst,true,2)}`;elTPN.className='text-[9px] text-gray-400 mt-0.5 block';}}else if(elTN){elTN.innerText='N/D';if(elTPN)elTPN.className='hidden';}
-        const mp=document.getElementById('margin-adj-panel'),mt=document.getElementById('res-margin-adj');
-        if(Math.abs(diff)<1){mp.className='p-3 rounded-xl border border-gray-700 bg-gray-900 flex justify-between items-center';if(mt){mt.innerText='S/ Alt.';mt.className='text-lg font-black text-gray-400';}}
-        else if(diff>0){mp.className='p-3 rounded-xl border border-red-500/30 bg-red-500/10 flex justify-between items-center';if(mt){mt.innerText='Add '+fPT(diff,true,2);mt.className='text-lg font-black text-red-400';}}
-        else{mp.className='p-3 rounded-xl border border-green-500/30 bg-green-500/10 flex justify-between items-center';if(mt){mt.innerText='Lib. '+fPT(Math.abs(diff),true,2);mt.className='text-lg font-black text-green-400';}}
+        if(tp>0&&elTN){elTN.innerText=fPT(tp,false,2);if(elTPN){const est=p.side==='Buy'?(tp-nAvg)*totalQty:(nAvg-tp)*totalQty;elTPN.innerText='PnL: '+fPT(est,true,2);elTPN.className='text-[9px] text-gray-400 mt-0.5 block';}}
+        else if(elTN){elTN.innerText='N/D';if(elTPN)elTPN.className='hidden';}
+        const mp=document.getElementById('margin-adj-panel'), mt=document.getElementById('res-margin-adj');
+        if(Math.abs(diff)<1){if(mp)mp.className='p-3 rounded-xl border border-gray-700 bg-gray-900 flex justify-between items-center min-h-[52px]';if(mt){mt.innerText='S/ Alt.';mt.className='text-base sm:text-lg font-black text-gray-400';}}
+        else if(diff>0){if(mp)mp.className='p-3 rounded-xl border border-red-500/30 bg-red-500/10 flex justify-between items-center min-h-[52px]';if(mt){mt.innerText='Add '+fPT(diff,true,2);mt.className='text-base sm:text-lg font-black text-red-400';}}
+        else{if(mp)mp.className='p-3 rounded-xl border border-green-500/30 bg-green-500/10 flex justify-between items-center min-h-[52px]';if(mt){mt.innerText='Lib. '+fPT(Math.abs(diff),true,2);mt.className='text-base sm:text-lg font-black text-green-400';}}
     }else{if(elMN)elMN.innerText='---';if(elTN)elTN.innerText='---';if(elTPN)elTPN.className='hidden';}
 }
-function resetSim(){document.querySelectorAll('.sim-val,.sim-px').forEach(i=>i.value='');const sym=document.getElementById('sim-select-pos').value;const p=currentPositions.find(x=>x.symbol===sym);if(p)document.getElementById('sim-input-leverage').value=p.leverage;runSimulation();}
+function resetSim(){
+    document.querySelectorAll('.sim-val,.sim-px').forEach(i=>i.value='');
+    const sym=document.getElementById('sim-select-pos').value;
+    const p=currentPositions.find(x=>x.symbol===sym);
+    if(p)document.getElementById('sim-input-leverage').value=p.leverage;
+    runSimulation();
+}
 
 // ── Risk Calc ──
 function calcRisk(){
@@ -731,9 +886,9 @@ function calcRisk(){
     const sl=parseFloat(document.getElementById('rc-sl').value)||0;
     const lev=parseFloat(document.getElementById('rc-lev').value)||1;
     if(!bal||!risk||!entry||!sl||!lev)return;
-    const riskUsd=bal*(risk/100),slPct=Math.abs((entry-sl)/entry);
-    const posSize=riskUsd/slPct,margin=posSize/lev;
-    const tp=(entry>sl)?entry+(entry-sl)*2:entry-(sl-entry)*2;
+    const riskUsd=bal*(risk/100), slPct=Math.abs((entry-sl)/entry);
+    const posSize=riskUsd/slPct, margin=posSize/lev;
+    const tp=entry>sl?entry+(entry-sl)*2:entry-(sl-entry)*2;
     setText('rc-out-risk',fPT(riskUsd,true,2));
     setText('rc-out-size',fPT(posSize,true,0));
     setText('rc-out-margin',fPT(margin,true,2));
@@ -745,34 +900,35 @@ function calcFunding(){
     if(!fr||!days||!currentPositions.length){setText('rc-fund-out','--');return;}
     let total=0;
     currentPositions.forEach(p=>{total+=parseFloat(p.positionValue)*(fr/100)*3*days;});
-    setText('rc-fund-out',fPT(Math.abs(total),true,2)+` em ${days} dia(s)`);
-    const el=document.getElementById('rc-fund-out');if(el)el.className='mono text-lg text-red-400 mt-1';
+    const el=document.getElementById('rc-fund-out');
+    if(el){el.innerText=fPT(Math.abs(total),true,2)+` em ${days} dia(s)`;el.className='mono text-base sm:text-lg text-red-400 mt-1';}
 }
 
 // ── AI ──
 function handleAICall(){
-    const s=document.getElementById('ai-section');
-    s.classList.toggle('open');
+    const ai=document.getElementById('ai-section'), overlay=document.getElementById('ai-overlay');
+    ai.classList.toggle('open');
+    overlay.classList.toggle('open');
     document.getElementById('main-grid').classList.toggle('chat-open');
-    if(s.classList.contains('open')&&!hasAutoRun){
+    if(ai.classList.contains('open')&&!hasAutoRun){
         hasAutoRun=true;
         document.getElementById('ai-content').innerHTML='';
-        fetchAI(null,`Faz uma análise completa do meu portefólio BTC. Inclui: risco atual, distâncias de liquidação, ROE, funding rate e recomendações estratégicas. Contexto adicional: ${getIntelContext()}`);
+        fetchAI(null,`Faz uma análise completa do meu portefólio BTC. Inclui: risco atual, distâncias de liquidação, ROE, funding rate e recomendações estratégicas. Contexto: ${getIntelContext()}`);
     }
 }
 function quickPrompt(q){
-    const s=document.getElementById('ai-section');
-    if(!s.classList.contains('open')){s.classList.add('open');document.getElementById('main-grid').classList.add('chat-open');}
+    const ai=document.getElementById('ai-section'), overlay=document.getElementById('ai-overlay');
+    if(!ai.classList.contains('open')){ai.classList.add('open');overlay.classList.add('open');document.getElementById('main-grid').classList.add('chat-open');}
     fetchAI(q);
 }
-async function fetchAI(userQ=null,hiddenQ=null){
+async function fetchAI(userQ=null, hiddenQ=null){
     const content=document.getElementById('ai-content');
     if(userQ){hiddenQ=`Contexto Intel: ${getIntelContext()}\n\nPergunta: ${userQ}`;content.insertAdjacentHTML('beforeend',`<div class="user-msg msg">${userQ}</div>`);content.scrollTop=content.scrollHeight;}
     const q=hiddenQ||userQ;
     const lid='load-'+Date.now();
     content.insertAdjacentHTML('beforeend',`<div id="${lid}" class="bot-msg msg"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>`);
     content.scrollTop=content.scrollHeight;
-    document.getElementById('ai-loading').classList.remove('hidden');
+    document.getElementById('ai-loading')?.classList.remove('hidden');
     try{
         const r=await fetch(AI_FUNC_PATH,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${SUPABASE_KEY}`,'apikey':SUPABASE_KEY},body:JSON.stringify({positions:currentPositions,userMessage:q})});
         const d=await r.json();
@@ -782,13 +938,13 @@ async function fetchAI(userQ=null,hiddenQ=null){
         const mid='msg-'+Date.now();
         content.insertAdjacentHTML('beforeend',`<div id="${mid}" class="bot-msg msg"></div>`);
         const msgEl=document.getElementById(mid);
-        let i=0,tag=false,buf='';
-        function type(){if(i<txt.length){const c=txt.charAt(i);if(c==='<')tag=true;buf+=c;if(c==='>')tag=false;msgEl.innerHTML=buf;i++;const atBot=Math.abs(content.scrollHeight-content.scrollTop-content.clientHeight)<60;if(atBot)content.scrollTop=content.scrollHeight;tag?type():setTimeout(type,8);}}
+        let i=0, tag=false, buf='';
+        function type(){if(i<txt.length){const c=txt.charAt(i);if(c==='<')tag=true;buf+=c;if(c==='>')tag=false;msgEl.innerHTML=buf;i++;const atBot=Math.abs(content.scrollHeight-content.scrollTop-content.clientHeight)<80;if(atBot)content.scrollTop=content.scrollHeight;tag?type():setTimeout(type,8);}}
         type();
-    }catch(e){document.getElementById(lid)?.remove();content.insertAdjacentHTML('beforeend','<div class="bot-msg msg text-red-400 text-xs">Erro de rede.</div>');}
-    finally{document.getElementById('ai-loading').classList.add('hidden');}
+    }catch(e){document.getElementById(lid)?.remove();content.insertAdjacentHTML('beforeend','<div class="bot-msg msg text-red-400 text-sm">Erro de rede.</div>');}
+    finally{document.getElementById('ai-loading')?.classList.add('hidden');}
 }
-function sendChat(){const i=document.getElementById('chat-input');if(i.value.trim()){fetchAI(i.value.trim());i.value='';}}
+function sendChat(){const i=document.getElementById('chat-input');if(i?.value.trim()){fetchAI(i.value.trim());i.value='';}}
 </script>
 </body>
 </html>
