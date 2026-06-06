@@ -245,71 +245,108 @@
 
 <!-- SIMULADOR -->
 <section id="tab-simulator" class="tab-content">
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        <!-- DCA -->
-        <div class="card p-4 sm:p-6">
-            <h2 class="font-black text-white text-xs uppercase tracking-widest mb-4 flex items-center gap-2">
-                <span style="color:#f7931a">◈</span> Simulador DCA
-            </h2>
-            <!-- Position selector row -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-                <div><p class="lbl mb-1.5">Posição Ativa</p><select id="sim-select-pos" onchange="loadPositionToSim()" class="text-sm"></select></div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div class="bg-white/5 p-3 rounded-xl border border-white/5 flex flex-col justify-center">
-                        <p class="lbl">Mark Price</p>
-                        <p id="sim-mark-price" class="mono text-base sm:text-lg" style="color:#f7931a">--</p>
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+
+        <!-- DCA PLANNER (xl: 2/3) -->
+        <div class="xl:col-span-2 space-y-4">
+
+            <!-- 1. Position header -->
+            <div class="card p-4 sm:p-5">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <h2 class="font-black text-white text-xs uppercase tracking-widest flex items-center gap-2">
+                        <span style="color:#f7931a">◈</span> DCA Planner
+                    </h2>
+                    <select id="sim-select-pos" onchange="loadPositionToSim()" class="!w-auto !min-w-[170px]">
+                        <option value="">— Sem posição ativa —</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <div class="bg-white/5 rounded-xl p-3 border border-white/5">
+                        <p class="lbl mb-1">Entrada</p>
+                        <p id="sim-cur-entry" class="mono text-sm font-bold text-white">--</p>
                     </div>
-                    <div class="bg-white/5 p-3 rounded-xl border border-white/5 flex flex-col justify-center">
-                        <p class="lbl">Tamanho</p>
-                        <p id="sim-current-qty" class="mono text-base sm:text-lg text-white">--</p>
+                    <div class="bg-white/5 rounded-xl p-3 border border-white/5">
+                        <p class="lbl mb-1">Mark Price</p>
+                        <p id="sim-cur-mark" class="mono text-sm font-bold" style="color:#f7931a">--</p>
+                    </div>
+                    <div class="bg-white/5 rounded-xl p-3 border border-white/5">
+                        <p class="lbl mb-1">Liquidação</p>
+                        <p id="sim-cur-liq" class="mono text-sm font-bold text-red-400">--</p>
+                    </div>
+                    <div class="bg-white/5 rounded-xl p-3 border border-white/5">
+                        <p class="lbl mb-1">Tamanho / Lev</p>
+                        <p id="sim-cur-size" class="mono text-sm font-bold text-gray-300">--</p>
                     </div>
                 </div>
             </div>
-            <div class="mb-4">
-                <p class="lbl mb-1.5" style="color:#f7931a">Alavancagem</p>
-                <input type="number" id="sim-input-leverage" oninput="runSimulation()" placeholder="Ex: 10" class="text-base" style="color:#f7931a;font-weight:900">
-            </div>
-            <!-- Comparison panels -->
-            <div class="grid grid-cols-2 gap-3 mb-4">
-                <div class="bg-white/5 border border-white/10 p-3 sm:p-4 rounded-xl space-y-3">
-                    <h4 class="text-gray-500 text-[9px] font-black uppercase tracking-widest border-b border-gray-800 pb-2">Atual</h4>
-                    <div><p class="lbl">Entrada</p><p class="mono text-white text-sm" id="sim-panel-current-entry">--</p></div>
-                    <div><p class="lbl">Liquidação</p><p class="mono text-red-400 text-sm" id="sim-panel-current-liq">--</p></div>
-                    <div><p class="lbl">Take Profit</p><p class="mono text-yellow-500 text-sm" id="sim-panel-current-tp">--</p><p class="text-[9px] text-gray-500 mt-0.5" id="sim-panel-current-tp-pnl"></p></div>
-                    <div><p class="lbl">Margem</p><p class="mono text-gray-300 text-sm" id="sim-panel-current-margin">--</p></div>
+
+            <!-- 2. DCA levels + visual ladder -->
+            <div class="card p-4 sm:p-5">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                    <h3 class="font-black text-white text-xs uppercase tracking-widest flex items-center gap-2">
+                        <span style="color:#02d386">▼</span> Níveis de DCA
+                    </h3>
+                    <div class="flex gap-2">
+                        <select id="dca-strategy" onchange="applyDCAStrategy()" class="!w-auto !min-w-[140px] !min-h-[36px] !py-1 text-xs">
+                            <option value="manual">Manual</option>
+                            <option value="equal">Espaçamento Igual</option>
+                            <option value="martingale">Martingale</option>
+                        </select>
+                        <button onclick="addDCALevel()" class="px-3 py-1 text-xs font-black uppercase rounded-lg text-black min-h-[36px] flex-shrink-0" style="background:#f7931a">+ Nível</button>
+                    </div>
                 </div>
-                <div class="p-3 sm:p-4 rounded-xl space-y-3 relative overflow-hidden" style="background:rgba(2,211,134,0.04);border:1px solid rgba(2,211,134,0.18)">
-                    <div class="absolute top-0 right-0 text-black text-[7px] font-black px-2 py-0.5 rounded-bl-lg uppercase" style="background:#02d386">Nova</div>
-                    <h4 class="text-[9px] font-black uppercase tracking-widest border-b pb-2" style="color:#02d386;border-color:rgba(2,211,134,0.15)">Projeção</h4>
-                    <div><p class="lbl" style="color:rgba(2,211,134,0.6)">Entrada</p><p class="mono text-white text-sm" id="res-new-avg">---</p></div>
-                    <div><p class="lbl" style="color:rgba(2,211,134,0.6)">Liquidação</p><p class="mono text-red-400 text-sm" id="sim-level-new-liq">---</p></div>
-                    <div><p class="lbl" style="color:rgba(2,211,134,0.6)">Take Profit</p><p class="mono text-yellow-500 text-sm" id="sim-level-new-tp">---</p><p class="text-[9px] text-gray-400 mt-0.5 hidden" id="sim-panel-new-tp-pnl"></p></div>
-                    <div><p class="lbl" style="color:rgba(2,211,134,0.6)">Margem</p><p class="mono text-white text-sm" id="sim-level-new-margin">---</p></div>
-                </div>
-            </div>
-            <!-- DCA Slots -->
-            <div class="mb-4">
-                <div class="grid grid-cols-[36px_1fr_1fr] gap-2 mb-2 px-1 border-b border-gray-800 pb-1.5">
-                    <div class="lbl text-center">On</div>
-                    <div class="lbl">USD</div>
-                    <div class="lbl">Preço</div>
-                </div>
-                <div id="sim-slots-body" class="space-y-2"></div>
-            </div>
-            <div class="grid grid-cols-2 gap-2.5 mb-3">
-                <div class="bg-white/5 p-3 rounded-xl border border-white/10 flex justify-between items-center min-h-[52px]">
-                    <span class="lbl">Custo DCA</span>
-                    <span id="res-total-cost" class="text-base sm:text-lg font-bold text-gray-300">$0</span>
-                </div>
-                <div id="margin-adj-panel" class="p-3 rounded-xl border border-gray-700 bg-gray-900 flex justify-between items-center min-h-[52px]">
-                    <span class="lbl text-white">Margem</span>
-                    <span id="res-margin-adj" class="text-base sm:text-lg font-black text-gray-400">S/ Alt.</span>
+                <div class="grid grid-cols-1 lg:grid-cols-[1fr_164px] gap-4">
+                    <!-- Levels list -->
+                    <div>
+                        <div id="dca-levels-body" class="space-y-2"></div>
+                        <p id="dca-empty-hint" class="text-center py-8 text-gray-600 text-[10px] font-black uppercase tracking-widest">Adiciona um nível ou escolhe uma estratégia</p>
+                    </div>
+                    <!-- SVG Price Ladder -->
+                    <div class="hidden lg:flex flex-col items-center">
+                        <p class="lbl mb-2 text-center w-full">Escala de Preço</p>
+                        <svg id="dca-ladder-svg" width="164" height="360" overflow="visible"></svg>
+                    </div>
                 </div>
             </div>
-            <button onclick="resetSim()" class="w-full py-3 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-white hover:bg-white/5 transition-all min-h-[44px]">Limpar</button>
+
+            <!-- 3. Summary -->
+            <div class="card p-4">
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                    <div class="bg-white/5 rounded-xl p-3 border border-white/10 text-center">
+                        <p class="lbl mb-1">Total Adicionado</p>
+                        <p id="dca-sum-cost" class="mono text-lg font-black text-white">$0</p>
+                    </div>
+                    <div class="rounded-xl p-3 border text-center" style="background:rgba(2,211,134,0.05);border-color:rgba(2,211,134,0.2)">
+                        <p class="lbl mb-1" style="color:rgba(2,211,134,0.7)">Nova Entrada Média</p>
+                        <p id="dca-sum-avg" class="mono text-lg font-black" style="color:#02d386">--</p>
+                    </div>
+                    <div class="rounded-xl p-3 border text-center" style="background:rgba(246,70,93,0.05);border-color:rgba(246,70,93,0.2)">
+                        <p class="lbl mb-1 text-red-400">Nova Liquidação</p>
+                        <p id="dca-sum-liq" class="mono text-lg font-black text-red-400">--</p>
+                    </div>
+                    <div class="bg-white/5 rounded-xl p-3 border border-white/10 text-center">
+                        <p class="lbl mb-1">Margem Extra</p>
+                        <p id="dca-sum-margin" class="mono text-lg font-black text-gray-300">--</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between mb-1.5">
+                        <span class="lbl">Distância à Liquidação (pós-DCA)</span>
+                        <span id="dca-liq-pct" class="lbl text-white">--%</span>
+                    </div>
+                    <div class="prog-bg">
+                        <div id="dca-liq-fill" class="prog-fill" style="width:0%;background:linear-gradient(90deg,#02d386,#f3ba2f,#f6465d)"></div>
+                    </div>
+                    <div class="flex justify-between mt-1">
+                        <span class="text-[9px] text-green-400 font-bold">MARK PRICE</span>
+                        <span class="text-[9px] text-red-400 font-bold">LIQUIDAÇÃO</span>
+                    </div>
+                </div>
+            </div>
         </div>
-        <!-- Risk Calc -->
-        <div class="card p-4 sm:p-6">
+
+        <!-- RIGHT: Risk Calculator -->
+        <div class="card p-4 sm:p-5">
             <h2 class="font-black text-white text-xs uppercase tracking-widest mb-4 flex items-center gap-2">
                 <span style="color:#f7931a">◈</span> Calculadora de Risco
             </h2>
@@ -469,7 +506,6 @@ const BYBIT = 'https://api.bybit.com';
 let currentPositions = [], intelHistory = [], hasAutoRun = false, btcPrev = 0, mktChart = null, fundingTimer = null;
 
 window.onload = async () => {
-    generateSimSlots();
     loadIntelHistory();
     await Promise.all([fetchPositions(), fetchMarketData(), fetchDominance()]);
     fetchTelemetry();
@@ -647,7 +683,7 @@ async function fetchPositions() {
             currentPositions=d.result.list.filter(p=>parseFloat(p.size)!==0);
             updateDashboard(currentPositions);
             updateSimDropdown(currentPositions);
-            runSimulation();
+            runDCACalc();
         }
     }catch(e){}
 }
@@ -810,72 +846,299 @@ function renderIntelHistory(){
 }
 function getIntelContext(){if(!intelHistory.length)return'Sem contexto adicional.';return intelHistory.slice(0,5).map(h=>`[${h.date}] ${h.text}`).join('\n\n');}
 
-// ── Simulator ──
-function generateSimSlots(){
-    const b=document.getElementById('sim-slots-body'); if(!b)return;
-    for(let i=0;i<8;i++){
-        const r=document.createElement('div');
-        r.className='grid grid-cols-[36px_1fr_1fr] gap-2 items-center';
-        r.innerHTML=`<div class="flex justify-center"><input type="checkbox" checked class="sim-cb w-5 h-5" style="accent-color:#f7931a" onchange="runSimulation()"></div><input type="number" class="sim-val" placeholder="USD" oninput="runSimulation()"><input type="number" class="sim-px" placeholder="Preço" oninput="runSimulation()">`;
-        b.appendChild(r);
+// ── DCA Planner ──
+let dcaLevelCount = 0;
+
+function updateSimDropdown(positions) {
+    const s = document.getElementById('sim-select-pos'); if (!s) return;
+    const v = s.value;
+    s.innerHTML = '<option value="">— Sem posição ativa —</option>';
+    positions.forEach(p => { const o = document.createElement('option'); o.value = p.symbol; o.innerText = `${p.symbol} (${p.side})`; s.appendChild(o); });
+    if (v) s.value = v;
+}
+
+function loadPositionToSim() {
+    const sym = document.getElementById('sim-select-pos').value;
+    const pos = currentPositions.find(x => x.symbol === sym);
+    if (!pos) { updateDCASVG(null); return; }
+    setText('sim-cur-entry', fPT(pos.avgPrice, false, 2));
+    setText('sim-cur-mark', fPT(pos.markPrice, false, 2));
+    setText('sim-cur-liq', fPT(pos.liqPrice, false, 2));
+    setText('sim-cur-size', `${fPT(Math.abs(parseFloat(pos.size)), false, 2)} / ${pos.leverage}x`);
+    document.getElementById('dca-levels-body').innerHTML = '';
+    dcaLevelCount = 0;
+    document.getElementById('dca-strategy').value = 'manual';
+    const hint = document.getElementById('dca-empty-hint');
+    if (hint) hint.style.display = '';
+    runDCACalc();
+}
+
+function addDCALevel(pctDefault, usdDefault) {
+    dcaLevelCount++;
+    const id = dcaLevelCount;
+    const hint = document.getElementById('dca-empty-hint');
+    if (hint) hint.style.display = 'none';
+    const sym = document.getElementById('sim-select-pos').value;
+    const pos = currentPositions.find(x => x.symbol === sym);
+    const isLong = pos ? pos.side === 'Buy' : true;
+    const row = document.createElement('div');
+    row.id = `dca-row-${id}`;
+    row.className = 'dca-level-row rounded-xl border border-white/6 p-3' ;
+    row.style.background = 'rgba(255,255,255,0.025)';
+    row.innerHTML = `
+        <div class="flex items-center gap-2 mb-2.5">
+            <input type="checkbox" checked class="dca-cb w-4 h-4 flex-shrink-0" style="accent-color:#f7931a" onchange="runDCACalc()">
+            <span class="text-[10px] font-black uppercase tracking-widest text-gray-500">Nível ${id}</span>
+            <button onclick="removeDCALevel(${id})" class="ml-auto text-gray-700 hover:text-red-400 transition-colors text-xl leading-none px-1 min-h-[28px]">×</button>
+        </div>
+        <div class="grid grid-cols-3 gap-2 mb-2.5">
+            <div>
+                <p class="lbl mb-1">% de Entrada</p>
+                <input type="number" class="dca-pct" style="min-height:38px;font-size:0.82rem" placeholder="${isLong ? '-5' : '+5'}" value="${pctDefault !== undefined ? pctDefault : ''}" oninput="onDCAPctChange(this)" step="0.5">
+            </div>
+            <div>
+                <p class="lbl mb-1">Preço</p>
+                <input type="number" class="dca-price" style="min-height:38px;font-size:0.82rem" placeholder="--" oninput="runDCACalc()">
+            </div>
+            <div>
+                <p class="lbl mb-1">USD</p>
+                <input type="number" class="dca-usd" style="min-height:38px;font-size:0.82rem" placeholder="100" value="${usdDefault !== undefined ? usdDefault : ''}" oninput="runDCACalc()">
+            </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2 pt-2.5 border-t border-white/5">
+            <div class="flex items-center justify-between">
+                <span class="lbl">Média Acum.</span>
+                <span class="dca-calc-avg mono text-xs font-black text-white">--</span>
+            </div>
+            <div class="flex items-center justify-between">
+                <span class="lbl">Liq. Acum.</span>
+                <span class="dca-calc-liq mono text-xs font-black text-red-400">--</span>
+            </div>
+        </div>`;
+    document.getElementById('dca-levels-body').appendChild(row);
+    if (pctDefault !== undefined) onDCAPctChange(row.querySelector('.dca-pct'));
+    else runDCACalc();
+}
+
+function onDCAPctChange(input) {
+    const row = input.closest('.dca-level-row');
+    const pct = parseFloat(input.value);
+    const sym = document.getElementById('sim-select-pos').value;
+    const pos = currentPositions.find(x => x.symbol === sym);
+    if (!pos || isNaN(pct)) { runDCACalc(); return; }
+    row.querySelector('.dca-price').value = (parseFloat(pos.avgPrice) * (1 + pct / 100)).toFixed(2);
+    runDCACalc();
+}
+
+function removeDCALevel(id) {
+    const row = document.getElementById(`dca-row-${id}`);
+    if (row) row.remove();
+    const hint = document.getElementById('dca-empty-hint');
+    if (hint && !document.querySelector('.dca-level-row')) hint.style.display = '';
+    runDCACalc();
+}
+
+function applyDCAStrategy() {
+    const strategy = document.getElementById('dca-strategy').value;
+    const sym = document.getElementById('sim-select-pos').value;
+    const pos = currentPositions.find(x => x.symbol === sym);
+    document.getElementById('dca-levels-body').innerHTML = '';
+    dcaLevelCount = 0;
+    const hint = document.getElementById('dca-empty-hint');
+    const isLong = pos ? pos.side === 'Buy' : true;
+    if (strategy === 'equal') {
+        const pcts = isLong ? [-3, -6, -10, -15] : [3, 6, 10, 15];
+        pcts.forEach(p => addDCALevel(p, 100));
+    } else if (strategy === 'martingale') {
+        const pcts = isLong ? [-2, -5, -9, -14] : [2, 5, 9, 14];
+        [50, 100, 200, 400].forEach((u, i) => addDCALevel(pcts[i], u));
+    } else {
+        if (hint) hint.style.display = '';
+        addDCALevel();
     }
 }
-function updateSimDropdown(positions){
-    const s=document.getElementById('sim-select-pos'); if(!s)return;
-    const v=s.value; s.innerHTML='<option value="">Selecionar...</option>';
-    positions.forEach(p=>{const o=document.createElement('option');o.value=p.symbol;o.innerText=`${p.symbol} (${p.side})`;s.appendChild(o);});
-    if(v)s.value=v;
-}
-function loadPositionToSim(){
-    const sym=document.getElementById('sim-select-pos').value;
-    const p=currentPositions.find(x=>x.symbol===sym); if(!p)return;
-    const marg=parseFloat(p.positionValue)/parseFloat(p.leverage);
-    setText('sim-mark-price',fPT(p.markPrice,false,2));
-    setText('sim-current-qty',fPT(Math.abs(parseFloat(p.size)),false,4));
-    document.getElementById('sim-input-leverage').value=p.leverage;
-    setText('sim-panel-current-entry',fPT(p.avgPrice,false,2));
-    setText('sim-panel-current-liq',fPT(p.liqPrice,false,2));
-    setText('sim-panel-current-margin',fPT(marg,true,2));
-    const tp=parseFloat(p.takeProfit);
-    setText('sim-panel-current-tp',tp>0?fPT(tp,false,2):'N/D');
-    if(tp>0){const qty=Math.abs(parseFloat(p.size)),est=p.side==='Buy'?(tp-p.avgPrice)*qty:(p.avgPrice-tp)*qty;setText('sim-panel-current-tp-pnl','PnL: '+fPT(est,true,2));}
-    runSimulation();
-}
-function runSimulation(){
-    const sym=document.getElementById('sim-select-pos').value;
-    const p=currentPositions.find(x=>x.symbol===sym); if(!p)return;
-    let curQty=Math.abs(parseFloat(p.size)), curAvg=parseFloat(p.avgPrice), origLev=parseFloat(p.leverage);
-    let newLev=parseFloat(document.getElementById('sim-input-leverage').value);
-    if(isNaN(newLev)||newLev<=0)newLev=origLev;
-    let totalQty=curQty, totalW=curQty*curAvg, totalCost=0;
-    document.querySelectorAll('.sim-val').forEach((v,i)=>{
-        const cb=document.querySelectorAll('.sim-cb')[i], px=document.querySelectorAll('.sim-px')[i];
-        if(cb.checked&&v.value&&px.value){const usd=parseFloat(v.value),price=parseFloat(px.value),qty=usd/price;totalQty+=qty;totalW+=qty*price;totalCost+=usd;}
+
+function runDCACalc() {
+    const sym = document.getElementById('sim-select-pos').value;
+    const pos = currentPositions.find(x => x.symbol === sym);
+    if (!pos) { updateDCASVG(null); return; }
+
+    const curQty = Math.abs(parseFloat(pos.size));
+    const curAvg = parseFloat(pos.avgPrice);
+    const curLev = parseFloat(pos.leverage);
+    const markPrice = parseFloat(pos.markPrice);
+    const isLong = pos.side === 'Buy';
+    const isInverse = !pos.symbol.endsWith('USDT') && pos.symbol.includes('USD');
+
+    // Normalize: posUsd = USD notional, totalBtc = BTC equivalent
+    const posUsd = isInverse ? curQty : curQty * curAvg;
+    let totalUsd = posUsd;
+    let totalBtc = isInverse ? curQty / curAvg : curQty;
+    let totalCostAdded = 0;
+
+    const curLiq = isLong
+        ? curAvg * (1 - 1 / curLev + 0.005)
+        : curAvg * (1 + 1 / curLev - 0.005);
+
+    const levelData = [];
+
+    document.querySelectorAll('.dca-level-row').forEach(row => {
+        const cb = row.querySelector('.dca-cb');
+        const priceEl = row.querySelector('.dca-price');
+        const usdEl = row.querySelector('.dca-usd');
+        const avgEl = row.querySelector('.dca-calc-avg');
+        const liqEl = row.querySelector('.dca-calc-liq');
+        const price = parseFloat(priceEl.value);
+        const usd = parseFloat(usdEl.value);
+
+        if (!cb.checked || isNaN(price) || isNaN(usd) || price <= 0 || usd <= 0) {
+            if (avgEl) avgEl.textContent = '--';
+            if (liqEl) { liqEl.textContent = '--'; liqEl.className = 'dca-calc-liq mono text-xs font-black text-red-400'; }
+            return;
+        }
+
+        totalBtc += usd / price;
+        totalUsd += usd;
+        totalCostAdded += usd;
+
+        const cumAvg = totalUsd / totalBtc;
+        const cumLiq = isLong
+            ? cumAvg * (1 - 1 / curLev + 0.005)
+            : cumAvg * (1 + 1 / curLev - 0.005);
+
+        if (avgEl) avgEl.textContent = fPT(cumAvg, false, 2);
+        if (liqEl) {
+            liqEl.textContent = fPT(cumLiq, false, 2);
+            liqEl.className = 'dca-calc-liq mono text-xs font-black text-red-400';
+        }
+        levelData.push({ price, usd, cumAvg, cumLiq });
     });
-    const nAvg=totalW/totalQty;
-    setText('res-new-avg',totalCost>0?fPT(nAvg,false,2):'---');
-    setText('res-total-cost',fPT(totalCost,true,0));
-    const newLiq=p.side==='Buy'?nAvg*(1-1/newLev+0.005):nAvg*(1+1/newLev-0.005);
-    setText('sim-level-new-liq',(totalCost>0||newLev!==origLev)?fPT(newLiq,false,2):'---');
-    const curMarg=(curQty*curAvg)/origLev, newMarg=(totalQty*nAvg)/newLev, diff=newMarg-curMarg;
-    const tp=parseFloat(p.takeProfit);
-    const elMN=document.getElementById('sim-level-new-margin'), elTN=document.getElementById('sim-level-new-tp'), elTPN=document.getElementById('sim-panel-new-tp-pnl');
-    if(totalCost>0||newLev!==origLev){
-        if(elMN)elMN.innerText=fPT(newMarg,true,2);
-        if(tp>0&&elTN){elTN.innerText=fPT(tp,false,2);if(elTPN){const est=p.side==='Buy'?(tp-nAvg)*totalQty:(nAvg-tp)*totalQty;elTPN.innerText='PnL: '+fPT(est,true,2);elTPN.className='text-[9px] text-gray-400 mt-0.5 block';}}
-        else if(elTN){elTN.innerText='N/D';if(elTPN)elTPN.className='hidden';}
-        const mp=document.getElementById('margin-adj-panel'), mt=document.getElementById('res-margin-adj');
-        if(Math.abs(diff)<1){if(mp)mp.className='p-3 rounded-xl border border-gray-700 bg-gray-900 flex justify-between items-center min-h-[52px]';if(mt){mt.innerText='S/ Alt.';mt.className='text-base sm:text-lg font-black text-gray-400';}}
-        else if(diff>0){if(mp)mp.className='p-3 rounded-xl border border-red-500/30 bg-red-500/10 flex justify-between items-center min-h-[52px]';if(mt){mt.innerText='Add '+fPT(diff,true,2);mt.className='text-base sm:text-lg font-black text-red-400';}}
-        else{if(mp)mp.className='p-3 rounded-xl border border-green-500/30 bg-green-500/10 flex justify-between items-center min-h-[52px]';if(mt){mt.innerText='Lib. '+fPT(Math.abs(diff),true,2);mt.className='text-base sm:text-lg font-black text-green-400';}}
-    }else{if(elMN)elMN.innerText='---';if(elTN)elTN.innerText='---';if(elTPN)elTPN.className='hidden';}
+
+    const finalAvg = totalCostAdded > 0 ? totalUsd / totalBtc : null;
+    const finalLiq = finalAvg
+        ? (isLong ? finalAvg * (1 - 1 / curLev + 0.005) : finalAvg * (1 + 1 / curLev - 0.005))
+        : null;
+
+    setText('dca-sum-cost', fPT(totalCostAdded, true, 0));
+    setText('dca-sum-avg', finalAvg ? fPT(finalAvg, false, 2) : '--');
+    setText('dca-sum-liq', fPT(finalLiq || curLiq, false, 2));
+    setText('dca-sum-margin', totalCostAdded > 0 ? fPT(totalCostAdded / curLev, true, 2) : '--');
+
+    const dispLiq = finalLiq || curLiq;
+    const liqDist = isLong
+        ? (markPrice - dispLiq) / markPrice * 100
+        : (dispLiq - markPrice) / markPrice * 100;
+    const liqPct = Math.max(0, Math.min(100, liqDist));
+    setText('dca-liq-pct', liqPct.toFixed(1) + '%');
+    const fill = document.getElementById('dca-liq-fill');
+    if (fill) fill.style.width = (100 - liqPct) + '%';
+
+    updateDCASVG({ markPrice, curAvg, curLiq, isLong, levelData, finalAvg, finalLiq });
 }
-function resetSim(){
-    document.querySelectorAll('.sim-val,.sim-px').forEach(i=>i.value='');
-    const sym=document.getElementById('sim-select-pos').value;
-    const p=currentPositions.find(x=>x.symbol===sym);
-    if(p)document.getElementById('sim-input-leverage').value=p.leverage;
-    runSimulation();
+
+function updateDCASVG(data) {
+    const svg = document.getElementById('dca-ladder-svg');
+    if (!svg) return;
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    if (!data) return;
+
+    const { markPrice, curAvg, curLiq, isLong, levelData, finalAvg, finalLiq } = data;
+    const W = 164, H = 360, PT = 18, PB = 18, PL = 6, PR = 56;
+    const cH = H - PT - PB, cW = W - PL - PR;
+    const ns = 'http://www.w3.org/2000/svg';
+
+    const prices = [markPrice, curAvg, curLiq];
+    if (finalAvg) prices.push(finalAvg);
+    if (finalLiq) prices.push(finalLiq);
+    levelData.forEach(l => prices.push(l.price));
+    const minP = Math.min(...prices) * 0.997;
+    const maxP = Math.max(...prices) * 1.003;
+    const sy = p => PT + ((maxP - p) / (maxP - minP)) * cH;
+
+    const line = (y, color, dash, w) => {
+        const el = document.createElementNS(ns, 'line');
+        el.setAttribute('x1', PL); el.setAttribute('y1', y);
+        el.setAttribute('x2', PL + cW); el.setAttribute('y2', y);
+        el.setAttribute('stroke', color); el.setAttribute('stroke-width', w || 1.5);
+        if (dash) el.setAttribute('stroke-dasharray', dash);
+        svg.appendChild(el);
+    };
+    const dot = (x, y, r, color) => {
+        const el = document.createElementNS(ns, 'circle');
+        el.setAttribute('cx', x); el.setAttribute('cy', y);
+        el.setAttribute('r', r); el.setAttribute('fill', color);
+        svg.appendChild(el);
+    };
+    const txt = (x, y, t, color, size) => {
+        const el = document.createElementNS(ns, 'text');
+        el.setAttribute('x', x); el.setAttribute('y', y);
+        el.setAttribute('fill', color || '#848e9c');
+        el.setAttribute('font-size', size || 7.5);
+        el.setAttribute('font-family', 'Roboto Mono,monospace');
+        el.setAttribute('font-weight', '700');
+        el.textContent = t; svg.appendChild(el);
+    };
+    const rect = (x, y, w, h, fill, rx) => {
+        const el = document.createElementNS(ns, 'rect');
+        el.setAttribute('x', x); el.setAttribute('y', y);
+        el.setAttribute('width', w); el.setAttribute('height', h);
+        el.setAttribute('fill', fill); if (rx) el.setAttribute('rx', rx);
+        svg.appendChild(el);
+    };
+
+    // Grid
+    for (let i = 0; i <= 4; i++) {
+        const gy = PT + (cH / 4) * i;
+        const gl = document.createElementNS(ns, 'line');
+        gl.setAttribute('x1', PL); gl.setAttribute('y1', gy);
+        gl.setAttribute('x2', PL + cW); gl.setAttribute('y2', gy);
+        gl.setAttribute('stroke', 'rgba(255,255,255,0.04)'); gl.setAttribute('stroke-width', '1');
+        svg.appendChild(gl);
+    }
+
+    // Risk zone (entry → liq, tinted red)
+    const yE = sy(curAvg), yL = sy(curLiq);
+    rect(PL, isLong ? yE : yL, cW, Math.abs(yL - yE), 'rgba(246,70,93,0.07)');
+
+    // Current liq (dashed red)
+    line(sy(curLiq), '#f6465d', '4,2', 1);
+    dot(PL + cW, sy(curLiq), 3, '#f6465d');
+    txt(PL + cW + 5, sy(curLiq) + 3, 'LIQ', '#f6465d', 7);
+
+    // DCA level bars + lines
+    const maxUsd = Math.max(...levelData.map(l => l.usd), 1);
+    levelData.forEach((l, i) => {
+        const y = sy(l.price);
+        const bw = (l.usd / maxUsd) * cW * 0.65 + cW * 0.12;
+        rect(PL, y - 2.5, bw, 5, 'rgba(0,170,255,0.22)', 2);
+        line(y, 'rgba(0,170,255,0.45)', '3,2', 1);
+        dot(PL + cW, y, 3.5, '#00aaff');
+        txt(PL + cW + 5, y + 3, `D${i + 1}`, '#00aaff', 7);
+    });
+
+    // Final liq* (darker red)
+    if (finalLiq) {
+        line(sy(finalLiq), '#c0392b', '3,2', 1.5);
+        dot(PL + cW, sy(finalLiq), 3, '#c0392b');
+        txt(PL + cW + 5, sy(finalLiq) + 3, 'L*', '#c0392b', 7);
+    }
+
+    // Final avg* (green dashed)
+    if (finalAvg) {
+        line(sy(finalAvg), '#02d386', '4,2', 1.5);
+        dot(PL + cW, sy(finalAvg), 3.5, '#02d386');
+        txt(PL + cW + 5, sy(finalAvg) + 3, 'A*', '#02d386', 7);
+    }
+
+    // Current avg entry (orange solid — on top)
+    line(sy(curAvg), '#f7931a', null, 2);
+    dot(PL + cW, sy(curAvg), 5, '#f7931a');
+    txt(PL + cW + 5, sy(curAvg) + 3, 'AVG', '#f7931a', 7);
+
+    // Mark price (white dashed — topmost)
+    line(sy(markPrice), 'rgba(255,255,255,0.65)', '2,2', 1.5);
+    dot(PL + cW, sy(markPrice), 5, 'white');
+    txt(PL + cW + 5, sy(markPrice) + 3, 'MRK', 'white', 7);
 }
 
 // ── Risk Calc ──
