@@ -3,767 +3,792 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Trading Lab - v24.4 UI Elite</title>
+    <title>BTC Command Center</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root { --risk-rgb: 2, 211, 134; --yellow-binance: #f3ba2f; }
-        body { 
-            background-color: #080a0c; color: #f0f2f5; font-family: 'Outfit', sans-serif; 
-            -webkit-font-smoothing: antialiased; background-image: radial-gradient(circle at top right, rgba(var(--risk-rgb), 0.1), transparent 800px);
-            min-height: 100vh; overflow-x: hidden;
-        }
-        .card { background: rgba(24, 26, 32, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; }
-        .metric-label { color: #848e9c; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.15em; font-weight: 800; }
-        .metric-value { font-family: 'Roboto Mono', monospace; font-weight: 700; }
-        
-        .nav-btn { padding: 12px 20px; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: #848e9c; border-bottom: 2px solid transparent; transition: 0.3s; white-space: nowrap; }
-        .nav-btn.active { color: var(--yellow-binance); border-bottom-color: var(--yellow-binance); }
+        :root { --btc: #f7931a; --green: #02d386; --red: #f6465d; --bg: #080a0c; }
+        body { background: var(--bg); color: #f0f2f5; font-family: 'Outfit', sans-serif; -webkit-font-smoothing: antialiased; background-image: radial-gradient(circle at top right, rgba(247,147,26,0.06), transparent 700px); min-height: 100vh; overflow-x: hidden; }
+        .card { background: rgba(24,26,32,0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; }
+        .lbl { color: #848e9c; font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.15em; font-weight: 800; }
+        .mono { font-family: 'Roboto Mono', monospace; font-weight: 700; }
+        .nav-btn { padding: 10px 14px; font-weight: 800; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.1em; color: #848e9c; border-bottom: 2px solid transparent; transition: 0.3s; white-space: nowrap; cursor: pointer; }
+        .nav-btn.active { color: var(--btc); border-bottom-color: var(--btc); }
         .tab-content { display: none; }
         .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
-
-        .progress-bg { background-color: #1e2329; height: 6px; border-radius: 3px; width: 100%; margin-top: 6px; overflow: hidden; }
-        .progress-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
-
-        .app-grid { display: grid; grid-template-columns: 1fr; gap: 20px; padding: 20px; max-width: 1800px; margin: 0 auto; transition: all 0.4s ease; }
-        
-        @media (min-width: 1280px) { 
-            .app-grid.chat-open { grid-template-columns: 1fr 450px; } 
-            #ai-section { height: calc(100vh - 120px); position: sticky; top: 100px; } 
-        }
-        
-        @media (max-width: 1279px) {
-            #ai-section.open {
-                position: fixed;
-                top: 85px; 
-                left: 10px;
-                right: 10px;
-                height: calc(100vh - 100px);
-                z-index: 100;
-                box-shadow: 0 20px 50px rgba(0,0,0,0.9);
-                border: 1px solid rgba(243, 186, 47, 0.3);
-            }
-        }
-
-        #ai-section { display: none; flex-direction: column; scroll-behavior: smooth; }
+        .prog-bg { background: #1e2329; height: 5px; border-radius: 3px; overflow: hidden; margin-top: 5px; }
+        .prog-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
+        .app-grid { display: grid; grid-template-columns: 1fr; gap: 20px; padding: 16px; max-width: 1900px; margin: 0 auto; transition: all 0.4s ease; }
+        @media (min-width: 1280px) { .app-grid.chat-open { grid-template-columns: 1fr 420px; } #ai-section { height: calc(100vh - 90px); position: sticky; top: 74px; } }
+        @media (max-width: 1279px) { #ai-section.open { position: fixed; top: 74px; left: 10px; right: 10px; height: calc(100vh - 88px); z-index: 100; box-shadow: 0 20px 50px rgba(0,0,0,0.95); border: 1px solid rgba(247,147,26,0.3); } }
+        #ai-section { display: none; flex-direction: column; }
         #ai-section.open { display: flex; }
-        
-        .msg { margin-bottom: 20px; padding: 16px; border-radius: 14px; font-size: 0.92rem; line-height: 1.7; }
-        .bot-msg { background: rgba(243, 186, 47, 0.04); border-left: 4px solid var(--yellow-binance); }
-        .user-msg { background: rgba(0, 170, 255, 0.1); border-right: 4px solid #00aaff; align-self: flex-end; text-align: right; color: #e6f4ff; }
-        
-        .typing-indicator { display: flex; gap: 6px; padding: 6px 4px; align-items: center; }
-        .typing-dot { width: 6px; height: 6px; background: var(--yellow-binance); border-radius: 50%; animation: typing 1.4s infinite ease-in-out both; }
-        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
-        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
-        @keyframes typing { 0%, 80%, 100% { transform: scale(0); opacity: 0.5; } 40% { transform: scale(1); opacity: 1; } }
-
-        select { background-color: #1e2329 !important; color: white !important; border: 1px solid rgba(255,255,255,0.1) !important; padding: 14px; border-radius: 8px; width: 100%; outline: none; cursor: pointer; }
-        input[type="number"], textarea { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; padding: 12px; font-family: 'Roboto Mono'; font-size: 0.9rem; width: 100%; outline: none; transition: border 0.2s; }
-        input[type="number"]:focus, textarea:focus { border-color: var(--yellow-binance); }
-        
-        .tv-wrap { border-radius: 12px; overflow: hidden; background: #000; border: 1px solid rgba(255,255,255,0.08); width: 100%; }
+        .msg { margin-bottom: 14px; padding: 13px; border-radius: 12px; font-size: 0.86rem; line-height: 1.75; }
+        .bot-msg { background: rgba(247,147,26,0.04); border-left: 3px solid var(--btc); }
+        .user-msg { background: rgba(0,170,255,0.08); border-right: 3px solid #00aaff; text-align: right; color: #e6f4ff; }
+        .typing-indicator { display: flex; gap: 5px; padding: 4px; align-items: center; }
+        .typing-dot { width: 5px; height: 5px; background: var(--btc); border-radius: 50%; animation: typing 1.4s infinite ease-in-out both; }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; } .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes typing { 0%,80%,100% { transform: scale(0); opacity: 0.5; } 40% { transform: scale(1); opacity: 1; } }
+        .ob-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; padding: 3px 8px; font-size: 0.7rem; font-family: 'Roboto Mono', monospace; position: relative; }
+        .ob-bar-bid { position: absolute; right: 0; top: 0; bottom: 0; background: rgba(2,211,134,0.08); z-index: 0; }
+        .ob-bar-ask { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(246,70,93,0.08); z-index: 0; }
+        .ob-row span { position: relative; z-index: 1; }
+        ::-webkit-scrollbar { width: 3px; } ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+        select, input[type="number"], textarea { background: rgba(255,255,255,0.05) !important; border: 1px solid rgba(255,255,255,0.1) !important; border-radius: 8px; color: white !important; padding: 10px 12px; outline: none; width: 100%; transition: border 0.2s; font-family: 'Roboto Mono', monospace; font-size: 0.85rem; }
+        input[type="number"]:focus, textarea:focus, select:focus { border-color: var(--btc) !important; }
+        .quick-btn { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; padding: 8px 10px; font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #6b7280; cursor: pointer; transition: all 0.2s; text-align: left; width: 100%; }
+        .quick-btn:hover { background: rgba(247,147,26,0.08); border-color: rgba(247,147,26,0.25); color: var(--btc); }
+        .badge { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 4px; font-size: 0.58rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; }
+        .risk-bar { height: 7px; border-radius: 4px; background: linear-gradient(90deg, #02d386, #f3ba2f 50%, #f6465d); position: relative; }
+        .risk-dot { width: 12px; height: 12px; border-radius: 50%; background: white; border: 2px solid var(--bg); position: absolute; top: -2.5px; transition: left 0.5s ease; box-shadow: 0 0 6px rgba(255,255,255,0.4); }
+        .news-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 10px; padding: 13px; transition: all 0.2s; cursor: pointer; }
+        .news-card:hover { background: rgba(247,147,26,0.04); border-color: rgba(247,147,26,0.15); }
+        .chart-btn { font-size: 0.65rem; font-weight: 700; padding: 4px 8px; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
+        .chart-btn.active { background: rgba(255,255,255,0.12); color: white; }
+        .chart-btn:not(.active) { background: rgba(255,255,255,0.04); color: #6b7280; }
         .hidden { display: none !important; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        @media (max-width: 768px) {
-            .nav-btn { padding: 10px; font-size: 0.65rem; }
-        }
     </style>
 </head>
 <body>
 
-    <header class="border-b border-gray-800/40 bg-[#080a0c]/90 backdrop-blur-md sticky top-0 z-50">
-        <div class="max-w-[1800px] mx-auto px-4 md:px-6 py-4 flex flex-col lg:flex-row justify-between items-center gap-4">
-            <div class="flex items-center justify-between w-full lg:w-auto gap-4">
-                <h1 class="text-xl md:text-3xl font-black text-white tracking-tighter whitespace-nowrap"><span class="text-[#f3ba2f]">AI</span> Trading Lab</h1>
-                <nav class="flex gap-2">
-                    <button onclick="switchTab('dashboard')" id="btn-dashboard" class="nav-btn active">Dashboard</button>
-                    <button onclick="switchTab('simulator')" id="btn-simulator" class="nav-btn">Simulador DCA</button>
-                    <button onclick="switchTab('intel')" id="btn-intel" class="nav-btn">Alpha Intel</button>
-                </nav>
+<header class="border-b border-gray-800/40 bg-[#080a0c]/95 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-[1900px] mx-auto px-3 md:px-5 py-2.5 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3 md:gap-5">
+            <h1 class="text-base md:text-xl font-black tracking-tighter whitespace-nowrap" style="color:white">
+                <span style="color:#f7931a">₿</span>TC Command
+            </h1>
+            <nav class="flex">
+                <button onclick="switchTab('dashboard')" id="btn-dashboard" class="nav-btn active">Dashboard</button>
+                <button onclick="switchTab('mercados')" id="btn-mercados" class="nav-btn">Mercados</button>
+                <button onclick="switchTab('simulator')" id="btn-simulator" class="nav-btn">Simulador</button>
+                <button onclick="switchTab('noticias')" id="btn-noticias" class="nav-btn hidden md:block">Notícias</button>
+                <button onclick="switchTab('intel')" id="btn-intel" class="nav-btn">Intel</button>
+            </nav>
+        </div>
+        <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1.5 bg-white/5 px-2.5 py-1.5 rounded-lg border border-white/10">
+                <span class="text-xs font-black" style="color:#f7931a">₿</span>
+                <span id="btc-price" class="mono text-sm text-white">--</span>
+                <span id="btc-change" class="text-[9px] font-bold text-gray-500">--</span>
             </div>
-            <div class="flex items-center justify-between w-full lg:w-auto gap-4">
-                <div class="flex gap-3 text-[9px] md:text-[10px] font-black uppercase tracking-widest text-gray-500">
-                    <span id="macro-trend" class="bg-white/5 px-2 md:px-3 py-1.5 rounded-md border border-white/10">Macro: --</span>
-                    <span id="fg-index-top" class="bg-white/5 px-2 md:px-3 py-1.5 rounded-md border border-white/10">F&G: --</span>
+            <div class="hidden sm:flex items-center gap-1 bg-white/5 px-2 py-1.5 rounded-lg border border-white/10">
+                <span class="lbl">Fund</span>
+                <span id="hdr-funding" class="mono text-xs text-white">--</span>
+            </div>
+            <span id="macro-trend" class="hidden md:block lbl bg-white/5 px-2 py-1.5 rounded-md border border-white/10 text-gray-500">Macro: --</span>
+            <span id="fg-index-top" class="hidden md:block lbl bg-white/5 px-2 py-1.5 rounded-md border border-white/10 text-gray-500">F&G: --</span>
+            <button onclick="handleAICall()" class="px-3 md:px-5 py-2 rounded-xl font-black uppercase text-[10px] hover:scale-105 transition-all whitespace-nowrap relative z-[110] text-black" style="background:#f7931a">AI Agent</button>
+        </div>
+    </div>
+</header>
+
+<div id="main-grid" class="app-grid">
+<main>
+
+<!-- DASHBOARD -->
+<section id="tab-dashboard" class="tab-content active">
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
+        <div class="card p-3.5"><p class="lbl mb-1">PnL Global</p><p id="total-pnl" class="text-xl lg:text-2xl mono text-white">$0</p></div>
+        <div class="card p-3.5"><p class="lbl mb-1">ROE Médio</p><p id="total-pnl-perc" class="text-xl lg:text-2xl mono text-white">0,00%</p></div>
+        <div class="card p-3.5"><p class="lbl mb-1">Exposição</p><p id="total-exposure" class="text-xl lg:text-2xl mono text-white">$0</p></div>
+        <div class="card p-3.5" style="border-color:rgba(247,147,26,0.15)"><p class="lbl mb-1" style="color:#f7931a">Alavancagem</p><p id="avg-leverage" class="text-xl lg:text-2xl mono" style="color:#f7931a">0x</p></div>
+        <div class="card p-3.5"><p class="lbl mb-1">Margem Usada</p><p id="total-margin" class="text-xl lg:text-2xl mono text-white">$0</p></div>
+    </div>
+    <div class="card p-4 mb-4">
+        <div class="flex justify-between items-center mb-2">
+            <p class="lbl">Risco do Portefólio</p>
+            <span id="risk-label" class="badge bg-gray-700/40 text-gray-400">Calculando...</span>
+        </div>
+        <div class="risk-bar"><div id="risk-dot" class="risk-dot" style="left:0%"></div></div>
+        <div class="flex justify-between mt-1.5"><span class="text-[9px] text-green-400 font-bold">Baixo</span><span class="text-[9px] text-yellow-500 font-bold">Moderado</span><span class="text-[9px] text-red-500 font-bold">Crítico</span></div>
+    </div>
+    <div id="dashboard-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
+    <div id="no-pos" class="hidden card p-14 text-center"><p class="text-gray-500 font-bold uppercase text-xs tracking-widest">Sem posições abertas na Bybit</p></div>
+</section>
+
+<!-- MERCADOS -->
+<section id="tab-mercados" class="tab-content">
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <div class="xl:col-span-2 flex flex-col gap-4">
+            <div class="card overflow-hidden">
+                <div class="px-4 pt-3 pb-2 border-b border-white/5 flex justify-between items-center">
+                    <span class="font-black text-white text-xs uppercase tracking-widest">₿TC / USD — Gráfico Live</span>
+                    <div class="flex gap-1.5">
+                        <button class="chart-btn active" onclick="setChartInterval('15',this)">15m</button>
+                        <button class="chart-btn" onclick="setChartInterval('60',this)">1h</button>
+                        <button class="chart-btn" onclick="setChartInterval('240',this)">4h</button>
+                        <button class="chart-btn" onclick="setChartInterval('D',this)">1D</button>
+                    </div>
                 </div>
-                <button onclick="handleAICall()" class="bg-[#f3ba2f] text-black px-4 md:px-6 py-2.5 rounded-xl font-black uppercase text-[10px] shadow-[0_4px_15px_rgba(243,186,47,0.2)] hover:scale-105 transition-all whitespace-nowrap relative z-[110]">AI Analysis</button>
+                <div id="tv-market-wrap" class="h-[440px] md:h-[540px]"></div>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div class="card p-3.5"><p class="lbl mb-1">Mark Price</p><p id="m-mark" class="mono text-lg text-white">--</p></div>
+                <div class="card p-3.5"><p class="lbl mb-1">24h Alto/Baixo</p><p id="m-hl" class="mono text-sm text-white">--</p></div>
+                <div class="card p-3.5"><p class="lbl mb-1">Volume 24h</p><p id="m-vol" class="mono text-sm text-white">--</p></div>
+                <div class="card p-3.5" style="border-color:rgba(247,147,26,0.2)"><p class="lbl mb-1" style="color:#f7931a">Open Interest</p><p id="m-oi" class="mono text-sm" style="color:#f7931a">--</p></div>
             </div>
         </div>
-    </header>
-
-    <div id="main-grid" class="app-grid">
-        <main>
-            <section id="tab-dashboard" class="tab-content active">
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
-                    <div class="card p-4"><p class="metric-label">PnL Global</p><p id="total-pnl" class="text-xl lg:text-2xl metric-value">$0</p></div>
-                    <div class="card p-4"><p class="metric-label">ROE Médio</p><p id="total-pnl-perc" class="text-xl lg:text-2xl metric-value">0,00%</p></div>
-                    <div class="card p-4"><p class="metric-label">Exposição Total</p><p id="total-exposure" class="text-xl lg:text-2xl metric-value text-white">$0,00</p></div>
-                    <div class="card p-4 border-yellow-500/10"><p class="metric-label text-yellow-500">Alavancagem Real</p><p id="avg-leverage" class="text-xl lg:text-2xl metric-value text-yellow-500">0x</p></div>
+        <div class="flex flex-col gap-4">
+            <div class="card p-4">
+                <div class="flex justify-between items-center mb-2">
+                    <p class="lbl">Funding Rate — BTCUSD</p>
+                    <span id="fund-badge" class="badge bg-gray-700/40 text-gray-400">--</span>
                 </div>
-
-                <div id="dashboard-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-6"></div>
-            </section>
-
-            <section id="tab-simulator" class="tab-content">
-                <div class="card p-4 md:p-8">
-                    <div class="mb-8 border-b border-gray-800 pb-8 grid grid-cols-1 lg:grid-cols-5 gap-6 items-end">
-                        <div class="lg:col-span-1">
-                            <label class="metric-label block mb-3">Posição Ativa</label>
-                            <select id="sim-select-pos" onchange="loadPositionToSim()"></select>
-                        </div>
-                        <div class="lg:col-span-4 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-                            <div class="bg-white/5 p-3 md:p-4 rounded-xl border border-white/5"><p class="metric-label">Mark Price</p><p id="sim-mark-price" class="metric-value text-lg md:text-xl text-[#f3ba2f]">0,0000</p></div>
-                            <div class="bg-white/5 p-3 md:p-4 rounded-xl border border-white/5"><p class="metric-label">Tamanho (Qtd)</p><p id="sim-current-qty" class="metric-value text-lg md:text-xl text-white">0,00</p></div>
-                            <div class="bg-white/5 p-3 md:p-4 rounded-xl border border-white/5"><p class="metric-label">Margem Atual</p><p id="sim-current-margin" class="metric-value text-lg md:text-xl text-gray-400">$0,00</p></div>
-                            <div class="bg-white/5 p-3 md:p-4 rounded-xl border border-[#f3ba2f]/30">
-                                <p class="metric-label text-yellow-500">Alavancagem (x)</p>
-                                <input type="number" id="sim-input-leverage" class="bg-transparent text-lg md:text-xl font-black text-yellow-500 w-full outline-none p-0 border-none h-auto" oninput="runSimulation()" placeholder="Ex: 10">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 md:gap-8 mb-8">
-                        <div class="card bg-black/50 border-white/5 p-2 h-[400px] lg:h-[600px]">
-                            <div id="tv-sim-container" class="w-full h-full rounded-lg overflow-hidden flex items-center justify-center text-gray-600 font-bold text-xs uppercase">
-                                Selecione uma posição
-                            </div>
-                        </div>
-                        
-                        <div class="flex flex-col gap-4">
-                            <h3 class="metric-label">Comparativo de Níveis Críticos e Margem</h3>
-                            <div class="grid grid-cols-2 gap-2 md:gap-4 h-full">
-                                
-                                <div class="bg-white/5 border border-white/10 p-3 md:p-5 rounded-xl flex flex-col gap-3 md:gap-5">
-                                    <h4 class="text-gray-500 font-bold text-[9px] md:text-[11px] uppercase tracking-widest border-b border-gray-800 pb-2">Atual</h4>
-                                    <div>
-                                        <p class="text-[8px] md:text-[10px] uppercase text-gray-400 mb-1">Preço Entrada</p>
-                                        <p class="font-mono font-bold text-white text-sm md:text-xl" id="sim-panel-current-entry">0,0000</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-[8px] md:text-[10px] uppercase text-gray-400 mb-1">Liquidação</p>
-                                        <p class="font-mono font-bold text-red-500 text-sm md:text-xl" id="sim-panel-current-liq">0,0000</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-[8px] md:text-[10px] uppercase text-gray-400 mb-1">Take Profit</p>
-                                        <p class="font-mono font-bold text-yellow-500 text-sm md:text-xl" id="sim-panel-current-tp">0,0000</p>
-                                        <p class="text-[8px] md:text-[10px] text-gray-500 font-bold mt-1" id="sim-panel-current-tp-pnl">PnL: $0,00</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-[8px] md:text-[10px] uppercase text-gray-400 mb-1">Margem</p>
-                                        <p class="font-mono font-bold text-gray-300 text-sm md:text-xl" id="sim-panel-current-margin">$0,00</p>
-                                    </div>
-                                </div>
-                                
-                                <div class="bg-[#02d386]/5 border border-[#02d386]/20 p-3 md:p-5 rounded-xl flex flex-col gap-3 md:gap-5 relative overflow-hidden">
-                                    <div class="absolute top-0 right-0 bg-[#02d386] text-black text-[7px] md:text-[9px] font-black px-2 py-1 rounded-bl-lg uppercase tracking-widest">Nova</div>
-                                    <h4 class="text-[#02d386] font-bold text-[9px] md:text-[11px] uppercase tracking-widest border-b border-[#02d386]/20 pb-2">Projeção</h4>
-                                    <div>
-                                        <p class="text-[8px] md:text-[10px] uppercase text-[#02d386]/70 mb-1">Nova Entrada</p>
-                                        <div class="flex items-baseline gap-1 md:gap-2 flex-wrap">
-                                            <p class="font-mono font-black text-white text-sm md:text-xl leading-none" id="res-new-avg">---</p>
-                                            <span class="hidden" id="res-entry-diff"></span>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <p class="text-[8px] md:text-[10px] uppercase text-[#02d386]/70 mb-1">Nova Liq.</p>
-                                        <div class="flex items-baseline gap-1 md:gap-2 flex-wrap">
-                                            <p class="font-mono font-black text-red-400 text-sm md:text-xl leading-none" id="sim-level-new-liq">---</p>
-                                            <span class="hidden" id="res-liq-diff"></span>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <p class="text-[8px] md:text-[10px] uppercase text-[#02d386]/70 mb-1">Take Profit</p>
-                                        <div class="flex items-baseline gap-1 md:gap-2 flex-wrap">
-                                            <p class="font-mono font-black text-yellow-500 text-sm md:text-xl leading-none" id="sim-level-new-tp">---</p>
-                                            <span class="hidden" id="res-tp-diff"></span>
-                                        </div>
-                                        <p class="text-[8px] md:text-[10px] text-gray-400 font-bold mt-1 hidden" id="sim-panel-new-tp-pnl">PnL: $0,00</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-[8px] md:text-[10px] uppercase text-[#02d386]/70 mb-1">Nova Margem</p>
-                                        <div class="flex items-baseline gap-1 md:gap-2 flex-wrap">
-                                            <p class="font-mono font-black text-white text-sm md:text-xl leading-none" id="sim-level-new-margin">---</p>
-                                            <span class="hidden" id="res-margin-diff"></span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mt-8">
-                        <div class="flex justify-between items-end mb-4">
-                            <h3 class="metric-label">Adicionar Posição / Valor (DCA)</h3>
-                        </div>
-                        <div class="grid grid-cols-[40px_1fr_1fr] md:grid-cols-[60px_1fr_1fr] gap-2 md:gap-4 mb-3 px-1 md:px-2 text-[8px] md:text-[10px] uppercase text-gray-500 font-bold border-b border-gray-800 pb-2">
-                            <div class="text-center">On</div>
-                            <div>Adicionar (USD)</div>
-                            <div>Preço Execução</div>
-                        </div>
-                        <div id="sim-slots-body" class="space-y-2 md:space-y-3"></div>
-                        
-                        <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="bg-white/5 p-4 rounded-xl border border-white/10 flex justify-between items-center">
-                                <span class="metric-label">Valor DCA</span>
-                                <span id="res-total-cost" class="text-xl md:text-2xl font-bold text-gray-300">$0</span>
-                            </div>
-                            <div id="margin-adjustment-panel" class="p-4 rounded-xl border flex justify-between items-center bg-gray-900 border-gray-700">
-                                <span class="metric-label text-white">Ajuste na Margem</span>
-                                <span id="res-margin-adj" class="text-xl md:text-2xl font-black text-white">S/ Alteração</span>
-                            </div>
-                        </div>
-
-                        <button onclick="resetSim()" class="w-full mt-6 py-4 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-white hover:bg-white/5 transition-all">Limpar Simulador</button>
-                    </div>
+                <p id="fund-big" class="mono text-3xl text-white mb-0.5">--</p>
+                <p class="text-[9px] text-gray-500 font-bold uppercase">Próximo ciclo: <span id="fund-countdown" class="text-gray-300">--</span></p>
+                <div class="mt-3 pt-3 border-t border-white/5">
+                    <p class="text-[9px] text-gray-500 mb-1 uppercase font-bold">Impacto na posição (próximo ciclo)</p>
+                    <p id="fund-impact" class="mono text-sm text-gray-400">--</p>
                 </div>
-            </section>
-
-            <section id="tab-intel" class="tab-content">
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div class="card p-6 lg:col-span-1 h-fit">
-                        <h2 class="text-[#f3ba2f] text-sm md:text-base font-black uppercase tracking-widest flex items-center gap-2 mb-4">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                            Nova Análise / Feeds
-                        </h2>
-                        <p class="text-xs text-gray-400 mb-6">Insere aqui os relatórios do Grok, Whale Alert, alertas Lookonchain ou sentimento macroeconómico. O assistente IA lerá estes dados para ajustar a estratégia das tuas posições ativas.</p>
-                        
-                        <textarea id="intel-input" rows="6" placeholder="Cole o texto ou alertas aqui..." class="mb-4 text-xs md:text-sm"></textarea>
-                        <button onclick="addIntel()" class="w-full bg-[#f3ba2f] text-black py-3 rounded-lg font-black uppercase text-xs tracking-widest hover:bg-yellow-400 transition-colors">Guardar Registo</button>
-                    </div>
-                    
-                    <div class="card p-6 lg:col-span-2">
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="metric-label">Histórico Operacional</h3>
-                            <button onclick="clearIntelHistory()" class="text-[10px] text-red-500 uppercase font-bold hover:underline">Limpar Tudo</button>
-                        </div>
-                        <div id="intel-history-container" class="space-y-4 max-h-[600px] overflow-y-auto pr-2 scrollbar-hide">
-                            </div>
-                    </div>
-                </div>
-            </section>
-        </main>
-
-        <aside id="ai-section" class="card p-6 md:p-8 flex flex-col">
-            <div class="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
-                <span class="text-white text-[10px] md:text-xs font-black uppercase tracking-widest text-yellow-500">AI Analysis</span>
-                <span id="ai-loading" class="text-[9px] text-yellow-500 animate-pulse hidden font-bold uppercase">A processar...</span>
             </div>
-            <div id="ai-content" class="flex-grow overflow-y-auto mb-4 pr-2 flex flex-col scrollbar-hide">
-                <div class="bot-msg msg text-gray-500 text-xs text-center">Aguardar inicialização do motor analítico...</div>
+            <div class="card p-4 flex-1">
+                <div class="flex justify-between items-center mb-2">
+                    <p class="lbl">Order Book — BTCUSD</p>
+                    <span class="text-[9px] text-gray-600 font-bold">Top 12</span>
+                </div>
+                <div class="grid grid-cols-3 gap-1 px-2 mb-1">
+                    <span class="text-[9px] font-bold text-gray-600">Preço</span>
+                    <span class="text-[9px] font-bold text-gray-600 text-center">Qtd</span>
+                    <span class="text-[9px] font-bold text-gray-600 text-right">Total</span>
+                </div>
+                <div id="ob-asks" class="mb-1 flex flex-col-reverse"></div>
+                <div class="py-1.5 px-2 border-y border-white/5 flex justify-between items-center my-0.5">
+                    <span class="text-[9px] text-gray-500 font-bold uppercase">Spread</span>
+                    <span id="ob-spread" class="mono text-xs text-white">--</span>
+                </div>
+                <div id="ob-bids" class="mt-1"></div>
             </div>
-            <input type="text" id="chat-input" placeholder="Comando..." class="w-full bg-white/5 p-4 md:p-5 rounded-2xl text-white outline-none text-xs md:text-sm border border-white/5 focus:border-[#f3ba2f] transition-all" onkeypress="handleChat(event)">
-        </aside>
+            <div class="card p-4">
+                <p class="lbl mb-2">BTC Dominance</p>
+                <p id="btc-dom" class="mono text-2xl text-white">--</p>
+                <div class="prog-bg mt-2"><div id="btc-dom-bar" class="prog-fill" style="background:#f7931a;width:0%"></div></div>
+            </div>
+        </div>
     </div>
+</section>
 
-    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-    <script>
-        const FUNC_PATH = `https://yifxgiwmibjaornighvt.supabase.co/functions/v1/get-bybit-positions`;
-        const AI_FUNC_PATH = `https://yifxgiwmibjaornighvt.supabase.co/functions/v1/trade-advisor`;
-        const SUPABASE_KEY = 'sb_publishable_xHjsFJbSuAhO6r6BUylTCw_tDE-nFXT';
-        let currentPositions = [];
-        let intelHistory = []; // NOVO: Armazena o histórico de inteligência
-
-        window.onload = async () => { 
-            generateSimSlots(); 
-            loadIntelHistory(); // NOVO: Carrega os dados guardados
-            await fetchPositions(); 
-            fetchTelemetry(); 
-            setInterval(fetchPositions, 10000); 
-            setInterval(fetchTelemetry, 60000); 
-        };
-
-        function switchTab(t) {
-            document.querySelectorAll('.tab-content, .nav-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById('tab-' + t).classList.add('active');
-            document.getElementById('btn-' + t).classList.add('active');
-        }
-
-        // --- INÍCIO LÓGICA ALPHA INTEL ---
-        function loadIntelHistory() {
-            const saved = localStorage.getItem('ai_trading_intel_history');
-            if(saved) {
-                try {
-                    intelHistory = JSON.parse(saved);
-                } catch(e) { intelHistory = []; }
-            }
-            renderIntelHistory();
-        }
-
-        function saveIntelHistory() {
-            localStorage.setItem('ai_trading_intel_history', JSON.stringify(intelHistory));
-        }
-
-        function addIntel() {
-            const input = document.getElementById('intel-input');
-            const text = input.value.trim();
-            if(!text) return;
-
-            const entry = {
-                id: Date.now(),
-                date: new Date().toLocaleString('pt-PT'),
-                text: text
-            };
-
-            intelHistory.unshift(entry); // Adiciona no topo
-            saveIntelHistory();
-            renderIntelHistory();
-            input.value = '';
-        }
-
-        function clearIntelHistory() {
-            if(confirm('Tem a certeza que deseja limpar todo o histórico de dados? A IA perderá este contexto.')) {
-                intelHistory = [];
-                saveIntelHistory();
-                renderIntelHistory();
-            }
-        }
-
-        function renderIntelHistory() {
-            const container = document.getElementById('intel-history-container');
-            if(intelHistory.length === 0) {
-                container.innerHTML = '<div class="text-center py-10 text-gray-500 text-xs uppercase tracking-widest font-bold">Nenhum registo disponível.</div>';
-                return;
-            }
-
-            container.innerHTML = intelHistory.map(item => `
-                <div class="bg-white/5 border border-white/10 rounded-xl p-5 relative group">
-                    <div class="flex justify-between items-start mb-2">
-                        <span class="text-[10px] text-[#f3ba2f] font-bold uppercase tracking-widest">${item.date}</span>
-                    </div>
-                    <div class="text-sm text-gray-300 whitespace-pre-wrap font-mono">${item.text}</div>
+<!-- SIMULADOR -->
+<section id="tab-simulator" class="tab-content">
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <div class="card p-5 md:p-6">
+            <h2 class="font-black text-white text-xs uppercase tracking-widest mb-5 flex items-center gap-2"><span style="color:#f7931a">◈</span> Simulador DCA</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+                <div><p class="lbl mb-1.5">Posição</p><select id="sim-select-pos" onchange="loadPositionToSim()" class="text-xs"></select></div>
+                <div class="bg-white/5 p-3 rounded-xl border border-white/5"><p class="lbl">Mark Price</p><p id="sim-mark-price" class="mono text-lg" style="color:#f7931a">--</p></div>
+                <div class="bg-white/5 p-3 rounded-xl border border-white/5"><p class="lbl">Tamanho</p><p id="sim-current-qty" class="mono text-lg text-white">--</p></div>
+                <div class="bg-white/5 p-3 rounded-xl" style="border:1px solid rgba(247,147,26,0.2)"><p class="lbl" style="color:#f7931a">Alavancagem</p><input type="number" id="sim-input-leverage" class="bg-transparent text-lg font-black w-full outline-none p-0 border-none" style="color:#f7931a" oninput="runSimulation()" placeholder="Ex: 10"></div>
+            </div>
+            <div class="grid grid-cols-2 gap-3 mb-5">
+                <div class="bg-white/5 border border-white/10 p-4 rounded-xl space-y-3">
+                    <h4 class="text-gray-500 text-[9px] font-black uppercase tracking-widest border-b border-gray-800 pb-2">Atual</h4>
+                    <div><p class="lbl">Entrada</p><p class="mono text-white text-sm" id="sim-panel-current-entry">--</p></div>
+                    <div><p class="lbl">Liquidação</p><p class="mono text-red-400 text-sm" id="sim-panel-current-liq">--</p></div>
+                    <div><p class="lbl">Take Profit</p><p class="mono text-yellow-500 text-sm" id="sim-panel-current-tp">--</p><p class="text-[9px] text-gray-500 mt-0.5" id="sim-panel-current-tp-pnl"></p></div>
+                    <div><p class="lbl">Margem</p><p class="mono text-gray-300 text-sm" id="sim-panel-current-margin">--</p></div>
                 </div>
-            `).join('');
-        }
-
-        function getIntelContextForAI() {
-            if(intelHistory.length === 0) return "Sem contexto macroeconómico reportado.";
-            // Pega nos últimos 5 registos para não estourar o limite de tokens da API
-            return intelHistory.slice(0, 5).map(h => `[Data: ${h.date}] Relatório: ${h.text}`).join('\n\n');
-        }
-        // --- FIM LÓGICA ALPHA INTEL ---
-
-        function fPT(n, isM = false, p = 2) {
-            let num = Number(n);
-            if(isNaN(num) || num === 0) return isM ? "$0" + (p>0?",00":"") : "0" + (p>0?",00":"");
-            let absNum = Math.abs(num);
-            let parts = absNum.toFixed(p).split(".");
-            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-            let res = p > 0 ? parts.join(",") : parts[0];
-            return (num < 0 ? "-" : "") + (isM ? "$" : "") + res;
-        }
-
-        async function fetchPositions() {
-            try {
-                const r = await fetch(FUNC_PATH, { headers: { 'Authorization': `Bearer ${SUPABASE_KEY}` } });
-                const d = await r.json();
-                if (d.result?.list) {
-                    currentPositions = d.result.list.filter(p => parseFloat(p.size) !== 0);
-                    updateDashboard(currentPositions);
-                    updateSimDropdown(currentPositions);
-                    runSimulation();
-                }
-            } catch (e) { console.error("Erro Posições:", e); }
-        }
-
-        function updateDashboard(positions) {
-            const grid = document.getElementById('dashboard-grid');
-            let tPnL = 0, tMarg = 0, tExp = 0;
-            
-            positions.forEach(pos => {
-                const pnl = parseFloat(pos.unrealisedPnl), val = parseFloat(pos.positionValue);
-                const lev = parseFloat(pos.leverage), cur = parseFloat(pos.markPrice);
-                const ent = parseFloat(pos.avgPrice), liq = parseFloat(pos.liqPrice);
-                const tp = parseFloat(pos.takeProfit), sl = parseFloat(pos.stopLoss);
-                const marg = val / lev; tPnL += pnl; tMarg += marg; tExp += val;
-                
-                let card = document.getElementById(`card-${pos.symbol}`);
-                if (!card) {
-                    card = document.createElement('div'); card.id = `card-${pos.symbol}`;
-                    card.className = `card border-l-4 p-4 lg:p-5 ${pos.side === 'Buy' ? 'border-l-green-500' : 'border-l-red-500'}`;
-                    card.innerHTML = `
-                        <div class="content-area"></div>
-                        <div id="tv-wrapper-${pos.symbol}" class="grid grid-cols-1 gap-4 mt-4 hidden" data-loaded="false">
-                            <div id="tv-1-${pos.symbol}" class="tv-wrap h-[400px] lg:h-[560px]"></div>
-                        </div>`;
-                    grid.appendChild(card);
-                }
-                
-                const dLiq = liq > 0 ? Math.abs((liq - cur) / cur) * 100 : 100;
-                const tpP = tp > 0 ? (Math.abs(cur - ent) / Math.abs(tp - ent)) * 100 : 0;
-                const cPnL = pnl >= 0 ? 'text-green-500' : 'text-red-500';
-                
-                card.querySelector('.content-area').innerHTML = `
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="font-black text-white text-xl uppercase tracking-tighter">${pos.symbol} <span class="text-[10px] font-bold text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded-md ml-2">${lev}x</span></h2>
-                        <button onclick="handleUniversalToggle('${pos.symbol}')" class="bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg text-[10px] font-bold text-gray-400 hover:text-white transition-all uppercase tracking-widest">Gráfico</button>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div><p class="metric-label">ROE</p><p class="text-2xl lg:text-3xl font-black ${cPnL}">${fPT((pnl/marg)*100, false, 2)}%</p></div>
-                        <div class="text-right"><p class="metric-label">PnL USD</p><p class="text-2xl lg:text-3xl font-bold ${cPnL}">${fPT(pnl, true, 0)}</p></div>
-                        <div class="pt-3 border-t border-white/5">
-                            <p class="metric-label">Valor Posição</p>
-                            <p class="text-sm lg:text-md font-bold text-gray-200">${fPT(val, true, 2)} <span class="text-[10px] text-gray-500 font-normal ml-1">(${fPT(marg, true, 2)})</span></p>
-                        </div>
-                        <div class="text-right pt-3 border-t border-white/5"><p class="metric-label">Entrada / Mark</p><p class="text-[10px] lg:text-xs font-bold text-gray-300 font-mono">${fPT(ent, false, 4)} → ${fPT(cur, false, 4)}</p></div>
-                        <div class="col-span-2 mt-1">
-                            <div class="flex justify-between text-[9px] font-bold text-gray-500 uppercase mb-1"><span>Liq ($${fPT(liq, false, 4)}) / SL ($${fPT(sl, false, 4)})</span><span>${fPT(dLiq, false, 1)}% Distância</span></div>
-                            <div class="progress-bg"><div class="progress-fill ${dLiq < 12 ? 'bg-red-500 animate-pulse' : 'bg-red-900/40'}" style="width: ${Math.max(0, 100 - dLiq)}%"></div></div>
-                        </div>
-                        <div class="col-span-2">
-                            <div class="flex justify-between text-[9px] font-bold text-yellow-600 uppercase mb-1"><span>Take Profit ($${fPT(tp, false, 4)})</span><span>${fPT(tpP, false, 0)}%</span></div>
-                            <div class="progress-bg"><div class="progress-fill bg-yellow-500/60" style="width: ${Math.min(tpP, 100)}%"></div></div>
-                        </div>
-                    </div>`;
-            });
-            
-            document.getElementById('total-pnl').innerText = fPT(tPnL, true, 0);
-            document.getElementById('total-pnl').className = `text-xl lg:text-2xl metric-value ${tPnL >= 0 ? 'text-green-500' : 'text-red-500'}`;
-            document.getElementById('total-pnl-perc').innerText = fPT(tMarg > 0 ? (tPnL/tMarg*100) : 0, false, 2) + "%";
-            document.getElementById('total-pnl-perc').className = `text-xl lg:text-2xl metric-value ${tPnL >= 0 ? 'text-green-500' : 'text-red-500'}`;
-            document.getElementById('total-exposure').innerText = fPT(tExp, true, 2);
-            document.getElementById('avg-leverage').innerText = fPT(tMarg > 0 ? (tExp / tMarg) : 0, false, 2) + "x";
-        }
-
-        function handleUniversalToggle(s) {
-            const isDesktop = window.innerWidth >= 1024;
-            if (isDesktop) {
-                const wrappers = Array.from(document.querySelectorAll('[id^="tv-wrapper-"]'));
-                const isAnyOpen = wrappers.some(el => !el.classList.contains('hidden'));
-                currentPositions.forEach(pos => {
-                    const el = document.getElementById(`tv-wrapper-${pos.symbol}`);
-                    if (isAnyOpen) { el.classList.add('hidden'); } else {
-                        el.classList.remove('hidden');
-                        if(el.getAttribute('data-loaded') === 'false') {
-                            new TradingView.widget({ "autosize": true, "symbol": `BYBIT:${pos.symbol}.P`, "interval": "15", "theme": "dark", "style": "1", "toolbar_bg": "#1e2329", "enable_publishing": false, "hide_side_toolbar": false, "container_id": `tv-1-${pos.symbol}`, "library_path": "https://s3.tradingview.com/tv.js" });
-                            el.setAttribute('data-loaded', 'true');
-                        }
-                    }
-                });
-            } else {
-                const el = document.getElementById(`tv-wrapper-${s}`);
-                el.classList.toggle('hidden');
-                if (!el.classList.contains('hidden') && el.getAttribute('data-loaded') === 'false') {
-                    new TradingView.widget({ "autosize": true, "symbol": `BYBIT:${s}.P`, "interval": "15", "theme": "dark", "style": "1", "toolbar_bg": "#1e2329", "enable_publishing": false, "hide_side_toolbar": false, "container_id": `tv-1-${s}`, "library_path": "https://s3.tradingview.com/tv.js" });
-                    el.setAttribute('data-loaded', 'true');
-                }
-            }
-        }
-
-        function generateSimSlots() {
-            const b = document.getElementById('sim-slots-body');
-            for(let i=0; i<10; i++) {
-                const r = document.createElement('div');
-                r.className = 'grid grid-cols-[40px_1fr_1fr] md:grid-cols-[60px_1fr_1fr] gap-2 md:gap-4 items-center';
-                r.innerHTML = `
-                    <div class="text-center flex justify-center"><input type="checkbox" checked class="sim-checkbox w-4 h-4 md:w-5 md:h-5 accent-[#f3ba2f]" onchange="runSimulation()"></div>
-                    <input type="number" class="sim-input-val" placeholder="Ex: 500" oninput="runSimulation()">
-                    <input type="number" class="sim-input-price" placeholder="Preço" oninput="runSimulation()">
-                `;
-                b.appendChild(r);
-            }
-        }
-
-        function updateSimDropdown(positions) {
-            const s = document.getElementById('sim-select-pos');
-            const v = s.value; s.innerHTML = '<option value="">Selecionar Posição...</option>';
-            positions.forEach(p => { const o = document.createElement('option'); o.value = p.symbol; o.innerText = `${p.symbol} (${p.side})`; s.appendChild(o); });
-            if(v) s.value = v;
-        }
-
-        function loadPositionToSim() {
-            const sym = document.getElementById('sim-select-pos').value;
-            const p = currentPositions.find(x => x.symbol === sym);
-            if(p) {
-                const curMargin = parseFloat(p.positionValue) / parseFloat(p.leverage);
-                document.getElementById('sim-mark-price').innerText = fPT(p.markPrice, false, 4);
-                document.getElementById('sim-current-qty').innerText = fPT(Math.abs(parseFloat(p.size)), false, 2);
-                document.getElementById('sim-input-leverage').value = p.leverage;
-
-                document.getElementById('sim-panel-current-entry').innerText = fPT(p.avgPrice, false, 4);
-                document.getElementById('sim-panel-current-liq').innerText = fPT(p.liqPrice, false, 4);
-                document.getElementById('sim-panel-current-margin').innerText = fPT(curMargin, true, 2);
-                
-                const tp = parseFloat(p.takeProfit);
-                const elTp = document.getElementById('sim-panel-current-tp');
-                const elTpPnl = document.getElementById('sim-panel-current-tp-pnl');
-                
-                if (tp > 0) {
-                    elTp.innerText = fPT(tp, false, 4);
-                    const qty = Math.abs(parseFloat(p.size));
-                    const estPnl = p.side === 'Buy' ? (tp - p.avgPrice) * qty : (p.avgPrice - tp) * qty;
-                    elTpPnl.innerText = `PnL: ${fPT(estPnl, true, 2)}`;
-                } else {
-                    elTp.innerText = "N/D";
-                    elTpPnl.innerText = "PnL: $0,00";
-                }
-
-                document.getElementById('tv-sim-container').innerHTML = `<div id="tv-sim-${sym}" class="w-full h-full"></div>`;
-                new TradingView.widget({ "autosize": true, "symbol": `BYBIT:${sym}.P`, "interval": "15", "theme": "dark", "style": "1", "hide_side_toolbar": false, "container_id": `tv-sim-${sym}`, "library_path": "https://s3.tradingview.com/tv.js" });
-                
-                runSimulation();
-            } else {
-                document.getElementById('tv-sim-container').innerHTML = `<div class="w-full h-full flex items-center justify-center text-gray-600 font-bold text-xs uppercase">Selecione uma posição</div>`;
-            }
-        }
-
-        function runSimulation() {
-            const sym = document.getElementById('sim-select-pos').value;
-            const p = currentPositions.find(x => x.symbol === sym);
-            if(!p) return;
-
-            let curQty = Math.abs(parseFloat(p.size)), curAvg = parseFloat(p.avgPrice), mkPrice = parseFloat(p.markPrice);
-            let origLev = parseFloat(p.leverage);
-            
-            let newLev = parseFloat(document.getElementById('sim-input-leverage').value);
-            if(isNaN(newLev) || newLev <= 0) newLev = origLev;
-
-            let totalQty = curQty, totalWPrice = curQty * curAvg, totalCost = 0;
-
-            const vals = document.querySelectorAll('.sim-input-val'), prices = document.querySelectorAll('.sim-input-price'), checks = document.querySelectorAll('.sim-checkbox');
-
-            vals.forEach((v, i) => {
-                if(checks[i].checked && v.value && prices[i].value) {
-                    const usdPosVal = parseFloat(v.value), price = parseFloat(prices[i].value);
-                    const qty = usdPosVal / price; 
-                    totalQty += qty; totalWPrice += (qty * price); totalCost += usdPosVal;
-                }
-            });
-
-            const nAvg = totalWPrice / totalQty;
-            document.getElementById('res-new-avg').innerText = totalWPrice !== (curQty * curAvg) ? fPT(nAvg, false, 4) : "---";
-            document.getElementById('res-total-cost').innerText = fPT(totalCost, true, 0);
-            
-            let newLiqCalc = 0;
-            if(p.side === 'Buy') newLiqCalc = nAvg * (1 - 1/newLev + 0.005);
-            else newLiqCalc = nAvg * (1 + 1/newLev - 0.005);
-            document.getElementById('sim-level-new-liq').innerText = (totalCost > 0 || newLev !== origLev) ? fPT(newLiqCalc, false, 4) : "---";
-
-            const oldLiq = parseFloat(p.liqPrice) > 0 ? parseFloat(p.liqPrice) : 0;
-            const curMargin = (curQty * curAvg) / origLev;
-            const newMargin = (totalQty * nAvg) / newLev;
-            const marginDiff = newMargin - curMargin;
-            const tp = parseFloat(p.takeProfit);
-
-            const elEntryDiff = document.getElementById('res-entry-diff');
-            const elLiqDiff = document.getElementById('res-liq-diff');
-            const elMarginNew = document.getElementById('sim-level-new-margin');
-            const elMarginDiff = document.getElementById('res-margin-diff');
-            const elTpNew = document.getElementById('sim-level-new-tp');
-            const elTpDiff = document.getElementById('res-tp-diff');
-            const elTpPnlNew = document.getElementById('sim-panel-new-tp-pnl');
-
-            if(totalCost > 0 || newLev !== origLev) {
-                if(totalCost > 0) {
-                    const entryDiffPerc = ((nAvg - curAvg) / curAvg) * 100;
-                    const isEntryBetter = p.side === 'Buy' ? entryDiffPerc < 0 : entryDiffPerc > 0;
-                    elEntryDiff.innerText = (entryDiffPerc > 0 ? "+" : "") + fPT(entryDiffPerc, false, 2) + "%";
-                    elEntryDiff.className = `text-[8px] md:text-[10px] font-bold px-1.5 md:px-2 py-0.5 rounded-md ${isEntryBetter ? 'bg-[#02d386]/20 text-[#02d386]' : 'bg-red-500/20 text-red-500'}`;
-                } else { elEntryDiff.className = "hidden"; }
-                
-                if(oldLiq > 0) {
-                    const liqDiffPerc = ((newLiqCalc - oldLiq) / oldLiq) * 100;
-                    const isLiqBetter = p.side === 'Buy' ? liqDiffPerc < 0 : liqDiffPerc > 0;
-                    elLiqDiff.innerText = (liqDiffPerc > 0 ? "+" : "") + fPT(liqDiffPerc, false, 2) + "%";
-                    elLiqDiff.className = `text-[8px] md:text-[10px] font-bold px-1.5 md:px-2 py-0.5 rounded-md ${isLiqBetter ? 'bg-[#02d386]/20 text-[#02d386]' : 'bg-red-500/20 text-red-500'}`;
-                } else { elLiqDiff.className = "hidden"; }
-
-                elMarginNew.innerText = fPT(newMargin, true, 2);
-                elMarginDiff.className = `text-[8px] md:text-[10px] font-bold px-1.5 md:px-2 py-0.5 rounded-md ${marginDiff <= 0 ? 'bg-[#02d386]/20 text-[#02d386]' : 'bg-red-500/20 text-red-500'}`;
-                
-                if (Math.abs(marginDiff) < 0.01) {
-                    elMarginDiff.innerText = "S/ Alt.";
-                    elMarginDiff.className = "text-[8px] md:text-[10px] font-bold px-1.5 md:px-2 py-0.5 rounded-md bg-gray-700/50 text-gray-400";
-                } else if (marginDiff > 0) {
-                    elMarginDiff.innerText = "Add " + fPT(marginDiff, true, 2);
-                } else {
-                    elMarginDiff.innerText = "Lib. " + fPT(Math.abs(marginDiff), true, 2);
-                }
-
-                if (tp > 0) {
-                    elTpNew.innerText = fPT(tp, false, 4);
-                    const oldEstPnl = p.side === 'Buy' ? (tp - curAvg) * curQty : (curAvg - tp) * curQty;
-                    const newEstPnl = p.side === 'Buy' ? (tp - nAvg) * totalQty : (nAvg - tp) * totalQty;
-                    const pnlDiff = newEstPnl - oldEstPnl;
-                    
-                    elTpPnlNew.innerText = `PnL: ${fPT(newEstPnl, true, 2)}`;
-                    elTpPnlNew.className = "text-[8px] md:text-[10px] text-gray-400 font-bold mt-1 block";
-                    
-                    elTpDiff.innerText = (pnlDiff > 0 ? "+" : "") + fPT(pnlDiff, true, 2);
-                    elTpDiff.className = `text-[8px] md:text-[10px] font-bold px-1.5 md:px-2 py-0.5 rounded-md ${pnlDiff >= 0 ? 'bg-[#02d386]/20 text-[#02d386]' : 'bg-red-500/20 text-red-500'}`;
-                } else {
-                    elTpNew.innerText = "N/D";
-                    elTpDiff.className = "hidden";
-                    elTpPnlNew.className = "hidden";
-                }
-                
-                const marginPanel = document.getElementById('margin-adjustment-panel');
-                const marginText = document.getElementById('res-margin-adj');
-                if (Math.abs(marginDiff) < 1) {
-                    marginPanel.className = "p-4 rounded-xl border flex justify-between items-center bg-gray-900 border-gray-700";
-                    marginText.innerText = "S/ Alteração";
-                    marginText.className = "text-xl md:text-2xl font-black text-gray-400";
-                } else if (marginDiff > 0) {
-                    marginPanel.className = "p-4 rounded-xl border flex justify-between items-center bg-red-500/10 border-red-500/30";
-                    marginText.innerText = "Adicionar " + fPT(marginDiff, true, 2);
-                    marginText.className = "text-xl md:text-2xl font-black text-red-500";
-                } else {
-                    marginPanel.className = "p-4 rounded-xl border flex justify-between items-center bg-[#02d386]/10 border-[#02d386]/30";
-                    marginText.innerText = "Liberta " + fPT(Math.abs(marginDiff), true, 2);
-                    marginText.className = "text-xl md:text-2xl font-black text-[#02d386]";
-                }
-
-            } else {
-                elEntryDiff.className = "hidden";
-                elLiqDiff.className = "hidden";
-                elMarginNew.innerText = "---";
-                elMarginDiff.className = "hidden";
-                elTpNew.innerText = "---";
-                elTpDiff.className = "hidden";
-                elTpPnlNew.className = "hidden";
-                document.getElementById('margin-adjustment-panel').className = "p-4 rounded-xl border flex justify-between items-center bg-gray-900 border-gray-700";
-                document.getElementById('res-margin-adj').innerText = "S/ Alteração";
-                document.getElementById('res-margin-adj').className = "text-xl md:text-2xl font-black text-gray-400";
-            }
-        }
-
-        async function fetchTelemetry() {
-            try {
-                const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}`, 'apikey': SUPABASE_KEY };
-                const r = await fetch(AI_FUNC_PATH, { method: 'POST', headers: headers, body: JSON.stringify({ positions: currentPositions, userMessage: "TELEMETRY" }) });
-                const d = await r.json();
-
-                if (d.error) return;
-                
-                if(d && d.insight) {
-                    const isB = d.insight.toUpperCase().includes('BULLISH');
-                    const m = document.getElementById('macro-trend');
-                    m.innerText = `Macro: ${isB ? 'BULLISH' : 'BEARISH'}`;
-                    m.className = `bg-white/5 px-2 md:px-3 py-1.5 rounded-md border text-[9px] md:text-[10px] font-black uppercase ${isB ? 'border-green-500/20 text-green-500' : 'border-red-500/20 text-red-500'}`;
-                }
-                if(d && d.fg) {
-                    const fg = document.getElementById('fg-index-top');
-                    fg.innerText = `F&G: ${d.fg}`;
-                    const v = parseInt(d.fg);
-                    fg.className = `bg-white/5 px-2 md:px-3 py-1.5 rounded-md border text-[9px] md:text-[10px] font-black uppercase ${v >= 70 ? 'border-green-500/20 text-green-500' : (v <= 30 ? 'border-red-500/20 text-red-500' : 'border-yellow-500/20 text-yellow-500')}`;
-                }
-            } catch (e) {}
-        }
-
-        let hasAutoRun = false;
-
-        function handleAICall() { 
-            const section = document.getElementById('ai-section');
-            section.classList.toggle('open'); 
-            document.getElementById('main-grid').classList.toggle('chat-open'); 
-
-            if (section.classList.contains('open') && !hasAutoRun) {
-                hasAutoRun = true;
-                document.getElementById('ai-content').innerHTML = ''; 
-                
-                // NOVO: Lê a "Intelligence Hub" usando a nova função de contexto do array history
-                const intelligenceText = getIntelContextForAI();
-                const contextQuery = `Faz um resumo do meu portefólio considerando este contexto macroeconómico reportado: ${intelligenceText}`;
-                
-                fetchAIIntelligence(null, contextQuery);
-            }
-        }
-
-        async function fetchAIIntelligence(userQuery = null, hiddenQuery = null) {
-            const aiContent = document.getElementById('ai-content');
-            
-            if (userQuery) { 
-                // NOVO: Lê a "Intelligence Hub" via history
-                const intelligenceText = getIntelContextForAI();
-                hiddenQuery = `Contexto atual do mercado (Histórico): ${intelligenceText}. Responde à seguinte pergunta do utilizador com base nisto: ${userQuery}`;
-                
-                aiContent.insertAdjacentHTML('beforeend', `<div class="user-msg msg">${userQuery}</div>`); 
-                aiContent.scrollTop = aiContent.scrollHeight;
-            }
-
-            const queryToSend = hiddenQuery || userQuery;
-            
-            const loadingId = "load-" + Date.now();
-            aiContent.insertAdjacentHTML('beforeend', `
-                <div id="${loadingId}" class="bot-msg msg">
-                    <div class="typing-indicator">
-                        <div class="typing-dot"></div>
-                        <div class="typing-dot"></div>
-                        <div class="typing-dot"></div>
-                    </div>
+                <div class="p-4 rounded-xl space-y-3 relative overflow-hidden" style="background:rgba(2,211,134,0.04);border:1px solid rgba(2,211,134,0.18)">
+                    <div class="absolute top-0 right-0 text-black text-[7px] font-black px-2 py-0.5 rounded-bl-lg uppercase" style="background:#02d386">Projeção</div>
+                    <h4 class="text-[10px] font-black uppercase tracking-widest border-b pb-2" style="color:#02d386;border-color:rgba(2,211,134,0.15)">Nova</h4>
+                    <div><p class="lbl" style="color:rgba(2,211,134,0.6)">Entrada</p><p class="mono text-white text-sm" id="res-new-avg">---</p></div>
+                    <div><p class="lbl" style="color:rgba(2,211,134,0.6)">Liquidação</p><p class="mono text-red-400 text-sm" id="sim-level-new-liq">---</p></div>
+                    <div><p class="lbl" style="color:rgba(2,211,134,0.6)">Take Profit</p><p class="mono text-yellow-500 text-sm" id="sim-level-new-tp">---</p><p class="text-[9px] text-gray-400 mt-0.5 hidden" id="sim-panel-new-tp-pnl"></p></div>
+                    <div><p class="lbl" style="color:rgba(2,211,134,0.6)">Margem</p><p class="mono text-white text-sm" id="sim-level-new-margin">---</p></div>
                 </div>
-            `);
-            aiContent.scrollTop = aiContent.scrollHeight;
+            </div>
+            <div class="mb-4">
+                <div class="grid grid-cols-[32px_1fr_1fr] gap-2 mb-2 px-1 text-[9px] uppercase text-gray-600 font-bold border-b border-gray-800 pb-1">
+                    <div class="text-center">On</div><div>Valor USD</div><div>Preço</div>
+                </div>
+                <div id="sim-slots-body" class="space-y-1.5"></div>
+            </div>
+            <div class="grid grid-cols-2 gap-3 mb-3">
+                <div class="bg-white/5 p-3 rounded-xl border border-white/10 flex justify-between items-center"><span class="lbl">Custo DCA</span><span id="res-total-cost" class="text-lg font-bold text-gray-300">$0</span></div>
+                <div id="margin-adj-panel" class="p-3 rounded-xl border border-gray-700 bg-gray-900 flex justify-between items-center"><span class="lbl text-white">Margem</span><span id="res-margin-adj" class="text-lg font-black text-gray-400">S/ Alt.</span></div>
+            </div>
+            <button onclick="resetSim()" class="w-full py-2.5 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest text-gray-500 hover:text-white hover:bg-white/5 transition-all">Limpar</button>
+        </div>
+        <div class="card p-5 md:p-6">
+            <h2 class="font-black text-white text-xs uppercase tracking-widest mb-5 flex items-center gap-2"><span style="color:#f7931a">◈</span> Calculadora de Risco</h2>
+            <div class="space-y-3">
+                <div><p class="lbl mb-1.5">Saldo da Conta (USD)</p><input type="number" id="rc-balance" placeholder="Ex: 1000" oninput="calcRisk()"></div>
+                <div><p class="lbl mb-1.5">Risco por Trade (%)</p><input type="number" id="rc-risk" placeholder="Ex: 2" oninput="calcRisk()"></div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div><p class="lbl mb-1.5">Entrada</p><input type="number" id="rc-entry" placeholder="Ex: 100000" oninput="calcRisk()"></div>
+                    <div><p class="lbl mb-1.5">Stop Loss</p><input type="number" id="rc-sl" placeholder="Ex: 97000" oninput="calcRisk()"></div>
+                </div>
+                <div><p class="lbl mb-1.5">Alavancagem</p><input type="number" id="rc-lev" placeholder="Ex: 10" oninput="calcRisk()"></div>
+                <div class="grid grid-cols-2 gap-3 pt-2 border-t border-white/5">
+                    <div class="bg-white/5 p-3 rounded-xl border border-white/10"><p class="lbl">Risco USD</p><p id="rc-out-risk" class="mono text-xl text-red-400 mt-1">$--</p></div>
+                    <div class="bg-white/5 p-3 rounded-xl border border-white/10"><p class="lbl">Tamanho Posição</p><p id="rc-out-size" class="mono text-xl text-white mt-1">$--</p></div>
+                    <div class="bg-white/5 p-3 rounded-xl border border-white/10"><p class="lbl">Margem Necessária</p><p id="rc-out-margin" class="mono text-xl mt-1" style="color:#f7931a">$--</p></div>
+                    <div class="bg-white/5 p-3 rounded-xl border border-white/10"><p class="lbl">TP Mínimo (2:1)</p><p id="rc-out-tp" class="mono text-xl text-green-400 mt-1">--</p></div>
+                </div>
+                <div class="pt-3 border-t border-white/5">
+                    <p class="lbl mb-3">Custo Funding Estimado</p>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><p class="lbl mb-1.5">Taxa (%)</p><input type="number" id="rc-fund-rate" placeholder="0.01" oninput="calcFunding()"></div>
+                        <div><p class="lbl mb-1.5">Dias</p><input type="number" id="rc-fund-days" placeholder="7" oninput="calcFunding()"></div>
+                    </div>
+                    <div class="mt-3 bg-white/5 p-3 rounded-xl border border-white/10"><p class="lbl">Total Estimado</p><p id="rc-fund-out" class="mono text-lg text-red-400 mt-1">--</p></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
-            try {
-                const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}`, 'apikey': SUPABASE_KEY };
-                const r = await fetch(AI_FUNC_PATH, { method: 'POST', headers: headers, body: JSON.stringify({ positions: currentPositions, userMessage: queryToSend }) });
-                
-                const d = await r.json();
-                let responseText = "";
+<!-- NOTÍCIAS -->
+<section id="tab-noticias" class="tab-content">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="lg:col-span-2 card p-5">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="font-black text-white text-xs uppercase tracking-widest">₿ Bitcoin News</h2>
+                <button onclick="fetchNews()" class="text-[9px] font-black uppercase border px-3 py-1 rounded-lg transition-all" style="color:#f7931a;border-color:rgba(247,147,26,0.3)">Atualizar</button>
+            </div>
+            <div id="news-container" class="space-y-2.5 max-h-[620px] overflow-y-auto pr-1">
+                <div class="text-center py-8 text-gray-500 text-xs uppercase font-bold">A carregar...</div>
+            </div>
+        </div>
+        <div class="flex flex-col gap-4">
+            <div class="card p-4">
+                <p class="lbl mb-3">Sentimento de Mercado</p>
+                <div class="text-center mb-3">
+                    <p id="fg-big" class="text-4xl font-black mono text-white">--</p>
+                    <p id="fg-text" class="text-[10px] text-gray-500 font-bold uppercase mt-1">Fear & Greed</p>
+                </div>
+                <div class="risk-bar"><div id="fg-dot" class="risk-dot" style="left:50%"></div></div>
+                <div class="flex justify-between mt-1.5"><span class="text-[9px] text-red-400 font-bold">Medo Extremo</span><span class="text-[9px] text-green-400 font-bold">Ganância</span></div>
+                <div class="mt-3 pt-3 border-t border-white/5 flex justify-between items-center">
+                    <span class="lbl">Macro</span>
+                    <span id="macro-badge" class="badge bg-gray-700/40 text-gray-400">--</span>
+                </div>
+            </div>
+            <div class="card p-4">
+                <h3 class="text-xs font-black uppercase tracking-widest mb-3" style="color:#f7931a">Guardar Intel</h3>
+                <textarea id="intel-news-input" rows="4" placeholder="Cola alertas Grok, Whale Alert, Lookonchain..." class="mb-3 text-xs"></textarea>
+                <button onclick="addIntelFrom('intel-news-input')" class="w-full py-2.5 rounded-lg font-black uppercase text-xs text-black" style="background:#f7931a">Guardar</button>
+            </div>
+            <div class="card p-4">
+                <p class="lbl mb-3">Briefings Rápidos IA</p>
+                <div class="space-y-2">
+                    <button class="quick-btn" onclick="quickPrompt('Gera um briefing completo do mercado BTC: tendência, níveis chave, sentimento e o que esperar nas próximas horas.')">📊 Briefing Mercado BTC</button>
+                    <button class="quick-btn" onclick="quickPrompt('Analisa o risco das minhas posições abertas. Distância de liquidação, ROE, e devo reduzir exposição?')">⚡ Analisar Risco</button>
+                    <button class="quick-btn" onclick="quickPrompt('Qual é o suporte e resistência mais próximos do preço atual de BTC? Onde o mercado está a testar?')">🎯 Suportes & Resistências</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
-                if (d.error) {
-                    responseText = `**Erro:** ${d.error}`;
-                } else if(d && d.insight) {
-                    responseText = d.insight.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
-                } else {
-                    responseText = `Erro de formatação.`;
-                }
+<!-- INTEL -->
+<section id="tab-intel" class="tab-content">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="card p-5">
+            <h2 class="text-xs font-black uppercase tracking-widest flex items-center gap-2 mb-4" style="color:#f7931a">⚡ Novo Registo</h2>
+            <p class="text-xs text-gray-400 mb-4">Relatórios Grok, alertas Whale Alert / Lookonchain ou contexto macro. O agente IA usa estes dados nas análises.</p>
+            <textarea id="intel-main-input" rows="6" placeholder="Cola o texto aqui..." class="mb-3 text-xs"></textarea>
+            <button onclick="addIntelFrom('intel-main-input')" class="w-full py-2.5 rounded-lg font-black uppercase text-xs text-black" style="background:#f7931a">Guardar Registo</button>
+        </div>
+        <div class="card p-5 lg:col-span-2">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="lbl">Histórico Operacional (<span id="intel-count">0</span>)</h3>
+                <button onclick="clearIntelHistory()" class="text-[9px] text-red-500 uppercase font-bold hover:underline">Limpar Tudo</button>
+            </div>
+            <div id="intel-history-container" class="space-y-3 max-h-[600px] overflow-y-auto pr-1"></div>
+        </div>
+    </div>
+</section>
 
-                const loadEl = document.getElementById(loadingId);
-                if(loadEl) loadEl.remove();
+</main>
 
-                const msgId = "msg-" + Date.now();
-                aiContent.insertAdjacentHTML('beforeend', `<div id="${msgId}" class="bot-msg msg"></div>`);
-                const msgEl = document.getElementById(msgId);
-                
-                let i = 0;
-                let isTag = false;
-                let textBuffer = "";
-                
-                function type() {
-                    if (i < responseText.length) {
-                        let char = responseText.charAt(i);
-                        if (char === '<') isTag = true;
-                        textBuffer += char;
-                        if (char === '>') isTag = false;
-                        
-                        const isAtBottom = Math.abs(aiContent.scrollHeight - aiContent.scrollTop - aiContent.clientHeight) < 60;
+<!-- AI SIDEBAR -->
+<aside id="ai-section" class="card p-5 flex flex-col">
+    <div class="flex justify-between items-center mb-4 border-b border-gray-800 pb-3">
+        <span class="text-xs font-black uppercase tracking-widest" style="color:#f7931a">₿ AI Agent</span>
+        <div class="flex items-center gap-2">
+            <span id="ai-loading" class="text-[9px] animate-pulse hidden font-bold uppercase" style="color:#f7931a">A processar...</span>
+            <button onclick="handleAICall()" class="text-gray-500 hover:text-white text-xl leading-none transition-colors">×</button>
+        </div>
+    </div>
+    <div class="grid grid-cols-2 gap-1.5 mb-3">
+        <button class="quick-btn" onclick="quickPrompt('Analisa o risco atual das minhas posições. Distância de liquidação, exposição e recomendação.')">⚡ Analisar Risco</button>
+        <button class="quick-btn" onclick="quickPrompt('Devo fazer DCA agora? Qual o melhor nível de entrada para reforçar BTC?')">📈 DCA Ideal?</button>
+        <button class="quick-btn" onclick="quickPrompt('Quais são os suportes e resistências mais importantes de BTC agora? Onde está o mercado?')">🎯 Níveis S/R</button>
+        <button class="quick-btn" onclick="quickPrompt('Resume o sentimento atual do mercado BTC. Bulls ou bears no controlo?')">🧠 Sentimento</button>
+        <button class="quick-btn" onclick="quickPrompt('Qual a melhor estratégia de take profit para as minhas posições abertas?')">💰 Take Profit</button>
+        <button class="quick-btn" onclick="quickPrompt('Qual o impacto do funding rate atual nas minhas posições e devo preocupar-me?')">💸 Funding</button>
+    </div>
+    <div id="ai-content" class="flex-grow overflow-y-auto mb-3 flex flex-col">
+        <div class="bot-msg msg text-gray-500 text-xs text-center">Agente pronto. Usa os atalhos ou escreve a tua pergunta.</div>
+    </div>
+    <div class="flex gap-2">
+        <input type="text" id="chat-input" placeholder="Pergunta ao agente..." class="flex-1 bg-white/5 p-3 rounded-xl text-white outline-none text-xs border border-white/5 transition-all" style="width:auto" onkeypress="if(event.key==='Enter')sendChat()">
+        <button onclick="sendChat()" class="px-4 rounded-xl font-black text-black text-sm hover:scale-105 transition-all" style="background:#f7931a">→</button>
+    </div>
+</aside>
+</div>
 
-                        msgEl.innerHTML = textBuffer;
-                        i++;
-                        
-                        if (isAtBottom) {
-                            aiContent.scrollTop = aiContent.scrollHeight;
-                        }
-                        
-                        if (isTag) {
-                            type();
-                        } else {
-                            setTimeout(type, 10);
-                        }
-                    }
-                }
-                type();
+<script src="https://s3.tradingview.com/tv.js"></script>
+<script>
+const FUNC_PATH = `https://yifxgiwmibjaornighvt.supabase.co/functions/v1/get-bybit-positions`;
+const AI_FUNC_PATH = `https://yifxgiwmibjaornighvt.supabase.co/functions/v1/trade-advisor`;
+const SUPABASE_KEY = 'sb_publishable_xHjsFJbSuAhO6r6BUylTCw_tDE-nFXT';
+const BYBIT = 'https://api.bybit.com';
 
-            } catch (err) {
-                const loadEl = document.getElementById(loadingId);
-                if(loadEl) loadEl.remove();
-                aiContent.insertAdjacentHTML('beforeend', `<div class="bot-msg msg text-red-500">Erro de rede.</div>`);
-                aiContent.scrollTop = aiContent.scrollHeight;
-            }
+let currentPositions = [], intelHistory = [], hasAutoRun = false, btcPrev = 0, mktChart = null, fundingTimer = null;
+
+window.onload = async () => {
+    generateSimSlots();
+    loadIntelHistory();
+    await Promise.all([fetchPositions(), fetchMarketData(), fetchDominance()]);
+    fetchTelemetry();
+    fetchNews();
+    initMarketChart();
+    setInterval(fetchPositions, 10000);
+    setInterval(fetchMarketData, 4000);
+    setInterval(fetchTelemetry, 60000);
+    setInterval(fetchDominance, 300000);
+};
+
+function switchTab(t) {
+    document.querySelectorAll('.tab-content,.nav-btn').forEach(e => e.classList.remove('active'));
+    document.getElementById('tab-'+t).classList.add('active');
+    document.getElementById('btn-'+t).classList.add('active');
+    if (t === 'mercados' && !mktChart) initMarketChart();
+}
+
+// ── Format ──
+function fPT(n, isM=false, p=2) {
+    let num = Number(n);
+    if (isNaN(num)||num===0) return isM ? '$0'+(p>0?',00':'') : '0'+(p>0?',00':'');
+    let abs = Math.abs(num), parts = abs.toFixed(p).split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+    return (num<0?'-':'') + (isM?'$':'') + (p>0?parts.join(','):parts[0]);
+}
+function fK(n) {
+    const v = Number(n);
+    if (isNaN(v)) return '--';
+    if (Math.abs(v)>=1e9) return fPT(v/1e9,false,2)+'B';
+    if (Math.abs(v)>=1e6) return fPT(v/1e6,false,2)+'M';
+    if (Math.abs(v)>=1e3) return fPT(v/1e3,false,1)+'K';
+    return fPT(v,false,2);
+}
+function timeAgo(d) {
+    const m = Math.floor((Date.now()-new Date(d).getTime())/60000);
+    if (m<60) return m+'m'; if (m<1440) return Math.floor(m/60)+'h'; return Math.floor(m/1440)+'d';
+}
+
+// ── Market Data ──
+async function fetchMarketData() {
+    try {
+        const [inv, ob] = await Promise.all([
+            fetch(`${BYBIT}/v5/market/tickers?category=inverse&symbol=BTCUSD`).then(r=>r.json()),
+            fetch(`${BYBIT}/v5/market/orderbook?category=inverse&symbol=BTCUSD&limit=12`).then(r=>r.json())
+        ]);
+        const t = inv?.result?.list?.[0];
+        if (t) {
+            const price = parseFloat(t.lastPrice), ch = parseFloat(t.price24hPcnt)*100;
+            const priceEl = document.getElementById('btc-price');
+            const up = price > btcPrev && btcPrev > 0, dn = price < btcPrev && btcPrev > 0;
+            priceEl.innerText = fPT(price,false,0);
+            priceEl.className = `mono text-sm ${up?'text-green-400':dn?'text-red-400':'text-white'} transition-colors`;
+            setTimeout(()=>priceEl.className='mono text-sm text-white transition-colors',700);
+            const chEl = document.getElementById('btc-change');
+            chEl.innerText = (ch>=0?'+':'')+fPT(ch,false,2)+'%';
+            chEl.className = `text-[9px] font-bold ${ch>=0?'text-green-400':'text-red-400'}`;
+            btcPrev = price;
+            const fr = parseFloat(t.fundingRate)*100;
+            const frStr = (fr>=0?'+':'')+fr.toFixed(4)+'%';
+            setText('hdr-funding', frStr);
+            setText('fund-big', frStr);
+            const fb = document.getElementById('fund-badge');
+            if (fb) { if (fr>0.02){fb.innerText='Longs pagam';fb.className='badge bg-red-500/20 text-red-400';}else if(fr<-0.01){fb.innerText='Shorts pagam';fb.className='badge bg-green-500/20 text-green-400';}else{fb.innerText='Neutro';fb.className='badge bg-gray-700/40 text-gray-400';} }
+            setFundingImpact(fr);
+            if (t.nextFundingTime) startFundingCountdown(parseInt(t.nextFundingTime));
+            setText('m-mark', fPT(parseFloat(t.markPrice),false,0));
+            const mhl = document.getElementById('m-hl');
+            if (mhl) mhl.innerHTML = `<span class="text-green-400">${fPT(parseFloat(t.highPrice24h),false,0)}</span>/<span class="text-red-400">${fPT(parseFloat(t.lowPrice24h),false,0)}</span>`;
+            setText('m-vol', '$'+fK(parseFloat(t.volume24h)));
+            setText('m-oi', '$'+fK(parseFloat(t.openInterestValue)));
         }
+        if (ob?.result) renderOrderBook(ob.result);
+    } catch(e){}
+}
 
-        function handleChat(e) { if (e.key === 'Enter' && e.target.value.trim() !== "") { fetchAIIntelligence(e.target.value); e.target.value = ''; } }
-        function resetSim() { 
-            document.querySelectorAll('.sim-input-val, .sim-input-price').forEach(i => i.value = ''); 
-            const sym = document.getElementById('sim-select-pos').value;
-            const p = currentPositions.find(x => x.symbol === sym);
-            if(p) document.getElementById('sim-input-leverage').value = p.leverage;
-            runSimulation(); 
+function setText(id, val) { const el=document.getElementById(id); if(el) el.innerText=val; }
+
+function setFundingImpact(fr) {
+    const el = document.getElementById('fund-impact');
+    if (!el || !currentPositions.length) return;
+    let total = 0;
+    currentPositions.forEach(p => {
+        if (p.symbol.includes('BTC')) {
+            const v = parseFloat(p.positionValue);
+            const imp = v*(fr/100);
+            total += p.side==='Buy' ? -imp : imp;
         }
-    </script>
+    });
+    el.innerText = (total>=0?'+':'')+fPT(total,true,4);
+    el.className = `mono text-sm ${total>=0?'text-green-400':'text-red-400'}`;
+}
+
+function startFundingCountdown(ts) {
+    if (fundingTimer) clearInterval(fundingTimer);
+    fundingTimer = setInterval(()=>{
+        const diff = ts - Date.now();
+        if (diff<=0){clearInterval(fundingTimer);return;}
+        const h=Math.floor(diff/3600000), m=Math.floor((diff%3600000)/60000), s=Math.floor((diff%60000)/1000);
+        setText('fund-countdown',`${h}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`);
+    },1000);
+}
+
+function renderOrderBook(ob) {
+    const asks=(ob.a||[]).slice(0,12), bids=(ob.b||[]).slice(0,12);
+    const mxA=asks.length?Math.max(...asks.map(a=>parseFloat(a[1]))):1;
+    const mxB=bids.length?Math.max(...bids.map(b=>parseFloat(b[1]))):1;
+    let ac=0, bc=0;
+    const asksHtml=asks.slice().reverse().map(([p,q])=>{ac+=parseFloat(q);const pct=(parseFloat(q)/mxA*100).toFixed(0);return`<div class="ob-row"><div class="ob-bar-ask" style="width:${pct}%"></div><span class="text-red-400">${fPT(parseFloat(p),false,0)}</span><span class="text-gray-300 text-center">${fK(parseFloat(q))}</span><span class="text-gray-500 text-right">${fK(ac)}</span></div>`;}).join('');
+    const bidsHtml=bids.map(([p,q])=>{bc+=parseFloat(q);const pct=(parseFloat(q)/mxB*100).toFixed(0);return`<div class="ob-row"><div class="ob-bar-bid" style="width:${pct}%"></div><span class="text-green-400">${fPT(parseFloat(p),false,0)}</span><span class="text-gray-300 text-center">${fK(parseFloat(q))}</span><span class="text-gray-500 text-right">${fK(bc)}</span></div>`;}).join('');
+    const ea=document.getElementById('ob-asks'), eb=document.getElementById('ob-bids'), es=document.getElementById('ob-spread');
+    if(ea)ea.innerHTML=asksHtml; if(eb)eb.innerHTML=bidsHtml;
+    if(es&&asks.length&&bids.length){const sp=Math.abs(parseFloat(asks[asks.length-1]?.[0]??0)-parseFloat(bids[0]?.[0]??0));es.innerText=fPT(sp,false,1)+' USD';}
+}
+
+async function fetchDominance() {
+    try {
+        const r=await fetch('https://api.coingecko.com/api/v3/global');
+        const d=await r.json();
+        const dom=d?.data?.market_cap_percentage?.btc;
+        if(dom){setText('btc-dom',fPT(dom,false,1)+'%');const b=document.getElementById('btc-dom-bar');if(b)b.style.width=dom+'%';}
+    }catch(e){}
+}
+
+// ── Chart ──
+function initMarketChart() {
+    if (mktChart) return;
+    const c=document.getElementById('tv-market-wrap');
+    if(!c)return;
+    c.innerHTML='<div id="tv-mkt" class="w-full h-full"></div>';
+    mktChart=new TradingView.widget({autosize:true,symbol:'BYBIT:BTCUSD',interval:'15',theme:'dark',style:'1',toolbar_bg:'#080a0c',enable_publishing:false,hide_side_toolbar:false,studies:['RSI@tv-basicstudies','MASimple@tv-basicstudies'],container_id:'tv-mkt'});
+}
+function setChartInterval(interval, btn) {
+    document.querySelectorAll('.chart-btn').forEach(b=>{b.className=b===btn?'chart-btn active':'chart-btn';});
+    const c=document.getElementById('tv-market-wrap');
+    if(!c)return;
+    c.innerHTML='<div id="tv-mkt" class="w-full h-full"></div>';
+    mktChart=new TradingView.widget({autosize:true,symbol:'BYBIT:BTCUSD',interval,theme:'dark',style:'1',toolbar_bg:'#080a0c',enable_publishing:false,hide_side_toolbar:false,studies:['RSI@tv-basicstudies'],container_id:'tv-mkt'});
+}
+
+// ── News ──
+async function fetchNews() {
+    const c=document.getElementById('news-container');
+    if(!c)return;
+    // Try RSS via rss2json
+    try {
+        const r=await fetch('https://api.rss2json.com/v1/api.json?rss_url=https://cointelegraph.com/rss/tag/bitcoin&count=20');
+        const d=await r.json();
+        if(d?.items?.length>0){
+            c.innerHTML=d.items.map(item=>`<div class="news-card" onclick="window.open('${item.link}','_blank')"><p class="text-sm font-bold text-white leading-tight mb-1.5">${item.title}</p><div class="flex gap-2 items-center"><span class="lbl">CoinTelegraph</span><span class="lbl">${timeAgo(item.pubDate)}</span></div></div>`).join('');
+            return;
+        }
+    }catch(e){}
+    // Fallback: Bitcoin Magazine
+    try {
+        const r=await fetch('https://api.rss2json.com/v1/api.json?rss_url=https://bitcoinmagazine.com/.rss/full&count=15');
+        const d=await r.json();
+        if(d?.items?.length>0){
+            c.innerHTML=d.items.map(item=>`<div class="news-card" onclick="window.open('${item.link}','_blank')"><p class="text-sm font-bold text-white leading-tight mb-1.5">${item.title}</p><div class="flex gap-2 items-center"><span class="lbl">Bitcoin Magazine</span><span class="lbl">${timeAgo(item.pubDate)}</span></div></div>`).join('');
+            return;
+        }
+    }catch(e){}
+    c.innerHTML='<div class="text-center py-8 text-gray-500 text-xs uppercase font-bold">Não foi possível carregar notícias.</div>';
+}
+
+// ── Positions ──
+async function fetchPositions() {
+    try {
+        const r=await fetch(FUNC_PATH,{headers:{'Authorization':`Bearer ${SUPABASE_KEY}`}});
+        const d=await r.json();
+        if(d.result?.list){
+            currentPositions=d.result.list.filter(p=>parseFloat(p.size)!==0);
+            updateDashboard(currentPositions);
+            updateSimDropdown(currentPositions);
+            runSimulation();
+        }
+    }catch(e){}
+}
+
+function updateDashboard(positions) {
+    const grid=document.getElementById('dashboard-grid');
+    const noPos=document.getElementById('no-pos');
+    if(positions.length===0){if(noPos)noPos.classList.remove('hidden');return;}
+    if(noPos)noPos.classList.add('hidden');
+    let tPnL=0,tMarg=0,tExp=0,maxRisk=0;
+    positions.forEach(pos=>{
+        const pnl=parseFloat(pos.unrealisedPnl),val=parseFloat(pos.positionValue),lev=parseFloat(pos.leverage);
+        const cur=parseFloat(pos.markPrice),ent=parseFloat(pos.avgPrice),liq=parseFloat(pos.liqPrice);
+        const tp=parseFloat(pos.takeProfit),sl=parseFloat(pos.stopLoss),marg=val/lev;
+        tPnL+=pnl;tMarg+=marg;tExp+=val;
+        const dLiq=liq>0?Math.abs((liq-cur)/cur)*100:100;
+        const risk=Math.max(0,Math.min(100,100-dLiq));
+        if(risk>maxRisk)maxRisk=risk;
+        const tpP=tp>0?Math.min(Math.abs(cur-ent)/Math.abs(tp-ent)*100,100):0;
+        const roe=marg>0?(pnl/marg)*100:0;
+        const cPnL=pnl>=0?'text-green-400':'text-red-400';
+        const isInv=pos.symbol.includes('USD')&&!pos.symbol.includes('USDT');
+        let card=document.getElementById(`card-${pos.symbol}`);
+        if(!card){
+            card=document.createElement('div');
+            card.id=`card-${pos.symbol}`;
+            card.className=`card border-l-4 p-4 lg:p-5 ${pos.side==='Buy'?'border-l-green-500':'border-l-red-500'}`;
+            card.innerHTML=`<div class="content-area"></div><div id="tv-w-${pos.symbol}" class="mt-4 hidden" data-loaded="false"><div id="tv-p-${pos.symbol}" class="rounded-xl overflow-hidden h-[400px] lg:h-[520px]" style="background:#000;border:1px solid rgba(255,255,255,0.06)"></div></div>`;
+            grid.appendChild(card);
+        }
+        card.querySelector('.content-area').innerHTML=`
+            <div class="flex justify-between items-start mb-3 flex-wrap gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <h2 class="font-black text-white text-lg uppercase tracking-tighter">${pos.symbol}</h2>
+                    <span class="badge bg-yellow-500/10 text-yellow-500">${lev}x</span>
+                    <span class="badge ${pos.side==='Buy'?'bg-green-500/10 text-green-400':'bg-red-500/10 text-red-400'}">${pos.side==='Buy'?'LONG':'SHORT'}</span>
+                    <span class="badge ${isInv?'bg-orange-500/10 text-orange-400':'bg-blue-500/10 text-blue-400'}">${isInv?'INVERSE':'LINEAR'}</span>
+                </div>
+                <button onclick="toggleChart('${pos.symbol}')" class="text-[9px] font-bold text-gray-400 border border-white/10 px-3 py-1.5 rounded-lg hover:text-white hover:border-white/20 transition-all uppercase">Gráfico</button>
+            </div>
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <div><p class="lbl mb-0.5">ROE</p><p class="text-2xl lg:text-3xl font-black ${cPnL}">${fPT(roe,false,2)}%</p></div>
+                <div class="text-right"><p class="lbl mb-0.5">PnL USD</p><p class="text-2xl lg:text-3xl font-bold ${cPnL}">${fPT(pnl,true,0)}</p></div>
+            </div>
+            <div class="grid grid-cols-3 gap-3 mb-4 pt-3 border-t border-white/5 text-xs">
+                <div><p class="lbl">Valor / Margem</p><p class="font-bold text-gray-200">${fPT(val,true,0)}</p><p class="text-gray-500">(${fPT(marg,true,2)})</p></div>
+                <div><p class="lbl">Entrada</p><p class="mono text-gray-300">${fPT(ent,false,2)}</p><p class="mono" style="color:#f7931a">${fPT(cur,false,2)}</p></div>
+                <div class="text-right"><p class="lbl">Liq. / SL</p><p class="mono text-red-400">${liq>0?fPT(liq,false,2):'N/D'}</p>${sl>0?`<p class="mono text-orange-400">${fPT(sl,false,2)}</p>`:''}</div>
+            </div>
+            <div class="space-y-2">
+                <div>
+                    <div class="flex justify-between text-[9px] font-bold mb-1">
+                        <span class="text-gray-500">Distância Liquidação</span>
+                        <span class="${dLiq<10?'text-red-500 animate-pulse':dLiq<20?'text-orange-400':'text-gray-500'}">${fPT(dLiq,false,1)}%</span>
+                    </div>
+                    <div class="prog-bg"><div class="prog-fill ${dLiq<10?'bg-red-500 animate-pulse':dLiq<20?'bg-orange-500':dLiq<40?'bg-yellow-500/60':'bg-red-900/40'}" style="width:${Math.max(0,100-dLiq)}%"></div></div>
+                </div>
+                ${tp>0?`<div><div class="flex justify-between text-[9px] font-bold mb-1"><span class="text-yellow-600">Take Profit (${fPT(tp,false,0)})</span><span class="text-yellow-600">${fPT(tpP,false,0)}%</span></div><div class="prog-bg"><div class="prog-fill bg-yellow-500/60" style="width:${tpP}%"></div></div></div>`:''}
+            </div>`;
+    });
+    document.getElementById('total-pnl').innerText=fPT(tPnL,true,0);
+    document.getElementById('total-pnl').className=`text-xl lg:text-2xl mono ${tPnL>=0?'text-green-400':'text-red-400'}`;
+    document.getElementById('total-pnl-perc').innerText=fPT(tMarg>0?(tPnL/tMarg*100):0,false,2)+'%';
+    document.getElementById('total-pnl-perc').className=`text-xl lg:text-2xl mono ${tPnL>=0?'text-green-400':'text-red-400'}`;
+    document.getElementById('total-exposure').innerText=fPT(tExp,true,0);
+    document.getElementById('avg-leverage').innerText=fPT(tMarg>0?(tExp/tMarg):0,false,2)+'x';
+    document.getElementById('total-margin').innerText=fPT(tMarg,true,0);
+    updateRiskScore(maxRisk);
+    setFundingImpact(parseFloat((document.getElementById('hdr-funding')?.innerText||'0').replace('%',''))||0);
+}
+
+function updateRiskScore(score) {
+    const dot=document.getElementById('risk-dot'), lbl=document.getElementById('risk-label');
+    if(!dot||!lbl)return;
+    dot.style.left=Math.min(score,95)+'%';
+    if(score<30){lbl.innerText='Risco Baixo';lbl.className='badge bg-green-500/20 text-green-400';}
+    else if(score<60){lbl.innerText='Risco Moderado';lbl.className='badge bg-yellow-500/20 text-yellow-500';}
+    else if(score<80){lbl.innerText='Risco Alto';lbl.className='badge bg-orange-500/20 text-orange-400';}
+    else{lbl.innerText='CRÍTICO';lbl.className='badge bg-red-500/20 text-red-400 animate-pulse';}
+}
+
+function toggleChart(s) {
+    const el=document.getElementById(`tv-w-${s}`);
+    el.classList.toggle('hidden');
+    if(!el.classList.contains('hidden')&&el.getAttribute('data-loaded')==='false'){
+        const pos=currentPositions.find(p=>p.symbol===s);
+        const isInv=pos&&pos.symbol.includes('USD')&&!pos.symbol.includes('USDT');
+        new TradingView.widget({autosize:true,symbol:`BYBIT:${s}${isInv?'':'.P'}`,interval:'15',theme:'dark',style:'1',toolbar_bg:'#1e2329',enable_publishing:false,hide_side_toolbar:false,studies:['RSI@tv-basicstudies'],container_id:`tv-p-${s}`});
+        el.setAttribute('data-loaded','true');
+    }
+}
+
+// ── Telemetry ──
+async function fetchTelemetry() {
+    try {
+        const r=await fetch(AI_FUNC_PATH,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${SUPABASE_KEY}`,'apikey':SUPABASE_KEY},body:JSON.stringify({positions:currentPositions,userMessage:'TELEMETRY'})});
+        const d=await r.json();
+        if(d.error)return;
+        if(d?.insight){
+            const isB=d.insight.toUpperCase().includes('BULLISH');
+            const m=document.getElementById('macro-trend'),mb=document.getElementById('macro-badge');
+            const cls=isB?'border-green-500/20 text-green-500':'border-red-500/20 text-red-500';
+            if(m){m.innerText=`Macro: ${isB?'BULLISH':'BEARISH'}`;m.className=`hidden md:block lbl bg-white/5 px-2 py-1.5 rounded-md border ${cls}`;}
+            if(mb){mb.innerText=isB?'BULLISH':'BEARISH';mb.className=`badge ${isB?'bg-green-500/20 text-green-400':'bg-red-500/20 text-red-400'}`;}
+        }
+        if(d?.fg){
+            const v=parseInt(d.fg);
+            const fg=document.getElementById('fg-index-top');
+            const cls=v>=70?'border-green-500/20 text-green-500':v<=30?'border-red-500/20 text-red-500':'border-yellow-500/20 text-yellow-500';
+            if(fg){fg.innerText=`F&G: ${d.fg}`;fg.className=`hidden md:block lbl bg-white/5 px-2 py-1.5 rounded-md border ${cls}`;}
+            setText('fg-big',d.fg);
+            const fgBig=document.getElementById('fg-big');
+            if(fgBig)fgBig.className=`text-4xl font-black mono ${v>=70?'text-green-400':v<=30?'text-red-400':'text-yellow-500'}`;
+            const labels=['Medo Extremo','Medo','Neutro','Ganância','Ganância Extrema'];
+            setText('fg-text',labels[v>=80?4:v>=60?3:v>=40?2:v>=25?1:0]);
+            const dot=document.getElementById('fg-dot');if(dot)dot.style.left=v+'%';
+        }
+    }catch(e){}
+}
+
+// ── Intel ──
+function loadIntelHistory(){const s=localStorage.getItem('ai_trading_intel_history');if(s)try{intelHistory=JSON.parse(s);}catch(e){intelHistory=[];}renderIntelHistory();}
+function saveIntelHistory(){localStorage.setItem('ai_trading_intel_history',JSON.stringify(intelHistory));}
+function addIntelFrom(id){
+    const el=document.getElementById(id);
+    const text=el?.value?.trim();
+    if(!text)return;
+    intelHistory.unshift({id:Date.now(),date:new Date().toLocaleString('pt-PT'),text});
+    saveIntelHistory();renderIntelHistory();
+    if(el)el.value='';
+}
+function clearIntelHistory(){if(confirm('Limpar todo o histórico?')){intelHistory=[];saveIntelHistory();renderIntelHistory();}}
+function deleteIntel(id){intelHistory=intelHistory.filter(i=>i.id!==id);saveIntelHistory();renderIntelHistory();}
+function renderIntelHistory(){
+    const c=document.getElementById('intel-history-container');
+    const cnt=document.getElementById('intel-count');
+    if(cnt)cnt.innerText=intelHistory.length;
+    if(!c)return;
+    if(intelHistory.length===0){c.innerHTML='<div class="text-center py-8 text-gray-500 text-xs uppercase font-bold tracking-widest">Nenhum registo.</div>';return;}
+    c.innerHTML=intelHistory.map(item=>`
+        <div class="bg-white/3 border border-white/5 rounded-xl p-4">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-[9px] font-bold uppercase" style="color:#f7931a">${item.date}</span>
+                <button onclick="deleteIntel(${item.id})" class="text-[9px] text-gray-600 hover:text-red-500 transition-colors">✕</button>
+            </div>
+            <p class="text-xs text-gray-300 mono whitespace-pre-wrap leading-relaxed">${item.text}</p>
+        </div>`).join('');
+}
+function getIntelContext(){if(!intelHistory.length)return'Sem contexto adicional.';return intelHistory.slice(0,5).map(h=>`[${h.date}] ${h.text}`).join('\n\n');}
+
+// ── Simulator ──
+function generateSimSlots(){
+    const b=document.getElementById('sim-slots-body');
+    for(let i=0;i<8;i++){const r=document.createElement('div');r.className='grid grid-cols-[32px_1fr_1fr] gap-2 items-center';r.innerHTML=`<div class="flex justify-center"><input type="checkbox" checked class="sim-cb w-4 h-4" style="accent-color:#f7931a" onchange="runSimulation()"></div><input type="number" class="sim-val" placeholder="USD" oninput="runSimulation()"><input type="number" class="sim-px" placeholder="Preço" oninput="runSimulation()">`;b.appendChild(r);}
+}
+function updateSimDropdown(positions){
+    const s=document.getElementById('sim-select-pos');if(!s)return;
+    const v=s.value;s.innerHTML='<option value="">Selecionar...</option>';
+    positions.forEach(p=>{const o=document.createElement('option');o.value=p.symbol;o.innerText=`${p.symbol} (${p.side})`;s.appendChild(o);});
+    if(v)s.value=v;
+}
+function loadPositionToSim(){
+    const sym=document.getElementById('sim-select-pos').value;
+    const p=currentPositions.find(x=>x.symbol===sym);
+    if(!p)return;
+    const marg=parseFloat(p.positionValue)/parseFloat(p.leverage);
+    setText('sim-mark-price',fPT(p.markPrice,false,2));
+    setText('sim-current-qty',fPT(Math.abs(parseFloat(p.size)),false,4));
+    document.getElementById('sim-input-leverage').value=p.leverage;
+    setText('sim-panel-current-entry',fPT(p.avgPrice,false,2));
+    setText('sim-panel-current-liq',fPT(p.liqPrice,false,2));
+    setText('sim-panel-current-margin',fPT(marg,true,2));
+    const tp=parseFloat(p.takeProfit);
+    setText('sim-panel-current-tp',tp>0?fPT(tp,false,2):'N/D');
+    if(tp>0){const qty=Math.abs(parseFloat(p.size)),estPnl=p.side==='Buy'?(tp-p.avgPrice)*qty:(p.avgPrice-tp)*qty;setText('sim-panel-current-tp-pnl',`PnL: ${fPT(estPnl,true,2)}`);}
+    runSimulation();
+}
+function runSimulation(){
+    const sym=document.getElementById('sim-select-pos').value;
+    const p=currentPositions.find(x=>x.symbol===sym);if(!p)return;
+    let curQty=Math.abs(parseFloat(p.size)),curAvg=parseFloat(p.avgPrice),origLev=parseFloat(p.leverage);
+    let newLev=parseFloat(document.getElementById('sim-input-leverage').value);
+    if(isNaN(newLev)||newLev<=0)newLev=origLev;
+    let totalQty=curQty,totalW=curQty*curAvg,totalCost=0;
+    document.querySelectorAll('.sim-val').forEach((v,i)=>{
+        const cb=document.querySelectorAll('.sim-cb')[i],px=document.querySelectorAll('.sim-px')[i];
+        if(cb.checked&&v.value&&px.value){const usd=parseFloat(v.value),price=parseFloat(px.value),qty=usd/price;totalQty+=qty;totalW+=qty*price;totalCost+=usd;}
+    });
+    const nAvg=totalW/totalQty;
+    setText('res-new-avg',totalCost>0?fPT(nAvg,false,2):'---');
+    setText('res-total-cost',fPT(totalCost,true,0));
+    let newLiq=p.side==='Buy'?nAvg*(1-1/newLev+0.005):nAvg*(1+1/newLev-0.005);
+    setText('sim-level-new-liq',(totalCost>0||newLev!==origLev)?fPT(newLiq,false,2):'---');
+    const curMarg=(curQty*curAvg)/origLev,newMarg=(totalQty*nAvg)/newLev,diff=newMarg-curMarg;
+    const tp=parseFloat(p.takeProfit);
+    const elMN=document.getElementById('sim-level-new-margin'),elTN=document.getElementById('sim-level-new-tp'),elTPN=document.getElementById('sim-panel-new-tp-pnl');
+    if(totalCost>0||newLev!==origLev){
+        if(elMN)elMN.innerText=fPT(newMarg,true,2);
+        if(tp>0&&elTN){elTN.innerText=fPT(tp,false,2);const newEst=p.side==='Buy'?(tp-nAvg)*totalQty:(nAvg-tp)*totalQty;if(elTPN){elTPN.innerText=`PnL: ${fPT(newEst,true,2)}`;elTPN.className='text-[9px] text-gray-400 mt-0.5 block';}}else if(elTN){elTN.innerText='N/D';if(elTPN)elTPN.className='hidden';}
+        const mp=document.getElementById('margin-adj-panel'),mt=document.getElementById('res-margin-adj');
+        if(Math.abs(diff)<1){mp.className='p-3 rounded-xl border border-gray-700 bg-gray-900 flex justify-between items-center';if(mt){mt.innerText='S/ Alt.';mt.className='text-lg font-black text-gray-400';}}
+        else if(diff>0){mp.className='p-3 rounded-xl border border-red-500/30 bg-red-500/10 flex justify-between items-center';if(mt){mt.innerText='Add '+fPT(diff,true,2);mt.className='text-lg font-black text-red-400';}}
+        else{mp.className='p-3 rounded-xl border border-green-500/30 bg-green-500/10 flex justify-between items-center';if(mt){mt.innerText='Lib. '+fPT(Math.abs(diff),true,2);mt.className='text-lg font-black text-green-400';}}
+    }else{if(elMN)elMN.innerText='---';if(elTN)elTN.innerText='---';if(elTPN)elTPN.className='hidden';}
+}
+function resetSim(){document.querySelectorAll('.sim-val,.sim-px').forEach(i=>i.value='');const sym=document.getElementById('sim-select-pos').value;const p=currentPositions.find(x=>x.symbol===sym);if(p)document.getElementById('sim-input-leverage').value=p.leverage;runSimulation();}
+
+// ── Risk Calc ──
+function calcRisk(){
+    const bal=parseFloat(document.getElementById('rc-balance').value)||0;
+    const risk=parseFloat(document.getElementById('rc-risk').value)||0;
+    const entry=parseFloat(document.getElementById('rc-entry').value)||0;
+    const sl=parseFloat(document.getElementById('rc-sl').value)||0;
+    const lev=parseFloat(document.getElementById('rc-lev').value)||1;
+    if(!bal||!risk||!entry||!sl||!lev)return;
+    const riskUsd=bal*(risk/100),slPct=Math.abs((entry-sl)/entry);
+    const posSize=riskUsd/slPct,margin=posSize/lev;
+    const tp=(entry>sl)?entry+(entry-sl)*2:entry-(sl-entry)*2;
+    setText('rc-out-risk',fPT(riskUsd,true,2));
+    setText('rc-out-size',fPT(posSize,true,0));
+    setText('rc-out-margin',fPT(margin,true,2));
+    setText('rc-out-tp',fPT(tp,false,0));
+}
+function calcFunding(){
+    const fr=parseFloat(document.getElementById('rc-fund-rate').value)||0;
+    const days=parseFloat(document.getElementById('rc-fund-days').value)||0;
+    if(!fr||!days||!currentPositions.length){setText('rc-fund-out','--');return;}
+    let total=0;
+    currentPositions.forEach(p=>{total+=parseFloat(p.positionValue)*(fr/100)*3*days;});
+    setText('rc-fund-out',fPT(Math.abs(total),true,2)+` em ${days} dia(s)`);
+    const el=document.getElementById('rc-fund-out');if(el)el.className='mono text-lg text-red-400 mt-1';
+}
+
+// ── AI ──
+function handleAICall(){
+    const s=document.getElementById('ai-section');
+    s.classList.toggle('open');
+    document.getElementById('main-grid').classList.toggle('chat-open');
+    if(s.classList.contains('open')&&!hasAutoRun){
+        hasAutoRun=true;
+        document.getElementById('ai-content').innerHTML='';
+        fetchAI(null,`Faz uma análise completa do meu portefólio BTC. Inclui: risco atual, distâncias de liquidação, ROE, funding rate e recomendações estratégicas. Contexto adicional: ${getIntelContext()}`);
+    }
+}
+function quickPrompt(q){
+    const s=document.getElementById('ai-section');
+    if(!s.classList.contains('open')){s.classList.add('open');document.getElementById('main-grid').classList.add('chat-open');}
+    fetchAI(q);
+}
+async function fetchAI(userQ=null,hiddenQ=null){
+    const content=document.getElementById('ai-content');
+    if(userQ){hiddenQ=`Contexto Intel: ${getIntelContext()}\n\nPergunta: ${userQ}`;content.insertAdjacentHTML('beforeend',`<div class="user-msg msg">${userQ}</div>`);content.scrollTop=content.scrollHeight;}
+    const q=hiddenQ||userQ;
+    const lid='load-'+Date.now();
+    content.insertAdjacentHTML('beforeend',`<div id="${lid}" class="bot-msg msg"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>`);
+    content.scrollTop=content.scrollHeight;
+    document.getElementById('ai-loading').classList.remove('hidden');
+    try{
+        const r=await fetch(AI_FUNC_PATH,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${SUPABASE_KEY}`,'apikey':SUPABASE_KEY},body:JSON.stringify({positions:currentPositions,userMessage:q})});
+        const d=await r.json();
+        let txt=d.error?`**Erro:** ${d.error}`:(d?.insight||'Sem resposta.');
+        txt=txt.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+        document.getElementById(lid)?.remove();
+        const mid='msg-'+Date.now();
+        content.insertAdjacentHTML('beforeend',`<div id="${mid}" class="bot-msg msg"></div>`);
+        const msgEl=document.getElementById(mid);
+        let i=0,tag=false,buf='';
+        function type(){if(i<txt.length){const c=txt.charAt(i);if(c==='<')tag=true;buf+=c;if(c==='>')tag=false;msgEl.innerHTML=buf;i++;const atBot=Math.abs(content.scrollHeight-content.scrollTop-content.clientHeight)<60;if(atBot)content.scrollTop=content.scrollHeight;tag?type():setTimeout(type,8);}}
+        type();
+    }catch(e){document.getElementById(lid)?.remove();content.insertAdjacentHTML('beforeend','<div class="bot-msg msg text-red-400 text-xs">Erro de rede.</div>');}
+    finally{document.getElementById('ai-loading').classList.add('hidden');}
+}
+function sendChat(){const i=document.getElementById('chat-input');if(i.value.trim()){fetchAI(i.value.trim());i.value='';}}
+</script>
 </body>
 </html>
