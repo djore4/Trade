@@ -120,7 +120,6 @@
                     <button onclick="switchTab('mercados')" id="btn-mercados" class="nav-btn">Mercados</button>
                     <button onclick="switchTab('simulator')" id="btn-simulator" class="nav-btn">Simulador</button>
                     <button onclick="switchTab('noticias')" id="btn-noticias" class="nav-btn">Notícias</button>
-                    <button onclick="switchTab('intel')" id="btn-intel" class="nav-btn">Intel</button>
                 </nav>
             </div>
         </div>
@@ -422,12 +421,6 @@
                     <span id="macro-badge" class="badge bg-gray-700/40 text-gray-400">--</span>
                 </div>
             </div>
-            <!-- Quick intel -->
-            <div class="card p-4">
-                <h3 class="text-xs font-black uppercase tracking-widest mb-3" style="color:#f7931a">Guardar Intel</h3>
-                <textarea id="intel-news-input" rows="4" placeholder="Cola alertas Grok, Whale Alert..." class="mb-3 text-sm"></textarea>
-                <button onclick="addIntelFrom('intel-news-input')" class="w-full py-3 rounded-lg font-black uppercase text-xs text-black min-h-[44px]" style="background:#f7931a">Guardar</button>
-            </div>
             <!-- AI briefings -->
             <div class="card p-4">
                 <p class="lbl mb-3">Briefings Rápidos</p>
@@ -441,24 +434,6 @@
     </div>
 </section>
 
-<!-- INTEL -->
-<section id="tab-intel" class="tab-content">
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div class="card p-4 sm:p-5">
-            <h2 class="text-xs font-black uppercase tracking-widest flex items-center gap-2 mb-3" style="color:#f7931a">⚡ Novo Registo</h2>
-            <p class="text-sm text-gray-400 mb-4 leading-relaxed">Relatórios Grok, alertas Whale Alert / Lookonchain ou contexto macro. O agente IA usa estes dados nas análises.</p>
-            <textarea id="intel-main-input" rows="5" placeholder="Cola o texto aqui..." class="mb-3 text-sm"></textarea>
-            <button onclick="addIntelFrom('intel-main-input')" class="w-full py-3 rounded-lg font-black uppercase text-sm text-black min-h-[48px]" style="background:#f7931a">Guardar Registo</button>
-        </div>
-        <div class="card p-4 sm:p-5 lg:col-span-2">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="lbl">Histórico (<span id="intel-count">0</span>)</h3>
-                <button onclick="clearIntelHistory()" class="text-[10px] text-red-500 uppercase font-bold hover:underline min-h-[44px] px-2">Limpar Tudo</button>
-            </div>
-            <div id="intel-history-container" class="space-y-3 max-h-[60vh] sm:max-h-[560px] overflow-y-auto pr-1"></div>
-        </div>
-    </div>
-</section>
 
 </main>
 
@@ -503,10 +478,9 @@ const AI_FUNC_PATH = `https://yifxgiwmibjaornighvt.supabase.co/functions/v1/trad
 const SUPABASE_KEY = 'sb_publishable_xHjsFJbSuAhO6r6BUylTCw_tDE-nFXT';
 const BYBIT = 'https://api.bybit.com';
 
-let currentPositions = [], intelHistory = [], hasAutoRun = false, btcPrev = 0, mktChart = null, fundingTimer = null;
+let currentPositions = [], hasAutoRun = false, btcPrev = 0, mktChart = null, fundingTimer = null;
 
 window.onload = async () => {
-    loadIntelHistory();
     await Promise.all([fetchPositions(), fetchMarketData(), fetchDominance()]);
     fetchTelemetry();
     fetchNews();
@@ -818,33 +792,6 @@ async function fetchTelemetry() {
         }
     }catch(e){}
 }
-
-// ── Intel ──
-function loadIntelHistory(){const s=localStorage.getItem('ai_trading_intel_history');if(s)try{intelHistory=JSON.parse(s);}catch(e){intelHistory=[];}renderIntelHistory();}
-function saveIntelHistory(){localStorage.setItem('ai_trading_intel_history',JSON.stringify(intelHistory));}
-function addIntelFrom(id){
-    const el=document.getElementById(id); if(!el)return;
-    const text=el.value.trim(); if(!text)return;
-    intelHistory.unshift({id:Date.now(),date:new Date().toLocaleString('pt-PT'),text});
-    saveIntelHistory(); renderIntelHistory(); el.value='';
-}
-function clearIntelHistory(){if(confirm('Limpar todo o histórico?')){intelHistory=[];saveIntelHistory();renderIntelHistory();}}
-function deleteIntel(id){intelHistory=intelHistory.filter(i=>i.id!==id);saveIntelHistory();renderIntelHistory();}
-function renderIntelHistory(){
-    const c=document.getElementById('intel-history-container');
-    setText('intel-count', String(intelHistory.length));
-    if(!c)return;
-    if(!intelHistory.length){c.innerHTML='<div class="text-center py-8 text-gray-500 text-xs uppercase font-bold tracking-widest">Nenhum registo.</div>';return;}
-    c.innerHTML=intelHistory.map(item=>`
-        <div class="bg-white/3 border border-white/5 rounded-xl p-4">
-            <div class="flex justify-between items-center mb-2">
-                <span class="text-[10px] font-bold uppercase" style="color:#f7931a">${item.date}</span>
-                <button onclick="deleteIntel(${item.id})" class="text-gray-600 hover:text-red-500 transition-colors text-sm w-8 h-8 flex items-center justify-center">✕</button>
-            </div>
-            <p class="text-sm text-gray-300 mono whitespace-pre-wrap leading-relaxed break-words">${item.text}</p>
-        </div>`).join('');
-}
-function getIntelContext(){if(!intelHistory.length)return'Sem contexto adicional.';return intelHistory.slice(0,5).map(h=>`[${h.date}] ${h.text}`).join('\n\n');}
 
 // ── DCA Planner ──
 let dcaLevelCount = 0;
@@ -1176,7 +1123,7 @@ function handleAICall(){
     if(ai.classList.contains('open')&&!hasAutoRun){
         hasAutoRun=true;
         document.getElementById('ai-content').innerHTML='';
-        fetchAI(null,`Faz uma análise completa do meu portefólio BTC. Inclui: risco atual, distâncias de liquidação, ROE, funding rate e recomendações estratégicas. Contexto: ${getIntelContext()}`);
+        fetchAI(null,`Faz uma análise completa do meu portefólio BTC. Inclui: risco atual, distâncias de liquidação, ROE, funding rate e recomendações estratégicas.`);
     }
 }
 function quickPrompt(q){
@@ -1186,7 +1133,7 @@ function quickPrompt(q){
 }
 async function fetchAI(userQ=null, hiddenQ=null){
     const content=document.getElementById('ai-content');
-    if(userQ){hiddenQ=`Contexto Intel: ${getIntelContext()}\n\nPergunta: ${userQ}`;content.insertAdjacentHTML('beforeend',`<div class="user-msg msg">${userQ}</div>`);content.scrollTop=content.scrollHeight;}
+    if(userQ){hiddenQ=userQ;content.insertAdjacentHTML('beforeend',`<div class="user-msg msg">${userQ}</div>`);content.scrollTop=content.scrollHeight;}
     const q=hiddenQ||userQ;
     const lid='load-'+Date.now();
     content.insertAdjacentHTML('beforeend',`<div id="${lid}" class="bot-msg msg"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>`);
