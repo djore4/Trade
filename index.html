@@ -4,118 +4,352 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <title>BTC Command Center</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root { --btc: #f7931a; --green: #02d386; --red: #f6465d; --bg: #080a0c; }
+        :root {
+            --btc: #f7931a;
+            --btc-dim: rgba(247,147,26,0.12);
+            --green: #10b981;
+            --green-dim: rgba(16,185,129,0.12);
+            --red: #ef4444;
+            --red-dim: rgba(239,68,68,0.12);
+            --blue: #3b82f6;
+            --bg: #070b14;
+            --surface: #0d1425;
+            --surface2: #111827;
+            --border: rgba(255,255,255,0.06);
+            --border-strong: rgba(255,255,255,0.1);
+            --text: #e2e8f0;
+            --text-muted: #64748b;
+            --text-faint: #334155;
+        }
         * { box-sizing: border-box; }
-        body { background: var(--bg); color: #f0f2f5; font-family: 'Outfit', sans-serif; -webkit-font-smoothing: antialiased; background-image: radial-gradient(circle at top right, rgba(247,147,26,0.06), transparent 600px); min-height: 100vh; overflow-x: hidden; }
-        .card { background: rgba(24,26,32,0.9); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; }
-        .lbl { color: #848e9c; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 800; }
-        .mono { font-family: 'Roboto Mono', monospace; font-weight: 700; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image:
+                radial-gradient(ellipse 80% 40% at 50% -10%, rgba(247,147,26,0.05) 0%, transparent 60%),
+                radial-gradient(ellipse 40% 60% at 90% 50%, rgba(59,130,246,0.03) 0%, transparent 50%);
+        }
 
-        /* Navigation */
+        /* ── MONO ── */
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* ── LABELS ── */
+        .lbl {
+            color: var(--text-muted);
+            font-size: 0.62rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 600;
+        }
+
+        /* ── CARDS ── */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            position: relative;
+        }
+        .card-glow {
+            background: var(--surface);
+            border-radius: 16px;
+            position: relative;
+        }
+        .card-glow::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 17px;
+            background: linear-gradient(135deg, rgba(247,147,26,0.2), transparent 40%, transparent 60%, rgba(59,130,246,0.1));
+            z-index: -1;
+        }
+
+        /* ── NAVIGATION ── */
         .nav-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; min-width: 0; flex: 1 1 0; }
         .nav-wrap::-webkit-scrollbar { display: none; }
-        .nav-btn { padding: 8px 12px; font-weight: 800; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: #6b7280; border-bottom: 2px solid transparent; transition: 0.25s; white-space: nowrap; cursor: pointer; display: inline-block; }
-        .nav-btn.active { color: var(--btc); border-bottom-color: var(--btc); }
-        @media (min-width: 640px) { .nav-btn { padding: 10px 16px; font-size: 0.7rem; } }
+        .nav-btn {
+            padding: 6px 14px;
+            font-weight: 600;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            border-radius: 8px;
+            transition: all 0.2s;
+            white-space: nowrap;
+            cursor: pointer;
+            display: inline-block;
+            letter-spacing: 0.01em;
+        }
+        .nav-btn.active {
+            color: var(--text);
+            background: var(--surface2);
+            border: 1px solid var(--border-strong);
+        }
+        .nav-btn:not(.active):hover { color: var(--text); }
 
-        /* Tabs */
+        /* ── TABS ── */
         .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.25s ease; }
+        .tab-content.active { display: block; animation: fadeUp 0.3s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Progress */
-        .prog-bg { background: #1e2329; height: 5px; border-radius: 3px; overflow: hidden; margin-top: 5px; }
-        .prog-fill { height: 100%; border-radius: 3px; transition: width 0.7s ease; }
+        /* ── PROGRESS ── */
+        .prog-bg { background: var(--surface2); height: 4px; border-radius: 4px; overflow: hidden; margin-top: 6px; }
+        .prog-fill { height: 100%; border-radius: 4px; transition: width 0.8s cubic-bezier(0.4,0,0.2,1); }
 
-        /* App grid */
-        .app-grid { display: grid; grid-template-columns: 1fr; gap: 16px; padding: 12px; max-width: 1900px; margin: 0 auto; transition: grid-template-columns 0.4s ease; }
-        @media (min-width: 640px) { .app-grid { padding: 16px; } }
-        @media (min-width: 1280px) { .app-grid.chat-open { grid-template-columns: 1fr 400px; } #ai-section { height: calc(100vh - 60px); position: sticky; top: 56px; } }
+        /* ── LAYOUT GRID ── */
+        .app-grid { display: grid; grid-template-columns: 1fr; gap: 0; max-width: 1920px; margin: 0 auto; transition: grid-template-columns 0.35s ease; }
+        @media (min-width: 1280px) { .app-grid.chat-open { grid-template-columns: 1fr 420px; } #ai-section { height: calc(100vh - 64px); position: sticky; top: 64px; } }
 
-        /* AI Sidebar */
+        /* ── AI SIDEBAR ── */
         #ai-section { display: none; flex-direction: column; }
         #ai-section.open { display: flex; }
         @media (max-width: 1279px) {
             #ai-section.open { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 200; border-radius: 0; }
         }
 
-        /* Messages */
-        .msg { margin-bottom: 12px; padding: 12px 14px; border-radius: 12px; font-size: 0.88rem; line-height: 1.75; }
-        .bot-msg { background: rgba(247,147,26,0.04); border-left: 3px solid var(--btc); }
-        .user-msg { background: rgba(0,170,255,0.08); border-right: 3px solid #00aaff; text-align: right; color: #e6f4ff; }
-        .typing-indicator { display: flex; gap: 5px; padding: 4px; align-items: center; }
+        /* ── MESSAGES ── */
+        .msg { margin-bottom: 10px; padding: 12px 16px; border-radius: 12px; font-size: 0.875rem; line-height: 1.8; }
+        .bot-msg { background: rgba(247,147,26,0.04); border: 1px solid rgba(247,147,26,0.1); }
+        .user-msg { background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.15); text-align: right; color: #bfdbfe; }
+        .typing-indicator { display: flex; gap: 4px; padding: 4px; align-items: center; }
         .typing-dot { width: 5px; height: 5px; background: var(--btc); border-radius: 50%; animation: typing 1.4s infinite ease-in-out both; }
         .typing-dot:nth-child(1) { animation-delay: -0.32s; }
         .typing-dot:nth-child(2) { animation-delay: -0.16s; }
-        @keyframes typing { 0%,80%,100% { transform: scale(0); opacity: 0.5; } 40% { transform: scale(1); opacity: 1; } }
+        @keyframes typing { 0%,80%,100% { transform: scale(0); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
 
-        /* Order Book */
-        .ob-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; padding: 3px 6px; font-size: 0.68rem; font-family: 'Roboto Mono', monospace; position: relative; }
-        @media (min-width: 640px) { .ob-row { font-size: 0.72rem; gap: 4px; padding: 3px 8px; } }
-        .ob-bar-bid { position: absolute; right: 0; top: 0; bottom: 0; background: rgba(2,211,134,0.08); z-index: 0; }
-        .ob-bar-ask { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(246,70,93,0.08); z-index: 0; }
+        /* ── ORDER BOOK ── */
+        .ob-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; padding: 3px 8px; font-size: 0.7rem; font-family: 'JetBrains Mono', monospace; position: relative; }
+        .ob-bar-bid { position: absolute; right: 0; top: 0; bottom: 0; background: rgba(16,185,129,0.08); z-index: 0; transition: width 0.3s; }
+        .ob-bar-ask { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(239,68,68,0.08); z-index: 0; transition: width 0.3s; }
         .ob-row span { position: relative; z-index: 1; }
 
-        /* Scrollbars */
+        /* ── SCROLLBARS ── */
         ::-webkit-scrollbar { width: 3px; height: 3px; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.07); border-radius: 2px; }
 
-        /* Inputs — 44px minimum touch target */
-        select, input[type="number"], textarea {
-            background: rgba(255,255,255,0.05) !important;
-            border: 1px solid rgba(255,255,255,0.1) !important;
-            border-radius: 8px; color: white !important;
-            padding: 11px 12px; outline: none; width: 100%;
-            transition: border 0.2s; font-family: 'Roboto Mono', monospace;
-            font-size: 0.88rem; min-height: 44px;
+        /* ── INPUTS ── */
+        select, input[type="number"], textarea, input[type="text"] {
+            background: var(--surface2) !important;
+            border: 1px solid var(--border-strong) !important;
+            border-radius: 10px;
+            color: var(--text) !important;
+            padding: 10px 14px;
+            outline: none;
+            width: 100%;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            min-height: 44px;
         }
-        input[type="number"]:focus, textarea:focus, select:focus { border-color: var(--btc) !important; }
+        input[type="number"]:focus,
+        input[type="text"]:focus,
+        textarea:focus,
+        select:focus {
+            border-color: rgba(247,147,26,0.5) !important;
+            box-shadow: 0 0 0 3px rgba(247,147,26,0.08) !important;
+        }
+        select option { background: #1e2837; }
 
-        /* Quick buttons — 44px touch target */
-        .quick-btn { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; padding: 10px 12px; min-height: 44px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #6b7280; cursor: pointer; transition: all 0.2s; text-align: left; width: 100%; display: flex; align-items: center; }
-        .quick-btn:hover { background: rgba(247,147,26,0.08); border-color: rgba(247,147,26,0.25); color: var(--btc); }
+        /* ── QUICK BUTTONS ── */
+        .quick-btn {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 14px;
+            min-height: 44px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .quick-btn:hover {
+            background: rgba(247,147,26,0.07);
+            border-color: rgba(247,147,26,0.2);
+            color: var(--text);
+        }
 
-        /* Badges */
-        .badge { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 4px; font-size: 0.62rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; }
+        /* ── BADGES ── */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.6rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+        }
 
-        /* Risk bar */
-        .risk-bar { height: 7px; border-radius: 4px; background: linear-gradient(90deg, #02d386, #f3ba2f 50%, #f6465d); position: relative; }
-        .risk-dot { width: 13px; height: 13px; border-radius: 50%; background: white; border: 2px solid var(--bg); position: absolute; top: -3px; transition: left 0.5s ease; box-shadow: 0 0 6px rgba(255,255,255,0.3); }
+        /* ── RISK BAR ── */
+        .risk-bar { height: 6px; border-radius: 4px; background: linear-gradient(90deg, #10b981, #f59e0b 50%, #ef4444); position: relative; }
+        .risk-dot { width: 14px; height: 14px; border-radius: 50%; background: white; border: 2px solid var(--bg); position: absolute; top: -4px; transition: left 0.6s cubic-bezier(0.4,0,0.2,1); box-shadow: 0 0 8px rgba(255,255,255,0.4); }
 
-        /* News */
-        .news-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 10px; padding: 12px; transition: all 0.2s; cursor: pointer; word-break: break-word; }
-        .news-card:hover { background: rgba(247,147,26,0.04); border-color: rgba(247,147,26,0.15); }
+        /* ── NEWS CARDS ── */
+        .news-card {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 16px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .news-card:hover {
+            background: rgba(247,147,26,0.04);
+            border-color: rgba(247,147,26,0.2);
+            transform: translateX(2px);
+        }
 
-        /* Chart buttons */
-        .chart-btn { font-size: 0.7rem; font-weight: 700; padding: 5px 9px; border-radius: 6px; cursor: pointer; transition: all 0.15s; min-height: 32px; }
-        .chart-btn.active { background: rgba(255,255,255,0.12); color: white; }
-        .chart-btn:not(.active) { background: rgba(255,255,255,0.04); color: #6b7280; }
+        /* ── CHART BUTTONS ── */
+        .chart-btn {
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 5px 11px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s;
+            min-height: 32px;
+        }
+        .chart-btn.active { background: var(--surface2); color: var(--text); border: 1px solid var(--border-strong); }
+        .chart-btn:not(.active) { background: transparent; color: var(--text-muted); border: 1px solid transparent; }
+        .chart-btn:not(.active):hover { color: var(--text); }
 
-        /* AI close overlay */
-        #ai-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 199; }
+        /* ── STAT TILES ── */
+        .stat-tile {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 14px;
+        }
+
+        /* ── POSITION CARD BORDER ── */
+        .pos-long { border-left: 3px solid var(--green) !important; }
+        .pos-short { border-left: 3px solid var(--red) !important; }
+
+        /* ── AI overlay ── */
+        #ai-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 199; backdrop-filter: blur(4px); }
         #ai-overlay.open { display: block; }
 
+        /* ── SEND BTN ── */
+        .send-btn {
+            background: var(--btc);
+            color: #000;
+            border-radius: 10px;
+            padding: 0 18px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.15s;
+            min-height: 44px;
+            min-width: 48px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .send-btn:hover { opacity: 0.9; transform: scale(1.03); }
+
+        /* ── AI TOGGLE BTN ── */
+        .ai-toggle {
+            background: var(--btc);
+            color: #000;
+            font-weight: 700;
+            font-size: 0.72rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            padding: 7px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+            min-height: 36px;
+        }
+        .ai-toggle:hover { opacity: 0.9; transform: scale(1.02); }
+
+        /* ── DIVIDER ── */
+        .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+        /* ── TICKER ── */
+        .ticker-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--surface2);
+            border: 1px solid var(--border-strong);
+            border-radius: 10px;
+            padding: 6px 12px;
+            min-height: 36px;
+        }
+
+        /* ── KPI CARD ── */
+        .kpi-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px 18px;
+            transition: border-color 0.2s;
+        }
+        .kpi-card:hover { border-color: var(--border-strong); }
+
+        /* ── SECTION HEADER ── */
+        .section-header {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section-header::before {
+            content: '';
+            display: inline-block;
+            width: 3px;
+            height: 12px;
+            background: var(--btc);
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+
         .hidden { display: none !important; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
 
-<!-- AI backdrop (mobile) -->
+<!-- AI Backdrop -->
 <div id="ai-overlay" onclick="handleAICall()"></div>
 
-<!-- HEADER -->
-<header class="border-b border-gray-800/40 bg-[#080a0c]/95 backdrop-blur-md sticky top-0 z-50">
-    <div class="max-w-[1900px] mx-auto px-3 sm:px-5 py-2.5 flex items-center justify-between gap-2">
+<!-- ══════════════════════════════════ HEADER ══════════════════════════════════ -->
+<header style="background:rgba(7,11,20,0.92);border-bottom:1px solid var(--border);backdrop-filter:blur(20px)" class="sticky top-0 z-50">
+    <div class="max-w-[1920px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+
         <!-- Logo + Nav -->
-        <div class="flex items-center gap-2 sm:gap-4 min-w-0">
-            <h1 class="text-base sm:text-xl font-black tracking-tighter whitespace-nowrap flex-shrink-0">
-                <span style="color:#f7931a">₿</span><span class="hidden sm:inline">TC</span>
-            </h1>
+        <div class="flex items-center gap-5 min-w-0">
+            <!-- Logo -->
+            <div class="flex items-center gap-2 flex-shrink-0">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:var(--btc-dim);border:1px solid rgba(247,147,26,0.25)">
+                    <span class="text-sm font-black" style="color:var(--btc)">₿</span>
+                </div>
+                <span class="font-bold text-sm hidden sm:block" style="color:var(--text)">Command</span>
+            </div>
+
+            <!-- Separator -->
+            <div class="hidden sm:block w-px h-5" style="background:var(--border-strong)"></div>
+
+            <!-- Nav -->
             <div class="nav-wrap">
-                <nav class="flex">
+                <nav class="flex gap-1">
                     <button onclick="switchTab('dashboard')" id="btn-dashboard" class="nav-btn active">Dashboard</button>
                     <button onclick="switchTab('mercados')" id="btn-mercados" class="nav-btn">Mercados</button>
                     <button onclick="switchTab('simulator')" id="btn-simulator" class="nav-btn">Simulador</button>
@@ -123,66 +357,106 @@
                 </nav>
             </div>
         </div>
-        <!-- Indicators + AI -->
-        <div class="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-            <div class="flex items-center gap-1 bg-white/5 px-2 py-1.5 rounded-lg border border-white/10 min-h-[36px]">
-                <span class="text-xs font-black" style="color:#f7931a">₿</span>
-                <span id="btc-price" class="mono text-sm text-white">--</span>
-                <span id="btc-change" class="text-[10px] font-bold text-gray-500 hidden sm:inline">--</span>
+
+        <!-- Right Indicators + AI -->
+        <div class="flex items-center gap-2 flex-shrink-0">
+            <!-- BTC Price -->
+            <div class="ticker-pill">
+                <span class="font-black text-xs" style="color:var(--btc)">₿</span>
+                <span id="btc-price" class="mono text-sm font-bold text-white">--</span>
+                <span id="btc-change" class="text-[10px] font-semibold text-gray-500 hidden sm:block">--</span>
             </div>
-            <div class="hidden sm:flex items-center gap-1 bg-white/5 px-2 py-1.5 rounded-lg border border-white/10">
+
+            <!-- Funding -->
+            <div class="ticker-pill hidden sm:flex">
                 <span class="lbl">Fund</span>
                 <span id="hdr-funding" class="mono text-xs text-white">--</span>
             </div>
-            <span id="macro-trend" class="hidden lg:flex items-center lbl bg-white/5 px-2 py-1.5 rounded-md border border-white/10 text-gray-500 min-h-[36px]">Macro: --</span>
-            <span id="fg-index-top" class="hidden lg:flex items-center lbl bg-white/5 px-2 py-1.5 rounded-md border border-white/10 text-gray-500 min-h-[36px]">F&G: --</span>
-            <button onclick="handleAICall()" class="px-3 sm:px-5 py-2 rounded-xl font-black uppercase text-[10px] sm:text-xs hover:scale-105 transition-all whitespace-nowrap text-black min-h-[36px]" style="background:#f7931a">AI</button>
+
+            <!-- Macro -->
+            <span id="macro-trend" class="hidden lg:flex items-center gap-1.5 lbl px-3 py-2 rounded-lg min-h-[36px]" style="background:var(--surface2);border:1px solid var(--border);color:var(--text-muted)">Macro --</span>
+
+            <!-- F&G -->
+            <span id="fg-index-top" class="hidden lg:flex items-center gap-1.5 lbl px-3 py-2 rounded-lg min-h-[36px]" style="background:var(--surface2);border:1px solid var(--border);color:var(--text-muted)">F&G --</span>
+
+            <!-- AI Button -->
+            <button onclick="handleAICall()" class="ai-toggle">AI Agent</button>
         </div>
     </div>
 </header>
 
+<!-- ══════════════════════════════════ MAIN ══════════════════════════════════ -->
 <div id="main-grid" class="app-grid">
-<main class="min-w-0">
+<main class="min-w-0 p-4 sm:p-6">
 
-<!-- DASHBOARD -->
+<!-- ╔══════════════════════╗ -->
+<!-- ║     DASHBOARD        ║ -->
+<!-- ╚══════════════════════╝ -->
 <section id="tab-dashboard" class="tab-content active">
-    <!-- KPI Cards -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3 mb-4">
-        <div class="card p-3 sm:p-3.5"><p class="lbl mb-1">PnL Global</p><p id="total-pnl" class="text-lg sm:text-2xl mono text-white">$0</p></div>
-        <div class="card p-3 sm:p-3.5"><p class="lbl mb-1">ROE Médio</p><p id="total-pnl-perc" class="text-lg sm:text-2xl mono text-white">0%</p></div>
-        <div class="card p-3 sm:p-3.5 col-span-2 sm:col-span-1"><p class="lbl mb-1">Exposição</p><p id="total-exposure" class="text-lg sm:text-2xl mono text-white">$0</p></div>
-        <div class="card p-3 sm:p-3.5" style="border-color:rgba(247,147,26,0.15)"><p class="lbl mb-1" style="color:#f7931a">Alavancagem</p><p id="avg-leverage" class="text-lg sm:text-2xl mono" style="color:#f7931a">0x</p></div>
-        <div class="card p-3 sm:p-3.5"><p class="lbl mb-1">Margem</p><p id="total-margin" class="text-lg sm:text-2xl mono text-white">$0</p></div>
+
+    <!-- KPI Row -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-4">
+        <div class="kpi-card">
+            <p class="lbl mb-2">PnL Global</p>
+            <p id="total-pnl" class="text-xl sm:text-2xl mono font-bold text-white">$0</p>
+        </div>
+        <div class="kpi-card">
+            <p class="lbl mb-2">ROE Médio</p>
+            <p id="total-pnl-perc" class="text-xl sm:text-2xl mono font-bold text-white">0%</p>
+        </div>
+        <div class="kpi-card col-span-2 sm:col-span-1">
+            <p class="lbl mb-2">Exposição</p>
+            <p id="total-exposure" class="text-xl sm:text-2xl mono font-bold text-white">$0</p>
+        </div>
+        <div class="kpi-card" style="border-color:rgba(247,147,26,0.2)">
+            <p class="lbl mb-2" style="color:rgba(247,147,26,0.7)">Alavancagem</p>
+            <p id="avg-leverage" class="text-xl sm:text-2xl mono font-bold" style="color:var(--btc)">0x</p>
+        </div>
+        <div class="kpi-card">
+            <p class="lbl mb-2">Margem</p>
+            <p id="total-margin" class="text-xl sm:text-2xl mono font-bold text-white">$0</p>
+        </div>
     </div>
+
     <!-- Risk Score -->
-    <div class="card p-3.5 sm:p-4 mb-4">
-        <div class="flex justify-between items-center mb-2.5">
-            <p class="lbl">Risco do Portefólio</p>
-            <span id="risk-label" class="badge bg-gray-700/40 text-gray-400">--</span>
+    <div class="card p-4 sm:p-5 mb-4">
+        <div class="flex justify-between items-center mb-3">
+            <span class="section-header">Risco do Portefólio</span>
+            <span id="risk-label" class="badge" style="background:rgba(100,116,139,0.2);color:#64748b">--</span>
         </div>
-        <div class="risk-bar"><div id="risk-dot" class="risk-dot" style="left:0%"></div></div>
-        <div class="flex justify-between mt-2">
-            <span class="text-[9px] text-green-400 font-bold uppercase">Baixo</span>
-            <span class="text-[9px] text-yellow-500 font-bold uppercase">Moderado</span>
-            <span class="text-[9px] text-red-500 font-bold uppercase">Crítico</span>
+        <div class="risk-bar">
+            <div id="risk-dot" class="risk-dot" style="left:0%"></div>
+        </div>
+        <div class="flex justify-between mt-2.5">
+            <span class="text-[10px] font-semibold" style="color:var(--green)">Baixo</span>
+            <span class="text-[10px] font-semibold text-yellow-500">Moderado</span>
+            <span class="text-[10px] font-semibold" style="color:var(--red)">Crítico</span>
         </div>
     </div>
-    <!-- Positions -->
+
+    <!-- Positions Grid -->
     <div id="dashboard-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
-    <div id="no-pos" class="hidden card p-12 text-center">
-        <p class="text-gray-500 font-bold uppercase text-xs tracking-widest">Sem posições abertas na Bybit</p>
+    <div id="no-pos" class="hidden card p-16 text-center">
+        <div class="w-12 h-12 rounded-2xl mx-auto mb-4 flex items-center justify-center" style="background:var(--surface2);border:1px solid var(--border)">
+            <span class="text-xl" style="color:var(--text-faint)">◌</span>
+        </div>
+        <p class="font-semibold text-sm" style="color:var(--text-muted)">Sem posições abertas na Bybit</p>
     </div>
 </section>
 
-<!-- MERCADOS -->
+<!-- ╔══════════════════════╗ -->
+<!-- ║      MERCADOS        ║ -->
+<!-- ╚══════════════════════╝ -->
 <section id="tab-mercados" class="tab-content">
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
-        <!-- Chart col -->
+
+        <!-- Chart + Stats -->
         <div class="xl:col-span-2 flex flex-col gap-4">
+            <!-- Chart Card -->
             <div class="card overflow-hidden">
-                <div class="px-3 sm:px-4 pt-3 pb-2 border-b border-white/5 flex justify-between items-center gap-2">
-                    <span class="font-black text-white text-xs uppercase tracking-widest">₿TC/USD Live</span>
-                    <div class="flex gap-1">
+                <div class="px-4 pt-4 pb-3 flex justify-between items-center gap-3" style="border-bottom:1px solid var(--border)">
+                    <span class="section-header">BTC/USD Live</span>
+                    <div class="flex gap-1.5">
                         <button class="chart-btn active" onclick="setChartInterval('15',this)">15m</button>
                         <button class="chart-btn" onclick="setChartInterval('60',this)">1h</button>
                         <button class="chart-btn" onclick="setChartInterval('240',this)">4h</button>
@@ -191,116 +465,132 @@
                 </div>
                 <div id="tv-market-wrap" class="h-[280px] sm:h-[420px] md:h-[520px]"></div>
             </div>
-            <!-- Market stats -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                <div class="card p-3"><p class="lbl mb-1">Mark Price</p><p id="m-mark" class="mono text-base sm:text-lg text-white">--</p></div>
-                <div class="card p-3"><p class="lbl mb-1">24h Alto/Baixo</p><p id="m-hl" class="mono text-xs sm:text-sm text-white">--</p></div>
-                <div class="card p-3"><p class="lbl mb-1">Volume 24h</p><p id="m-vol" class="mono text-xs sm:text-sm text-white">--</p></div>
-                <div class="card p-3" style="border-color:rgba(247,147,26,0.2)"><p class="lbl mb-1" style="color:#f7931a">Open Interest</p><p id="m-oi" class="mono text-xs sm:text-sm" style="color:#f7931a">--</p></div>
+
+            <!-- Market Stats -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div class="stat-tile">
+                    <p class="lbl mb-1.5">Mark Price</p>
+                    <p id="m-mark" class="mono text-base sm:text-lg font-bold text-white">--</p>
+                </div>
+                <div class="stat-tile">
+                    <p class="lbl mb-1.5">24h Alto / Baixo</p>
+                    <p id="m-hl" class="mono text-sm font-bold text-white">--</p>
+                </div>
+                <div class="stat-tile">
+                    <p class="lbl mb-1.5">Volume 24h</p>
+                    <p id="m-vol" class="mono text-sm font-bold text-white">--</p>
+                </div>
+                <div class="stat-tile" style="border-color:rgba(247,147,26,0.15)">
+                    <p class="lbl mb-1.5" style="color:rgba(247,147,26,0.7)">Open Interest</p>
+                    <p id="m-oi" class="mono text-sm font-bold" style="color:var(--btc)">--</p>
+                </div>
             </div>
         </div>
-        <!-- Right: funding + OB + dom -->
+
+        <!-- Right Panel -->
         <div class="flex flex-col gap-4">
-            <!-- Funding -->
-            <div class="card p-4">
-                <div class="flex justify-between items-center mb-2">
-                    <p class="lbl">Funding Rate — BTCUSD</p>
-                    <span id="fund-badge" class="badge bg-gray-700/40 text-gray-400">--</span>
+
+            <!-- Funding Rate -->
+            <div class="card p-4 sm:p-5">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="section-header">Funding Rate</span>
+                    <span id="fund-badge" class="badge" style="background:rgba(100,116,139,0.2);color:#64748b">--</span>
                 </div>
-                <p id="fund-big" class="mono text-3xl sm:text-4xl text-white mb-1">--</p>
-                <p class="text-[10px] text-gray-500 font-bold uppercase">Próximo: <span id="fund-countdown" class="text-gray-300">--</span></p>
-                <div class="mt-3 pt-3 border-t border-white/5">
-                    <p class="lbl mb-1">Impacto na posição</p>
-                    <p id="fund-impact" class="mono text-sm text-gray-400">--</p>
-                </div>
+                <p id="fund-big" class="mono text-3xl sm:text-4xl font-bold text-white mb-1">--</p>
+                <p class="text-[10px] font-medium" style="color:var(--text-muted)">Próximo: <span id="fund-countdown" class="text-gray-300">--</span></p>
+                <div class="divider"></div>
+                <p class="lbl mb-1.5">Impacto na posição</p>
+                <p id="fund-impact" class="mono text-sm" style="color:var(--text-muted)">--</p>
             </div>
+
             <!-- Order Book -->
-            <div class="card p-3 sm:p-4 flex-1">
-                <div class="flex justify-between items-center mb-2">
-                    <p class="lbl">Order Book — BTCUSD</p>
-                    <span class="text-[9px] text-gray-600 font-bold">Top 12</span>
+            <div class="card p-4 sm:p-5 flex-1">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="section-header">Order Book</span>
+                    <span class="badge" style="background:var(--surface2);color:var(--text-muted)">Top 12</span>
                 </div>
-                <div class="grid grid-cols-3 gap-1 px-1.5 sm:px-2 mb-1.5">
+                <div class="grid grid-cols-3 gap-1 px-2 mb-2">
                     <span class="lbl">Preço</span>
                     <span class="lbl text-center">Qtd</span>
                     <span class="lbl text-right">Total</span>
                 </div>
-                <div id="ob-asks" class="mb-0.5 flex flex-col-reverse"></div>
-                <div class="py-1.5 px-2 border-y border-white/5 flex justify-between items-center my-0.5">
+                <div id="ob-asks" class="mb-1 flex flex-col-reverse"></div>
+                <div class="py-2 px-2 flex justify-between items-center my-1" style="border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
                     <span class="lbl">Spread</span>
-                    <span id="ob-spread" class="mono text-xs text-white">--</span>
+                    <span id="ob-spread" class="mono text-xs text-white font-bold">--</span>
                 </div>
-                <div id="ob-bids" class="mt-0.5"></div>
+                <div id="ob-bids" class="mt-1"></div>
             </div>
-            <!-- Dominance -->
-            <div class="card p-4">
-                <p class="lbl mb-2">BTC Dominance</p>
-                <p id="btc-dom" class="mono text-2xl text-white">--</p>
-                <div class="prog-bg mt-2"><div id="btc-dom-bar" class="prog-fill" style="background:#f7931a;width:0%"></div></div>
+
+            <!-- BTC Dominance -->
+            <div class="card p-4 sm:p-5">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="section-header">BTC Dominance</span>
+                </div>
+                <p id="btc-dom" class="mono text-2xl font-bold text-white mt-2">--</p>
+                <div class="prog-bg mt-2">
+                    <div id="btc-dom-bar" class="prog-fill" style="background:var(--btc);width:0%"></div>
+                </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- SIMULADOR -->
+<!-- ╔══════════════════════╗ -->
+<!-- ║     SIMULADOR        ║ -->
+<!-- ╚══════════════════════╝ -->
 <section id="tab-simulator" class="tab-content">
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
 
-        <!-- DCA PLANNER (xl: 2/3) -->
+        <!-- DCA Planner (2/3) -->
         <div class="xl:col-span-2 space-y-4">
 
-            <!-- 1. Position header -->
+            <!-- Position Header -->
             <div class="card p-4 sm:p-5">
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-                    <h2 class="font-black text-white text-xs uppercase tracking-widest flex items-center gap-2">
-                        <span style="color:#f7931a">◈</span> DCA Planner
-                    </h2>
-                    <select id="sim-select-pos" onchange="loadPositionToSim()" class="!w-auto !min-w-[170px]">
+                    <span class="section-header">DCA Planner</span>
+                    <select id="sim-select-pos" onchange="loadPositionToSim()" class="!w-auto !min-w-[180px]">
                         <option value="">— Sem posição ativa —</option>
                     </select>
                 </div>
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    <div class="bg-white/5 rounded-xl p-3 border border-white/5">
-                        <p class="lbl mb-1">Entrada</p>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                    <div class="stat-tile">
+                        <p class="lbl mb-1.5">Entrada</p>
                         <p id="sim-cur-entry" class="mono text-sm font-bold text-white">--</p>
                     </div>
-                    <div class="bg-white/5 rounded-xl p-3 border border-white/5">
-                        <p class="lbl mb-1">Mark Price</p>
-                        <p id="sim-cur-mark" class="mono text-sm font-bold" style="color:#f7931a">--</p>
+                    <div class="stat-tile">
+                        <p class="lbl mb-1.5">Mark Price</p>
+                        <p id="sim-cur-mark" class="mono text-sm font-bold" style="color:var(--btc)">--</p>
                     </div>
-                    <div class="bg-white/5 rounded-xl p-3 border border-white/5">
-                        <p class="lbl mb-1">Liquidação</p>
-                        <p id="sim-cur-liq" class="mono text-sm font-bold text-red-400">--</p>
+                    <div class="stat-tile">
+                        <p class="lbl mb-1.5">Liquidação</p>
+                        <p id="sim-cur-liq" class="mono text-sm font-bold" style="color:var(--red)">--</p>
                     </div>
-                    <div class="bg-white/5 rounded-xl p-3 border border-white/5">
-                        <p class="lbl mb-1">Tamanho / Lev</p>
+                    <div class="stat-tile">
+                        <p class="lbl mb-1.5">Tamanho / Lev</p>
                         <p id="sim-cur-size" class="mono text-sm font-bold text-gray-300">--</p>
                     </div>
                 </div>
             </div>
 
-            <!-- 2. DCA levels + visual ladder -->
+            <!-- DCA Levels -->
             <div class="card p-4 sm:p-5">
                 <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
-                    <h3 class="font-black text-white text-xs uppercase tracking-widest flex items-center gap-2">
-                        <span style="color:#02d386">▼</span> Níveis de DCA
-                    </h3>
+                    <span class="section-header">Níveis de DCA</span>
                     <div class="flex gap-2">
-                        <select id="dca-strategy" onchange="applyDCAStrategy()" class="!w-auto !min-w-[140px] !min-h-[36px] !py-1 text-xs">
+                        <select id="dca-strategy" onchange="applyDCAStrategy()" class="!w-auto !min-w-[150px] !min-h-[36px] !py-1 text-xs">
                             <option value="manual">Manual</option>
                             <option value="equal">Espaçamento Igual</option>
                             <option value="martingale">Martingale</option>
                         </select>
-                        <button onclick="addDCALevel()" class="px-3 py-1 text-xs font-black uppercase rounded-lg text-black min-h-[36px] flex-shrink-0" style="background:#f7931a">+ Nível</button>
+                        <button onclick="addDCALevel()" class="flex-shrink-0 px-4 rounded-xl font-bold text-xs text-black min-h-[36px] transition-all hover:opacity-90" style="background:var(--btc)">+ Nível</button>
                     </div>
                 </div>
                 <div class="grid grid-cols-1 lg:grid-cols-[1fr_164px] gap-4">
-                    <!-- Levels list -->
                     <div>
                         <div id="dca-levels-body" class="space-y-2"></div>
-                        <p id="dca-empty-hint" class="text-center py-8 text-gray-600 text-[10px] font-black uppercase tracking-widest">Adiciona um nível ou escolhe uma estratégia</p>
+                        <p id="dca-empty-hint" class="text-center py-10 lbl tracking-widest">Adiciona um nível ou escolhe uma estratégia</p>
                     </div>
-                    <!-- SVG Price Ladder -->
                     <div class="hidden lg:flex flex-col items-center">
                         <p class="lbl mb-2 text-center w-full">Escala de Preço</p>
                         <svg id="dca-ladder-svg" width="164" height="360" overflow="visible"></svg>
@@ -308,24 +598,24 @@
                 </div>
             </div>
 
-            <!-- 3. Summary -->
-            <div class="card p-4">
+            <!-- DCA Summary -->
+            <div class="card p-4 sm:p-5">
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-                    <div class="bg-white/5 rounded-xl p-3 border border-white/10 text-center">
-                        <p class="lbl mb-1">Total Adicionado</p>
-                        <p id="dca-sum-cost" class="mono text-lg font-black text-white">$0</p>
+                    <div class="stat-tile text-center">
+                        <p class="lbl mb-1.5">Total Adicionado</p>
+                        <p id="dca-sum-cost" class="mono text-xl font-bold text-white">$0</p>
                     </div>
-                    <div class="rounded-xl p-3 border text-center" style="background:rgba(2,211,134,0.05);border-color:rgba(2,211,134,0.2)">
-                        <p class="lbl mb-1" style="color:rgba(2,211,134,0.7)">Nova Entrada Média</p>
-                        <p id="dca-sum-avg" class="mono text-lg font-black" style="color:#02d386">--</p>
+                    <div class="text-center rounded-xl p-3" style="background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.15)">
+                        <p class="lbl mb-1.5" style="color:rgba(16,185,129,0.7)">Nova Entrada Média</p>
+                        <p id="dca-sum-avg" class="mono text-xl font-bold" style="color:var(--green)">--</p>
                     </div>
-                    <div class="rounded-xl p-3 border text-center" style="background:rgba(246,70,93,0.05);border-color:rgba(246,70,93,0.2)">
-                        <p class="lbl mb-1 text-red-400">Nova Liquidação</p>
-                        <p id="dca-sum-liq" class="mono text-lg font-black text-red-400">--</p>
+                    <div class="text-center rounded-xl p-3" style="background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.15)">
+                        <p class="lbl mb-1.5" style="color:rgba(239,68,68,0.7)">Nova Liquidação</p>
+                        <p id="dca-sum-liq" class="mono text-xl font-bold" style="color:var(--red)">--</p>
                     </div>
-                    <div class="bg-white/5 rounded-xl p-3 border border-white/10 text-center">
-                        <p class="lbl mb-1">Margem Extra</p>
-                        <p id="dca-sum-margin" class="mono text-lg font-black text-gray-300">--</p>
+                    <div class="stat-tile text-center">
+                        <p class="lbl mb-1.5">Margem Extra</p>
+                        <p id="dca-sum-margin" class="mono text-xl font-bold text-gray-300">--</p>
                     </div>
                 </div>
                 <div>
@@ -334,138 +624,189 @@
                         <span id="dca-liq-pct" class="lbl text-white">--%</span>
                     </div>
                     <div class="prog-bg">
-                        <div id="dca-liq-fill" class="prog-fill" style="width:0%;background:linear-gradient(90deg,#02d386,#f3ba2f,#f6465d)"></div>
+                        <div id="dca-liq-fill" class="prog-fill" style="width:0%;background:linear-gradient(90deg,#10b981,#f59e0b,#ef4444)"></div>
                     </div>
-                    <div class="flex justify-between mt-1">
-                        <span class="text-[9px] text-green-400 font-bold">MARK PRICE</span>
-                        <span class="text-[9px] text-red-400 font-bold">LIQUIDAÇÃO</span>
+                    <div class="flex justify-between mt-1.5">
+                        <span class="text-[9px] font-semibold" style="color:var(--green)">MARK PRICE</span>
+                        <span class="text-[9px] font-semibold" style="color:var(--red)">LIQUIDAÇÃO</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- RIGHT: Risk Calculator -->
+        <!-- Risk Calculator (1/3) -->
         <div class="card p-4 sm:p-5">
-            <h2 class="font-black text-white text-xs uppercase tracking-widest mb-4 flex items-center gap-2">
-                <span style="color:#f7931a">◈</span> Calculadora de Risco
-            </h2>
-            <div class="space-y-3">
-                <div><p class="lbl mb-1.5">Saldo da Conta (USD)</p><input type="number" id="rc-balance" placeholder="Ex: 1000" oninput="calcRisk()"></div>
-                <div><p class="lbl mb-1.5">Risco por Trade (%)</p><input type="number" id="rc-risk" placeholder="Ex: 2" oninput="calcRisk()"></div>
+            <div class="mb-5">
+                <span class="section-header">Calculadora de Risco</span>
+            </div>
+            <div class="space-y-3.5">
+                <div>
+                    <p class="lbl mb-1.5">Saldo da Conta (USD)</p>
+                    <input type="number" id="rc-balance" placeholder="Ex: 1000" oninput="calcRisk()">
+                </div>
+                <div>
+                    <p class="lbl mb-1.5">Risco por Trade (%)</p>
+                    <input type="number" id="rc-risk" placeholder="Ex: 2" oninput="calcRisk()">
+                </div>
                 <div class="grid grid-cols-2 gap-2.5">
-                    <div><p class="lbl mb-1.5">Entrada</p><input type="number" id="rc-entry" placeholder="100000" oninput="calcRisk()"></div>
-                    <div><p class="lbl mb-1.5">Stop Loss</p><input type="number" id="rc-sl" placeholder="97000" oninput="calcRisk()"></div>
-                </div>
-                <div><p class="lbl mb-1.5">Alavancagem</p><input type="number" id="rc-lev" placeholder="Ex: 10" oninput="calcRisk()"></div>
-                <div class="grid grid-cols-2 gap-2.5 pt-2 border-t border-white/5">
-                    <div class="bg-white/5 p-3 rounded-xl border border-white/10">
-                        <p class="lbl">Risco USD</p>
-                        <p id="rc-out-risk" class="mono text-lg sm:text-xl text-red-400 mt-1">$--</p>
+                    <div>
+                        <p class="lbl mb-1.5">Entrada</p>
+                        <input type="number" id="rc-entry" placeholder="100000" oninput="calcRisk()">
                     </div>
-                    <div class="bg-white/5 p-3 rounded-xl border border-white/10">
-                        <p class="lbl">Tamanho Posição</p>
-                        <p id="rc-out-size" class="mono text-lg sm:text-xl text-white mt-1">$--</p>
-                    </div>
-                    <div class="bg-white/5 p-3 rounded-xl border border-white/10">
-                        <p class="lbl">Margem</p>
-                        <p id="rc-out-margin" class="mono text-lg sm:text-xl mt-1" style="color:#f7931a">$--</p>
-                    </div>
-                    <div class="bg-white/5 p-3 rounded-xl border border-white/10">
-                        <p class="lbl">TP Mín. (2:1)</p>
-                        <p id="rc-out-tp" class="mono text-lg sm:text-xl text-green-400 mt-1">--</p>
+                    <div>
+                        <p class="lbl mb-1.5">Stop Loss</p>
+                        <input type="number" id="rc-sl" placeholder="97000" oninput="calcRisk()">
                     </div>
                 </div>
-                <div class="pt-3 border-t border-white/5">
-                    <p class="lbl mb-3">Custo Funding Estimado</p>
-                    <div class="grid grid-cols-2 gap-2.5">
-                        <div><p class="lbl mb-1.5">Taxa (%)</p><input type="number" id="rc-fund-rate" placeholder="0.01" oninput="calcFunding()"></div>
-                        <div><p class="lbl mb-1.5">Dias</p><input type="number" id="rc-fund-days" placeholder="7" oninput="calcFunding()"></div>
+                <div>
+                    <p class="lbl mb-1.5">Alavancagem</p>
+                    <input type="number" id="rc-lev" placeholder="Ex: 10" oninput="calcRisk()">
+                </div>
+                <div class="divider"></div>
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div class="stat-tile">
+                        <p class="lbl mb-1">Risco USD</p>
+                        <p id="rc-out-risk" class="mono text-lg font-bold mt-1" style="color:var(--red)">$--</p>
                     </div>
-                    <div class="mt-3 bg-white/5 p-3 rounded-xl border border-white/10">
-                        <p class="lbl">Total Estimado</p>
-                        <p id="rc-fund-out" class="mono text-base sm:text-lg text-red-400 mt-1">--</p>
+                    <div class="stat-tile">
+                        <p class="lbl mb-1">Tamanho Posição</p>
+                        <p id="rc-out-size" class="mono text-lg font-bold text-white mt-1">$--</p>
                     </div>
+                    <div class="stat-tile">
+                        <p class="lbl mb-1">Margem</p>
+                        <p id="rc-out-margin" class="mono text-lg font-bold mt-1" style="color:var(--btc)">$--</p>
+                    </div>
+                    <div class="stat-tile">
+                        <p class="lbl mb-1">TP Mín. (2:1)</p>
+                        <p id="rc-out-tp" class="mono text-lg font-bold mt-1" style="color:var(--green)">--</p>
+                    </div>
+                </div>
+                <div class="divider"></div>
+                <p class="lbl mb-3">Custo Funding Estimado</p>
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div>
+                        <p class="lbl mb-1.5">Taxa (%)</p>
+                        <input type="number" id="rc-fund-rate" placeholder="0.01" oninput="calcFunding()">
+                    </div>
+                    <div>
+                        <p class="lbl mb-1.5">Dias</p>
+                        <input type="number" id="rc-fund-days" placeholder="7" oninput="calcFunding()">
+                    </div>
+                </div>
+                <div class="stat-tile mt-2">
+                    <p class="lbl mb-1">Total Estimado</p>
+                    <p id="rc-fund-out" class="mono text-base font-bold mt-1" style="color:var(--red)">--</p>
                 </div>
             </div>
         </div>
+
     </div>
 </section>
 
-<!-- NOTÍCIAS -->
+<!-- ╔══════════════════════╗ -->
+<!-- ║      NOTÍCIAS        ║ -->
+<!-- ╚══════════════════════╝ -->
 <section id="tab-noticias" class="tab-content">
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+        <!-- News Feed -->
         <div class="lg:col-span-2 card p-4 sm:p-5">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="font-black text-white text-xs uppercase tracking-widest">₿ Bitcoin News</h2>
-                <button onclick="fetchNews()" class="text-[10px] font-black uppercase border px-3 py-2 rounded-lg transition-all min-h-[36px]" style="color:#f7931a;border-color:rgba(247,147,26,0.3)">Atualizar</button>
+                <span class="section-header">Bitcoin News</span>
+                <button onclick="fetchNews()" class="text-[10px] font-bold uppercase px-3 py-2 rounded-lg transition-all min-h-[36px]" style="color:var(--btc);background:var(--btc-dim);border:1px solid rgba(247,147,26,0.2)">Atualizar</button>
             </div>
             <div id="news-container" class="space-y-2.5 max-h-[65vh] sm:max-h-[600px] overflow-y-auto pr-1">
-                <div class="text-center py-8 text-gray-500 text-xs uppercase font-bold">A carregar...</div>
+                <div class="text-center py-10 lbl">A carregar...</div>
             </div>
         </div>
+
+        <!-- Sidebar -->
         <div class="flex flex-col gap-4">
+
             <!-- Sentiment -->
-            <div class="card p-4">
-                <p class="lbl mb-3">Sentimento</p>
-                <div class="text-center mb-3">
-                    <p id="fg-big" class="text-4xl font-black mono text-white">--</p>
-                    <p id="fg-text" class="text-[10px] text-gray-500 font-bold uppercase mt-1">Fear & Greed</p>
+            <div class="card p-4 sm:p-5">
+                <span class="section-header block mb-4">Sentimento</span>
+                <div class="text-center mb-4">
+                    <p id="fg-big" class="text-5xl font-black mono text-white">--</p>
+                    <p id="fg-text" class="lbl mt-2">Fear & Greed</p>
                 </div>
-                <div class="risk-bar"><div id="fg-dot" class="risk-dot" style="left:50%"></div></div>
-                <div class="flex justify-between mt-2">
-                    <span class="text-[9px] text-red-400 font-bold">Medo</span>
-                    <span class="text-[9px] text-green-400 font-bold">Ganância</span>
+                <div class="risk-bar">
+                    <div id="fg-dot" class="risk-dot" style="left:50%"></div>
                 </div>
-                <div class="mt-3 pt-3 border-t border-white/5 flex justify-between items-center">
-                    <span class="lbl">Macro</span>
-                    <span id="macro-badge" class="badge bg-gray-700/40 text-gray-400">--</span>
+                <div class="flex justify-between mt-2.5">
+                    <span class="text-[10px] font-semibold" style="color:var(--red)">Medo</span>
+                    <span class="text-[10px] font-semibold" style="color:var(--green)">Ganância</span>
+                </div>
+                <div class="divider"></div>
+                <div class="flex justify-between items-center">
+                    <span class="lbl">Macro Trend</span>
+                    <span id="macro-badge" class="badge" style="background:rgba(100,116,139,0.2);color:#64748b">--</span>
                 </div>
             </div>
-            <!-- AI briefings -->
-            <div class="card p-4">
-                <p class="lbl mb-3">Briefings Rápidos</p>
+
+            <!-- AI Quick Prompts -->
+            <div class="card p-4 sm:p-5">
+                <span class="section-header block mb-4">Análise Rápida AI</span>
                 <div class="space-y-2">
-                    <button class="quick-btn" onclick="quickPrompt('Gera um briefing completo do mercado BTC: tendência, níveis chave, sentimento e o que esperar nas próximas horas.')">📊 Briefing Mercado</button>
-                    <button class="quick-btn" onclick="quickPrompt('Analisa o risco das minhas posições abertas. Distância de liquidação, ROE, e devo reduzir exposição?')">⚡ Analisar Risco</button>
-                    <button class="quick-btn" onclick="quickPrompt('Quais os suportes e resistências mais importantes de BTC? Onde o mercado está a testar?')">🎯 Suportes/Resistências</button>
+                    <button class="quick-btn" onclick="quickPrompt('Gera um briefing completo do mercado BTC: tendência, níveis chave, sentimento e o que esperar nas próximas horas.')">
+                        <span>📊</span> Briefing de Mercado
+                    </button>
+                    <button class="quick-btn" onclick="quickPrompt('Analisa o risco das minhas posições abertas. Distância de liquidação, ROE, e devo reduzir exposição?')">
+                        <span>⚡</span> Analisar Risco
+                    </button>
+                    <button class="quick-btn" onclick="quickPrompt('Quais os suportes e resistências mais importantes de BTC? Onde o mercado está a testar?')">
+                        <span>🎯</span> Suportes / Resistências
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 </section>
-
 
 </main>
 
-<!-- AI SIDEBAR -->
-<aside id="ai-section" class="card flex flex-col" style="border-radius:0">
-    <!-- Mobile: full screen with close button -->
-    <div class="p-4 sm:p-5 border-b border-gray-800 flex justify-between items-center flex-shrink-0">
-        <span class="text-sm font-black uppercase tracking-widest" style="color:#f7931a">₿ AI Agent</span>
+<!-- ══════════════════════════════════ AI SIDEBAR ══════════════════════════════════ -->
+<aside id="ai-section" class="flex flex-col" style="background:var(--surface);border-left:1px solid var(--border);border-radius:0">
+
+    <!-- Header -->
+    <div class="px-5 py-4 flex justify-between items-center flex-shrink-0" style="border-bottom:1px solid var(--border)">
         <div class="flex items-center gap-3">
-            <span id="ai-loading" class="text-[10px] animate-pulse hidden font-bold uppercase" style="color:#f7931a">A processar...</span>
-            <button onclick="handleAICall()" class="text-gray-400 hover:text-white text-2xl leading-none transition-colors w-10 h-10 flex items-center justify-center">×</button>
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:var(--btc-dim);border:1px solid rgba(247,147,26,0.2)">
+                <span class="text-xs font-black" style="color:var(--btc)">₿</span>
+            </div>
+            <div>
+                <p class="text-sm font-bold text-white">AI Agent</p>
+                <p class="text-[10px]" style="color:var(--text-muted)">Análise de Portefólio</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <span id="ai-loading" class="text-[10px] animate-pulse hidden font-semibold" style="color:var(--btc)">A processar...</span>
+            <button onclick="handleAICall()" class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-white transition-colors text-xl" style="background:var(--surface2)">×</button>
         </div>
     </div>
-    <!-- Desktop: styled card -->
-    <div class="p-4 sm:p-5 flex flex-col flex-1 min-h-0">
-        <!-- Quick prompts -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
-            <button class="quick-btn" onclick="quickPrompt('Analisa o risco atual das minhas posições. Distância de liquidação, exposição e recomendação.')">⚡ Analisar Risco</button>
-            <button class="quick-btn" onclick="quickPrompt('Devo fazer DCA agora? Qual o melhor nível de entrada para reforçar BTC?')">📈 DCA Ideal?</button>
-            <button class="quick-btn" onclick="quickPrompt('Quais são os suportes e resistências mais importantes de BTC agora?')">🎯 Níveis S/R</button>
-            <button class="quick-btn" onclick="quickPrompt('Resume o sentimento atual do mercado BTC. Bulls ou bears no controlo?')">🧠 Sentimento</button>
-            <button class="quick-btn" onclick="quickPrompt('Qual a melhor estratégia de take profit para as minhas posições abertas?')">💰 Take Profit</button>
-            <button class="quick-btn" onclick="quickPrompt('Qual o impacto do funding rate atual nas minhas posições? Devo preocupar-me?')">💸 Funding</button>
+
+    <!-- Content -->
+    <div class="flex flex-col flex-1 min-h-0 p-4 sm:p-5">
+
+        <!-- Quick Prompts -->
+        <div class="grid grid-cols-2 gap-2 mb-4">
+            <button class="quick-btn text-[10px]" onclick="quickPrompt('Analisa o risco atual das minhas posições. Distância de liquidação, exposição e recomendação.')">⚡ Analisar Risco</button>
+            <button class="quick-btn text-[10px]" onclick="quickPrompt('Devo fazer DCA agora? Qual o melhor nível de entrada para reforçar BTC?')">📈 DCA Ideal?</button>
+            <button class="quick-btn text-[10px]" onclick="quickPrompt('Quais são os suportes e resistências mais importantes de BTC agora?')">🎯 Níveis S/R</button>
+            <button class="quick-btn text-[10px]" onclick="quickPrompt('Resume o sentimento atual do mercado BTC. Bulls ou bears no controlo?')">🧠 Sentimento</button>
+            <button class="quick-btn text-[10px]" onclick="quickPrompt('Qual a melhor estratégia de take profit para as minhas posições abertas?')">💰 Take Profit</button>
+            <button class="quick-btn text-[10px]" onclick="quickPrompt('Qual o impacto do funding rate atual nas minhas posições? Devo preocupar-me?')">💸 Funding</button>
         </div>
+
         <!-- Messages -->
         <div id="ai-content" class="flex-1 overflow-y-auto mb-4 flex flex-col" style="min-height:120px">
-            <div class="bot-msg msg text-gray-500 text-sm text-center">Agente pronto. Usa os atalhos ou escreve a tua pergunta.</div>
+            <div class="bot-msg msg text-sm text-center" style="color:var(--text-muted)">Agente pronto. Usa os atalhos ou escreve a tua pergunta.</div>
         </div>
+
         <!-- Input -->
         <div class="flex gap-2 flex-shrink-0">
-            <input type="text" id="chat-input" placeholder="Pergunta ao agente..." class="flex-1 bg-white/5 rounded-xl text-white outline-none text-sm border border-white/5 transition-all" style="width:auto;min-height:48px;padding:12px 16px;font-family:'Outfit',sans-serif" onkeypress="if(event.key==='Enter')sendChat()">
-            <button onclick="sendChat()" class="px-4 rounded-xl font-black text-black text-base hover:scale-105 transition-all flex-shrink-0 min-h-[48px] min-w-[48px]" style="background:#f7931a">→</button>
+            <input type="text" id="chat-input" placeholder="Pergunta ao agente..." class="flex-1" style="width:auto;min-height:44px;padding:11px 14px;font-family:'Inter',sans-serif;font-size:0.875rem;font-weight:400" onkeypress="if(event.key==='Enter')sendChat()">
+            <button onclick="sendChat()" class="send-btn">→</button>
         </div>
     </div>
 </aside>
@@ -495,7 +836,6 @@ function switchTab(t) {
     document.querySelectorAll('.tab-content,.nav-btn').forEach(e => e.classList.remove('active'));
     document.getElementById('tab-'+t).classList.add('active');
     document.getElementById('btn-'+t).classList.add('active');
-    // Scroll tab into view on mobile
     document.getElementById('btn-'+t).scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
     if (t === 'mercados' && !mktChart) initMarketChart();
 }
@@ -534,21 +874,21 @@ async function fetchMarketData() {
             const priceEl = document.getElementById('btc-price');
             const up = price > btcPrev && btcPrev > 0, dn = price < btcPrev && btcPrev > 0;
             priceEl.innerText = fPT(price,false,0);
-            priceEl.className = `mono text-sm ${up?'text-green-400':dn?'text-red-400':'text-white'} transition-colors`;
-            setTimeout(()=>priceEl.className='mono text-sm text-white transition-colors', 700);
+            priceEl.className = `mono text-sm font-bold ${up?'text-emerald-400':dn?'text-red-400':'text-white'} transition-colors`;
+            setTimeout(()=>priceEl.className='mono text-sm font-bold text-white transition-colors', 700);
             const chEl = document.getElementById('btc-change');
-            if (chEl) { chEl.innerText=(ch>=0?'+':'')+fPT(ch,false,2)+'%'; chEl.className=`text-[10px] font-bold ${ch>=0?'text-green-400':'text-red-400'} hidden sm:inline`; }
+            if (chEl) { chEl.innerText=(ch>=0?'+':'')+fPT(ch,false,2)+'%'; chEl.className=`text-[10px] font-semibold ${ch>=0?'text-emerald-400':'text-red-400'} hidden sm:block`; }
             btcPrev = price;
             const fr = parseFloat(t.fundingRate)*100;
             const frStr = (fr>=0?'+':'')+fr.toFixed(4)+'%';
             setText('hdr-funding', frStr); setText('fund-big', frStr);
             const fb = document.getElementById('fund-badge');
-            if (fb) { if(fr>0.02){fb.innerText='Longs pagam';fb.className='badge bg-red-500/20 text-red-400';}else if(fr<-0.01){fb.innerText='Shorts pagam';fb.className='badge bg-green-500/20 text-green-400';}else{fb.innerText='Neutro';fb.className='badge bg-gray-700/40 text-gray-400';} }
+            if (fb) { if(fr>0.02){fb.innerText='Longs pagam';fb.style.cssText='background:rgba(239,68,68,0.15);color:#ef4444';}else if(fr<-0.01){fb.innerText='Shorts pagam';fb.style.cssText='background:rgba(16,185,129,0.15);color:#10b981';}else{fb.innerText='Neutro';fb.style.cssText='background:rgba(100,116,139,0.2);color:#64748b';} }
             setFundingImpact(fr);
             if (t.nextFundingTime) startFundingCountdown(parseInt(t.nextFundingTime));
             setText('m-mark', fPT(parseFloat(t.markPrice),false,0));
             const mhl = document.getElementById('m-hl');
-            if (mhl) mhl.innerHTML = `<span class="text-green-400">${fPT(parseFloat(t.highPrice24h),false,0)}</span>/<span class="text-red-400">${fPT(parseFloat(t.lowPrice24h),false,0)}</span>`;
+            if (mhl) mhl.innerHTML = `<span style="color:#10b981">${fPT(parseFloat(t.highPrice24h),false,0)}</span> / <span style="color:#ef4444">${fPT(parseFloat(t.lowPrice24h),false,0)}</span>`;
             setText('m-vol', '$'+fK(parseFloat(t.volume24h)));
             setText('m-oi', '$'+fK(parseFloat(t.openInterestValue)));
         }
@@ -567,7 +907,8 @@ function setFundingImpact(fr) {
         }
     });
     el.innerText = (total>=0?'+':'')+fPT(total,true,4)+' (próximo ciclo)';
-    el.className = `mono text-sm ${total>=0?'text-green-400':'text-red-400'}`;
+    el.style.color = total>=0 ? '#10b981' : '#ef4444';
+    el.className = 'mono text-sm';
 }
 
 function startFundingCountdown(ts) {
@@ -588,12 +929,12 @@ function renderOrderBook(ob) {
     const asksHtml = asks.slice().reverse().map(([p,q]) => {
         ac+=parseFloat(q);
         const pct=(parseFloat(q)/mxA*100).toFixed(0);
-        return `<div class="ob-row"><div class="ob-bar-ask" style="width:${pct}%"></div><span class="text-red-400">${fPT(parseFloat(p),false,0)}</span><span class="text-gray-300 text-center">${fK(parseFloat(q))}</span><span class="text-gray-500 text-right">${fK(ac)}</span></div>`;
+        return `<div class="ob-row"><div class="ob-bar-ask" style="width:${pct}%"></div><span style="color:#ef4444">${fPT(parseFloat(p),false,0)}</span><span style="color:#94a3b8;text-align:center">${fK(parseFloat(q))}</span><span style="color:#475569;text-align:right">${fK(ac)}</span></div>`;
     }).join('');
     const bidsHtml = bids.map(([p,q]) => {
         bc+=parseFloat(q);
         const pct=(parseFloat(q)/mxB*100).toFixed(0);
-        return `<div class="ob-row"><div class="ob-bar-bid" style="width:${pct}%"></div><span class="text-green-400">${fPT(parseFloat(p),false,0)}</span><span class="text-gray-300 text-center">${fK(parseFloat(q))}</span><span class="text-gray-500 text-right">${fK(bc)}</span></div>`;
+        return `<div class="ob-row"><div class="ob-bar-bid" style="width:${pct}%"></div><span style="color:#10b981">${fPT(parseFloat(p),false,0)}</span><span style="color:#94a3b8;text-align:center">${fK(parseFloat(q))}</span><span style="color:#475569;text-align:right">${fK(bc)}</span></div>`;
     }).join('');
     const ea=document.getElementById('ob-asks'), eb=document.getElementById('ob-bids'), es=document.getElementById('ob-spread');
     if(ea) ea.innerHTML=asksHtml; if(eb) eb.innerHTML=bidsHtml;
@@ -617,13 +958,13 @@ function initMarketChart() {
     if (mktChart) return;
     const c=document.getElementById('tv-market-wrap'); if(!c)return;
     c.innerHTML='<div id="tv-mkt" class="w-full h-full"></div>';
-    mktChart=new TradingView.widget({autosize:true,symbol:'BYBIT:BTCUSD',interval:'15',theme:'dark',style:'1',toolbar_bg:'#080a0c',enable_publishing:false,hide_side_toolbar:false,studies:['RSI@tv-basicstudies','MASimple@tv-basicstudies'],container_id:'tv-mkt'});
+    mktChart=new TradingView.widget({autosize:true,symbol:'BYBIT:BTCUSD',interval:'15',theme:'dark',style:'1',toolbar_bg:'#070b14',enable_publishing:false,hide_side_toolbar:false,studies:['RSI@tv-basicstudies','MASimple@tv-basicstudies'],container_id:'tv-mkt'});
 }
 function setChartInterval(interval, btn) {
     document.querySelectorAll('.chart-btn').forEach(b=>b.className=b===btn?'chart-btn active':'chart-btn');
     const c=document.getElementById('tv-market-wrap'); if(!c)return;
     c.innerHTML='<div id="tv-mkt" class="w-full h-full"></div>';
-    mktChart=new TradingView.widget({autosize:true,symbol:'BYBIT:BTCUSD',interval,theme:'dark',style:'1',toolbar_bg:'#080a0c',enable_publishing:false,hide_side_toolbar:false,studies:['RSI@tv-basicstudies'],container_id:'tv-mkt'});
+    mktChart=new TradingView.widget({autosize:true,symbol:'BYBIT:BTCUSD',interval,theme:'dark',style:'1',toolbar_bg:'#070b14',enable_publishing:false,hide_side_toolbar:false,studies:['RSI@tv-basicstudies'],container_id:'tv-mkt'});
 }
 
 // ── News ──
@@ -633,7 +974,7 @@ async function fetchNews() {
         const r=await fetch('https://api.rss2json.com/v1/api.json?rss_url=https://cointelegraph.com/rss/tag/bitcoin&count=20');
         const d=await r.json();
         if(d?.items?.length>0){
-            c.innerHTML=d.items.map(item=>`<div class="news-card" onclick="window.open('${item.link}','_blank')"><p class="text-sm font-bold text-white leading-tight mb-2">${item.title}</p><div class="flex gap-2 items-center"><span class="lbl">CoinTelegraph</span><span class="lbl">${timeAgo(item.pubDate)}</span></div></div>`).join('');
+            c.innerHTML=d.items.map(item=>`<div class="news-card" onclick="window.open('${item.link}','_blank')"><p class="text-sm font-semibold text-white leading-snug mb-2">${item.title}</p><div class="flex gap-2 items-center"><span class="lbl">CoinTelegraph</span><span class="lbl">${timeAgo(item.pubDate)}</span></div></div>`).join('');
             return;
         }
     }catch(e){}
@@ -641,11 +982,11 @@ async function fetchNews() {
         const r=await fetch('https://api.rss2json.com/v1/api.json?rss_url=https://bitcoinmagazine.com/.rss/full&count=15');
         const d=await r.json();
         if(d?.items?.length>0){
-            c.innerHTML=d.items.map(item=>`<div class="news-card" onclick="window.open('${item.link}','_blank')"><p class="text-sm font-bold text-white leading-tight mb-2">${item.title}</p><div class="flex gap-2 items-center"><span class="lbl">Bitcoin Magazine</span><span class="lbl">${timeAgo(item.pubDate)}</span></div></div>`).join('');
+            c.innerHTML=d.items.map(item=>`<div class="news-card" onclick="window.open('${item.link}','_blank')"><p class="text-sm font-semibold text-white leading-snug mb-2">${item.title}</p><div class="flex gap-2 items-center"><span class="lbl">Bitcoin Magazine</span><span class="lbl">${timeAgo(item.pubDate)}</span></div></div>`).join('');
             return;
         }
     }catch(e){}
-    c.innerHTML='<div class="text-center py-8 text-gray-500 text-xs uppercase font-bold">Não foi possível carregar notícias.</div>';
+    c.innerHTML='<div class="text-center py-10 lbl">Não foi possível carregar notícias.</div>';
 }
 
 // ── Positions ──
@@ -678,68 +1019,81 @@ function updateDashboard(positions) {
         if(risk>maxRisk) maxRisk=risk;
         const tpP=tp>0?Math.min(Math.abs(cur-ent)/Math.abs(tp-ent)*100,100):0;
         const roe=marg>0?(pnl/marg)*100:0;
-        const cPnL=pnl>=0?'text-green-400':'text-red-400';
+        const isPos=pnl>=0;
         const isInv=pos.symbol.includes('USD')&&!pos.symbol.includes('USDT');
         let card=document.getElementById(`card-${pos.symbol}`);
         if(!card){
             card=document.createElement('div');
             card.id=`card-${pos.symbol}`;
-            card.className=`card border-l-4 p-4 ${pos.side==='Buy'?'border-l-green-500':'border-l-red-500'}`;
-            card.innerHTML=`<div class="content-area"></div><div id="tv-w-${pos.symbol}" class="mt-4 hidden" data-loaded="false"><div id="tv-p-${pos.symbol}" class="rounded-xl overflow-hidden h-[260px] sm:h-[420px] lg:h-[500px]" style="background:#000;border:1px solid rgba(255,255,255,0.06)"></div></div>`;
+            card.className=`card p-4 sm:p-5 ${pos.side==='Buy'?'pos-long':'pos-short'}`;
+            card.innerHTML=`<div class="content-area"></div><div id="tv-w-${pos.symbol}" class="mt-4 hidden" data-loaded="false"><div id="tv-p-${pos.symbol}" class="rounded-xl overflow-hidden h-[260px] sm:h-[420px]" style="background:#070b14;border:1px solid var(--border)"></div></div>`;
             grid.appendChild(card);
         }
+        const pnlColor = isPos ? '#10b981' : '#ef4444';
+        const dLiqColor = dLiq<10?'#ef4444':dLiq<20?'#f59e0b':'#64748b';
+        const dLiqPulse = dLiq<10?' style="animation:pulse 1s infinite"':'';
         card.querySelector('.content-area').innerHTML=`
-            <div class="flex justify-between items-start mb-3 gap-2">
-                <div class="flex items-center gap-1.5 flex-wrap">
-                    <h2 class="font-black text-white text-base sm:text-lg uppercase tracking-tighter">${pos.symbol}</h2>
-                    <span class="badge bg-yellow-500/10 text-yellow-500">${lev}x</span>
-                    <span class="badge ${pos.side==='Buy'?'bg-green-500/10 text-green-400':'bg-red-500/10 text-red-400'}">${pos.side==='Buy'?'LONG':'SHORT'}</span>
-                    <span class="badge ${isInv?'bg-orange-500/10 text-orange-400':'bg-blue-500/10 text-blue-400'}">${isInv?'INV':'LIN'}</span>
-                </div>
-                <button onclick="toggleChart('${pos.symbol}')" class="text-[10px] font-bold text-gray-400 border border-white/10 px-3 py-2 rounded-lg hover:text-white transition-all uppercase whitespace-nowrap min-h-[36px]">Gráfico</button>
-            </div>
-            <div class="grid grid-cols-2 gap-3 mb-3">
-                <div><p class="lbl mb-0.5">ROE</p><p class="text-2xl sm:text-3xl font-black ${cPnL}">${fPT(roe,false,2)}%</p></div>
-                <div class="text-right"><p class="lbl mb-0.5">PnL USD</p><p class="text-2xl sm:text-3xl font-bold ${cPnL}">${fPT(pnl,true,0)}</p></div>
-            </div>
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mb-3 pt-3 border-t border-white/5 text-xs">
+            <div class="flex justify-between items-start mb-4 gap-2">
                 <div>
-                    <p class="lbl">Valor / Margem</p>
-                    <p class="font-bold text-gray-200">${fPT(val,true,0)}</p>
-                    <p class="text-gray-500 text-[10px]">(${fPT(marg,true,2)})</p>
-                </div>
-                <div>
-                    <p class="lbl">Entrada → Mark</p>
-                    <p class="mono text-gray-300">${fPT(ent,false,2)}</p>
-                    <p class="mono" style="color:#f7931a">${fPT(cur,false,2)}</p>
-                </div>
-                <div class="col-span-2 sm:col-span-1 sm:text-right">
-                    <p class="lbl">Liq. / SL</p>
-                    <p class="mono text-red-400">${liq>0?fPT(liq,false,2):'N/D'}</p>
-                    ${sl>0?`<p class="mono text-orange-400">${fPT(sl,false,2)}</p>`:''}
-                </div>
-            </div>
-            <div class="space-y-2">
-                <div>
-                    <div class="flex justify-between text-[10px] font-bold mb-1">
-                        <span class="text-gray-500">Dist. Liquidação</span>
-                        <span class="${dLiq<10?'text-red-500 animate-pulse':dLiq<20?'text-orange-400':'text-gray-500'}">${fPT(dLiq,false,1)}%</span>
+                    <div class="flex items-center gap-2 flex-wrap mb-1.5">
+                        <h2 class="font-bold text-white text-base sm:text-lg">${pos.symbol}</h2>
+                        <span class="badge" style="background:rgba(245,158,11,0.12);color:#f59e0b">${lev}x</span>
+                        <span class="badge" style="background:${pos.side==='Buy'?'rgba(16,185,129,0.12)':'rgba(239,68,68,0.12)'};color:${pos.side==='Buy'?'#10b981':'#ef4444'}">${pos.side==='Buy'?'LONG':'SHORT'}</span>
+                        <span class="badge" style="background:${isInv?'rgba(247,147,26,0.12)':'rgba(59,130,246,0.12)'};color:${isInv?'#f7931a':'#60a5fa'}">${isInv?'INV':'LIN'}</span>
                     </div>
-                    <div class="prog-bg"><div class="prog-fill ${dLiq<10?'bg-red-500 animate-pulse':dLiq<20?'bg-orange-500':dLiq<40?'bg-yellow-500/60':'bg-red-900/40'}" style="width:${Math.max(0,100-dLiq)}%"></div></div>
+                </div>
+                <button onclick="toggleChart('${pos.symbol}')" class="text-[10px] font-semibold px-3 py-2 rounded-lg transition-all min-h-[34px] whitespace-nowrap flex-shrink-0" style="color:var(--text-muted);background:var(--surface2);border:1px solid var(--border)">Gráfico</button>
+            </div>
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <div>
+                    <p class="lbl mb-1">ROE</p>
+                    <p class="text-2xl sm:text-3xl font-bold mono" style="color:${pnlColor}">${fPT(roe,false,2)}%</p>
+                </div>
+                <div class="text-right">
+                    <p class="lbl mb-1">PnL USD</p>
+                    <p class="text-2xl sm:text-3xl font-bold mono" style="color:${pnlColor}">${fPT(pnl,true,0)}</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mb-4 pt-3" style="border-top:1px solid var(--border)">
+                <div class="stat-tile">
+                    <p class="lbl mb-1">Valor / Margem</p>
+                    <p class="font-semibold text-sm text-gray-200">${fPT(val,true,0)}</p>
+                    <p class="text-xs mt-0.5" style="color:var(--text-muted)">(${fPT(marg,true,2)})</p>
+                </div>
+                <div class="stat-tile">
+                    <p class="lbl mb-1">Entrada → Mark</p>
+                    <p class="mono text-xs text-gray-300">${fPT(ent,false,2)}</p>
+                    <p class="mono text-xs" style="color:var(--btc)">${fPT(cur,false,2)}</p>
+                </div>
+                <div class="stat-tile col-span-2 sm:col-span-1">
+                    <p class="lbl mb-1">Liq. / SL</p>
+                    <p class="mono text-xs" style="color:var(--red)">${liq>0?fPT(liq,false,2):'N/D'}</p>
+                    ${sl>0?`<p class="mono text-xs" style="color:#f97316">${fPT(sl,false,2)}</p>`:''}
+                </div>
+            </div>
+            <div class="space-y-2.5">
+                <div>
+                    <div class="flex justify-between text-[10px] font-semibold mb-1.5">
+                        <span style="color:var(--text-muted)">Dist. Liquidação</span>
+                        <span style="color:${dLiqColor}"${dLiqPulse}>${fPT(dLiq,false,1)}%</span>
+                    </div>
+                    <div class="prog-bg"><div class="prog-fill" style="width:${Math.max(0,100-dLiq)}%;background:${dLiq<10?'#ef4444':dLiq<20?'#f59e0b':dLiq<40?'rgba(245,158,11,0.5)':'rgba(100,116,139,0.3)'}"></div></div>
                 </div>
                 ${tp>0?`<div>
-                    <div class="flex justify-between text-[10px] font-bold mb-1">
-                        <span class="text-yellow-600">Take Profit (${fPT(tp,false,0)})</span>
-                        <span class="text-yellow-600">${fPT(tpP,false,0)}%</span>
+                    <div class="flex justify-between text-[10px] font-semibold mb-1.5">
+                        <span style="color:#a16207">Take Profit (${fPT(tp,false,0)})</span>
+                        <span style="color:#a16207">${fPT(tpP,false,0)}%</span>
                     </div>
-                    <div class="prog-bg"><div class="prog-fill bg-yellow-500/60" style="width:${tpP}%"></div></div>
+                    <div class="prog-bg"><div class="prog-fill" style="width:${tpP}%;background:rgba(245,158,11,0.5)"></div></div>
                 </div>`:''}
             </div>`;
     });
-    document.getElementById('total-pnl').innerText=fPT(tPnL,true,0);
-    document.getElementById('total-pnl').className=`text-lg sm:text-2xl mono ${tPnL>=0?'text-green-400':'text-red-400'}`;
-    document.getElementById('total-pnl-perc').innerText=fPT(tMarg>0?(tPnL/tMarg*100):0,false,2)+'%';
-    document.getElementById('total-pnl-perc').className=`text-lg sm:text-2xl mono ${tPnL>=0?'text-green-400':'text-red-400'}`;
+    const pnlEl=document.getElementById('total-pnl');
+    pnlEl.innerText=fPT(tPnL,true,0);
+    pnlEl.className=`text-xl sm:text-2xl mono font-bold ${tPnL>=0?'text-emerald-400':'text-red-400'}`;
+    const roeEl=document.getElementById('total-pnl-perc');
+    roeEl.innerText=fPT(tMarg>0?(tPnL/tMarg*100):0,false,2)+'%';
+    roeEl.className=`text-xl sm:text-2xl mono font-bold ${tPnL>=0?'text-emerald-400':'text-red-400'}`;
     setText('total-exposure', fPT(tExp,true,0));
     setText('avg-leverage', fPT(tMarg>0?(tExp/tMarg):0,false,2)+'x');
     setText('total-margin', fPT(tMarg,true,0));
@@ -750,10 +1104,10 @@ function updateRiskScore(score) {
     const dot=document.getElementById('risk-dot'), lbl=document.getElementById('risk-label');
     if(!dot||!lbl) return;
     dot.style.left=Math.min(score,95)+'%';
-    if(score<30){lbl.innerText='Risco Baixo';lbl.className='badge bg-green-500/20 text-green-400';}
-    else if(score<60){lbl.innerText='Moderado';lbl.className='badge bg-yellow-500/20 text-yellow-500';}
-    else if(score<80){lbl.innerText='Alto';lbl.className='badge bg-orange-500/20 text-orange-400';}
-    else{lbl.innerText='CRÍTICO';lbl.className='badge bg-red-500/20 text-red-400 animate-pulse';}
+    if(score<30){lbl.innerText='Risco Baixo';lbl.style.cssText='background:rgba(16,185,129,0.15);color:#10b981';}
+    else if(score<60){lbl.innerText='Moderado';lbl.style.cssText='background:rgba(245,158,11,0.15);color:#f59e0b';}
+    else if(score<80){lbl.innerText='Alto';lbl.style.cssText='background:rgba(249,115,22,0.15);color:#f97316';}
+    else{lbl.innerText='CRÍTICO';lbl.style.cssText='background:rgba(239,68,68,0.15);color:#ef4444;animation:pulse 1s infinite';}
 }
 
 function toggleChart(s) {
@@ -762,7 +1116,7 @@ function toggleChart(s) {
     if(!el.classList.contains('hidden')&&el.getAttribute('data-loaded')==='false'){
         const pos=currentPositions.find(p=>p.symbol===s);
         const isInv=pos&&pos.symbol.includes('USD')&&!pos.symbol.includes('USDT');
-        new TradingView.widget({autosize:true,symbol:`BYBIT:${s}${isInv?'':'.P'}`,interval:'15',theme:'dark',style:'1',toolbar_bg:'#1e2329',enable_publishing:false,hide_side_toolbar:false,studies:['RSI@tv-basicstudies'],container_id:`tv-p-${s}`});
+        new TradingView.widget({autosize:true,symbol:`BYBIT:${s}${isInv?'':'.P'}`,interval:'15',theme:'dark',style:'1',toolbar_bg:'#070b14',enable_publishing:false,hide_side_toolbar:false,studies:['RSI@tv-basicstudies'],container_id:`tv-p-${s}`});
         el.setAttribute('data-loaded','true');
     }
 }
@@ -775,17 +1129,16 @@ async function fetchTelemetry() {
         if(d?.insight){
             const isB=d.insight.toUpperCase().includes('BULLISH');
             const m=document.getElementById('macro-trend'), mb=document.getElementById('macro-badge');
-            const cls=isB?'border-green-500/20 text-green-500':'border-red-500/20 text-red-500';
-            if(m){m.innerText=`Macro: ${isB?'BULLISH':'BEARISH'}`;m.className=`hidden lg:flex items-center lbl bg-white/5 px-2 py-1.5 rounded-md border min-h-[36px] ${cls}`;}
-            if(mb){mb.innerText=isB?'BULLISH':'BEARISH';mb.className=`badge ${isB?'bg-green-500/20 text-green-400':'bg-red-500/20 text-red-400'}`;}
+            if(m){m.innerText=`Macro ${isB?'BULLISH':'BEARISH'}`;m.style.cssText=`background:var(--surface2);border:1px solid ${isB?'rgba(16,185,129,0.25)':'rgba(239,68,68,0.25)'};color:${isB?'#10b981':'#ef4444'}`;}
+            if(mb){mb.innerText=isB?'BULLISH':'BEARISH';mb.style.cssText=`background:${isB?'rgba(16,185,129,0.12)':'rgba(239,68,68,0.12)'};color:${isB?'#10b981':'#ef4444'}`;}
         }
         if(d?.fg){
             const v=parseInt(d.fg);
             const fg=document.getElementById('fg-index-top');
-            const cls=v>=70?'border-green-500/20 text-green-500':v<=30?'border-red-500/20 text-red-500':'border-yellow-500/20 text-yellow-500';
-            if(fg){fg.innerText=`F&G: ${d.fg}`;fg.className=`hidden lg:flex items-center lbl bg-white/5 px-2 py-1.5 rounded-md border min-h-[36px] ${cls}`;}
+            const c=v>=70?'#10b981':v<=30?'#ef4444':'#f59e0b';
+            if(fg){fg.innerText=`F&G ${d.fg}`;fg.style.cssText=`background:var(--surface2);border:1px solid rgba(255,255,255,0.08);color:${c}`;}
             const fgEl=document.getElementById('fg-big');
-            if(fgEl){fgEl.innerText=d.fg;fgEl.className=`text-4xl font-black mono ${v>=70?'text-green-400':v<=30?'text-red-400':'text-yellow-500'}`;}
+            if(fgEl){fgEl.innerText=d.fg;fgEl.style.color=c;}
             const labels=['Medo Extremo','Medo','Neutro','Ganância','Ganância Extrema'];
             setText('fg-text', labels[v>=80?4:v>=60?3:v>=40?2:v>=25?1:0]);
             const dot=document.getElementById('fg-dot'); if(dot) dot.style.left=v+'%';
@@ -830,13 +1183,13 @@ function addDCALevel(pctDefault, usdDefault) {
     const isLong = pos ? pos.side === 'Buy' : true;
     const row = document.createElement('div');
     row.id = `dca-row-${id}`;
-    row.className = 'dca-level-row rounded-xl border border-white/6 p-3' ;
-    row.style.background = 'rgba(255,255,255,0.025)';
+    row.className = 'dca-level-row rounded-xl p-3';
+    row.style.cssText = 'background:var(--surface2);border:1px solid var(--border)';
     row.innerHTML = `
         <div class="flex items-center gap-2 mb-2.5">
-            <input type="checkbox" checked class="dca-cb w-4 h-4 flex-shrink-0" style="accent-color:#f7931a" onchange="runDCACalc()">
-            <span class="text-[10px] font-black uppercase tracking-widest text-gray-500">Nível ${id}</span>
-            <button onclick="removeDCALevel(${id})" class="ml-auto text-gray-700 hover:text-red-400 transition-colors text-xl leading-none px-1 min-h-[28px]">×</button>
+            <input type="checkbox" checked class="dca-cb w-4 h-4 flex-shrink-0" style="accent-color:var(--btc)" onchange="runDCACalc()">
+            <span class="lbl">Nível ${id}</span>
+            <button onclick="removeDCALevel(${id})" class="ml-auto text-gray-600 hover:text-red-400 transition-colors text-xl leading-none px-1 min-h-[28px]">×</button>
         </div>
         <div class="grid grid-cols-3 gap-2 mb-2.5">
             <div>
@@ -852,14 +1205,14 @@ function addDCALevel(pctDefault, usdDefault) {
                 <input type="number" class="dca-usd" style="min-height:38px;font-size:0.82rem" placeholder="100" value="${usdDefault !== undefined ? usdDefault : ''}" oninput="runDCACalc()">
             </div>
         </div>
-        <div class="grid grid-cols-2 gap-2 pt-2.5 border-t border-white/5">
+        <div class="grid grid-cols-2 gap-2 pt-2.5" style="border-top:1px solid var(--border)">
             <div class="flex items-center justify-between">
                 <span class="lbl">Média Acum.</span>
-                <span class="dca-calc-avg mono text-xs font-black text-white">--</span>
+                <span class="dca-calc-avg mono text-xs font-bold text-white">--</span>
             </div>
             <div class="flex items-center justify-between">
                 <span class="lbl">Liq. Acum.</span>
-                <span class="dca-calc-liq mono text-xs font-black text-red-400">--</span>
+                <span class="dca-calc-liq mono text-xs font-bold" style="color:var(--red)">--</span>
             </div>
         </div>`;
     document.getElementById('dca-levels-body').appendChild(row);
@@ -917,7 +1270,6 @@ function runDCACalc() {
     const isLong = pos.side === 'Buy';
     const isInverse = !pos.symbol.endsWith('USDT') && pos.symbol.includes('USD');
 
-    // Normalize: posUsd = USD notional, totalBtc = BTC equivalent
     const posUsd = isInverse ? curQty : curQty * curAvg;
     let totalUsd = posUsd;
     let totalBtc = isInverse ? curQty / curAvg : curQty;
@@ -940,7 +1292,7 @@ function runDCACalc() {
 
         if (!cb.checked || isNaN(price) || isNaN(usd) || price <= 0 || usd <= 0) {
             if (avgEl) avgEl.textContent = '--';
-            if (liqEl) { liqEl.textContent = '--'; liqEl.className = 'dca-calc-liq mono text-xs font-black text-red-400'; }
+            if (liqEl) liqEl.textContent = '--';
             return;
         }
 
@@ -954,10 +1306,7 @@ function runDCACalc() {
             : cumAvg * (1 + 1 / curLev - 0.005);
 
         if (avgEl) avgEl.textContent = fPT(cumAvg, false, 2);
-        if (liqEl) {
-            liqEl.textContent = fPT(cumLiq, false, 2);
-            liqEl.className = 'dca-calc-liq mono text-xs font-black text-red-400';
-        }
+        if (liqEl) liqEl.textContent = fPT(cumLiq, false, 2);
         levelData.push({ price, usd, cumAvg, cumLiq });
     });
 
@@ -1019,9 +1368,9 @@ function updateDCASVG(data) {
     const txt = (x, y, t, color, size) => {
         const el = document.createElementNS(ns, 'text');
         el.setAttribute('x', x); el.setAttribute('y', y);
-        el.setAttribute('fill', color || '#848e9c');
+        el.setAttribute('fill', color || '#64748b');
         el.setAttribute('font-size', size || 7.5);
-        el.setAttribute('font-family', 'Roboto Mono,monospace');
+        el.setAttribute('font-family', 'JetBrains Mono,monospace');
         el.setAttribute('font-weight', '700');
         el.textContent = t; svg.appendChild(el);
     };
@@ -1033,7 +1382,6 @@ function updateDCASVG(data) {
         svg.appendChild(el);
     };
 
-    // Grid
     for (let i = 0; i <= 4; i++) {
         const gy = PT + (cH / 4) * i;
         const gl = document.createElementNS(ns, 'line');
@@ -1043,47 +1391,36 @@ function updateDCASVG(data) {
         svg.appendChild(gl);
     }
 
-    // Risk zone (entry → liq, tinted red)
     const yE = sy(curAvg), yL = sy(curLiq);
-    rect(PL, isLong ? yE : yL, cW, Math.abs(yL - yE), 'rgba(246,70,93,0.07)');
+    rect(PL, isLong ? yE : yL, cW, Math.abs(yL - yE), 'rgba(239,68,68,0.06)');
+    line(sy(curLiq), '#ef4444', '4,2', 1);
+    dot(PL + cW, sy(curLiq), 3, '#ef4444');
+    txt(PL + cW + 5, sy(curLiq) + 3, 'LIQ', '#ef4444', 7);
 
-    // Current liq (dashed red)
-    line(sy(curLiq), '#f6465d', '4,2', 1);
-    dot(PL + cW, sy(curLiq), 3, '#f6465d');
-    txt(PL + cW + 5, sy(curLiq) + 3, 'LIQ', '#f6465d', 7);
-
-    // DCA level bars + lines
     const maxUsd = Math.max(...levelData.map(l => l.usd), 1);
     levelData.forEach((l, i) => {
         const y = sy(l.price);
         const bw = (l.usd / maxUsd) * cW * 0.65 + cW * 0.12;
-        rect(PL, y - 2.5, bw, 5, 'rgba(0,170,255,0.22)', 2);
-        line(y, 'rgba(0,170,255,0.45)', '3,2', 1);
-        dot(PL + cW, y, 3.5, '#00aaff');
-        txt(PL + cW + 5, y + 3, `D${i + 1}`, '#00aaff', 7);
+        rect(PL, y - 2.5, bw, 5, 'rgba(59,130,246,0.25)', 2);
+        line(y, 'rgba(59,130,246,0.5)', '3,2', 1);
+        dot(PL + cW, y, 3.5, '#3b82f6');
+        txt(PL + cW + 5, y + 3, `D${i + 1}`, '#3b82f6', 7);
     });
 
-    // Final liq* (darker red)
     if (finalLiq) {
-        line(sy(finalLiq), '#c0392b', '3,2', 1.5);
-        dot(PL + cW, sy(finalLiq), 3, '#c0392b');
-        txt(PL + cW + 5, sy(finalLiq) + 3, 'L*', '#c0392b', 7);
+        line(sy(finalLiq), '#b91c1c', '3,2', 1.5);
+        dot(PL + cW, sy(finalLiq), 3, '#b91c1c');
+        txt(PL + cW + 5, sy(finalLiq) + 3, 'L*', '#b91c1c', 7);
     }
-
-    // Final avg* (green dashed)
     if (finalAvg) {
-        line(sy(finalAvg), '#02d386', '4,2', 1.5);
-        dot(PL + cW, sy(finalAvg), 3.5, '#02d386');
-        txt(PL + cW + 5, sy(finalAvg) + 3, 'A*', '#02d386', 7);
+        line(sy(finalAvg), '#10b981', '4,2', 1.5);
+        dot(PL + cW, sy(finalAvg), 3.5, '#10b981');
+        txt(PL + cW + 5, sy(finalAvg) + 3, 'A*', '#10b981', 7);
     }
-
-    // Current avg entry (orange solid — on top)
     line(sy(curAvg), '#f7931a', null, 2);
     dot(PL + cW, sy(curAvg), 5, '#f7931a');
     txt(PL + cW + 5, sy(curAvg) + 3, 'AVG', '#f7931a', 7);
-
-    // Mark price (white dashed — topmost)
-    line(sy(markPrice), 'rgba(255,255,255,0.65)', '2,2', 1.5);
+    line(sy(markPrice), 'rgba(255,255,255,0.7)', '2,2', 1.5);
     dot(PL + cW, sy(markPrice), 5, 'white');
     txt(PL + cW + 5, sy(markPrice) + 3, 'MRK', 'white', 7);
 }
@@ -1111,7 +1448,7 @@ function calcFunding(){
     let total=0;
     currentPositions.forEach(p=>{total+=parseFloat(p.positionValue)*(fr/100)*3*days;});
     const el=document.getElementById('rc-fund-out');
-    if(el){el.innerText=fPT(Math.abs(total),true,2)+` em ${days} dia(s)`;el.className='mono text-base sm:text-lg text-red-400 mt-1';}
+    if(el){el.innerText=fPT(Math.abs(total),true,2)+` em ${days} dia(s)`;}
 }
 
 // ── AI ──
