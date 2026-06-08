@@ -2,1496 +2,825 @@
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-    <title>BTC Command Center</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trade Desk</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
         :root {
-            --btc: #f7931a;
-            --btc-dim: rgba(247,147,26,0.12);
-            --green: #10b981;
-            --green-dim: rgba(16,185,129,0.12);
-            --red: #ef4444;
-            --red-dim: rgba(239,68,68,0.12);
-            --blue: #3b82f6;
-            --bg: #070b14;
-            --surface: #0d1425;
-            --surface2: #111827;
-            --border: rgba(255,255,255,0.06);
-            --border-strong: rgba(255,255,255,0.1);
-            --text: #e2e8f0;
-            --text-muted: #64748b;
-            --text-faint: #334155;
+            --bg:       #0c0c0f;
+            --surface:  #141418;
+            --line:     #1e1e24;
+            --muted:    #4a4a5a;
+            --dim:      #8888a0;
+            --text:     #e8e8f0;
+            --green:    #34d399;
+            --red:      #f87171;
+            --btc:      #f7931a;
+            --blue:     #60a5fa;
         }
-        * { box-sizing: border-box; }
+
+        html, body { height: 100%; }
+
         body {
             background: var(--bg);
             color: var(--text);
             font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            line-height: 1.5;
             -webkit-font-smoothing: antialiased;
-            min-height: 100vh;
-            overflow-x: hidden;
-            background-image:
-                radial-gradient(ellipse 80% 40% at 50% -10%, rgba(247,147,26,0.05) 0%, transparent 60%),
-                radial-gradient(ellipse 40% 60% at 90% 50%, rgba(59,130,246,0.03) 0%, transparent 50%);
         }
 
-        /* ── MONO ── */
         .mono { font-family: 'JetBrains Mono', monospace; }
 
-        /* ── LABELS ── */
-        .lbl {
-            color: var(--text-muted);
-            font-size: 0.62rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            font-weight: 600;
+        /* ── LAYOUT ── */
+        .shell {
+            display: grid;
+            grid-template-rows: 48px 1fr;
+            height: 100vh;
+            overflow: hidden;
         }
 
-        /* ── CARDS ── */
-        .card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            position: relative;
-        }
-        .card-glow {
-            background: var(--surface);
-            border-radius: 16px;
-            position: relative;
-        }
-        .card-glow::before {
-            content: '';
-            position: absolute;
-            inset: -1px;
-            border-radius: 17px;
-            background: linear-gradient(135deg, rgba(247,147,26,0.2), transparent 40%, transparent 60%, rgba(59,130,246,0.1));
-            z-index: -1;
+        /* ── HEADER ── */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            border-bottom: 1px solid var(--line);
+            background: var(--bg);
+            gap: 24px;
         }
 
-        /* ── NAVIGATION ── */
-        .nav-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; min-width: 0; flex: 1 1 0; }
-        .nav-wrap::-webkit-scrollbar { display: none; }
-        .nav-btn {
-            padding: 6px 14px;
-            font-weight: 600;
-            font-size: 0.78rem;
-            color: var(--text-muted);
-            border-radius: 8px;
-            transition: all 0.2s;
-            white-space: nowrap;
-            cursor: pointer;
-            display: inline-block;
-            letter-spacing: 0.01em;
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
         }
-        .nav-btn.active {
+
+        .wordmark {
+            font-size: 13px;
+            font-weight: 600;
             color: var(--text);
-            background: var(--surface2);
-            border: 1px solid var(--border-strong);
+            letter-spacing: -0.01em;
         }
-        .nav-btn:not(.active):hover { color: var(--text); }
+        .wordmark span { color: var(--btc); }
 
-        /* ── TABS ── */
-        .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeUp 0.3s ease; }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* ── PROGRESS ── */
-        .prog-bg { background: var(--surface2); height: 4px; border-radius: 4px; overflow: hidden; margin-top: 6px; }
-        .prog-fill { height: 100%; border-radius: 4px; transition: width 0.8s cubic-bezier(0.4,0,0.2,1); }
-
-        /* ── LAYOUT GRID ── */
-        .app-grid { display: grid; grid-template-columns: 1fr; gap: 0; max-width: 1920px; margin: 0 auto; transition: grid-template-columns 0.35s ease; }
-        @media (min-width: 1280px) { .app-grid.chat-open { grid-template-columns: 1fr 420px; } #ai-section { height: calc(100vh - 64px); position: sticky; top: 64px; } }
-
-        /* ── AI SIDEBAR ── */
-        #ai-section { display: none; flex-direction: column; }
-        #ai-section.open { display: flex; }
-        @media (max-width: 1279px) {
-            #ai-section.open { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 200; border-radius: 0; }
+        .header-divider {
+            width: 1px;
+            height: 16px;
+            background: var(--line);
         }
 
-        /* ── MESSAGES ── */
-        .msg { margin-bottom: 10px; padding: 12px 16px; border-radius: 12px; font-size: 0.875rem; line-height: 1.8; }
-        .bot-msg { background: rgba(247,147,26,0.04); border: 1px solid rgba(247,147,26,0.1); }
-        .user-msg { background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.15); text-align: right; color: #bfdbfe; }
-        .typing-indicator { display: flex; gap: 4px; padding: 4px; align-items: center; }
-        .typing-dot { width: 5px; height: 5px; background: var(--btc); border-radius: 50%; animation: typing 1.4s infinite ease-in-out both; }
-        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
-        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
-        @keyframes typing { 0%,80%,100% { transform: scale(0); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
-
-        /* ── ORDER BOOK ── */
-        .ob-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; padding: 3px 8px; font-size: 0.7rem; font-family: 'JetBrains Mono', monospace; position: relative; }
-        .ob-bar-bid { position: absolute; right: 0; top: 0; bottom: 0; background: rgba(16,185,129,0.08); z-index: 0; transition: width 0.3s; }
-        .ob-bar-ask { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(239,68,68,0.08); z-index: 0; transition: width 0.3s; }
-        .ob-row span { position: relative; z-index: 1; }
-
-        /* ── SCROLLBARS ── */
-        ::-webkit-scrollbar { width: 3px; height: 3px; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.07); border-radius: 2px; }
-
-        /* ── INPUTS ── */
-        select, input[type="number"], textarea, input[type="text"] {
-            background: var(--surface2) !important;
-            border: 1px solid var(--border-strong) !important;
-            border-radius: 10px;
-            color: var(--text) !important;
-            padding: 10px 14px;
-            outline: none;
-            width: 100%;
-            transition: border-color 0.2s, box-shadow 0.2s;
+        .ticker {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .ticker-label {
+            font-size: 10px;
+            font-weight: 500;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .ticker-price {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
-            min-height: 44px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text);
+            transition: color 0.4s;
         }
-        input[type="number"]:focus,
-        input[type="text"]:focus,
-        textarea:focus,
-        select:focus {
-            border-color: rgba(247,147,26,0.5) !important;
-            box-shadow: 0 0 0 3px rgba(247,147,26,0.08) !important;
+        .ticker-change {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 400;
         }
-        select option { background: #1e2837; }
 
-        /* ── QUICK BUTTONS ── */
-        .quick-btn {
-            background: var(--surface2);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 10px 14px;
-            min-height: 44px;
-            font-size: 0.72rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            cursor: pointer;
-            transition: all 0.2s;
-            text-align: left;
-            width: 100%;
+        .header-right {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 16px;
         }
-        .quick-btn:hover {
-            background: rgba(247,147,26,0.07);
-            border-color: rgba(247,147,26,0.2);
+
+        .status-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 6px var(--green);
+            flex-shrink: 0;
+        }
+        .status-dot.stale { background: var(--muted); box-shadow: none; }
+
+        .header-stat {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .header-stat-label {
+            font-size: 10px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .header-stat-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
             color: var(--text);
         }
 
-        /* ── BADGES ── */
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 3px 8px;
-            border-radius: 6px;
-            font-size: 0.6rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.07em;
+        .last-updated {
+            font-size: 10px;
+            color: var(--muted);
+            font-family: 'JetBrains Mono', monospace;
         }
 
-        /* ── RISK BAR ── */
-        .risk-bar { height: 6px; border-radius: 4px; background: linear-gradient(90deg, #10b981, #f59e0b 50%, #ef4444); position: relative; }
-        .risk-dot { width: 14px; height: 14px; border-radius: 50%; background: white; border: 2px solid var(--bg); position: absolute; top: -4px; transition: left 0.6s cubic-bezier(0.4,0,0.2,1); box-shadow: 0 0 8px rgba(255,255,255,0.4); }
-
-        /* ── NEWS CARDS ── */
-        .news-card {
-            background: var(--surface2);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 14px 16px;
-            transition: all 0.2s;
-            cursor: pointer;
-        }
-        .news-card:hover {
-            background: rgba(247,147,26,0.04);
-            border-color: rgba(247,147,26,0.2);
-            transform: translateX(2px);
+        /* ── MAIN ── */
+        main {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            overflow: hidden;
         }
 
-        /* ── CHART BUTTONS ── */
-        .chart-btn {
-            font-size: 0.72rem;
+        @media (max-width: 900px) {
+            main { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+            .shell { grid-template-rows: 48px 1fr; }
+        }
+
+        /* ── PORTFOLIO PANEL ── */
+        .portfolio-panel {
+            overflow-y: auto;
+            border-right: 1px solid var(--line);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* ── SECTION TITLES ── */
+        .section-title {
+            font-size: 10px;
             font-weight: 600;
-            padding: 5px 11px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.15s;
-            min-height: 32px;
-        }
-        .chart-btn.active { background: var(--surface2); color: var(--text); border: 1px solid var(--border-strong); }
-        .chart-btn:not(.active) { background: transparent; color: var(--text-muted); border: 1px solid transparent; }
-        .chart-btn:not(.active):hover { color: var(--text); }
-
-        /* ── STAT TILES ── */
-        .stat-tile {
-            background: var(--surface2);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 12px 14px;
-        }
-
-        /* ── POSITION CARD BORDER ── */
-        .pos-long { border-left: 3px solid var(--green) !important; }
-        .pos-short { border-left: 3px solid var(--red) !important; }
-
-        /* ── AI overlay ── */
-        #ai-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 199; backdrop-filter: blur(4px); }
-        #ai-overlay.open { display: block; }
-
-        /* ── SEND BTN ── */
-        .send-btn {
-            background: var(--btc);
-            color: #000;
-            border-radius: 10px;
-            padding: 0 18px;
-            font-weight: 700;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.15s;
-            min-height: 44px;
-            min-width: 48px;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .send-btn:hover { opacity: 0.9; transform: scale(1.03); }
-
-        /* ── AI TOGGLE BTN ── */
-        .ai-toggle {
-            background: var(--btc);
-            color: #000;
-            font-weight: 700;
-            font-size: 0.72rem;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-            padding: 7px 16px;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.15s;
-            white-space: nowrap;
-            min-height: 36px;
-        }
-        .ai-toggle:hover { opacity: 0.9; transform: scale(1.02); }
-
-        /* ── DIVIDER ── */
-        .divider { height: 1px; background: var(--border); margin: 16px 0; }
-
-        /* ── TICKER ── */
-        .ticker-pill {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: var(--surface2);
-            border: 1px solid var(--border-strong);
-            border-radius: 10px;
-            padding: 6px 12px;
-            min-height: 36px;
-        }
-
-        /* ── KPI CARD ── */
-        .kpi-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 16px 18px;
-            transition: border-color 0.2s;
-        }
-        .kpi-card:hover { border-color: var(--border-strong); }
-
-        /* ── SECTION HEADER ── */
-        .section-header {
-            font-size: 0.7rem;
-            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.1em;
-            color: var(--text-muted);
+            color: var(--muted);
+            margin-bottom: 14px;
+        }
+
+        /* ── KPI ROW ── */
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            background: var(--line);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        @media (max-width: 640px) { .kpi-row { grid-template-columns: repeat(2, 1fr); } }
+
+        .kpi {
+            background: var(--surface);
+            padding: 16px 18px;
+        }
+        .kpi-label {
+            font-size: 10px;
+            font-weight: 500;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 8px;
+        }
+        .kpi-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 20px;
+            font-weight: 500;
+            color: var(--text);
+            line-height: 1;
+        }
+        .kpi-sub {
+            font-size: 10px;
+            color: var(--muted);
+            margin-top: 4px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* ── POSITION CARDS ── */
+        .positions-list {
             display: flex;
-            align-items: center;
+            flex-direction: column;
             gap: 8px;
         }
-        .section-header::before {
-            content: '';
-            display: inline-block;
+
+        .pos-card {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .pos-header {
+            display: grid;
+            grid-template-columns: auto 1fr auto auto;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .pos-side-bar {
             width: 3px;
-            height: 12px;
-            background: var(--btc);
+            height: 32px;
             border-radius: 2px;
             flex-shrink: 0;
         }
+        .long { background: var(--green); }
+        .short { background: var(--red); }
 
-        .hidden { display: none !important; }
+        .pos-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            letter-spacing: -0.01em;
+        }
+        .pos-tags {
+            display: flex;
+            gap: 4px;
+            margin-top: 3px;
+        }
+        .tag {
+            font-size: 9px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+        .tag-long  { background: rgba(52,211,153,0.1); color: var(--green); }
+        .tag-short { background: rgba(248,113,113,0.1); color: var(--red); }
+        .tag-lev   { background: rgba(247,147,26,0.1); color: var(--btc); }
+        .tag-inv   { background: rgba(96,165,250,0.1); color: var(--blue); }
+        .tag-lin   { background: rgba(148,163,184,0.1); color: var(--dim); }
+
+        .pos-roe {
+            text-align: right;
+        }
+        .roe-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 18px;
+            font-weight: 500;
+            line-height: 1;
+        }
+        .roe-label { font-size: 9px; color: var(--muted); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.08em; }
+
+        .pos-pnl {
+            text-align: right;
+        }
+        .pnl-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 15px;
+            font-weight: 500;
+            line-height: 1;
+        }
+        .pnl-label { font-size: 9px; color: var(--muted); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.08em; }
+
+        .pos-body {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1px;
+            background: var(--line);
+        }
+        @media (max-width: 540px) { .pos-body { grid-template-columns: repeat(2, 1fr); } }
+
+        .pos-field {
+            background: var(--bg);
+            padding: 10px 14px;
+        }
+        .pos-field-label {
+            font-size: 9px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+            margin-bottom: 5px;
+        }
+        .pos-field-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--text);
+        }
+        .pos-field-val.green { color: var(--green); }
+        .pos-field-val.red   { color: var(--red); }
+        .pos-field-val.btc   { color: var(--btc); }
+
+        /* Distance bar */
+        .pos-footer {
+            padding: 10px 16px;
+            background: var(--bg);
+            border-top: 1px solid var(--line);
+        }
+        .dist-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .dist-label {
+            font-size: 9px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+        }
+        .dist-pct {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--dim);
+        }
+        .bar-track {
+            height: 3px;
+            background: var(--line);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.6s ease;
+        }
+
+        /* ── NO POSITIONS ── */
+        .empty-state {
+            padding: 48px 24px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        /* ── NEWS PANEL ── */
+        .news-panel {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .news-header {
+            padding: 16px 20px 14px;
+            border-bottom: 1px solid var(--line);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .news-tabs {
+            display: flex;
+            gap: 0;
+        }
+        .news-tab {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+            padding: 4px 10px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: color 0.15s, background 0.15s;
+        }
+        .news-tab.active {
+            color: var(--text);
+            background: var(--line);
+        }
+
+        .news-refresh {
+            width: 24px; height: 24px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 4px;
+            cursor: pointer;
+            color: var(--muted);
+            transition: color 0.15s, background 0.15s;
+            font-size: 14px;
+            border: none;
+            background: transparent;
+        }
+        .news-refresh:hover { color: var(--text); background: var(--line); }
+        .news-refresh.spinning { animation: spin 0.7s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .news-feed {
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .news-item {
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--line);
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+        .news-item:hover { background: var(--surface); }
+        .news-item:last-child { border-bottom: none; }
+
+        .news-source-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+        .news-source {
+            font-size: 9px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--btc);
+        }
+        .news-dot { width: 2px; height: 2px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
+        .news-time {
+            font-size: 9px;
+            color: var(--muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .news-title {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text);
+            line-height: 1.55;
+        }
+
+        .news-loading {
+            padding: 40px 20px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 2px; }
+
+        /* ── PULSE ANIMATION ── */
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        .pulse { animation: pulse 1.5s ease-in-out infinite; }
+
+        /* ── UP/DOWN FLASH ── */
+        .flash-up   { color: var(--green) !important; }
+        .flash-down { color: var(--red) !important; }
     </style>
 </head>
 <body>
 
-<!-- AI Backdrop -->
-<div id="ai-overlay" onclick="handleAICall()"></div>
+<div class="shell">
 
-<!-- ══════════════════════════════════ HEADER ══════════════════════════════════ -->
-<header style="background:rgba(7,11,20,0.92);border-bottom:1px solid var(--border);backdrop-filter:blur(20px)" class="sticky top-0 z-50">
-    <div class="max-w-[1920px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-
-        <!-- Logo + Nav -->
-        <div class="flex items-center gap-5 min-w-0">
-            <!-- Logo -->
-            <div class="flex items-center gap-2 flex-shrink-0">
-                <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:var(--btc-dim);border:1px solid rgba(247,147,26,0.25)">
-                    <span class="text-sm font-black" style="color:var(--btc)">₿</span>
-                </div>
-                <span class="font-bold text-sm hidden sm:block" style="color:var(--text)">Command</span>
+    <!-- ══ HEADER ══ -->
+    <header>
+        <div class="header-left">
+            <div class="wordmark"><span>₿</span> Trade Desk</div>
+            <div class="header-divider"></div>
+            <div class="ticker">
+                <span class="ticker-label">BTC</span>
+                <span id="hdr-price" class="ticker-price mono">—</span>
+                <span id="hdr-change" class="ticker-change mono" style="color:var(--muted)">—</span>
             </div>
-
-            <!-- Separator -->
-            <div class="hidden sm:block w-px h-5" style="background:var(--border-strong)"></div>
-
-            <!-- Nav -->
-            <div class="nav-wrap">
-                <nav class="flex gap-1">
-                    <button onclick="switchTab('dashboard')" id="btn-dashboard" class="nav-btn active">Dashboard</button>
-                    <button onclick="switchTab('mercados')" id="btn-mercados" class="nav-btn">Mercados</button>
-                    <button onclick="switchTab('simulator')" id="btn-simulator" class="nav-btn">Simulador</button>
-                    <button onclick="switchTab('noticias')" id="btn-noticias" class="nav-btn">Notícias</button>
-                </nav>
+            <div class="header-divider"></div>
+            <div class="header-stat">
+                <span class="header-stat-label">Fund</span>
+                <span id="hdr-fund" class="header-stat-val">—</span>
             </div>
         </div>
-
-        <!-- Right Indicators + AI -->
-        <div class="flex items-center gap-2 flex-shrink-0">
-            <!-- BTC Price -->
-            <div class="ticker-pill">
-                <span class="font-black text-xs" style="color:var(--btc)">₿</span>
-                <span id="btc-price" class="mono text-sm font-bold text-white">--</span>
-                <span id="btc-change" class="text-[10px] font-semibold text-gray-500 hidden sm:block">--</span>
-            </div>
-
-            <!-- Funding -->
-            <div class="ticker-pill hidden sm:flex">
-                <span class="lbl">Fund</span>
-                <span id="hdr-funding" class="mono text-xs text-white">--</span>
-            </div>
-
-            <!-- Macro -->
-            <span id="macro-trend" class="hidden lg:flex items-center gap-1.5 lbl px-3 py-2 rounded-lg min-h-[36px]" style="background:var(--surface2);border:1px solid var(--border);color:var(--text-muted)">Macro --</span>
-
-            <!-- F&G -->
-            <span id="fg-index-top" class="hidden lg:flex items-center gap-1.5 lbl px-3 py-2 rounded-lg min-h-[36px]" style="background:var(--surface2);border:1px solid var(--border);color:var(--text-muted)">F&G --</span>
-
-            <!-- AI Button -->
-            <button onclick="handleAICall()" class="ai-toggle">AI Agent</button>
+        <div class="header-right">
+            <span id="hdr-updated" class="last-updated">—</span>
+            <div id="live-dot" class="status-dot stale"></div>
         </div>
-    </div>
-</header>
+    </header>
 
-<!-- ══════════════════════════════════ MAIN ══════════════════════════════════ -->
-<div id="main-grid" class="app-grid">
-<main class="min-w-0 p-4 sm:p-6">
+    <!-- ══ MAIN ══ -->
+    <main>
 
-<!-- ╔══════════════════════╗ -->
-<!-- ║     DASHBOARD        ║ -->
-<!-- ╚══════════════════════╝ -->
-<section id="tab-dashboard" class="tab-content active">
+        <!-- ── LEFT: Portfolio ── -->
+        <div class="portfolio-panel">
 
-    <!-- KPI Row -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-4">
-        <div class="kpi-card">
-            <p class="lbl mb-2">PnL Global</p>
-            <p id="total-pnl" class="text-xl sm:text-2xl mono font-bold text-white">$0</p>
-        </div>
-        <div class="kpi-card">
-            <p class="lbl mb-2">ROE Médio</p>
-            <p id="total-pnl-perc" class="text-xl sm:text-2xl mono font-bold text-white">0%</p>
-        </div>
-        <div class="kpi-card col-span-2 sm:col-span-1">
-            <p class="lbl mb-2">Exposição</p>
-            <p id="total-exposure" class="text-xl sm:text-2xl mono font-bold text-white">$0</p>
-        </div>
-        <div class="kpi-card" style="border-color:rgba(247,147,26,0.2)">
-            <p class="lbl mb-2" style="color:rgba(247,147,26,0.7)">Alavancagem</p>
-            <p id="avg-leverage" class="text-xl sm:text-2xl mono font-bold" style="color:var(--btc)">0x</p>
-        </div>
-        <div class="kpi-card">
-            <p class="lbl mb-2">Margem</p>
-            <p id="total-margin" class="text-xl sm:text-2xl mono font-bold text-white">$0</p>
-        </div>
-    </div>
-
-    <!-- Risk Score -->
-    <div class="card p-4 sm:p-5 mb-4">
-        <div class="flex justify-between items-center mb-3">
-            <span class="section-header">Risco do Portefólio</span>
-            <span id="risk-label" class="badge" style="background:rgba(100,116,139,0.2);color:#64748b">--</span>
-        </div>
-        <div class="risk-bar">
-            <div id="risk-dot" class="risk-dot" style="left:0%"></div>
-        </div>
-        <div class="flex justify-between mt-2.5">
-            <span class="text-[10px] font-semibold" style="color:var(--green)">Baixo</span>
-            <span class="text-[10px] font-semibold text-yellow-500">Moderado</span>
-            <span class="text-[10px] font-semibold" style="color:var(--red)">Crítico</span>
-        </div>
-    </div>
-
-    <!-- Positions Grid -->
-    <div id="dashboard-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
-    <div id="no-pos" class="hidden card p-16 text-center">
-        <div class="w-12 h-12 rounded-2xl mx-auto mb-4 flex items-center justify-center" style="background:var(--surface2);border:1px solid var(--border)">
-            <span class="text-xl" style="color:var(--text-faint)">◌</span>
-        </div>
-        <p class="font-semibold text-sm" style="color:var(--text-muted)">Sem posições abertas na Bybit</p>
-    </div>
-</section>
-
-<!-- ╔══════════════════════╗ -->
-<!-- ║      MERCADOS        ║ -->
-<!-- ╚══════════════════════╝ -->
-<section id="tab-mercados" class="tab-content">
-    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
-
-        <!-- Chart + Stats -->
-        <div class="xl:col-span-2 flex flex-col gap-4">
-            <!-- Chart Card -->
-            <div class="card overflow-hidden">
-                <div class="px-4 pt-4 pb-3 flex justify-between items-center gap-3" style="border-bottom:1px solid var(--border)">
-                    <span class="section-header">BTC/USD Live</span>
-                    <div class="flex gap-1.5">
-                        <button class="chart-btn active" onclick="setChartInterval('15',this)">15m</button>
-                        <button class="chart-btn" onclick="setChartInterval('60',this)">1h</button>
-                        <button class="chart-btn" onclick="setChartInterval('240',this)">4h</button>
-                        <button class="chart-btn" onclick="setChartInterval('D',this)">1D</button>
-                    </div>
-                </div>
-                <div id="tv-market-wrap" class="h-[280px] sm:h-[420px] md:h-[520px]"></div>
-            </div>
-
-            <!-- Market Stats -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div class="stat-tile">
-                    <p class="lbl mb-1.5">Mark Price</p>
-                    <p id="m-mark" class="mono text-base sm:text-lg font-bold text-white">--</p>
-                </div>
-                <div class="stat-tile">
-                    <p class="lbl mb-1.5">24h Alto / Baixo</p>
-                    <p id="m-hl" class="mono text-sm font-bold text-white">--</p>
-                </div>
-                <div class="stat-tile">
-                    <p class="lbl mb-1.5">Volume 24h</p>
-                    <p id="m-vol" class="mono text-sm font-bold text-white">--</p>
-                </div>
-                <div class="stat-tile" style="border-color:rgba(247,147,26,0.15)">
-                    <p class="lbl mb-1.5" style="color:rgba(247,147,26,0.7)">Open Interest</p>
-                    <p id="m-oi" class="mono text-sm font-bold" style="color:var(--btc)">--</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Right Panel -->
-        <div class="flex flex-col gap-4">
-
-            <!-- Funding Rate -->
-            <div class="card p-4 sm:p-5">
-                <div class="flex justify-between items-center mb-3">
-                    <span class="section-header">Funding Rate</span>
-                    <span id="fund-badge" class="badge" style="background:rgba(100,116,139,0.2);color:#64748b">--</span>
-                </div>
-                <p id="fund-big" class="mono text-3xl sm:text-4xl font-bold text-white mb-1">--</p>
-                <p class="text-[10px] font-medium" style="color:var(--text-muted)">Próximo: <span id="fund-countdown" class="text-gray-300">--</span></p>
-                <div class="divider"></div>
-                <p class="lbl mb-1.5">Impacto na posição</p>
-                <p id="fund-impact" class="mono text-sm" style="color:var(--text-muted)">--</p>
-            </div>
-
-            <!-- Order Book -->
-            <div class="card p-4 sm:p-5 flex-1">
-                <div class="flex justify-between items-center mb-3">
-                    <span class="section-header">Order Book</span>
-                    <span class="badge" style="background:var(--surface2);color:var(--text-muted)">Top 12</span>
-                </div>
-                <div class="grid grid-cols-3 gap-1 px-2 mb-2">
-                    <span class="lbl">Preço</span>
-                    <span class="lbl text-center">Qtd</span>
-                    <span class="lbl text-right">Total</span>
-                </div>
-                <div id="ob-asks" class="mb-1 flex flex-col-reverse"></div>
-                <div class="py-2 px-2 flex justify-between items-center my-1" style="border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
-                    <span class="lbl">Spread</span>
-                    <span id="ob-spread" class="mono text-xs text-white font-bold">--</span>
-                </div>
-                <div id="ob-bids" class="mt-1"></div>
-            </div>
-
-            <!-- BTC Dominance -->
-            <div class="card p-4 sm:p-5">
-                <div class="flex justify-between items-center mb-2">
-                    <span class="section-header">BTC Dominance</span>
-                </div>
-                <p id="btc-dom" class="mono text-2xl font-bold text-white mt-2">--</p>
-                <div class="prog-bg mt-2">
-                    <div id="btc-dom-bar" class="prog-fill" style="background:var(--btc);width:0%"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- ╔══════════════════════╗ -->
-<!-- ║     SIMULADOR        ║ -->
-<!-- ╚══════════════════════╝ -->
-<section id="tab-simulator" class="tab-content">
-    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
-
-        <!-- DCA Planner (2/3) -->
-        <div class="xl:col-span-2 space-y-4">
-
-            <!-- Position Header -->
-            <div class="card p-4 sm:p-5">
-                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-                    <span class="section-header">DCA Planner</span>
-                    <select id="sim-select-pos" onchange="loadPositionToSim()" class="!w-auto !min-w-[180px]">
-                        <option value="">— Sem posição ativa —</option>
-                    </select>
-                </div>
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                    <div class="stat-tile">
-                        <p class="lbl mb-1.5">Entrada</p>
-                        <p id="sim-cur-entry" class="mono text-sm font-bold text-white">--</p>
-                    </div>
-                    <div class="stat-tile">
-                        <p class="lbl mb-1.5">Mark Price</p>
-                        <p id="sim-cur-mark" class="mono text-sm font-bold" style="color:var(--btc)">--</p>
-                    </div>
-                    <div class="stat-tile">
-                        <p class="lbl mb-1.5">Liquidação</p>
-                        <p id="sim-cur-liq" class="mono text-sm font-bold" style="color:var(--red)">--</p>
-                    </div>
-                    <div class="stat-tile">
-                        <p class="lbl mb-1.5">Tamanho / Lev</p>
-                        <p id="sim-cur-size" class="mono text-sm font-bold text-gray-300">--</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- DCA Levels -->
-            <div class="card p-4 sm:p-5">
-                <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
-                    <span class="section-header">Níveis de DCA</span>
-                    <div class="flex gap-2">
-                        <select id="dca-strategy" onchange="applyDCAStrategy()" class="!w-auto !min-w-[150px] !min-h-[36px] !py-1 text-xs">
-                            <option value="manual">Manual</option>
-                            <option value="equal">Espaçamento Igual</option>
-                            <option value="martingale">Martingale</option>
-                        </select>
-                        <button onclick="addDCALevel()" class="flex-shrink-0 px-4 rounded-xl font-bold text-xs text-black min-h-[36px] transition-all hover:opacity-90" style="background:var(--btc)">+ Nível</button>
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 lg:grid-cols-[1fr_164px] gap-4">
-                    <div>
-                        <div id="dca-levels-body" class="space-y-2"></div>
-                        <p id="dca-empty-hint" class="text-center py-10 lbl tracking-widest">Adiciona um nível ou escolhe uma estratégia</p>
-                    </div>
-                    <div class="hidden lg:flex flex-col items-center">
-                        <p class="lbl mb-2 text-center w-full">Escala de Preço</p>
-                        <svg id="dca-ladder-svg" width="164" height="360" overflow="visible"></svg>
-                    </div>
-                </div>
-            </div>
-
-            <!-- DCA Summary -->
-            <div class="card p-4 sm:p-5">
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-                    <div class="stat-tile text-center">
-                        <p class="lbl mb-1.5">Total Adicionado</p>
-                        <p id="dca-sum-cost" class="mono text-xl font-bold text-white">$0</p>
-                    </div>
-                    <div class="text-center rounded-xl p-3" style="background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.15)">
-                        <p class="lbl mb-1.5" style="color:rgba(16,185,129,0.7)">Nova Entrada Média</p>
-                        <p id="dca-sum-avg" class="mono text-xl font-bold" style="color:var(--green)">--</p>
-                    </div>
-                    <div class="text-center rounded-xl p-3" style="background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.15)">
-                        <p class="lbl mb-1.5" style="color:rgba(239,68,68,0.7)">Nova Liquidação</p>
-                        <p id="dca-sum-liq" class="mono text-xl font-bold" style="color:var(--red)">--</p>
-                    </div>
-                    <div class="stat-tile text-center">
-                        <p class="lbl mb-1.5">Margem Extra</p>
-                        <p id="dca-sum-margin" class="mono text-xl font-bold text-gray-300">--</p>
-                    </div>
-                </div>
-                <div>
-                    <div class="flex justify-between mb-1.5">
-                        <span class="lbl">Distância à Liquidação (pós-DCA)</span>
-                        <span id="dca-liq-pct" class="lbl text-white">--%</span>
-                    </div>
-                    <div class="prog-bg">
-                        <div id="dca-liq-fill" class="prog-fill" style="width:0%;background:linear-gradient(90deg,#10b981,#f59e0b,#ef4444)"></div>
-                    </div>
-                    <div class="flex justify-between mt-1.5">
-                        <span class="text-[9px] font-semibold" style="color:var(--green)">MARK PRICE</span>
-                        <span class="text-[9px] font-semibold" style="color:var(--red)">LIQUIDAÇÃO</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Risk Calculator (1/3) -->
-        <div class="card p-4 sm:p-5">
-            <div class="mb-5">
-                <span class="section-header">Calculadora de Risco</span>
-            </div>
-            <div class="space-y-3.5">
-                <div>
-                    <p class="lbl mb-1.5">Saldo da Conta (USD)</p>
-                    <input type="number" id="rc-balance" placeholder="Ex: 1000" oninput="calcRisk()">
-                </div>
-                <div>
-                    <p class="lbl mb-1.5">Risco por Trade (%)</p>
-                    <input type="number" id="rc-risk" placeholder="Ex: 2" oninput="calcRisk()">
-                </div>
-                <div class="grid grid-cols-2 gap-2.5">
-                    <div>
-                        <p class="lbl mb-1.5">Entrada</p>
-                        <input type="number" id="rc-entry" placeholder="100000" oninput="calcRisk()">
-                    </div>
-                    <div>
-                        <p class="lbl mb-1.5">Stop Loss</p>
-                        <input type="number" id="rc-sl" placeholder="97000" oninput="calcRisk()">
-                    </div>
-                </div>
-                <div>
-                    <p class="lbl mb-1.5">Alavancagem</p>
-                    <input type="number" id="rc-lev" placeholder="Ex: 10" oninput="calcRisk()">
-                </div>
-                <div class="divider"></div>
-                <div class="grid grid-cols-2 gap-2.5">
-                    <div class="stat-tile">
-                        <p class="lbl mb-1">Risco USD</p>
-                        <p id="rc-out-risk" class="mono text-lg font-bold mt-1" style="color:var(--red)">$--</p>
-                    </div>
-                    <div class="stat-tile">
-                        <p class="lbl mb-1">Tamanho Posição</p>
-                        <p id="rc-out-size" class="mono text-lg font-bold text-white mt-1">$--</p>
-                    </div>
-                    <div class="stat-tile">
-                        <p class="lbl mb-1">Margem</p>
-                        <p id="rc-out-margin" class="mono text-lg font-bold mt-1" style="color:var(--btc)">$--</p>
-                    </div>
-                    <div class="stat-tile">
-                        <p class="lbl mb-1">TP Mín. (2:1)</p>
-                        <p id="rc-out-tp" class="mono text-lg font-bold mt-1" style="color:var(--green)">--</p>
-                    </div>
-                </div>
-                <div class="divider"></div>
-                <p class="lbl mb-3">Custo Funding Estimado</p>
-                <div class="grid grid-cols-2 gap-2.5">
-                    <div>
-                        <p class="lbl mb-1.5">Taxa (%)</p>
-                        <input type="number" id="rc-fund-rate" placeholder="0.01" oninput="calcFunding()">
-                    </div>
-                    <div>
-                        <p class="lbl mb-1.5">Dias</p>
-                        <input type="number" id="rc-fund-days" placeholder="7" oninput="calcFunding()">
-                    </div>
-                </div>
-                <div class="stat-tile mt-2">
-                    <p class="lbl mb-1">Total Estimado</p>
-                    <p id="rc-fund-out" class="mono text-base font-bold mt-1" style="color:var(--red)">--</p>
-                </div>
-            </div>
-        </div>
-
-    </div>
-</section>
-
-<!-- ╔══════════════════════╗ -->
-<!-- ║      NOTÍCIAS        ║ -->
-<!-- ╚══════════════════════╝ -->
-<section id="tab-noticias" class="tab-content">
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
-        <!-- News Feed -->
-        <div class="lg:col-span-2 card p-4 sm:p-5">
-            <div class="flex justify-between items-center mb-4">
-                <span class="section-header">Bitcoin News</span>
-                <button onclick="fetchNews()" class="text-[10px] font-bold uppercase px-3 py-2 rounded-lg transition-all min-h-[36px]" style="color:var(--btc);background:var(--btc-dim);border:1px solid rgba(247,147,26,0.2)">Atualizar</button>
-            </div>
-            <div id="news-container" class="space-y-2.5 max-h-[65vh] sm:max-h-[600px] overflow-y-auto pr-1">
-                <div class="text-center py-10 lbl">A carregar...</div>
-            </div>
-        </div>
-
-        <!-- Sidebar -->
-        <div class="flex flex-col gap-4">
-
-            <!-- Sentiment -->
-            <div class="card p-4 sm:p-5">
-                <span class="section-header block mb-4">Sentimento</span>
-                <div class="text-center mb-4">
-                    <p id="fg-big" class="text-5xl font-black mono text-white">--</p>
-                    <p id="fg-text" class="lbl mt-2">Fear & Greed</p>
-                </div>
-                <div class="risk-bar">
-                    <div id="fg-dot" class="risk-dot" style="left:50%"></div>
-                </div>
-                <div class="flex justify-between mt-2.5">
-                    <span class="text-[10px] font-semibold" style="color:var(--red)">Medo</span>
-                    <span class="text-[10px] font-semibold" style="color:var(--green)">Ganância</span>
-                </div>
-                <div class="divider"></div>
-                <div class="flex justify-between items-center">
-                    <span class="lbl">Macro Trend</span>
-                    <span id="macro-badge" class="badge" style="background:rgba(100,116,139,0.2);color:#64748b">--</span>
-                </div>
-            </div>
-
-            <!-- AI Quick Prompts -->
-            <div class="card p-4 sm:p-5">
-                <span class="section-header block mb-4">Análise Rápida AI</span>
-                <div class="space-y-2">
-                    <button class="quick-btn" onclick="quickPrompt('Gera um briefing completo do mercado BTC: tendência, níveis chave, sentimento e o que esperar nas próximas horas.')">
-                        <span>📊</span> Briefing de Mercado
-                    </button>
-                    <button class="quick-btn" onclick="quickPrompt('Analisa o risco das minhas posições abertas. Distância de liquidação, ROE, e devo reduzir exposição?')">
-                        <span>⚡</span> Analisar Risco
-                    </button>
-                    <button class="quick-btn" onclick="quickPrompt('Quais os suportes e resistências mais importantes de BTC? Onde o mercado está a testar?')">
-                        <span>🎯</span> Suportes / Resistências
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-</main>
-
-<!-- ══════════════════════════════════ AI SIDEBAR ══════════════════════════════════ -->
-<aside id="ai-section" class="flex flex-col" style="background:var(--surface);border-left:1px solid var(--border);border-radius:0">
-
-    <!-- Header -->
-    <div class="px-5 py-4 flex justify-between items-center flex-shrink-0" style="border-bottom:1px solid var(--border)">
-        <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:var(--btc-dim);border:1px solid rgba(247,147,26,0.2)">
-                <span class="text-xs font-black" style="color:var(--btc)">₿</span>
-            </div>
+            <!-- KPIs -->
             <div>
-                <p class="text-sm font-bold text-white">AI Agent</p>
-                <p class="text-[10px]" style="color:var(--text-muted)">Análise de Portefólio</p>
+                <div class="section-title">Carteira</div>
+                <div class="kpi-row">
+                    <div class="kpi">
+                        <div class="kpi-label">PnL Aberto</div>
+                        <div id="kpi-pnl" class="kpi-value">—</div>
+                        <div id="kpi-roe" class="kpi-sub">ROE —</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-label">Exposição</div>
+                        <div id="kpi-exp" class="kpi-value">—</div>
+                        <div class="kpi-sub">Valor nocional</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-label">Margem</div>
+                        <div id="kpi-margin" class="kpi-value">—</div>
+                        <div id="kpi-lev" class="kpi-sub">Lev. —</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-label">Posições</div>
+                        <div id="kpi-count" class="kpi-value">—</div>
+                        <div class="kpi-sub">abertas</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Positions -->
+            <div>
+                <div class="section-title">Posições abertas</div>
+                <div id="positions-list" class="positions-list">
+                    <div class="empty-state">A carregar posições...</div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ── RIGHT: News ── -->
+        <div class="news-panel">
+            <div class="news-header">
+                <div class="news-tabs">
+                    <div class="news-tab active" onclick="setTab('ct',this)">Cointelegraph</div>
+                    <div class="news-tab" onclick="setTab('bm',this)">Bitcoin Mag</div>
+                </div>
+                <button id="refresh-btn" class="news-refresh" onclick="refreshNews()" title="Atualizar">↻</button>
+            </div>
+            <div id="news-feed" class="news-feed">
+                <div class="news-loading">A carregar notícias...</div>
             </div>
         </div>
-        <div class="flex items-center gap-3">
-            <span id="ai-loading" class="text-[10px] animate-pulse hidden font-semibold" style="color:var(--btc)">A processar...</span>
-            <button onclick="handleAICall()" class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-white transition-colors text-xl" style="background:var(--surface2)">×</button>
-        </div>
-    </div>
 
-    <!-- Content -->
-    <div class="flex flex-col flex-1 min-h-0 p-4 sm:p-5">
-
-        <!-- Quick Prompts -->
-        <div class="grid grid-cols-2 gap-2 mb-4">
-            <button class="quick-btn text-[10px]" onclick="quickPrompt('Analisa o risco atual das minhas posições. Distância de liquidação, exposição e recomendação.')">⚡ Analisar Risco</button>
-            <button class="quick-btn text-[10px]" onclick="quickPrompt('Devo fazer DCA agora? Qual o melhor nível de entrada para reforçar BTC?')">📈 DCA Ideal?</button>
-            <button class="quick-btn text-[10px]" onclick="quickPrompt('Quais são os suportes e resistências mais importantes de BTC agora?')">🎯 Níveis S/R</button>
-            <button class="quick-btn text-[10px]" onclick="quickPrompt('Resume o sentimento atual do mercado BTC. Bulls ou bears no controlo?')">🧠 Sentimento</button>
-            <button class="quick-btn text-[10px]" onclick="quickPrompt('Qual a melhor estratégia de take profit para as minhas posições abertas?')">💰 Take Profit</button>
-            <button class="quick-btn text-[10px]" onclick="quickPrompt('Qual o impacto do funding rate atual nas minhas posições? Devo preocupar-me?')">💸 Funding</button>
-        </div>
-
-        <!-- Messages -->
-        <div id="ai-content" class="flex-1 overflow-y-auto mb-4 flex flex-col" style="min-height:120px">
-            <div class="bot-msg msg text-sm text-center" style="color:var(--text-muted)">Agente pronto. Usa os atalhos ou escreve a tua pergunta.</div>
-        </div>
-
-        <!-- Input -->
-        <div class="flex gap-2 flex-shrink-0">
-            <input type="text" id="chat-input" placeholder="Pergunta ao agente..." class="flex-1" style="width:auto;min-height:44px;padding:11px 14px;font-family:'Inter',sans-serif;font-size:0.875rem;font-weight:400" onkeypress="if(event.key==='Enter')sendChat()">
-            <button onclick="sendChat()" class="send-btn">→</button>
-        </div>
-    </div>
-</aside>
+    </main>
 </div>
 
-<script src="https://s3.tradingview.com/tv.js"></script>
 <script>
-const FUNC_PATH = `https://yifxgiwmibjaornighvt.supabase.co/functions/v1/get-bybit-positions`;
-const AI_FUNC_PATH = `https://yifxgiwmibjaornighvt.supabase.co/functions/v1/trade-advisor`;
+const FUNC_PATH  = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/get-bybit-positions';
 const SUPABASE_KEY = 'sb_publishable_xHjsFJbSuAhO6r6BUylTCw_tDE-nFXT';
 const BYBIT = 'https://api.bybit.com';
 
-let currentPositions = [], hasAutoRun = false, btcPrev = 0, mktChart = null, fundingTimer = null;
+let currentTab = 'ct';
+let btcPrev = 0;
 
-window.onload = async () => {
-    await Promise.all([fetchPositions(), fetchMarketData(), fetchDominance()]);
-    fetchTelemetry();
-    fetchNews();
-    initMarketChart();
-    setInterval(fetchPositions, 10000);
-    setInterval(fetchMarketData, 4000);
-    setInterval(fetchTelemetry, 60000);
-    setInterval(fetchDominance, 300000);
-};
-
-function switchTab(t) {
-    document.querySelectorAll('.tab-content,.nav-btn').forEach(e => e.classList.remove('active'));
-    document.getElementById('tab-'+t).classList.add('active');
-    document.getElementById('btn-'+t).classList.add('active');
-    document.getElementById('btn-'+t).scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
-    if (t === 'mercados' && !mktChart) initMarketChart();
-}
-
-// ── Format ──
-function fPT(n, isM=false, p=2) {
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function fmt(n, decimals = 0) {
     const num = Number(n);
-    if (isNaN(num)||num===0) return isM?'$0'+(p>0?',00':''):'0'+(p>0?',00':'');
-    const abs = Math.abs(num), parts = abs.toFixed(p).split('.');
-    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-    return (num<0?'-':'')+(isM?'$':'')+(p>0?parts.join(','):parts[0]);
+    if (isNaN(num)) return '—';
+    return num.toLocaleString('pt-PT', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 }
-function fK(n) {
-    const v = Number(n); if (isNaN(v)) return '--';
-    if (Math.abs(v)>=1e9) return fPT(v/1e9,false,2)+'B';
-    if (Math.abs(v)>=1e6) return fPT(v/1e6,false,2)+'M';
-    if (Math.abs(v)>=1e3) return fPT(v/1e3,false,1)+'K';
-    return fPT(v,false,2);
+function fmtUsd(n, decimals = 0) {
+    const num = Number(n);
+    if (isNaN(num)) return '—';
+    const abs = Math.abs(num);
+    const sign = num < 0 ? '-' : '';
+    if (abs >= 1e6) return `${sign}$${fmt(abs/1e6,2)}M`;
+    if (abs >= 1e3) return `${sign}$${fmt(abs/1e3,1)}K`;
+    return `${sign}$${fmt(abs, decimals)}`;
 }
-function timeAgo(d) {
-    const m = Math.floor((Date.now()-new Date(d).getTime())/60000);
-    if (m<60) return m+'m'; if (m<1440) return Math.floor(m/60)+'h'; return Math.floor(m/1440)+'d';
+function timeAgo(dateStr) {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const m = Math.floor(diff / 60000);
+    if (m < 1) return 'agora';
+    if (m < 60) return `${m}m`;
+    if (m < 1440) return `${Math.floor(m/60)}h`;
+    return `${Math.floor(m/1440)}d`;
 }
-function setText(id, val) { const el=document.getElementById(id); if(el) el.innerText=val; }
+function colorClass(n) { return Number(n) >= 0 ? 'green' : 'red'; }
+function setText(id, val) { const e = document.getElementById(id); if (e) e.textContent = val; }
 
-// ── Market Data ──
-async function fetchMarketData() {
+// ── Market data ───────────────────────────────────────────────────────────────
+async function fetchMarket() {
     try {
-        const [inv, ob] = await Promise.all([
-            fetch(`${BYBIT}/v5/market/tickers?category=inverse&symbol=BTCUSD`).then(r=>r.json()),
-            fetch(`${BYBIT}/v5/market/orderbook?category=inverse&symbol=BTCUSD&limit=12`).then(r=>r.json())
-        ]);
-        const t = inv?.result?.list?.[0];
-        if (t) {
-            const price = parseFloat(t.lastPrice), ch = parseFloat(t.price24hPcnt)*100;
-            const priceEl = document.getElementById('btc-price');
-            const up = price > btcPrev && btcPrev > 0, dn = price < btcPrev && btcPrev > 0;
-            priceEl.innerText = fPT(price,false,0);
-            priceEl.className = `mono text-sm font-bold ${up?'text-emerald-400':dn?'text-red-400':'text-white'} transition-colors`;
-            setTimeout(()=>priceEl.className='mono text-sm font-bold text-white transition-colors', 700);
-            const chEl = document.getElementById('btc-change');
-            if (chEl) { chEl.innerText=(ch>=0?'+':'')+fPT(ch,false,2)+'%'; chEl.className=`text-[10px] font-semibold ${ch>=0?'text-emerald-400':'text-red-400'} hidden sm:block`; }
+        const r = await fetch(`${BYBIT}/v5/market/tickers?category=inverse&symbol=BTCUSD`);
+        const d = await r.json();
+        const t = d?.result?.list?.[0];
+        if (!t) return;
+
+        const price = parseFloat(t.lastPrice);
+        const chPct = parseFloat(t.price24hPcnt) * 100;
+        const fr    = parseFloat(t.fundingRate) * 100;
+
+        const priceEl = document.getElementById('hdr-price');
+        if (priceEl) {
+            priceEl.textContent = fmt(price, 0);
+            priceEl.classList.remove('flash-up','flash-down');
+            if (btcPrev > 0) {
+                if (price > btcPrev) { priceEl.classList.add('flash-up'); setTimeout(() => priceEl.classList.remove('flash-up'), 600); }
+                else if (price < btcPrev) { priceEl.classList.add('flash-down'); setTimeout(() => priceEl.classList.remove('flash-down'), 600); }
+            }
             btcPrev = price;
-            const fr = parseFloat(t.fundingRate)*100;
-            const frStr = (fr>=0?'+':'')+fr.toFixed(4)+'%';
-            setText('hdr-funding', frStr); setText('fund-big', frStr);
-            const fb = document.getElementById('fund-badge');
-            if (fb) { if(fr>0.02){fb.innerText='Longs pagam';fb.style.cssText='background:rgba(239,68,68,0.15);color:#ef4444';}else if(fr<-0.01){fb.innerText='Shorts pagam';fb.style.cssText='background:rgba(16,185,129,0.15);color:#10b981';}else{fb.innerText='Neutro';fb.style.cssText='background:rgba(100,116,139,0.2);color:#64748b';} }
-            setFundingImpact(fr);
-            if (t.nextFundingTime) startFundingCountdown(parseInt(t.nextFundingTime));
-            setText('m-mark', fPT(parseFloat(t.markPrice),false,0));
-            const mhl = document.getElementById('m-hl');
-            if (mhl) mhl.innerHTML = `<span style="color:#10b981">${fPT(parseFloat(t.highPrice24h),false,0)}</span> / <span style="color:#ef4444">${fPT(parseFloat(t.lowPrice24h),false,0)}</span>`;
-            setText('m-vol', '$'+fK(parseFloat(t.volume24h)));
-            setText('m-oi', '$'+fK(parseFloat(t.openInterestValue)));
         }
-        if (ob?.result) renderOrderBook(ob.result);
-    } catch(e){}
-}
 
-function setFundingImpact(fr) {
-    const el = document.getElementById('fund-impact');
-    if (!el || !currentPositions.length) return;
-    let total = 0;
-    currentPositions.forEach(p => {
-        if (p.symbol.includes('BTC')) {
-            const v = parseFloat(p.positionValue), imp = v*(fr/100);
-            total += p.side==='Buy' ? -imp : imp;
+        const chEl = document.getElementById('hdr-change');
+        if (chEl) {
+            chEl.textContent = (chPct >= 0 ? '+' : '') + fmt(chPct, 2) + '%';
+            chEl.style.color = chPct >= 0 ? 'var(--green)' : 'var(--red)';
         }
-    });
-    el.innerText = (total>=0?'+':'')+fPT(total,true,4)+' (próximo ciclo)';
-    el.style.color = total>=0 ? '#10b981' : '#ef4444';
-    el.className = 'mono text-sm';
-}
 
-function startFundingCountdown(ts) {
-    if (fundingTimer) clearInterval(fundingTimer);
-    fundingTimer = setInterval(() => {
-        const diff = ts - Date.now();
-        if (diff<=0){clearInterval(fundingTimer);return;}
-        const h=Math.floor(diff/3600000), m=Math.floor((diff%3600000)/60000), s=Math.floor((diff%60000)/1000);
-        setText('fund-countdown', `${h}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`);
-    }, 1000);
-}
+        const frEl = document.getElementById('hdr-fund');
+        if (frEl) {
+            frEl.textContent = (fr >= 0 ? '+' : '') + fr.toFixed(4) + '%';
+            frEl.style.color = fr > 0.02 ? 'var(--red)' : fr < -0.01 ? 'var(--green)' : 'var(--dim)';
+        }
 
-function renderOrderBook(ob) {
-    const asks=(ob.a||[]).slice(0,12), bids=(ob.b||[]).slice(0,12);
-    const mxA=asks.length?Math.max(...asks.map(a=>parseFloat(a[1]))):1;
-    const mxB=bids.length?Math.max(...bids.map(b=>parseFloat(b[1]))):1;
-    let ac=0, bc=0;
-    const asksHtml = asks.slice().reverse().map(([p,q]) => {
-        ac+=parseFloat(q);
-        const pct=(parseFloat(q)/mxA*100).toFixed(0);
-        return `<div class="ob-row"><div class="ob-bar-ask" style="width:${pct}%"></div><span style="color:#ef4444">${fPT(parseFloat(p),false,0)}</span><span style="color:#94a3b8;text-align:center">${fK(parseFloat(q))}</span><span style="color:#475569;text-align:right">${fK(ac)}</span></div>`;
-    }).join('');
-    const bidsHtml = bids.map(([p,q]) => {
-        bc+=parseFloat(q);
-        const pct=(parseFloat(q)/mxB*100).toFixed(0);
-        return `<div class="ob-row"><div class="ob-bar-bid" style="width:${pct}%"></div><span style="color:#10b981">${fPT(parseFloat(p),false,0)}</span><span style="color:#94a3b8;text-align:center">${fK(parseFloat(q))}</span><span style="color:#475569;text-align:right">${fK(bc)}</span></div>`;
-    }).join('');
-    const ea=document.getElementById('ob-asks'), eb=document.getElementById('ob-bids'), es=document.getElementById('ob-spread');
-    if(ea) ea.innerHTML=asksHtml; if(eb) eb.innerHTML=bidsHtml;
-    if(es&&asks.length&&bids.length){
-        const sp=Math.abs(parseFloat(asks[asks.length-1]?.[0]??0)-parseFloat(bids[0]?.[0]??0));
-        es.innerText=fPT(sp,false,1)+' USD';
+        // live dot
+        const dot = document.getElementById('live-dot');
+        if (dot) dot.className = 'status-dot';
+
+        // timestamp
+        const now = new Date();
+        setText('hdr-updated', now.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+
+    } catch(e) {
+        const dot = document.getElementById('live-dot');
+        if (dot) dot.className = 'status-dot stale';
     }
 }
 
-async function fetchDominance() {
-    try {
-        const r=await fetch('https://api.coingecko.com/api/v3/global');
-        const d=await r.json();
-        const dom=d?.data?.market_cap_percentage?.btc;
-        if(dom){setText('btc-dom',fPT(dom,false,1)+'%');const b=document.getElementById('btc-dom-bar');if(b)b.style.width=dom+'%';}
-    }catch(e){}
-}
-
-// ── Chart ──
-function initMarketChart() {
-    if (mktChart) return;
-    const c=document.getElementById('tv-market-wrap'); if(!c)return;
-    c.innerHTML='<div id="tv-mkt" class="w-full h-full"></div>';
-    mktChart=new TradingView.widget({autosize:true,symbol:'BYBIT:BTCUSD',interval:'15',theme:'dark',style:'1',toolbar_bg:'#070b14',enable_publishing:false,hide_side_toolbar:false,studies:['RSI@tv-basicstudies','MASimple@tv-basicstudies'],container_id:'tv-mkt'});
-}
-function setChartInterval(interval, btn) {
-    document.querySelectorAll('.chart-btn').forEach(b=>b.className=b===btn?'chart-btn active':'chart-btn');
-    const c=document.getElementById('tv-market-wrap'); if(!c)return;
-    c.innerHTML='<div id="tv-mkt" class="w-full h-full"></div>';
-    mktChart=new TradingView.widget({autosize:true,symbol:'BYBIT:BTCUSD',interval,theme:'dark',style:'1',toolbar_bg:'#070b14',enable_publishing:false,hide_side_toolbar:false,studies:['RSI@tv-basicstudies'],container_id:'tv-mkt'});
-}
-
-// ── News ──
-async function fetchNews() {
-    const c=document.getElementById('news-container'); if(!c)return;
-    try {
-        const r=await fetch('https://api.rss2json.com/v1/api.json?rss_url=https://cointelegraph.com/rss/tag/bitcoin&count=20');
-        const d=await r.json();
-        if(d?.items?.length>0){
-            c.innerHTML=d.items.map(item=>`<div class="news-card" onclick="window.open('${item.link}','_blank')"><p class="text-sm font-semibold text-white leading-snug mb-2">${item.title}</p><div class="flex gap-2 items-center"><span class="lbl">CoinTelegraph</span><span class="lbl">${timeAgo(item.pubDate)}</span></div></div>`).join('');
-            return;
-        }
-    }catch(e){}
-    try {
-        const r=await fetch('https://api.rss2json.com/v1/api.json?rss_url=https://bitcoinmagazine.com/.rss/full&count=15');
-        const d=await r.json();
-        if(d?.items?.length>0){
-            c.innerHTML=d.items.map(item=>`<div class="news-card" onclick="window.open('${item.link}','_blank')"><p class="text-sm font-semibold text-white leading-snug mb-2">${item.title}</p><div class="flex gap-2 items-center"><span class="lbl">Bitcoin Magazine</span><span class="lbl">${timeAgo(item.pubDate)}</span></div></div>`).join('');
-            return;
-        }
-    }catch(e){}
-    c.innerHTML='<div class="text-center py-10 lbl">Não foi possível carregar notícias.</div>';
-}
-
-// ── Positions ──
+// ── Positions ─────────────────────────────────────────────────────────────────
 async function fetchPositions() {
     try {
-        const r=await fetch(FUNC_PATH,{headers:{'Authorization':`Bearer ${SUPABASE_KEY}`}});
-        const d=await r.json();
-        if(d.result?.list){
-            currentPositions=d.result.list.filter(p=>parseFloat(p.size)!==0);
-            updateDashboard(currentPositions);
-            updateSimDropdown(currentPositions);
-            runDCACalc();
-        }
-    }catch(e){}
-}
-
-function updateDashboard(positions) {
-    const grid=document.getElementById('dashboard-grid');
-    const noPos=document.getElementById('no-pos');
-    if(!positions.length){if(noPos)noPos.classList.remove('hidden');return;}
-    if(noPos)noPos.classList.add('hidden');
-    let tPnL=0, tMarg=0, tExp=0, maxRisk=0;
-    positions.forEach(pos => {
-        const pnl=parseFloat(pos.unrealisedPnl), val=parseFloat(pos.positionValue), lev=parseFloat(pos.leverage);
-        const cur=parseFloat(pos.markPrice), ent=parseFloat(pos.avgPrice), liq=parseFloat(pos.liqPrice);
-        const tp=parseFloat(pos.takeProfit), sl=parseFloat(pos.stopLoss), marg=val/lev;
-        tPnL+=pnl; tMarg+=marg; tExp+=val;
-        const dLiq=liq>0?Math.abs((liq-cur)/cur)*100:100;
-        const risk=Math.max(0,Math.min(100,100-dLiq));
-        if(risk>maxRisk) maxRisk=risk;
-        const tpP=tp>0?Math.min(Math.abs(cur-ent)/Math.abs(tp-ent)*100,100):0;
-        const roe=marg>0?(pnl/marg)*100:0;
-        const isPos=pnl>=0;
-        const isInv=pos.symbol.includes('USD')&&!pos.symbol.includes('USDT');
-        let card=document.getElementById(`card-${pos.symbol}`);
-        if(!card){
-            card=document.createElement('div');
-            card.id=`card-${pos.symbol}`;
-            card.className=`card p-4 sm:p-5 ${pos.side==='Buy'?'pos-long':'pos-short'}`;
-            card.innerHTML=`<div class="content-area"></div><div id="tv-w-${pos.symbol}" class="mt-4 hidden" data-loaded="false"><div id="tv-p-${pos.symbol}" class="rounded-xl overflow-hidden h-[260px] sm:h-[420px]" style="background:#070b14;border:1px solid var(--border)"></div></div>`;
-            grid.appendChild(card);
-        }
-        const pnlColor = isPos ? '#10b981' : '#ef4444';
-        const dLiqColor = dLiq<10?'#ef4444':dLiq<20?'#f59e0b':'#64748b';
-        const dLiqPulse = dLiq<10?' style="animation:pulse 1s infinite"':'';
-        card.querySelector('.content-area').innerHTML=`
-            <div class="flex justify-between items-start mb-4 gap-2">
-                <div>
-                    <div class="flex items-center gap-2 flex-wrap mb-1.5">
-                        <h2 class="font-bold text-white text-base sm:text-lg">${pos.symbol}</h2>
-                        <span class="badge" style="background:rgba(245,158,11,0.12);color:#f59e0b">${lev}x</span>
-                        <span class="badge" style="background:${pos.side==='Buy'?'rgba(16,185,129,0.12)':'rgba(239,68,68,0.12)'};color:${pos.side==='Buy'?'#10b981':'#ef4444'}">${pos.side==='Buy'?'LONG':'SHORT'}</span>
-                        <span class="badge" style="background:${isInv?'rgba(247,147,26,0.12)':'rgba(59,130,246,0.12)'};color:${isInv?'#f7931a':'#60a5fa'}">${isInv?'INV':'LIN'}</span>
-                    </div>
-                </div>
-                <button onclick="toggleChart('${pos.symbol}')" class="text-[10px] font-semibold px-3 py-2 rounded-lg transition-all min-h-[34px] whitespace-nowrap flex-shrink-0" style="color:var(--text-muted);background:var(--surface2);border:1px solid var(--border)">Gráfico</button>
-            </div>
-            <div class="grid grid-cols-2 gap-3 mb-4">
-                <div>
-                    <p class="lbl mb-1">ROE</p>
-                    <p class="text-2xl sm:text-3xl font-bold mono" style="color:${pnlColor}">${fPT(roe,false,2)}%</p>
-                </div>
-                <div class="text-right">
-                    <p class="lbl mb-1">PnL USD</p>
-                    <p class="text-2xl sm:text-3xl font-bold mono" style="color:${pnlColor}">${fPT(pnl,true,0)}</p>
-                </div>
-            </div>
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mb-4 pt-3" style="border-top:1px solid var(--border)">
-                <div class="stat-tile">
-                    <p class="lbl mb-1">Valor / Margem</p>
-                    <p class="font-semibold text-sm text-gray-200">${fPT(val,true,0)}</p>
-                    <p class="text-xs mt-0.5" style="color:var(--text-muted)">(${fPT(marg,true,2)})</p>
-                </div>
-                <div class="stat-tile">
-                    <p class="lbl mb-1">Entrada → Mark</p>
-                    <p class="mono text-xs text-gray-300">${fPT(ent,false,2)}</p>
-                    <p class="mono text-xs" style="color:var(--btc)">${fPT(cur,false,2)}</p>
-                </div>
-                <div class="stat-tile col-span-2 sm:col-span-1">
-                    <p class="lbl mb-1">Liq. / SL</p>
-                    <p class="mono text-xs" style="color:var(--red)">${liq>0?fPT(liq,false,2):'N/D'}</p>
-                    ${sl>0?`<p class="mono text-xs" style="color:#f97316">${fPT(sl,false,2)}</p>`:''}
-                </div>
-            </div>
-            <div class="space-y-2.5">
-                <div>
-                    <div class="flex justify-between text-[10px] font-semibold mb-1.5">
-                        <span style="color:var(--text-muted)">Dist. Liquidação</span>
-                        <span style="color:${dLiqColor}"${dLiqPulse}>${fPT(dLiq,false,1)}%</span>
-                    </div>
-                    <div class="prog-bg"><div class="prog-fill" style="width:${Math.max(0,100-dLiq)}%;background:${dLiq<10?'#ef4444':dLiq<20?'#f59e0b':dLiq<40?'rgba(245,158,11,0.5)':'rgba(100,116,139,0.3)'}"></div></div>
-                </div>
-                ${tp>0?`<div>
-                    <div class="flex justify-between text-[10px] font-semibold mb-1.5">
-                        <span style="color:#a16207">Take Profit (${fPT(tp,false,0)})</span>
-                        <span style="color:#a16207">${fPT(tpP,false,0)}%</span>
-                    </div>
-                    <div class="prog-bg"><div class="prog-fill" style="width:${tpP}%;background:rgba(245,158,11,0.5)"></div></div>
-                </div>`:''}
-            </div>`;
-    });
-    const pnlEl=document.getElementById('total-pnl');
-    pnlEl.innerText=fPT(tPnL,true,0);
-    pnlEl.className=`text-xl sm:text-2xl mono font-bold ${tPnL>=0?'text-emerald-400':'text-red-400'}`;
-    const roeEl=document.getElementById('total-pnl-perc');
-    roeEl.innerText=fPT(tMarg>0?(tPnL/tMarg*100):0,false,2)+'%';
-    roeEl.className=`text-xl sm:text-2xl mono font-bold ${tPnL>=0?'text-emerald-400':'text-red-400'}`;
-    setText('total-exposure', fPT(tExp,true,0));
-    setText('avg-leverage', fPT(tMarg>0?(tExp/tMarg):0,false,2)+'x');
-    setText('total-margin', fPT(tMarg,true,0));
-    updateRiskScore(maxRisk);
-}
-
-function updateRiskScore(score) {
-    const dot=document.getElementById('risk-dot'), lbl=document.getElementById('risk-label');
-    if(!dot||!lbl) return;
-    dot.style.left=Math.min(score,95)+'%';
-    if(score<30){lbl.innerText='Risco Baixo';lbl.style.cssText='background:rgba(16,185,129,0.15);color:#10b981';}
-    else if(score<60){lbl.innerText='Moderado';lbl.style.cssText='background:rgba(245,158,11,0.15);color:#f59e0b';}
-    else if(score<80){lbl.innerText='Alto';lbl.style.cssText='background:rgba(249,115,22,0.15);color:#f97316';}
-    else{lbl.innerText='CRÍTICO';lbl.style.cssText='background:rgba(239,68,68,0.15);color:#ef4444;animation:pulse 1s infinite';}
-}
-
-function toggleChart(s) {
-    const el=document.getElementById(`tv-w-${s}`);
-    el.classList.toggle('hidden');
-    if(!el.classList.contains('hidden')&&el.getAttribute('data-loaded')==='false'){
-        const pos=currentPositions.find(p=>p.symbol===s);
-        const isInv=pos&&pos.symbol.includes('USD')&&!pos.symbol.includes('USDT');
-        new TradingView.widget({autosize:true,symbol:`BYBIT:${s}${isInv?'':'.P'}`,interval:'15',theme:'dark',style:'1',toolbar_bg:'#070b14',enable_publishing:false,hide_side_toolbar:false,studies:['RSI@tv-basicstudies'],container_id:`tv-p-${s}`});
-        el.setAttribute('data-loaded','true');
+        const r = await fetch(FUNC_PATH, { headers: { 'Authorization': `Bearer ${SUPABASE_KEY}` } });
+        const d = await r.json();
+        const list = (d?.result?.list || []).filter(p => parseFloat(p.size) !== 0);
+        renderPortfolio(list);
+    } catch(e) {
+        document.getElementById('positions-list').innerHTML = '<div class="empty-state">Não foi possível carregar posições.</div>';
     }
 }
 
-// ── Telemetry ──
-async function fetchTelemetry() {
-    try {
-        const r=await fetch(AI_FUNC_PATH,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${SUPABASE_KEY}`,'apikey':SUPABASE_KEY},body:JSON.stringify({positions:currentPositions,userMessage:'TELEMETRY'})});
-        const d=await r.json(); if(d.error)return;
-        if(d?.insight){
-            const isB=d.insight.toUpperCase().includes('BULLISH');
-            const m=document.getElementById('macro-trend'), mb=document.getElementById('macro-badge');
-            if(m){m.innerText=`Macro ${isB?'BULLISH':'BEARISH'}`;m.style.cssText=`background:var(--surface2);border:1px solid ${isB?'rgba(16,185,129,0.25)':'rgba(239,68,68,0.25)'};color:${isB?'#10b981':'#ef4444'}`;}
-            if(mb){mb.innerText=isB?'BULLISH':'BEARISH';mb.style.cssText=`background:${isB?'rgba(16,185,129,0.12)':'rgba(239,68,68,0.12)'};color:${isB?'#10b981':'#ef4444'}`;}
-        }
-        if(d?.fg){
-            const v=parseInt(d.fg);
-            const fg=document.getElementById('fg-index-top');
-            const c=v>=70?'#10b981':v<=30?'#ef4444':'#f59e0b';
-            if(fg){fg.innerText=`F&G ${d.fg}`;fg.style.cssText=`background:var(--surface2);border:1px solid rgba(255,255,255,0.08);color:${c}`;}
-            const fgEl=document.getElementById('fg-big');
-            if(fgEl){fgEl.innerText=d.fg;fgEl.style.color=c;}
-            const labels=['Medo Extremo','Medo','Neutro','Ganância','Ganância Extrema'];
-            setText('fg-text', labels[v>=80?4:v>=60?3:v>=40?2:v>=25?1:0]);
-            const dot=document.getElementById('fg-dot'); if(dot) dot.style.left=v+'%';
-        }
-    }catch(e){}
-}
+function renderPortfolio(positions) {
+    // KPIs
+    let totalPnl = 0, totalMargin = 0, totalExposure = 0;
+    positions.forEach(p => {
+        const pnl  = parseFloat(p.unrealisedPnl);
+        const val  = parseFloat(p.positionValue);
+        const lev  = parseFloat(p.leverage);
+        totalPnl      += pnl;
+        totalMargin   += val / lev;
+        totalExposure += val;
+    });
+    const roe = totalMargin > 0 ? (totalPnl / totalMargin) * 100 : 0;
+    const avgLev = totalMargin > 0 ? totalExposure / totalMargin : 0;
 
-// ── DCA Planner ──
-let dcaLevelCount = 0;
+    const pnlEl = document.getElementById('kpi-pnl');
+    if (pnlEl) {
+        pnlEl.textContent = fmtUsd(totalPnl, 2);
+        pnlEl.style.color = totalPnl >= 0 ? 'var(--green)' : 'var(--red)';
+    }
+    const roeEl = document.getElementById('kpi-roe');
+    if (roeEl) {
+        roeEl.textContent = `ROE ${roe >= 0 ? '+' : ''}${fmt(roe, 2)}%`;
+        roeEl.style.color = roe >= 0 ? 'var(--green)' : 'var(--red)';
+    }
+    setText('kpi-exp', fmtUsd(totalExposure));
+    setText('kpi-margin', fmtUsd(totalMargin, 2));
+    setText('kpi-lev', `Lev. ${fmt(avgLev, 2)}x`);
+    setText('kpi-count', positions.length.toString());
 
-function updateSimDropdown(positions) {
-    const s = document.getElementById('sim-select-pos'); if (!s) return;
-    const v = s.value;
-    s.innerHTML = '<option value="">— Sem posição ativa —</option>';
-    positions.forEach(p => { const o = document.createElement('option'); o.value = p.symbol; o.innerText = `${p.symbol} (${p.side})`; s.appendChild(o); });
-    if (v) s.value = v;
-}
+    // Cards
+    const container = document.getElementById('positions-list');
+    if (!positions.length) {
+        container.innerHTML = '<div class="empty-state">Sem posições abertas na Bybit.</div>';
+        return;
+    }
 
-function loadPositionToSim() {
-    const sym = document.getElementById('sim-select-pos').value;
-    const pos = currentPositions.find(x => x.symbol === sym);
-    if (!pos) { updateDCASVG(null); return; }
-    setText('sim-cur-entry', fPT(pos.avgPrice, false, 2));
-    setText('sim-cur-mark', fPT(pos.markPrice, false, 2));
-    setText('sim-cur-liq', fPT(pos.liqPrice, false, 2));
-    setText('sim-cur-size', `${fPT(Math.abs(parseFloat(pos.size)), false, 2)} / ${pos.leverage}x`);
-    document.getElementById('dca-levels-body').innerHTML = '';
-    dcaLevelCount = 0;
-    document.getElementById('dca-strategy').value = 'manual';
-    const hint = document.getElementById('dca-empty-hint');
-    if (hint) hint.style.display = '';
-    runDCACalc();
-}
+    container.innerHTML = positions.map(p => {
+        const pnl  = parseFloat(p.unrealisedPnl);
+        const val  = parseFloat(p.positionValue);
+        const lev  = parseFloat(p.leverage);
+        const mark = parseFloat(p.markPrice);
+        const entry= parseFloat(p.avgPrice);
+        const liq  = parseFloat(p.liqPrice);
+        const tp   = parseFloat(p.takeProfit);
+        const sl   = parseFloat(p.stopLoss);
+        const marg = val / lev;
+        const roe  = marg > 0 ? (pnl / marg) * 100 : 0;
+        const isLong = p.side === 'Buy';
+        const isInv  = p.symbol.includes('USD') && !p.symbol.includes('USDT');
+        const dLiq   = liq > 0 ? Math.abs((liq - mark) / mark) * 100 : 100;
+        const pnlColor = pnl >= 0 ? 'var(--green)' : 'var(--red)';
+        const roeColor = roe >= 0 ? 'var(--green)' : 'var(--red)';
+        const dLiqColor= dLiq < 8 ? 'var(--red)' : dLiq < 20 ? 'var(--btc)' : 'var(--dim)';
+        const barColor = dLiq < 8 ? '#f87171' : dLiq < 20 ? '#f7931a' : '#34d399';
+        const barWidth = Math.max(2, Math.min(98, 100 - dLiq));
 
-function addDCALevel(pctDefault, usdDefault) {
-    dcaLevelCount++;
-    const id = dcaLevelCount;
-    const hint = document.getElementById('dca-empty-hint');
-    if (hint) hint.style.display = 'none';
-    const sym = document.getElementById('sim-select-pos').value;
-    const pos = currentPositions.find(x => x.symbol === sym);
-    const isLong = pos ? pos.side === 'Buy' : true;
-    const row = document.createElement('div');
-    row.id = `dca-row-${id}`;
-    row.className = 'dca-level-row rounded-xl p-3';
-    row.style.cssText = 'background:var(--surface2);border:1px solid var(--border)';
-    row.innerHTML = `
-        <div class="flex items-center gap-2 mb-2.5">
-            <input type="checkbox" checked class="dca-cb w-4 h-4 flex-shrink-0" style="accent-color:var(--btc)" onchange="runDCACalc()">
-            <span class="lbl">Nível ${id}</span>
-            <button onclick="removeDCALevel(${id})" class="ml-auto text-gray-600 hover:text-red-400 transition-colors text-xl leading-none px-1 min-h-[28px]">×</button>
-        </div>
-        <div class="grid grid-cols-3 gap-2 mb-2.5">
-            <div>
-                <p class="lbl mb-1">% de Entrada</p>
-                <input type="number" class="dca-pct" style="min-height:38px;font-size:0.82rem" placeholder="${isLong ? '-5' : '+5'}" value="${pctDefault !== undefined ? pctDefault : ''}" oninput="onDCAPctChange(this)" step="0.5">
+        return `
+        <div class="pos-card">
+            <div class="pos-header">
+                <div class="pos-side-bar ${isLong ? 'long' : 'short'}"></div>
+                <div>
+                    <div class="pos-name">${p.symbol}</div>
+                    <div class="pos-tags">
+                        <span class="tag ${isLong ? 'tag-long' : 'tag-short'}">${isLong ? 'Long' : 'Short'}</span>
+                        <span class="tag tag-lev">${lev}x</span>
+                        <span class="tag ${isInv ? 'tag-inv' : 'tag-lin'}">${isInv ? 'Inverse' : 'Linear'}</span>
+                    </div>
+                </div>
+                <div class="pos-roe">
+                    <div class="roe-value" style="color:${roeColor}">${roe >= 0 ? '+' : ''}${fmt(roe, 2)}%</div>
+                    <div class="roe-label">ROE</div>
+                </div>
+                <div class="pos-pnl">
+                    <div class="pnl-value" style="color:${pnlColor}">${pnl >= 0 ? '+' : ''}${fmtUsd(pnl, 2)}</div>
+                    <div class="pnl-label">PnL</div>
+                </div>
             </div>
-            <div>
-                <p class="lbl mb-1">Preço</p>
-                <input type="number" class="dca-price" style="min-height:38px;font-size:0.82rem" placeholder="--" oninput="runDCACalc()">
+            <div class="pos-body">
+                <div class="pos-field">
+                    <div class="pos-field-label">Entrada</div>
+                    <div class="pos-field-val">${fmt(entry, 2)}</div>
+                </div>
+                <div class="pos-field">
+                    <div class="pos-field-label">Mark</div>
+                    <div class="pos-field-val btc">${fmt(mark, 2)}</div>
+                </div>
+                <div class="pos-field">
+                    <div class="pos-field-label">Liquidação</div>
+                    <div class="pos-field-val red">${liq > 0 ? fmt(liq, 2) : '—'}</div>
+                </div>
+                <div class="pos-field">
+                    <div class="pos-field-label">Tamanho</div>
+                    <div class="pos-field-val">${fmtUsd(val)}</div>
+                </div>
+                <div class="pos-field">
+                    <div class="pos-field-label">Margem</div>
+                    <div class="pos-field-val">${fmtUsd(marg, 2)}</div>
+                </div>
+                <div class="pos-field">
+                    <div class="pos-field-label">TP / SL</div>
+                    <div class="pos-field-val">
+                        ${tp > 0 ? `<span style="color:var(--green)">${fmt(tp, 0)}</span>` : '<span style="color:var(--muted)">—</span>'}
+                        <span style="color:var(--muted)"> / </span>
+                        ${sl > 0 ? `<span style="color:var(--red)">${fmt(sl, 0)}</span>` : '<span style="color:var(--muted)">—</span>'}
+                    </div>
+                </div>
             </div>
-            <div>
-                <p class="lbl mb-1">USD</p>
-                <input type="number" class="dca-usd" style="min-height:38px;font-size:0.82rem" placeholder="100" value="${usdDefault !== undefined ? usdDefault : ''}" oninput="runDCACalc()">
-            </div>
-        </div>
-        <div class="grid grid-cols-2 gap-2 pt-2.5" style="border-top:1px solid var(--border)">
-            <div class="flex items-center justify-between">
-                <span class="lbl">Média Acum.</span>
-                <span class="dca-calc-avg mono text-xs font-bold text-white">--</span>
-            </div>
-            <div class="flex items-center justify-between">
-                <span class="lbl">Liq. Acum.</span>
-                <span class="dca-calc-liq mono text-xs font-bold" style="color:var(--red)">--</span>
+            <div class="pos-footer">
+                <div class="dist-row">
+                    <span class="dist-label">Distância à liquidação</span>
+                    <span class="dist-pct${dLiq < 8 ? ' pulse' : ''}" style="color:${dLiqColor}">${fmt(dLiq, 1)}%</span>
+                </div>
+                <div class="bar-track">
+                    <div class="bar-fill" style="width:${barWidth}%;background:${barColor}"></div>
+                </div>
             </div>
         </div>`;
-    document.getElementById('dca-levels-body').appendChild(row);
-    if (pctDefault !== undefined) onDCAPctChange(row.querySelector('.dca-pct'));
-    else runDCACalc();
+    }).join('');
 }
 
-function onDCAPctChange(input) {
-    const row = input.closest('.dca-level-row');
-    const pct = parseFloat(input.value);
-    const sym = document.getElementById('sim-select-pos').value;
-    const pos = currentPositions.find(x => x.symbol === sym);
-    if (!pos || isNaN(pct)) { runDCACalc(); return; }
-    row.querySelector('.dca-price').value = (parseFloat(pos.avgPrice) * (1 + pct / 100)).toFixed(2);
-    runDCACalc();
+// ── News ──────────────────────────────────────────────────────────────────────
+const RSS = {
+    ct: 'https://api.rss2json.com/v1/api.json?rss_url=https://cointelegraph.com/rss/tag/bitcoin&count=30',
+    bm: 'https://api.rss2json.com/v1/api.json?rss_url=https://bitcoinmagazine.com/.rss/full&count=20'
+};
+const SOURCE_NAME = { ct: 'Cointelegraph', bm: 'Bitcoin Magazine' };
+
+function setTab(tab, el) {
+    currentTab = tab;
+    document.querySelectorAll('.news-tab').forEach(t => t.classList.remove('active'));
+    if (el) el.classList.add('active');
+    loadNews(tab);
 }
 
-function removeDCALevel(id) {
-    const row = document.getElementById(`dca-row-${id}`);
-    if (row) row.remove();
-    const hint = document.getElementById('dca-empty-hint');
-    if (hint && !document.querySelector('.dca-level-row')) hint.style.display = '';
-    runDCACalc();
-}
-
-function applyDCAStrategy() {
-    const strategy = document.getElementById('dca-strategy').value;
-    const sym = document.getElementById('sim-select-pos').value;
-    const pos = currentPositions.find(x => x.symbol === sym);
-    document.getElementById('dca-levels-body').innerHTML = '';
-    dcaLevelCount = 0;
-    const hint = document.getElementById('dca-empty-hint');
-    const isLong = pos ? pos.side === 'Buy' : true;
-    if (strategy === 'equal') {
-        const pcts = isLong ? [-3, -6, -10, -15] : [3, 6, 10, 15];
-        pcts.forEach(p => addDCALevel(p, 100));
-    } else if (strategy === 'martingale') {
-        const pcts = isLong ? [-2, -5, -9, -14] : [2, 5, 9, 14];
-        [50, 100, 200, 400].forEach((u, i) => addDCALevel(pcts[i], u));
-    } else {
-        if (hint) hint.style.display = '';
-        addDCALevel();
+async function loadNews(tab) {
+    const feed = document.getElementById('news-feed');
+    feed.innerHTML = '<div class="news-loading">A carregar...</div>';
+    try {
+        const r = await fetch(RSS[tab]);
+        const d = await r.json();
+        if (!d?.items?.length) throw new Error('no items');
+        feed.innerHTML = d.items.map(item => `
+            <div class="news-item" onclick="window.open('${item.link}','_blank')">
+                <div class="news-source-row">
+                    <span class="news-source">${SOURCE_NAME[tab]}</span>
+                    <div class="news-dot"></div>
+                    <span class="news-time">${timeAgo(item.pubDate)}</span>
+                </div>
+                <div class="news-title">${item.title}</div>
+            </div>`
+        ).join('');
+    } catch(e) {
+        feed.innerHTML = '<div class="news-loading">Não foi possível carregar notícias.</div>';
     }
 }
 
-function runDCACalc() {
-    const sym = document.getElementById('sim-select-pos').value;
-    const pos = currentPositions.find(x => x.symbol === sym);
-    if (!pos) { updateDCASVG(null); return; }
-
-    const curQty = Math.abs(parseFloat(pos.size));
-    const curAvg = parseFloat(pos.avgPrice);
-    const curLev = parseFloat(pos.leverage);
-    const markPrice = parseFloat(pos.markPrice);
-    const isLong = pos.side === 'Buy';
-    const isInverse = !pos.symbol.endsWith('USDT') && pos.symbol.includes('USD');
-
-    const posUsd = isInverse ? curQty : curQty * curAvg;
-    let totalUsd = posUsd;
-    let totalBtc = isInverse ? curQty / curAvg : curQty;
-    let totalCostAdded = 0;
-
-    const curLiq = isLong
-        ? curAvg * (1 - 1 / curLev + 0.005)
-        : curAvg * (1 + 1 / curLev - 0.005);
-
-    const levelData = [];
-
-    document.querySelectorAll('.dca-level-row').forEach(row => {
-        const cb = row.querySelector('.dca-cb');
-        const priceEl = row.querySelector('.dca-price');
-        const usdEl = row.querySelector('.dca-usd');
-        const avgEl = row.querySelector('.dca-calc-avg');
-        const liqEl = row.querySelector('.dca-calc-liq');
-        const price = parseFloat(priceEl.value);
-        const usd = parseFloat(usdEl.value);
-
-        if (!cb.checked || isNaN(price) || isNaN(usd) || price <= 0 || usd <= 0) {
-            if (avgEl) avgEl.textContent = '--';
-            if (liqEl) liqEl.textContent = '--';
-            return;
-        }
-
-        totalBtc += usd / price;
-        totalUsd += usd;
-        totalCostAdded += usd;
-
-        const cumAvg = totalUsd / totalBtc;
-        const cumLiq = isLong
-            ? cumAvg * (1 - 1 / curLev + 0.005)
-            : cumAvg * (1 + 1 / curLev - 0.005);
-
-        if (avgEl) avgEl.textContent = fPT(cumAvg, false, 2);
-        if (liqEl) liqEl.textContent = fPT(cumLiq, false, 2);
-        levelData.push({ price, usd, cumAvg, cumLiq });
-    });
-
-    const finalAvg = totalCostAdded > 0 ? totalUsd / totalBtc : null;
-    const finalLiq = finalAvg
-        ? (isLong ? finalAvg * (1 - 1 / curLev + 0.005) : finalAvg * (1 + 1 / curLev - 0.005))
-        : null;
-
-    setText('dca-sum-cost', fPT(totalCostAdded, true, 0));
-    setText('dca-sum-avg', finalAvg ? fPT(finalAvg, false, 2) : '--');
-    setText('dca-sum-liq', fPT(finalLiq || curLiq, false, 2));
-    setText('dca-sum-margin', totalCostAdded > 0 ? fPT(totalCostAdded / curLev, true, 2) : '--');
-
-    const dispLiq = finalLiq || curLiq;
-    const liqDist = isLong
-        ? (markPrice - dispLiq) / markPrice * 100
-        : (dispLiq - markPrice) / markPrice * 100;
-    const liqPct = Math.max(0, Math.min(100, liqDist));
-    setText('dca-liq-pct', liqPct.toFixed(1) + '%');
-    const fill = document.getElementById('dca-liq-fill');
-    if (fill) fill.style.width = (100 - liqPct) + '%';
-
-    updateDCASVG({ markPrice, curAvg, curLiq, isLong, levelData, finalAvg, finalLiq });
+function refreshNews() {
+    const btn = document.getElementById('refresh-btn');
+    if (btn) { btn.classList.add('spinning'); setTimeout(() => btn.classList.remove('spinning'), 700); }
+    loadNews(currentTab);
 }
 
-function updateDCASVG(data) {
-    const svg = document.getElementById('dca-ladder-svg');
-    if (!svg) return;
-    while (svg.firstChild) svg.removeChild(svg.firstChild);
-    if (!data) return;
-
-    const { markPrice, curAvg, curLiq, isLong, levelData, finalAvg, finalLiq } = data;
-    const W = 164, H = 360, PT = 18, PB = 18, PL = 6, PR = 56;
-    const cH = H - PT - PB, cW = W - PL - PR;
-    const ns = 'http://www.w3.org/2000/svg';
-
-    const prices = [markPrice, curAvg, curLiq];
-    if (finalAvg) prices.push(finalAvg);
-    if (finalLiq) prices.push(finalLiq);
-    levelData.forEach(l => prices.push(l.price));
-    const minP = Math.min(...prices) * 0.997;
-    const maxP = Math.max(...prices) * 1.003;
-    const sy = p => PT + ((maxP - p) / (maxP - minP)) * cH;
-
-    const line = (y, color, dash, w) => {
-        const el = document.createElementNS(ns, 'line');
-        el.setAttribute('x1', PL); el.setAttribute('y1', y);
-        el.setAttribute('x2', PL + cW); el.setAttribute('y2', y);
-        el.setAttribute('stroke', color); el.setAttribute('stroke-width', w || 1.5);
-        if (dash) el.setAttribute('stroke-dasharray', dash);
-        svg.appendChild(el);
-    };
-    const dot = (x, y, r, color) => {
-        const el = document.createElementNS(ns, 'circle');
-        el.setAttribute('cx', x); el.setAttribute('cy', y);
-        el.setAttribute('r', r); el.setAttribute('fill', color);
-        svg.appendChild(el);
-    };
-    const txt = (x, y, t, color, size) => {
-        const el = document.createElementNS(ns, 'text');
-        el.setAttribute('x', x); el.setAttribute('y', y);
-        el.setAttribute('fill', color || '#64748b');
-        el.setAttribute('font-size', size || 7.5);
-        el.setAttribute('font-family', 'JetBrains Mono,monospace');
-        el.setAttribute('font-weight', '700');
-        el.textContent = t; svg.appendChild(el);
-    };
-    const rect = (x, y, w, h, fill, rx) => {
-        const el = document.createElementNS(ns, 'rect');
-        el.setAttribute('x', x); el.setAttribute('y', y);
-        el.setAttribute('width', w); el.setAttribute('height', h);
-        el.setAttribute('fill', fill); if (rx) el.setAttribute('rx', rx);
-        svg.appendChild(el);
-    };
-
-    for (let i = 0; i <= 4; i++) {
-        const gy = PT + (cH / 4) * i;
-        const gl = document.createElementNS(ns, 'line');
-        gl.setAttribute('x1', PL); gl.setAttribute('y1', gy);
-        gl.setAttribute('x2', PL + cW); gl.setAttribute('y2', gy);
-        gl.setAttribute('stroke', 'rgba(255,255,255,0.04)'); gl.setAttribute('stroke-width', '1');
-        svg.appendChild(gl);
-    }
-
-    const yE = sy(curAvg), yL = sy(curLiq);
-    rect(PL, isLong ? yE : yL, cW, Math.abs(yL - yE), 'rgba(239,68,68,0.06)');
-    line(sy(curLiq), '#ef4444', '4,2', 1);
-    dot(PL + cW, sy(curLiq), 3, '#ef4444');
-    txt(PL + cW + 5, sy(curLiq) + 3, 'LIQ', '#ef4444', 7);
-
-    const maxUsd = Math.max(...levelData.map(l => l.usd), 1);
-    levelData.forEach((l, i) => {
-        const y = sy(l.price);
-        const bw = (l.usd / maxUsd) * cW * 0.65 + cW * 0.12;
-        rect(PL, y - 2.5, bw, 5, 'rgba(59,130,246,0.25)', 2);
-        line(y, 'rgba(59,130,246,0.5)', '3,2', 1);
-        dot(PL + cW, y, 3.5, '#3b82f6');
-        txt(PL + cW + 5, y + 3, `D${i + 1}`, '#3b82f6', 7);
-    });
-
-    if (finalLiq) {
-        line(sy(finalLiq), '#b91c1c', '3,2', 1.5);
-        dot(PL + cW, sy(finalLiq), 3, '#b91c1c');
-        txt(PL + cW + 5, sy(finalLiq) + 3, 'L*', '#b91c1c', 7);
-    }
-    if (finalAvg) {
-        line(sy(finalAvg), '#10b981', '4,2', 1.5);
-        dot(PL + cW, sy(finalAvg), 3.5, '#10b981');
-        txt(PL + cW + 5, sy(finalAvg) + 3, 'A*', '#10b981', 7);
-    }
-    line(sy(curAvg), '#f7931a', null, 2);
-    dot(PL + cW, sy(curAvg), 5, '#f7931a');
-    txt(PL + cW + 5, sy(curAvg) + 3, 'AVG', '#f7931a', 7);
-    line(sy(markPrice), 'rgba(255,255,255,0.7)', '2,2', 1.5);
-    dot(PL + cW, sy(markPrice), 5, 'white');
-    txt(PL + cW + 5, sy(markPrice) + 3, 'MRK', 'white', 7);
-}
-
-// ── Risk Calc ──
-function calcRisk(){
-    const bal=parseFloat(document.getElementById('rc-balance').value)||0;
-    const risk=parseFloat(document.getElementById('rc-risk').value)||0;
-    const entry=parseFloat(document.getElementById('rc-entry').value)||0;
-    const sl=parseFloat(document.getElementById('rc-sl').value)||0;
-    const lev=parseFloat(document.getElementById('rc-lev').value)||1;
-    if(!bal||!risk||!entry||!sl||!lev)return;
-    const riskUsd=bal*(risk/100), slPct=Math.abs((entry-sl)/entry);
-    const posSize=riskUsd/slPct, margin=posSize/lev;
-    const tp=entry>sl?entry+(entry-sl)*2:entry-(sl-entry)*2;
-    setText('rc-out-risk',fPT(riskUsd,true,2));
-    setText('rc-out-size',fPT(posSize,true,0));
-    setText('rc-out-margin',fPT(margin,true,2));
-    setText('rc-out-tp',fPT(tp,false,0));
-}
-function calcFunding(){
-    const fr=parseFloat(document.getElementById('rc-fund-rate').value)||0;
-    const days=parseFloat(document.getElementById('rc-fund-days').value)||0;
-    if(!fr||!days||!currentPositions.length){setText('rc-fund-out','--');return;}
-    let total=0;
-    currentPositions.forEach(p=>{total+=parseFloat(p.positionValue)*(fr/100)*3*days;});
-    const el=document.getElementById('rc-fund-out');
-    if(el){el.innerText=fPT(Math.abs(total),true,2)+` em ${days} dia(s)`;}
-}
-
-// ── AI ──
-function handleAICall(){
-    const ai=document.getElementById('ai-section'), overlay=document.getElementById('ai-overlay');
-    ai.classList.toggle('open');
-    overlay.classList.toggle('open');
-    document.getElementById('main-grid').classList.toggle('chat-open');
-    if(ai.classList.contains('open')&&!hasAutoRun){
-        hasAutoRun=true;
-        document.getElementById('ai-content').innerHTML='';
-        fetchAI(null,`Faz uma análise completa do meu portefólio BTC. Inclui: risco atual, distâncias de liquidação, ROE, funding rate e recomendações estratégicas.`);
-    }
-}
-function quickPrompt(q){
-    const ai=document.getElementById('ai-section'), overlay=document.getElementById('ai-overlay');
-    if(!ai.classList.contains('open')){ai.classList.add('open');overlay.classList.add('open');document.getElementById('main-grid').classList.add('chat-open');}
-    fetchAI(q);
-}
-async function fetchAI(userQ=null, hiddenQ=null){
-    const content=document.getElementById('ai-content');
-    if(userQ){hiddenQ=userQ;content.insertAdjacentHTML('beforeend',`<div class="user-msg msg">${userQ}</div>`);content.scrollTop=content.scrollHeight;}
-    const q=hiddenQ||userQ;
-    const lid='load-'+Date.now();
-    content.insertAdjacentHTML('beforeend',`<div id="${lid}" class="bot-msg msg"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>`);
-    content.scrollTop=content.scrollHeight;
-    document.getElementById('ai-loading')?.classList.remove('hidden');
-    try{
-        const r=await fetch(AI_FUNC_PATH,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${SUPABASE_KEY}`,'apikey':SUPABASE_KEY},body:JSON.stringify({positions:currentPositions,userMessage:q})});
-        const d=await r.json();
-        let txt=d.error?`**Erro:** ${d.error}`:(d?.insight||'Sem resposta.');
-        txt=txt.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
-        document.getElementById(lid)?.remove();
-        const mid='msg-'+Date.now();
-        content.insertAdjacentHTML('beforeend',`<div id="${mid}" class="bot-msg msg"></div>`);
-        const msgEl=document.getElementById(mid);
-        let i=0, tag=false, buf='';
-        function type(){if(i<txt.length){const c=txt.charAt(i);if(c==='<')tag=true;buf+=c;if(c==='>')tag=false;msgEl.innerHTML=buf;i++;const atBot=Math.abs(content.scrollHeight-content.scrollTop-content.clientHeight)<80;if(atBot)content.scrollTop=content.scrollHeight;tag?type():setTimeout(type,8);}}
-        type();
-    }catch(e){document.getElementById(lid)?.remove();content.insertAdjacentHTML('beforeend','<div class="bot-msg msg text-red-400 text-sm">Erro de rede.</div>');}
-    finally{document.getElementById('ai-loading')?.classList.add('hidden');}
-}
-function sendChat(){const i=document.getElementById('chat-input');if(i?.value.trim()){fetchAI(i.value.trim());i.value='';}}
+// ── Init ──────────────────────────────────────────────────────────────────────
+(async () => {
+    await Promise.all([fetchMarket(), fetchPositions(), loadNews('ct')]);
+    setInterval(fetchMarket,    5000);
+    setInterval(fetchPositions, 10000);
+})();
 </script>
 </body>
 </html>
