@@ -436,6 +436,7 @@ body {
 
     <div>
       <div class="sec-label">Posições abertas</div>
+      <div id="pos-debug" style="display:none;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--dim);background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:10px;word-break:break-all"></div>
       <div id="pos-list" style="display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(320px,1fr))">
         <div style="color:var(--faint);font-size:12px;padding:24px 0">A carregar posições...</div>
       </div>
@@ -737,22 +738,50 @@ const POSITIONS_URL = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/get
 const SUPABASE_KEY  = 'sb_publishable_xHjsFJbSuAhO6r6BUylTCw_tDE-nFXT';
 const BYBIT         = 'https://api.bybit.com';
 
-// Multiple RSS fallbacks per source
-const RSS_SOURCES = {
+// RSS feeds fetched via allorigins proxy (avoids CORS + rss2json rate limits)
+// Multiple fallback URLs per source
+const RSS_FEEDS = {
   ct: [
-    'https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fcointelegraph.com%2Frss&count=25',
-    'https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fcointelegraph.com%2Frss%2Ftag%2Fbitcoin&count=25'
+    'https://cointelegraph.com/rss',
+    'https://cointelegraph.com/rss/tag/bitcoin'
   ],
   cd: [
-    'https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fwww.coindesk.com%2Farc%2Foutboundfeeds%2Frss%2F&count=25',
-    'https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Ffeeds.feedburner.com%2FCoinDesk&count=25'
+    'https://www.coindesk.com/arc/outboundfeeds/rss/',
+    'https://feeds.feedburner.com/CoinDesk'
   ],
   bm: [
-    'https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fbitcoinmagazine.com%2F.rss%2Ffull&count=20',
-    'https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fbitcoinmagazine.com%2Ffeed&count=20'
+    'https://bitcoinmagazine.com/.rss/full',
+    'https://bitcoinmagazine.com/feed'
   ]
 };
 const SRC_NAME = { ct: 'Cointelegraph', cd: 'CoinDesk', bm: 'Bitcoin Magazine' };
+
+// Proxy options tried in order
+const PROXIES = [
+  url => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+  url => `https://corsproxy.io/?${encodeURIComponent(url)}`
+];
+
+async function fetchRSS(feedUrl) {
+  for (const makeProxy of PROXIES) {
+    try {
+      const res = await fetch(makeProxy(feedUrl), { signal: AbortSignal.timeout(7000) });
+      if (!res.ok) continue;
+      const json = await res.json();
+      // allorigins returns { contents: "..." }, corsproxy returns raw text
+      const xml = json.contents ?? (typeof json === 'string' ? json : null);
+      if (!xml) continue;
+      const doc  = new DOMParser().parseFromString(xml, 'application/xml');
+      const items = [...doc.querySelectorAll('item')].slice(0, 25).map(item => ({
+        title:   item.querySelector('title')?.textContent?.trim() ?? '',
+        link:    item.querySelector('link')?.textContent?.trim() ?? '',
+        pubDate: item.querySelector('pubDate')?.textContent ?? new Date().toISOString()
+      })).filter(i => i.title && i.link);
+      if (items.length) return items;
+    } catch(e) { continue; }
+  }
+  return null;
+}
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let positions = [], btcPrev = 0, fundingTimer = null, currentNewsSrc = 'ct';
@@ -1020,13 +1049,32 @@ async function fetchPositions() {
   try {
     const r = await fetch(POSITIONS_URL, { headers: { Authorization: `Bearer ${SUPABASE_KEY}` } });
     const d = await r.json();
-    // accept all position types, any category
     const raw = d?.result?.list || [];
-    positions = raw.filter(p => parseFloat(p.size) !== 0);
-    console.log('Positions fetched:', positions.length, positions.map(p => p.symbol + ' ' + p.side));
+
+    // Filter: size > 0 AND side defined (Bybit returns all symbols ever traded with size=0)
+    positions = raw.filter(p => {
+      const sz = parseFloat(p.size ?? p.qty ?? 0);
+      return sz > 0 && p.side && p.side !== '';
+    });
+
+    // Debug banner
+    const dbg = document.getElementById('pos-debug');
+    if (dbg) {
+      if (positions.length) {
+        dbg.textContent = positions.map(p => `${p.symbol} ${p.side} size=${p.size}`).join(' | ');
+        dbg.style.display = 'block';
+      } else {
+        const allSymbols = raw.slice(0,5).map(p => `${p.symbol}(${p.size}/${p.side})`).join(' ');
+        dbg.textContent = `Nenhuma posição ativa encontrada. Raw[0..4]: ${allSymbols}`;
+        dbg.style.display = 'block';
+      }
+    }
+
     renderPortfolio();
   } catch(e) {
     console.error('fetchPositions error:', e);
+    const dbg = document.getElementById('pos-debug');
+    if (dbg) { dbg.textContent = 'Erro ao carregar posições: ' + e.message; dbg.style.display = 'block'; }
   }
 }
 
@@ -1076,24 +1124,30 @@ function renderPortfolio() {
   }
 
   container.innerHTML = positions.map(p => {
-    const pnl  = parseFloat(p.unrealisedPnl);
-    const val  = parseFloat(p.positionValue);
-    const lev  = parseFloat(p.leverage);
-    const mark = parseFloat(p.markPrice);
-    const ent  = parseFloat(p.avgPrice);
-    const liq  = parseFloat(p.liqPrice);
-    const tp   = parseFloat(p.takeProfit);
-    const sl   = parseFloat(p.stopLoss);
-    const marg = val / lev;
-    const roe  = marg > 0 ? (pnl / marg) * 100 : 0;
+    try {
+    const pnl  = parseFloat(p.unrealisedPnl ?? 0);
+    const lev  = parseFloat(p.leverage ?? 1);
+    const mark = parseFloat(p.markPrice ?? p.indexPrice ?? 0);
+    const ent  = parseFloat(p.avgPrice ?? p.entryPrice ?? 0);
+    const liq  = parseFloat(p.liqPrice ?? 0);
+    const tp   = parseFloat(p.takeProfit ?? 0);
+    const sl   = parseFloat(p.stopLoss ?? 0);
+    const sz   = parseFloat(p.size ?? p.qty ?? 0);
     const isLong = p.side === 'Buy';
     const isInv  = p.symbol.includes('USD') && !p.symbol.endsWith('USDT');
+
+    // positionValue: for linear UMA may be "0", compute from size×mark as fallback
+    let val = parseFloat(p.positionValue ?? 0);
+    if (val === 0 && sz > 0 && mark > 0) val = isInv ? sz : sz * mark;
+
+    const marg = lev > 0 ? val / lev : 0;
+    const roe  = marg > 0 ? (pnl / marg) * 100 : 0;
     const dLiq   = liq > 0 ? Math.abs((liq - mark) / mark) * 100 : 100;
     const barW   = Math.max(2, Math.min(97, 100 - dLiq));
     const barCol = dLiq < 8 ? 'var(--red)' : dLiq < 20 ? 'var(--orange)' : 'var(--green)';
     const pnlC   = pnl >= 0 ? 'var(--green)' : 'var(--red)';
     const roeC   = roe >= 0 ? 'var(--green)' : 'var(--red)';
-    const tpProg = tp > 0 ? Math.min(97, Math.max(2, (Math.abs(mark - ent) / Math.abs(tp - ent)) * 100)) : 0;
+    const tpProg = tp > 0 && ent > 0 ? Math.min(97, Math.max(2, (Math.abs(mark - ent) / Math.abs(tp - ent)) * 100)) : 0;
 
     return `<div class="pos-card">
       <div class="pos-accent ${isLong ? 'pa-long' : 'pa-short'}"></div>
@@ -1138,6 +1192,9 @@ function renderPortfolio() {
         <div class="bar-track"><div class="bar-fill" style="width:${tpProg}%;background:var(--green)"></div></div>` : ''}
       </div>
     </div>`;
+    } catch(err) {
+      return `<div class="card" style="padding:14px;color:var(--red);font-size:11px">Erro ao renderizar ${p?.symbol || 'posição'}: ${err.message}</div>`;
+    }
   }).join('');
 }
 
@@ -1300,34 +1357,36 @@ function setNewsSrc(src, btn) {
 async function loadNews() {
   const el = document.getElementById('news-list');
   if (!el) return;
-  el.innerHTML = '<div style="padding:24px;color:var(--faint);font-size:12px">A carregar...</div>';
+  el.innerHTML = '<div style="padding:24px;color:var(--faint);font-size:12px">A carregar notícias...</div>';
 
-  const urls = RSS_SOURCES[currentNewsSrc];
+  const feeds = RSS_FEEDS[currentNewsSrc];
   let items = null;
 
-  for (const url of urls) {
-    try {
-      const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
-      if (!r.ok) continue;
-      const d = await r.json();
-      if (d?.items?.length) { items = d.items; break; }
-    } catch(e) { continue; }
+  for (const feedUrl of feeds) {
+    items = await fetchRSS(feedUrl);
+    if (items) break;
   }
 
   if (!items || !items.length) {
-    el.innerHTML = '<div style="padding:24px;color:var(--faint);font-size:12px">Não foi possível carregar notícias de momento. Tenta outra fonte ou atualiza.</div>';
+    el.innerHTML = `<div style="padding:24px;color:var(--faint);font-size:12px">
+      Não foi possível carregar notícias. Verifica a ligação ou tenta outra fonte.<br>
+      <span style="color:var(--faint);font-size:10px;margin-top:6px;display:block">Fonte: ${SRC_NAME[currentNewsSrc]}</span>
+    </div>`;
     return;
   }
 
-  el.innerHTML = items.map(item => `
-    <div class="news-item" onclick="window.open('${(item.link||'').replace(/'/g,"\\'")}','_blank')">
+  const src = SRC_NAME[currentNewsSrc];
+  el.innerHTML = items.map(item => {
+    const safeLink = (item.link || '').replace(/"/g, '&quot;');
+    return `<div class="news-item" onclick="window.open('${safeLink}','_blank')">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
-        <span class="news-source">${SRC_NAME[currentNewsSrc]}</span>
+        <span class="news-source">${src}</span>
         <span style="width:2px;height:2px;border-radius:50%;background:var(--faint);flex-shrink:0;display:inline-block"></span>
         <span class="news-age">${timeAgo(item.pubDate)}</span>
       </div>
-      <div class="news-title">${item.title || ''}</div>
-    </div>`).join('');
+      <div class="news-title">${item.title}</div>
+    </div>`;
+  }).join('');
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
