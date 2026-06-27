@@ -1556,21 +1556,29 @@ async function loadNews() {
 
 // ── WALLET / DASHBOARD ────────────────────────────────────────────────────────
 function computeAvgPrices(txlog) {
-  const buys = {};
-  (txlog || []).forEach(tx => {
-    if (tx.type !== 'TRADE' || tx.side !== 'Buy') return;
-    const base = tx.symbol.replace(/USDT$|USDC$|BUSD$|PERP$|USD$/, '');
+  // Process oldest-first (API returns newest-first); use AVCO cost-basis
+  const sorted = [...(txlog || [])].reverse();
+  const pos = {};
+  sorted.forEach(tx => {
+    if (tx.type !== 'TRADE') return;
+    const base = (tx.symbol || '').replace(/USDT$|USDC$|BUSD$|PERP$|USD$/, '');
     if (!base || base === tx.symbol) return;
     const qty   = parseFloat(tx.qty || 0);
     const price = parseFloat(tx.tradePrice || 0);
     if (!qty || !price) return;
-    if (!buys[base]) buys[base] = { cost: 0, qty: 0 };
-    buys[base].cost += qty * price;
-    buys[base].qty  += qty;
+    if (!pos[base]) pos[base] = { cost: 0, qty: 0 };
+    if (tx.side === 'Buy') {
+      pos[base].cost += qty * price;
+      pos[base].qty  += qty;
+    } else if (tx.side === 'Sell' && pos[base].qty > 0) {
+      const ratio = Math.min(qty / pos[base].qty, 1);
+      pos[base].cost *= (1 - ratio);
+      pos[base].qty   = Math.max(0, pos[base].qty - qty);
+    }
   });
   const result = {};
-  Object.entries(buys).forEach(([coin, d]) => {
-    if (d.qty > 0) result[coin] = d.cost / d.qty;
+  Object.entries(pos).forEach(([coin, d]) => {
+    if (d.qty > 0.000001) result[coin] = d.cost / d.qty;
   });
   return result;
 }
@@ -1596,7 +1604,15 @@ function renderDashboard() {
   if (!walletData) return;
   const equity  = parseFloat(walletData.totalEquity || 0);
   const perpUPL = parseFloat(walletData.totalPerpUPL || walletData.totalUnrealisedPnl || 0);
-  const spotUPL = (walletData.coin || []).reduce((s, c) => s + parseFloat(c.unrealisedPnl || 0), 0);
+  // Bybit returns unrealisedPnl=0 for spot coins; compute from avgPrices
+  let spotUPL = 0;
+  (walletData.coin || []).forEach(c => {
+    const qty  = parseFloat(c.walletBalance || 0);
+    const usd  = parseFloat(c.usdValue || 0);
+    const px   = qty > 0 ? usd / qty : 0;
+    const avgP = avgPrices[c.coin];
+    if (avgP && qty > 0 && px > 0) spotUPL += (px - avgP) * qty;
+  });
   const totalPnl = perpUPL + spotUPL;
   const baseVal  = equity - totalPnl;
   const pctChg   = baseVal > 0 ? (totalPnl / baseVal) * 100 : 0;
@@ -1613,6 +1629,13 @@ function renderDashboard() {
     ppEl.textContent = (isPos ? '▲' : '▼') + ' ' + Math.abs(pctChg).toFixed(2) + '%';
     ppEl.style.background = isPos ? 'rgba(45,212,160,.12)' : 'rgba(247,100,122,.12)';
     ppEl.style.color = pnlColor;
+  }
+
+  // Update header PnL to include spot PnL (not just derivatives)
+  const hp = document.getElementById('hdr-pnl');
+  if (hp && totalPnl !== 0) {
+    hp.textContent = fmtUsd(totalPnl, 2);
+    hp.style.color = isPos ? 'var(--green)' : 'var(--red)';
   }
 
   drawPortfolioChart();
