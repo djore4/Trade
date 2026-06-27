@@ -567,7 +567,7 @@ body {
         <div class="db-asset-header">
           <span>Ativo</span>
           <span style="text-align:right">PnL Não Realizado</span>
-          <span style="text-align:right">Preço</span>
+          <span style="text-align:right">Preço / Médio</span>
         </div>
         <div id="db-assets-list"><div class="db-empty">A carregar ativos...</div></div>
       </div>
@@ -1744,11 +1744,16 @@ function renderDbAssets() {
       </div>
       <div class="db-asset-pnl">
         <div style="color:${isP ? 'var(--green)' : isN ? 'var(--red)' : 'var(--faint)'}">
-          ${unrPnl !== 0 ? (isP ? '+' : '') + fmtUsd(unrPnl, 4) : '—'}
+          ${unrPnl !== 0 ? (isP ? '+' : '') + fmtUsd(unrPnl, 2) : '—'}
         </div>
         ${unrPnl !== 0 ? `<div class="db-asset-pct ${isP ? 'db-pct-g' : 'db-pct-r'}">${isP ? '▲' : '▼'} ${Math.abs(pnlPct).toFixed(2)}%</div>` : ''}
       </div>
-      <div class="db-asset-price">${prStr}</div>
+      <div class="db-asset-price">
+        ${prStr}
+        ${avgPrices[c.coin] ? `<div style="font-size:9px;color:var(--faint);margin-top:2px">med ${
+          '$' + fmt(avgPrices[c.coin], avgPrices[c.coin] < 0.001 ? 6 : avgPrices[c.coin] < 1 ? 4 : avgPrices[c.coin] < 100 ? 2 : 0)
+        }</div>` : ''}
+      </div>
     </div>`;
   }).join('');
 }
