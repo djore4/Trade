@@ -72,8 +72,7 @@ body {
   gap: 0;
   border-bottom: 1px solid var(--border);
   background: rgba(8,8,16,0.97);
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 100;
 }
 
@@ -363,7 +362,7 @@ html.light .theme-btn .icon-sun  { display: block; }
 .db-hero { text-align: center; padding: 28px 16px 10px; }
 .db-total-value {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 42px; font-weight: 700; color: var(--text);
+  font-size: 34px; font-weight: 700; color: var(--text);
   letter-spacing: -0.02em; line-height: 1; margin-bottom: 10px;
 }
 .db-pnl-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 4px; }
@@ -392,6 +391,8 @@ html.light .theme-btn .icon-sun  { display: block; }
 .db-sub-btn.active { color: var(--orange); }
 .db-sub-btn.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: var(--orange); }
 html.light .db-sub-btn { color: var(--dim); }
+html.light .mnav-btn { color: var(--faint); }
+html.light .mnav-btn.active { color: var(--orange); }
 .db-sub-pane { display: none; }
 .db-sub-pane.active { display: block; }
 .db-assets-toolbar { display: flex; align-items: center; justify-content: flex-end; padding: 6px 14px; border-bottom: 1px solid var(--border); }
@@ -425,7 +426,7 @@ html.light .db-sub-btn { color: var(--dim); }
 .db-asset-qty { font-size: 10px; font-weight: 400; color: var(--dim); font-family: 'JetBrains Mono', monospace; }
 .db-asset-usd { font-size: 10px; color: var(--dim); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
 .db-asset-pnl { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; text-align: right; }
-.db-asset-pct { font-size: 10px; font-weight: 600; margin-top: 2px; padding: 1px 5px; border-radius: 3px; display: inline-block; }
+.db-asset-pct { font-size: 10px; font-weight: 600; padding: 1px 5px; border-radius: 3px; display: inline-block; }
 .db-pct-g { background: rgba(45,212,160,.1); color: var(--green); }
 .db-pct-r { background: rgba(247,100,122,.1); color: var(--red); }
 .db-asset-price { font-size: 12px; font-weight: 500; color: var(--text); text-align: right; font-family: 'JetBrains Mono', monospace; }
@@ -445,7 +446,7 @@ html.light .db-sub-btn { color: var(--dim); }
 .db-pos-sym { font-size: 14px; font-weight: 700; color: var(--text); }
 .db-pos-rt { text-align: right; }
 @media (max-width: 480px) {
-  .db-total-value { font-size: 32px; }
+  .db-total-value { font-size: 26px; }
   .db-time-btn { padding: 6px 7px; font-size: 10px; }
   .db-asset-header, .db-asset-row { grid-template-columns: 1fr 90px 70px; }
 }
@@ -542,11 +543,6 @@ html.light .db-sub-btn { color: var(--dim); }
       <span id="hdr-fund" class="hdr-val mono">—</span>
     </div>
     <div class="hdr-sep hdr-hide-sm"></div>
-    <div class="hdr-pill">
-      <span class="hdr-label">PnL</span>
-      <span id="hdr-pnl" class="hdr-val mono">—</span>
-    </div>
-    <div class="hdr-sep"></div>
     <button class="theme-btn" onclick="toggleTheme()" title="Alternar tema">
       <svg class="icon-moon" width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M12.5 9A5.5 5.5 0 0 1 6 2.5a5.5 5.5 0 1 0 6.5 6.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" fill="none"/></svg>
       <svg class="icon-sun"  width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="2.8" stroke="currentColor" stroke-width="1.3" fill="none"/><g stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><line x1="7.5" y1="0.5" x2="7.5" y2="2.5"/><line x1="7.5" y1="12.5" x2="7.5" y2="14.5"/><line x1="0.5" y1="7.5" x2="2.5" y2="7.5"/><line x1="12.5" y1="7.5" x2="14.5" y2="7.5"/><line x1="2.6" y1="2.6" x2="4" y2="4"/><line x1="11" y1="11" x2="12.4" y2="12.4"/><line x1="11" y1="4" x2="12.4" y2="2.6"/><line x1="2.6" y1="12.4" x2="4" y2="11"/></g></svg>
@@ -1819,17 +1815,14 @@ function renderDbAssets() {
           <div class="db-asset-usd">${fmtUsd(usdVal, 2)}</div>
         </div>
       </div>
-      <div class="db-asset-pnl">
-        <div style="color:${isP ? 'var(--green)' : isN ? 'var(--red)' : 'var(--faint)'}">
+      <div class="db-asset-pnl" style="display:flex;align-items:center;justify-content:flex-end;gap:4px;flex-wrap:nowrap">
+        <span style="color:${isP ? 'var(--green)' : isN ? 'var(--red)' : 'var(--faint)'}">
           ${unrPnl !== 0 ? (isP ? '+' : '') + fmtUsd(unrPnl, 2) : '—'}
-        </div>
-        ${unrPnl !== 0 ? `<div class="db-asset-pct ${isP ? 'db-pct-g' : 'db-pct-r'}">${isP ? '▲' : '▼'} ${Math.abs(pnlPct).toFixed(2)}%</div>` : ''}
+        </span>
+        ${unrPnl !== 0 ? `<span class="db-asset-pct ${isP ? 'db-pct-g' : 'db-pct-r'}">${isP ? '▲' : '▼'} ${Math.abs(pnlPct).toFixed(1)}%</span>` : ''}
       </div>
-      <div class="db-asset-price">
-        ${prStr}
-        ${avgPrices[c.coin] ? `<div style="font-size:9px;color:var(--faint);margin-top:2px">med ${
-          '$' + fmt(avgPrices[c.coin], avgPrices[c.coin] < 0.001 ? 6 : avgPrices[c.coin] < 1 ? 4 : avgPrices[c.coin] < 100 ? 2 : 0)
-        }</div>` : ''}
+      <div class="db-asset-price" style="white-space:nowrap">
+        ${prStr}${avgPrices[c.coin] ? ` <span style="font-size:9px;color:var(--faint)">/ m$${fmt(avgPrices[c.coin], avgPrices[c.coin] < 0.001 ? 6 : avgPrices[c.coin] < 1 ? 4 : avgPrices[c.coin] < 100 ? 2 : 0)}</span>` : ''}
       </div>
     </div>`;
   }).join('');
