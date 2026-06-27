@@ -24,6 +24,25 @@
   --blue:    #7c8fff;
   --yellow:  #f5c842;
 }
+html.light {
+  --bg:      #eef0f8;
+  --s1:      #ffffff;
+  --s2:      #f3f5fc;
+  --s3:      #e2e6f4;
+  --border:  rgba(0,0,0,0.08);
+  --border2: rgba(0,0,0,0.15);
+  --text:    #0c0e1e;
+  --dim:     #5c607e;
+  --faint:   #9299be;
+  --green:   #0ea578;
+  --red:     #d93a52;
+  --orange:  #e07b0e;
+  --blue:    #3a4bd4;
+  --yellow:  #c49810;
+}
+html.light body { background: var(--bg); color: var(--text); }
+html.light #header { background: rgba(238,240,248,0.97); }
+html.light #mnav   { background: rgba(238,240,248,0.97); border-top-color: var(--border); }
 
 html, body { height: 100%; }
 body {
@@ -113,6 +132,11 @@ body {
 .hdr-label { font-size: 9px; color: var(--faint); text-transform: uppercase; letter-spacing: .08em; }
 .hdr-val { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text); }
 .hdr-sep { width: 1px; height: 14px; background: var(--border); }
+.theme-btn { background: none; border: none; cursor: pointer; color: var(--dim); padding: 3px 4px; display: flex; align-items: center; transition: color .15s; }
+.theme-btn:hover { color: var(--text); }
+.theme-btn .icon-sun { display: none; }
+html.light .theme-btn .icon-moon { display: none; }
+html.light .theme-btn .icon-sun  { display: block; }
 @media (max-width: 600px) { .hdr-hide-sm { display: none; } }
 
 .pulse-dot {
@@ -527,6 +551,11 @@ body {
       <span class="hdr-label">PnL</span>
       <span id="hdr-pnl" class="hdr-val mono">—</span>
     </div>
+    <div class="hdr-sep"></div>
+    <button class="theme-btn" onclick="toggleTheme()" title="Alternar tema">
+      <svg class="icon-moon" width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M12.5 9A5.5 5.5 0 0 1 6 2.5a5.5 5.5 0 1 0 6.5 6.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" fill="none"/></svg>
+      <svg class="icon-sun"  width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="2.8" stroke="currentColor" stroke-width="1.3" fill="none"/><g stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><line x1="7.5" y1="0.5" x2="7.5" y2="2.5"/><line x1="7.5" y1="12.5" x2="7.5" y2="14.5"/><line x1="0.5" y1="7.5" x2="2.5" y2="7.5"/><line x1="12.5" y1="7.5" x2="14.5" y2="7.5"/><line x1="2.6" y1="2.6" x2="4" y2="4"/><line x1="11" y1="11" x2="12.4" y2="12.4"/><line x1="11" y1="4" x2="12.4" y2="2.6"/><line x1="2.6" y1="12.4" x2="4" y2="11"/></g></svg>
+    </button>
     <div class="hdr-sep"></div>
     <div id="live-dot" class="pulse-dot off"></div>
   </div>
@@ -986,6 +1015,7 @@ body {
 
 <script src="https://s3.tradingview.com/tv.js"></script>
 <script>
+(function() { if (localStorage.getItem('theme') === 'light') document.documentElement.classList.add('light'); })();
 // ── CONFIG ────────────────────────────────────────────────────────────────────
 const POSITIONS_URL = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/get-bybit-positions';
 const SUPABASE_KEY  = 'sb_publishable_xHjsFJbSuAhO6r6BUylTCw_tDE-nFXT';
@@ -1904,6 +1934,11 @@ function renderDbHistory() {
 function toggleFilterSmall(checked) {
   dbFilterSmall = !!checked;
   renderDbAssets();
+}
+
+function toggleTheme() {
+  const isLight = document.documentElement.classList.toggle('light');
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
 }
 
 function switchDbTab(tab, btn) {
