@@ -368,7 +368,10 @@ body {
 .db-sub-btn.active { color: var(--orange); }
 .db-sub-btn.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: var(--orange); }
 .db-sub-pane { display: none; }
-.db-sub-pane.active { display: block; }
+.db-sub-pane.active { display: block; max-height: 55vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.db-assets-toolbar { display: flex; justify-content: flex-end; padding: 5px 12px; border-bottom: 1px solid var(--border); }
+.db-filter-btn { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border); background: transparent; color: var(--dim); cursor: pointer; transition: all .15s; }
+.db-filter-btn.active { background: rgba(247,140,56,.12); border-color: rgba(247,140,56,.4); color: var(--orange); }
 .db-asset-header {
   display: grid; grid-template-columns: 1fr 110px 90px;
   padding: 7px 16px; font-size: 9px; font-weight: 600;
@@ -559,11 +562,13 @@ body {
         <button class="db-sub-btn active" onclick="switchDbTab('assets',this)">Ativos</button>
         <button class="db-sub-btn" onclick="switchDbTab('history',this)">Histórico</button>
         <button class="db-sub-btn" onclick="switchDbTab('positions',this)">Posições Abertas</button>
-        <button class="db-sub-btn" onclick="switchDbTab('orders',this)">Ordens Abertas</button>
       </div>
 
       <!-- ASSETS -->
       <div id="db-tab-assets" class="db-sub-pane active">
+        <div class="db-assets-toolbar">
+          <button id="btn-filter-small" class="db-filter-btn" onclick="toggleFilterSmall()">Ocultar &lt; $5</button>
+        </div>
         <div class="db-asset-header">
           <span>Ativo</span>
           <span style="text-align:right">PnL Não Realizado</span>
@@ -580,11 +585,6 @@ body {
       <!-- OPEN POSITIONS -->
       <div id="db-tab-positions" class="db-sub-pane">
         <div id="db-pos-list"><div class="db-empty">A carregar posições...</div></div>
-      </div>
-
-      <!-- OPEN ORDERS -->
-      <div id="db-tab-orders" class="db-sub-pane">
-        <div class="db-empty">Sem ordens abertas na Bybit.</div>
       </div>
 
     </div><!-- /card -->
@@ -978,7 +978,7 @@ const SRC_NAME = { ct: 'Cointelegraph', cd: 'CoinDesk', bm: 'Bitcoin Magazine' }
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let positions = [], btcPrev = 0, fundingTimer = null, currentNewsSrc = 'ct';
 let walletData = null, portfolioHistory = [], dbCurrentSubTab = 'assets';
-let txlogData = [], avgPrices = {};
+let txlogData = [], avgPrices = {}, dbFilterSmall = false;
 let tvChart = null, tvDom = null, tvTotal2 = null, tvTotal3 = null;
 let currentIv = '15', posCharts = {};
 
@@ -1653,12 +1653,17 @@ function drawPortfolioChart() {
   const W = rect.width || svg.parentElement?.clientWidth || 800;
   const H = rect.height || 130;
 
-  if (portfolioHistory.length < 2) {
+  // Filter by selected time range (in-session data only)
+  const activeRangeBtn = document.querySelector('.db-time-btn.active');
+  const rangeLabel = activeRangeBtn?.textContent?.trim() || 'TUDO';
+  const rangeCutoffs = { '24H': 86400e3, '1S': 604800e3, '1M': 2592000e3, '3M': 7776000e3, '6M': 15552000e3, '1A': 31536000e3 };
+  const since = rangeCutoffs[rangeLabel] ? Date.now() - rangeCutoffs[rangeLabel] : 0;
+  const pts = since > 0 ? portfolioHistory.filter(p => p.ts >= since) : [...portfolioHistory];
+
+  if (pts.length < 2) {
     svg.innerHTML = `<line x1="0" y1="${(H/2).toFixed(0)}" x2="${W}" y2="${(H/2).toFixed(0)}" stroke="var(--s3)" stroke-width="1.5" stroke-dasharray="4 4"/>`;
     return;
   }
-
-  const pts  = portfolioHistory;
   const minV = Math.min(...pts.map(p => p.v));
   const maxV = Math.max(...pts.map(p => p.v));
   const vRng = maxV - minV || 1;
@@ -1707,8 +1712,9 @@ function renderDbAssets() {
   if (!el) return;
   if (!walletData) { el.innerHTML = '<div class="db-empty">A aguardar dados da Bybit...</div>'; return; }
 
+  const minVal = dbFilterSmall ? 5 : 0.01;
   const coins = (walletData.coin || [])
-    .filter(c => parseFloat(c.usdValue || 0) >= 0.01)
+    .filter(c => parseFloat(c.usdValue || 0) >= minVal)
     .sort((a, b) => parseFloat(b.usdValue || 0) - parseFloat(a.usdValue || 0));
 
   if (!coins.length) {
@@ -1774,8 +1780,12 @@ function renderDbPositions() {
     const liq  = parseFloat(p.liqPrice);
     const marg = val / lev;
     const roe  = marg > 0 ? (pnl / marg) * 100 : 0;
+    // Inverse contracts (BTCUSD, ETHUSD…) settle in base coin — unrealisedPnl is in BTC/ETH
+    // Multiply by mark price to get USD equivalent for display
+    const isInverse = p.symbol.endsWith('USD') && !p.symbol.endsWith('USDT');
+    const pnlUsd = isInverse && mark > 0 ? pnl * mark : pnl;
     const isLong = p.side === 'Buy';
-    const pnlC = pnl >= 0 ? 'var(--green)' : 'var(--red)';
+    const pnlC = pnlUsd >= 0 ? 'var(--green)' : 'var(--red)';
     const dLiq = liq > 0 ? Math.abs((liq - mark) / mark) * 100 : 100;
     const barCol = dLiq < 8 ? 'var(--red)' : dLiq < 20 ? 'var(--orange)' : 'var(--green)';
     const barW   = Math.max(2, Math.min(97, 100 - dLiq));
@@ -1795,7 +1805,7 @@ function renderDbPositions() {
       </div>
       <div class="db-pos-rt" style="color:${pnlC}">
         <div class="mono" style="font-size:15px;font-weight:700">${roe >= 0 ? '+' : ''}${fmt(roe,2)}%</div>
-        <div class="mono" style="font-size:12px;margin-top:2px">${pnl >= 0 ? '+' : ''}${fmtUsd(pnl,2)}</div>
+        <div class="mono" style="font-size:12px;margin-top:2px">${pnlUsd >= 0 ? '+' : ''}${fmtUsd(pnlUsd,2)}</div>
         <div style="font-size:9px;color:var(--faint);margin-top:2px">ROE / PnL</div>
       </div>
     </div>`;
@@ -1843,6 +1853,13 @@ function renderDbHistory() {
       </div>
     </div>`;
   }).join('');
+}
+
+function toggleFilterSmall() {
+  dbFilterSmall = !dbFilterSmall;
+  const btn = document.getElementById('btn-filter-small');
+  if (btn) btn.classList.toggle('active', dbFilterSmall);
+  renderDbAssets();
 }
 
 function switchDbTab(tab, btn) {
