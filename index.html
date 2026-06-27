@@ -405,6 +405,12 @@ body {
 .db-pct-r { background: rgba(247,100,122,.1); color: var(--red); }
 .db-asset-price { font-size: 12px; font-weight: 500; color: var(--text); text-align: right; font-family: 'JetBrains Mono', monospace; }
 .db-empty { padding: 32px 16px; text-align: center; color: var(--faint); font-size: 12px; }
+.db-metrics-bar { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 14px; }
+.db-metric { background: var(--s1); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; text-align: center; }
+.db-metric-lbl { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--faint); margin-bottom: 5px; }
+.db-metric-num { font-size: 17px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); line-height: 1.1; }
+.db-metric-sub { font-size: 9px; color: var(--dim); margin-top: 3px; }
+@media (max-width: 480px) { .db-metric-num { font-size: 14px; } }
 .db-pos-row {
   display: grid; grid-template-columns: auto 1fr auto;
   align-items: center; gap: 14px; padding: 13px 16px;
@@ -532,6 +538,25 @@ body {
 <!-- ─── TAB: DASHBOARD ────────────────────────────────── -->
 <div class="tab-pane active" id="tab-dashboard">
   <div style="max-width:900px;margin:0 auto">
+
+    <!-- Metrics bar: Fear & Greed · BTC.D · BTC price -->
+    <div class="db-metrics-bar">
+      <div class="db-metric">
+        <div class="db-metric-lbl">Fear &amp; Greed</div>
+        <div id="db-fg-val" class="db-metric-num">—</div>
+        <div id="db-fg-lbl" class="db-metric-sub">—</div>
+      </div>
+      <div class="db-metric">
+        <div class="db-metric-lbl">BTC.D</div>
+        <div id="db-btcd-val" class="db-metric-num">—</div>
+        <div class="db-metric-sub">dominância</div>
+      </div>
+      <div class="db-metric">
+        <div class="db-metric-lbl">Bitcoin</div>
+        <div id="db-btcp-val" class="db-metric-num">—</div>
+        <div id="db-btcp-chg" class="db-metric-sub">—</div>
+      </div>
+    </div>
 
     <!-- Hero: total value -->
     <div class="db-hero">
@@ -1048,6 +1073,11 @@ async function fetchMarket() {
       }
       const ce = document.getElementById('hdr-chg');
       if (ce) { ce.textContent = (chPct >= 0 ? '+' : '') + fmt(chPct, 2) + '%'; ce.style.color = chPct >= 0 ? 'var(--green)' : 'var(--red)'; }
+      // Dashboard BTC chip
+      const dbBp = document.getElementById('db-btcp-val');
+      if (dbBp) dbBp.textContent = '$' + fmt(price, 0);
+      const dbBc = document.getElementById('db-btcp-chg');
+      if (dbBc) { dbBc.textContent = (chPct >= 0 ? '+' : '') + fmt(chPct, 2) + '% 24h'; dbBc.style.color = chPct >= 0 ? 'var(--green)' : 'var(--red)'; }
 
       // funding
       const frStr = (fr >= 0 ? '+' : '') + fr.toFixed(4) + '%';
@@ -1196,6 +1226,7 @@ async function fetchGlobal() {
     const total3 = total * (1 - (dom + ethPct) / 100);
 
     set('s-dom',       fmt(dom, 1) + '%');
+    set('db-btcd-val', fmt(dom, 1) + '%');
     set('s-total',     fmtUsd(total));
     set('s-total2',    fmtUsd(total2));
     set('s-total3',    fmtUsd(total3));
@@ -1230,6 +1261,10 @@ async function fetchFearGreed() {
     if (fgEl) { fgEl.textContent = v.toString(); fgEl.style.color = color; }
     set('fg-text', label);
     set('fg-label', label);
+    // Dashboard F&G chip
+    const dbFg = document.getElementById('db-fg-val');
+    if (dbFg) { dbFg.textContent = v.toString(); dbFg.style.color = color; }
+    set('db-fg-lbl', label);
 
     const ctxFg = document.getElementById('ctx-fg');
     if (ctxFg) { ctxFg.textContent = v + ' — ' + label; ctxFg.style.color = color; }
