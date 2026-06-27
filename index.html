@@ -358,20 +358,25 @@ body {
   content: ''; position: absolute; bottom: 0; left: 0; right: 0;
   height: 2px; background: var(--orange); border-radius: 2px 2px 0 0;
 }
-.db-sub-nav { display: flex; border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
-.db-sub-nav::-webkit-scrollbar { display: none; }
+.db-sub-nav { display: flex; border-bottom: 1px solid var(--border); }
 .db-sub-btn {
-  flex-shrink: 0; padding: 12px 16px; font-size: 11px; font-weight: 700;
+  flex: 1; padding: 12px 6px; font-size: 11px; font-weight: 700;
   color: var(--faint); border: none; background: transparent; cursor: pointer;
-  position: relative; text-transform: uppercase; letter-spacing: .08em; transition: color .15s; white-space: nowrap;
+  position: relative; text-transform: uppercase; letter-spacing: .06em;
+  transition: color .15s; text-align: center; white-space: nowrap;
 }
 .db-sub-btn.active { color: var(--orange); }
 .db-sub-btn.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: var(--orange); }
 .db-sub-pane { display: none; }
 .db-sub-pane.active { display: block; max-height: 55vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-.db-assets-toolbar { display: flex; justify-content: flex-end; padding: 5px 12px; border-bottom: 1px solid var(--border); }
-.db-filter-btn { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border); background: transparent; color: var(--dim); cursor: pointer; transition: all .15s; }
-.db-filter-btn.active { background: rgba(247,140,56,.12); border-color: rgba(247,140,56,.4); color: var(--orange); }
+.db-assets-toolbar { display: flex; align-items: center; justify-content: flex-end; padding: 6px 14px; border-bottom: 1px solid var(--border); }
+.db-toggle { display: flex; align-items: center; gap: 7px; cursor: pointer; }
+.db-toggle input { display: none; }
+.db-toggle-track { width: 30px; height: 17px; border-radius: 9px; background: var(--s3); position: relative; transition: background .2s; flex-shrink: 0; }
+.db-toggle input:checked + .db-toggle-track { background: var(--orange); }
+.db-toggle-thumb { width: 13px; height: 13px; border-radius: 50%; background: #fff; position: absolute; top: 2px; left: 2px; transition: transform .18s; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
+.db-toggle input:checked + .db-toggle-track .db-toggle-thumb { transform: translateX(13px); }
+.db-toggle-label { font-size: 10px; font-weight: 600; color: var(--dim); user-select: none; }
 .db-asset-header {
   display: grid; grid-template-columns: 1fr 110px 90px;
   padding: 7px 16px; font-size: 9px; font-weight: 600;
@@ -567,7 +572,11 @@ body {
       <!-- ASSETS -->
       <div id="db-tab-assets" class="db-sub-pane active">
         <div class="db-assets-toolbar">
-          <button id="btn-filter-small" class="db-filter-btn" onclick="toggleFilterSmall()">Ocultar &lt; $5</button>
+          <label class="db-toggle">
+            <input type="checkbox" id="chk-filter-small" onchange="toggleFilterSmall(this.checked)">
+            <span class="db-toggle-track"><span class="db-toggle-thumb"></span></span>
+            <span class="db-toggle-label">Ocultar &lt; $5</span>
+          </label>
         </div>
         <div class="db-asset-header">
           <span>Ativo</span>
@@ -1742,7 +1751,9 @@ function renderDbAssets() {
     const qStr = qty < 0.0001 ? qty.toFixed(8) : qty < 1 ? qty.toFixed(6) : fmt(qty, qty < 1000 ? 4 : 2);
     return `<div class="db-asset-row">
       <div class="db-asset-left">
-        <div class="db-coin-avatar" style="background:${cc}18;border-color:${cc}40"><span style="color:${cc}">${ini}</span></div>
+        <div class="db-coin-avatar" style="background:${cc}18;border-color:${cc}40">
+          <img src="https://assets.coincap.io/assets/icons/${c.coin.toLowerCase()}@2x.png" width="24" height="24" style="border-radius:50%;object-fit:cover" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span style="display:none;color:${cc}">${ini}</span>
+        </div>
         <div>
           <div class="db-asset-sym">${c.coin} <span class="db-asset-qty">${qStr}</span></div>
           <div class="db-asset-usd">${fmtUsd(usdVal, 2)}</div>
@@ -1855,10 +1866,8 @@ function renderDbHistory() {
   }).join('');
 }
 
-function toggleFilterSmall() {
-  dbFilterSmall = !dbFilterSmall;
-  const btn = document.getElementById('btn-filter-small');
-  if (btn) btn.classList.toggle('active', dbFilterSmall);
+function toggleFilterSmall(checked) {
+  dbFilterSmall = !!checked;
   renderDbAssets();
 }
 
