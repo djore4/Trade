@@ -335,6 +335,82 @@ body {
 .flash-g { color: var(--green) !important; transition: color .5s; }
 .flash-r { color: var(--red) !important;   transition: color .5s; }
 
+/* ─── DASHBOARD ──────────────────────────────────── */
+.db-hero { text-align: center; padding: 28px 16px 10px; }
+.db-total-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 42px; font-weight: 700; color: var(--text);
+  letter-spacing: -0.02em; line-height: 1; margin-bottom: 10px;
+}
+.db-pnl-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 4px; }
+.db-pnl-usd { font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 500; }
+.db-pnl-pct { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 5px; }
+.db-chart-wrap { height: 130px; margin: 14px 0 0; position: relative; overflow: hidden; }
+.db-chart-svg { width: 100%; height: 100%; display: block; }
+.db-time-btns { display: flex; justify-content: center; border-bottom: 1px solid var(--border); }
+.db-time-btn {
+  padding: 7px 11px; font-size: 11px; font-weight: 600; color: var(--faint);
+  border: none; background: transparent; cursor: pointer; position: relative;
+  text-transform: uppercase; letter-spacing: .07em; transition: color .15s; flex-shrink: 0;
+}
+.db-time-btn.active { color: var(--text); }
+.db-time-btn.active::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+  height: 2px; background: var(--orange); border-radius: 2px 2px 0 0;
+}
+.db-sub-nav { display: flex; border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+.db-sub-nav::-webkit-scrollbar { display: none; }
+.db-sub-btn {
+  flex-shrink: 0; padding: 12px 16px; font-size: 11px; font-weight: 700;
+  color: var(--faint); border: none; background: transparent; cursor: pointer;
+  position: relative; text-transform: uppercase; letter-spacing: .08em; transition: color .15s; white-space: nowrap;
+}
+.db-sub-btn.active { color: var(--orange); }
+.db-sub-btn.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: var(--orange); }
+.db-sub-pane { display: none; }
+.db-sub-pane.active { display: block; }
+.db-asset-header {
+  display: grid; grid-template-columns: 1fr 110px 90px;
+  padding: 7px 16px; font-size: 9px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .08em; color: var(--faint);
+  border-bottom: 1px solid var(--border);
+}
+.db-asset-row {
+  display: grid; grid-template-columns: 1fr 110px 90px;
+  align-items: center; padding: 11px 16px;
+  border-bottom: 1px solid var(--border); transition: background .12s;
+}
+.db-asset-row:hover { background: var(--s2); }
+.db-asset-row:last-child { border-bottom: none; }
+.db-asset-left { display: flex; align-items: center; gap: 11px; }
+.db-coin-avatar {
+  width: 34px; height: 34px; border-radius: 50%; border: 1px solid;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; flex-shrink: 0;
+}
+.db-asset-sym { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1; }
+.db-asset-qty { font-size: 10px; font-weight: 400; color: var(--dim); font-family: 'JetBrains Mono', monospace; }
+.db-asset-usd { font-size: 10px; color: var(--dim); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+.db-asset-pnl { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; text-align: right; }
+.db-asset-pct { font-size: 10px; font-weight: 600; margin-top: 2px; padding: 1px 5px; border-radius: 3px; display: inline-block; }
+.db-pct-g { background: rgba(45,212,160,.1); color: var(--green); }
+.db-pct-r { background: rgba(247,100,122,.1); color: var(--red); }
+.db-asset-price { font-size: 12px; font-weight: 500; color: var(--text); text-align: right; font-family: 'JetBrains Mono', monospace; }
+.db-empty { padding: 32px 16px; text-align: center; color: var(--faint); font-size: 12px; }
+.db-pos-row {
+  display: grid; grid-template-columns: auto 1fr auto;
+  align-items: center; gap: 14px; padding: 13px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.db-pos-row:last-child { border-bottom: none; }
+.db-pos-sym { font-size: 14px; font-weight: 700; color: var(--text); }
+.db-pos-rt { text-align: right; }
+@media (max-width: 480px) {
+  .db-total-value { font-size: 32px; }
+  .db-time-btn { padding: 6px 7px; font-size: 10px; }
+  .db-asset-header, .db-asset-row { grid-template-columns: 1fr 90px 70px; }
+}
+
 /* ─── RESPONSIVE ──────────────────────────────────── */
 @media (max-width: 900px) {
   .hide-md { display: none !important; }
@@ -354,7 +430,11 @@ body {
 <div id="header">
   <div class="logo"><b>₿</b> Trade Desk</div>
   <nav class="tab-nav">
-    <button class="tab-btn active" onclick="switchTab('carteira',this)">
+    <button class="tab-btn active" onclick="switchTab('dashboard',this)">
+      <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x=".5" y=".5" width="4.5" height="5" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/><rect x="6" y=".5" width="4.5" height="2.5" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/><rect x="6" y="4" width="4.5" height="6" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/><rect x=".5" y="6.5" width="4.5" height="4" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/></svg>
+      Dashboard
+    </button>
+    <button class="tab-btn" onclick="switchTab('carteira',this)">
       <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x=".5" y=".5" width="4" height="4" rx="1" stroke="currentColor"/><rect x="6.5" y=".5" width="4" height="4" rx="1" stroke="currentColor"/><rect x=".5" y="6.5" width="4" height="4" rx="1" stroke="currentColor"/><rect x="6.5" y="6.5" width="4" height="4" rx="1" stroke="currentColor"/></svg>
       Carteira
     </button>
@@ -399,8 +479,78 @@ body {
 <!-- ══ CONTENT ══════════════════════════════════════════ -->
 <div id="content">
 
+<!-- ─── TAB: DASHBOARD ────────────────────────────────── -->
+<div class="tab-pane active" id="tab-dashboard">
+  <div style="max-width:900px;margin:0 auto">
+
+    <!-- Hero: total value -->
+    <div class="db-hero">
+      <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--faint);margin-bottom:10px">Portfólio Total · Bybit</div>
+      <div id="db-total-value" class="db-total-value">—</div>
+      <div class="db-pnl-row">
+        <span id="db-pnl-usd" class="db-pnl-usd" style="color:var(--dim)">—</span>
+        <span id="db-pnl-pct" class="db-pnl-pct" style="background:var(--s3);color:var(--dim)">—</span>
+      </div>
+    </div>
+
+    <!-- Sparkline chart -->
+    <div class="db-chart-wrap">
+      <svg id="db-chart-svg" class="db-chart-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+
+    <!-- Time range buttons -->
+    <div class="db-time-btns">
+      <button class="db-time-btn active" onclick="setDbRange(this)">24H</button>
+      <button class="db-time-btn" onclick="setDbRange(this)">1S</button>
+      <button class="db-time-btn" onclick="setDbRange(this)">1M</button>
+      <button class="db-time-btn" onclick="setDbRange(this)">3M</button>
+      <button class="db-time-btn" onclick="setDbRange(this)">6M</button>
+      <button class="db-time-btn" onclick="setDbRange(this)">1A</button>
+      <button class="db-time-btn" onclick="setDbRange(this)">TUDO</button>
+    </div>
+
+    <!-- Card wrapping sub-nav + panes -->
+    <div class="card" style="margin-top:14px;border-radius:12px;overflow:hidden">
+
+      <!-- Sub-tab navigation -->
+      <div class="db-sub-nav">
+        <button class="db-sub-btn active" onclick="switchDbTab('assets',this)">Ativos</button>
+        <button class="db-sub-btn" onclick="switchDbTab('history',this)">Histórico</button>
+        <button class="db-sub-btn" onclick="switchDbTab('positions',this)">Posições Abertas</button>
+        <button class="db-sub-btn" onclick="switchDbTab('orders',this)">Ordens Abertas</button>
+      </div>
+
+      <!-- ASSETS -->
+      <div id="db-tab-assets" class="db-sub-pane active">
+        <div class="db-asset-header">
+          <span>Ativo</span>
+          <span style="text-align:right">PnL Não Realizado</span>
+          <span style="text-align:right">Preço</span>
+        </div>
+        <div id="db-assets-list"><div class="db-empty">A carregar ativos...</div></div>
+      </div>
+
+      <!-- HISTORY -->
+      <div id="db-tab-history" class="db-sub-pane">
+        <div class="db-empty">Histórico de transações não disponível.</div>
+      </div>
+
+      <!-- OPEN POSITIONS -->
+      <div id="db-tab-positions" class="db-sub-pane">
+        <div id="db-pos-list"><div class="db-empty">A carregar posições...</div></div>
+      </div>
+
+      <!-- OPEN ORDERS -->
+      <div id="db-tab-orders" class="db-sub-pane">
+        <div class="db-empty">Sem ordens abertas na Bybit.</div>
+      </div>
+
+    </div><!-- /card -->
+  </div>
+</div>
+
 <!-- ─── TAB: CARTEIRA ─────────────────────────────────── -->
-<div class="tab-pane active" id="tab-carteira">
+<div class="tab-pane" id="tab-carteira">
   <div style="max-width:1400px;margin:0 auto;display:flex;flex-direction:column;gap:18px">
 
     <div>
@@ -736,6 +886,7 @@ body {
 const POSITIONS_URL = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/get-bybit-positions';
 const SUPABASE_KEY  = 'sb_publishable_xHjsFJbSuAhO6r6BUylTCw_tDE-nFXT';
 const BYBIT         = 'https://api.bybit.com';
+const WALLET_URL    = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/get-bybit-wallet';
 
 // Multiple RSS fallbacks per source
 const RSS_SOURCES = {
@@ -756,6 +907,7 @@ const SRC_NAME = { ct: 'Cointelegraph', cd: 'CoinDesk', bm: 'Bitcoin Magazine' }
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let positions = [], btcPrev = 0, fundingTimer = null, currentNewsSrc = 'ct';
+let walletData = null, portfolioHistory = [], dbCurrentSubTab = 'assets';
 let tvChart = null, tvDom = null, tvTotal2 = null, tvTotal3 = null;
 let currentIv = '15', posCharts = {};
 
@@ -785,6 +937,7 @@ function switchTab(id, btn) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + id).classList.add('active');
   if (btn) btn.classList.add('active');
+  if (id === 'dashboard')  { setTimeout(drawPortfolioChart, 60); renderDbAssets(); renderDbPositions(); }
   if (id === 'mercado')    { initMainChart(); renderPosCharts(); }
   if (id === 'estrutura')  initStructureCharts();
 }
@@ -1330,19 +1483,228 @@ async function loadNews() {
     </div>`).join('');
 }
 
+// ── WALLET / DASHBOARD ────────────────────────────────────────────────────────
+async function fetchWalletBalance() {
+  try {
+    const r = await fetch(WALLET_URL, { headers: { Authorization: `Bearer ${SUPABASE_KEY}` } });
+    const d = await r.json();
+    walletData = d?.result?.list?.[0];
+    if (!walletData) return;
+    const equity = parseFloat(walletData.totalEquity || 0);
+    if (equity > 0) {
+      portfolioHistory.push({ ts: Date.now(), v: equity });
+      if (portfolioHistory.length > 600) portfolioHistory.shift();
+    }
+    renderDashboard();
+  } catch(e) { console.error('fetchWalletBalance:', e); }
+}
+
+function renderDashboard() {
+  if (!walletData) return;
+  const equity  = parseFloat(walletData.totalEquity || 0);
+  const perpUPL = parseFloat(walletData.totalPerpUPL || walletData.totalUnrealisedPnl || 0);
+  const spotUPL = (walletData.coin || []).reduce((s, c) => s + parseFloat(c.unrealisedPnl || 0), 0);
+  const totalPnl = perpUPL + spotUPL;
+  const baseVal  = equity - totalPnl;
+  const pctChg   = baseVal > 0 ? (totalPnl / baseVal) * 100 : 0;
+  const isPos    = totalPnl >= 0;
+  const pnlColor = totalPnl !== 0 ? (isPos ? 'var(--green)' : 'var(--red)') : 'var(--dim)';
+
+  const tvEl = document.getElementById('db-total-value');
+  if (tvEl) tvEl.textContent = '$' + fmt(equity, 2);
+
+  const puEl = document.getElementById('db-pnl-usd');
+  if (puEl) { puEl.textContent = (totalPnl >= 0 ? '+' : '') + fmtUsd(totalPnl, 2); puEl.style.color = pnlColor; }
+  const ppEl = document.getElementById('db-pnl-pct');
+  if (ppEl) {
+    ppEl.textContent = (isPos ? '▲' : '▼') + ' ' + Math.abs(pctChg).toFixed(2) + '%';
+    ppEl.style.background = isPos ? 'rgba(45,212,160,.12)' : 'rgba(247,100,122,.12)';
+    ppEl.style.color = pnlColor;
+  }
+
+  drawPortfolioChart();
+  if (dbCurrentSubTab === 'assets')    renderDbAssets();
+  if (dbCurrentSubTab === 'positions') renderDbPositions();
+}
+
+function drawPortfolioChart() {
+  const svg = document.getElementById('db-chart-svg');
+  if (!svg) return;
+  const rect = svg.getBoundingClientRect();
+  const W = rect.width || svg.parentElement?.clientWidth || 800;
+  const H = rect.height || 130;
+
+  if (portfolioHistory.length < 2) {
+    svg.innerHTML = `<line x1="0" y1="${(H/2).toFixed(0)}" x2="${W}" y2="${(H/2).toFixed(0)}" stroke="var(--s3)" stroke-width="1.5" stroke-dasharray="4 4"/>`;
+    return;
+  }
+
+  const pts  = portfolioHistory;
+  const minV = Math.min(...pts.map(p => p.v));
+  const maxV = Math.max(...pts.map(p => p.v));
+  const vRng = maxV - minV || 1;
+  const tRng = pts[pts.length-1].ts - pts[0].ts || 1;
+  const pad  = 10;
+  const toX  = t => ((t - pts[0].ts) / tRng) * W;
+  const toY  = v => H - pad - ((v - minV) / vRng) * (H - pad * 2);
+  const coords = pts.map(p => [toX(p.ts), toY(p.v)]);
+
+  let path = `M ${coords[0][0].toFixed(1)} ${coords[0][1].toFixed(1)}`;
+  for (let i = 1; i < coords.length; i++) {
+    const [x0, y0] = coords[i-1], [x1, y1] = coords[i];
+    const cx = ((x0 + x1) / 2).toFixed(1);
+    path += ` C ${cx} ${y0.toFixed(1)} ${cx} ${y1.toFixed(1)} ${x1.toFixed(1)} ${y1.toFixed(1)}`;
+  }
+  const lx = coords[coords.length-1][0].toFixed(1);
+  const ly = coords[coords.length-1][1].toFixed(1);
+  const fx = coords[0][0].toFixed(1);
+  const isUp = pts[pts.length-1].v >= pts[0].v;
+  const lc = isUp ? '#2dd4a0' : '#f7647a';
+  const g1 = isUp ? 'rgba(45,212,160,0.22)' : 'rgba(247,100,122,0.22)';
+
+  svg.innerHTML = `<defs>
+    <linearGradient id="dbg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${g1}"/>
+      <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+    </linearGradient>
+  </defs>
+  <path d="${path} L ${lx} ${H} L ${fx} ${H} Z" fill="url(#dbg)"/>
+  <path d="${path}" stroke="${lc}" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="${lx}" cy="${ly}" r="3.5" fill="${lc}" opacity="0.9"/>`;
+}
+
+const COIN_COLORS = {
+  BTC:'#f7931a', ETH:'#7c8fff', USDT:'#26a17b', BNB:'#f3ba2f',
+  SOL:'#9945ff', XRP:'#346aa9', ADA:'#0033ad', AVAX:'#e84142',
+  DOT:'#e6007a', DOGE:'#c3a634', USDC:'#2775ca', MATIC:'#8247e5',
+  APT:'#2dd4a0', ARB:'#28a0f0', OP:'#ff0420', SUI:'#6fbcf0',
+  LINK:'#375bd2', UNI:'#ff007a', ATOM:'#2e3148', NEAR:'#a5d6a7',
+  TRX:'#ef0027', LTC:'#bfbbbb', BCH:'#8dc351', ETC:'#328332',
+  PEPE:'#2ecc71', WIF:'#9b59b6', BONK:'#e67e22',
+};
+
+function renderDbAssets() {
+  const el = document.getElementById('db-assets-list');
+  if (!el) return;
+  if (!walletData) { el.innerHTML = '<div class="db-empty">A aguardar dados da Bybit...</div>'; return; }
+
+  const coins = (walletData.coin || [])
+    .filter(c => parseFloat(c.usdValue || 0) >= 0.01)
+    .sort((a, b) => parseFloat(b.usdValue || 0) - parseFloat(a.usdValue || 0));
+
+  if (!coins.length) {
+    el.innerHTML = '<div class="db-empty">Sem ativos na conta Bybit.</div>';
+    return;
+  }
+
+  el.innerHTML = coins.map(c => {
+    const qty    = parseFloat(c.walletBalance || 0);
+    const usdVal = parseFloat(c.usdValue || 0);
+    const unrPnl = parseFloat(c.unrealisedPnl || 0);
+    const price  = qty > 0 ? usdVal / qty : 0;
+    const pnlPct = (usdVal - unrPnl) > 0 ? (unrPnl / (usdVal - unrPnl)) * 100 : 0;
+    const isP = unrPnl > 0, isN = unrPnl < 0;
+    const cc  = COIN_COLORS[c.coin] || '#7b7fa0';
+    const ini = (c.coin || '?')[0];
+    const prStr = price > 0
+      ? '$' + fmt(price, price < 0.001 ? 6 : price < 1 ? 4 : price < 100 ? 3 : price < 10000 ? 1 : 0)
+      : '—';
+    const qStr = qty < 0.0001 ? qty.toFixed(8) : qty < 1 ? qty.toFixed(6) : fmt(qty, qty < 1000 ? 4 : 2);
+    return `<div class="db-asset-row">
+      <div class="db-asset-left">
+        <div class="db-coin-avatar" style="background:${cc}18;border-color:${cc}40"><span style="color:${cc}">${ini}</span></div>
+        <div>
+          <div class="db-asset-sym">${c.coin} <span class="db-asset-qty">${qStr}</span></div>
+          <div class="db-asset-usd">${fmtUsd(usdVal, 2)}</div>
+        </div>
+      </div>
+      <div class="db-asset-pnl">
+        <div style="color:${isP ? 'var(--green)' : isN ? 'var(--red)' : 'var(--faint)'}">
+          ${unrPnl !== 0 ? (isP ? '+' : '') + fmtUsd(unrPnl, 4) : '—'}
+        </div>
+        ${unrPnl !== 0 ? `<div class="db-asset-pct ${isP ? 'db-pct-g' : 'db-pct-r'}">${isP ? '▲' : '▼'} ${Math.abs(pnlPct).toFixed(2)}%</div>` : ''}
+      </div>
+      <div class="db-asset-price">${prStr}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderDbPositions() {
+  const el = document.getElementById('db-pos-list');
+  if (!el) return;
+  if (!positions.length) {
+    el.innerHTML = '<div class="db-empty">Sem posições abertas na Bybit.</div>';
+    return;
+  }
+  el.innerHTML = positions.map(p => {
+    const pnl  = parseFloat(p.unrealisedPnl);
+    const val  = parseFloat(p.positionValue);
+    const lev  = parseFloat(p.leverage);
+    const mark = parseFloat(p.markPrice);
+    const ent  = parseFloat(p.avgPrice);
+    const liq  = parseFloat(p.liqPrice);
+    const marg = val / lev;
+    const roe  = marg > 0 ? (pnl / marg) * 100 : 0;
+    const isLong = p.side === 'Buy';
+    const pnlC = pnl >= 0 ? 'var(--green)' : 'var(--red)';
+    const dLiq = liq > 0 ? Math.abs((liq - mark) / mark) * 100 : 100;
+    const barCol = dLiq < 8 ? 'var(--red)' : dLiq < 20 ? 'var(--orange)' : 'var(--green)';
+    const barW   = Math.max(2, Math.min(97, 100 - dLiq));
+    return `<div class="db-pos-row">
+      <div>
+        <div class="db-pos-sym">${p.symbol}</div>
+        <div class="tag-row" style="margin-top:4px">
+          <span class="tag ${isLong ? 'tag-long' : 'tag-short'}">${isLong ? 'Long' : 'Short'}</span>
+          <span class="tag tag-lev">${lev}×</span>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--faint);margin-bottom:3px">Entrada / Mark</div>
+        <div class="mono" style="font-size:12px">${fmt(ent,2)} <span style="color:var(--faint)">/</span> <span style="color:var(--orange)">${fmt(mark,2)}</span></div>
+        <div style="margin-top:5px"><div class="bar-track"><div class="bar-fill" style="width:${barW}%;background:${barCol}"></div></div></div>
+        <div style="font-size:9px;color:var(--faint);margin-top:2px">Dist. liq. ${fmt(dLiq,1)}%</div>
+      </div>
+      <div class="db-pos-rt" style="color:${pnlC}">
+        <div class="mono" style="font-size:15px;font-weight:700">${roe >= 0 ? '+' : ''}${fmt(roe,2)}%</div>
+        <div class="mono" style="font-size:12px;margin-top:2px">${pnl >= 0 ? '+' : ''}${fmtUsd(pnl,2)}</div>
+        <div style="font-size:9px;color:var(--faint);margin-top:2px">ROE / PnL</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function switchDbTab(tab, btn) {
+  dbCurrentSubTab = tab;
+  document.querySelectorAll('.db-sub-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  document.querySelectorAll('.db-sub-pane').forEach(p => p.classList.remove('active'));
+  const pane = document.getElementById('db-tab-' + tab);
+  if (pane) pane.classList.add('active');
+  if (tab === 'assets')    renderDbAssets();
+  if (tab === 'positions') renderDbPositions();
+}
+
+function setDbRange(btn) {
+  document.querySelectorAll('.db-time-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  drawPortfolioChart();
+}
+
 // ── INIT ──────────────────────────────────────────────────────────────────────
 (async () => {
   await Promise.all([
     fetchMarket(),
     fetchPositions(),
+    fetchWalletBalance(),
     fetchGlobal(),
     fetchFearGreed(),
     fetchLiquidations(),
     fetchMacro(),
     loadNews()
   ]);
-  setInterval(fetchMarket,       5000);
-  setInterval(fetchPositions,   10000);
+  setInterval(fetchMarket,        5000);
+  setInterval(fetchPositions,    10000);
+  setInterval(fetchWalletBalance, 30000);
   setInterval(fetchGlobal,     120000);
   setInterval(fetchFearGreed,  300000);
   setInterval(fetchLiquidations, 30000);
