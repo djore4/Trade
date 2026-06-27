@@ -1555,22 +1555,23 @@ async function loadNews() {
 }
 
 // ── WALLET / DASHBOARD ────────────────────────────────────────────────────────
-function computeAvgPrices(txlog) {
-  // Process oldest-first (API returns newest-first); use AVCO cost-basis
-  const sorted = [...(txlog || [])].reverse();
+// orders: filled spot order history from /v5/order/history
+// Each entry has avgPrice (avg fill price) and cumExecQty (total filled qty)
+function computeAvgPrices(orders) {
+  // Process oldest-first (API returns newest-first); AVCO cost-basis
+  const sorted = [...(orders || [])].reverse();
   const pos = {};
-  sorted.forEach(tx => {
-    if (tx.type !== 'TRADE') return;
-    const base = (tx.symbol || '').replace(/USDT$|USDC$|BUSD$|PERP$|USD$/, '');
-    if (!base || base === tx.symbol) return;
-    const qty   = parseFloat(tx.qty || 0);
-    const price = parseFloat(tx.tradePrice || 0);
+  sorted.forEach(o => {
+    const base = (o.symbol || '').replace(/USDT$|USDC$|BUSD$|PERP$|USD$/, '');
+    if (!base || base === o.symbol) return;
+    const qty   = parseFloat(o.cumExecQty || 0);
+    const price = parseFloat(o.avgPrice   || 0);
     if (!qty || !price) return;
     if (!pos[base]) pos[base] = { cost: 0, qty: 0 };
-    if (tx.side === 'Buy') {
+    if (o.side === 'Buy') {
       pos[base].cost += qty * price;
       pos[base].qty  += qty;
-    } else if (tx.side === 'Sell' && pos[base].qty > 0) {
+    } else if (o.side === 'Sell' && pos[base].qty > 0) {
       const ratio = Math.min(qty / pos[base].qty, 1);
       pos[base].cost *= (1 - ratio);
       pos[base].qty   = Math.max(0, pos[base].qty - qty);
@@ -1590,7 +1591,8 @@ async function fetchWalletBalance() {
     walletData = d?.balance?.result?.list?.[0];
     txlogData  = d?.txlog?.result?.list || [];
     if (!walletData) return;
-    avgPrices = computeAvgPrices(txlogData);
+    // Use filled spot orders (avgPrice per order) for cost basis — much deeper history than tx log
+    avgPrices = computeAvgPrices(d?.spotOrders?.result?.list || []);
     const equity = parseFloat(walletData.totalEquity || 0);
     if (equity > 0) {
       portfolioHistory.push({ ts: Date.now(), v: equity });
