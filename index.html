@@ -369,7 +369,7 @@ html.light .theme-btn .icon-sun  { display: block; }
 .db-pnl-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 4px; }
 .db-pnl-usd { font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 500; }
 .db-pnl-pct { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 5px; }
-.db-chart-wrap { height: 130px; margin: 14px 0 0; position: relative; overflow: hidden; }
+.db-chart-wrap { height: 110px; margin: 14px 0 0; position: relative; overflow: hidden; }
 .db-chart-svg { width: 100%; height: 100%; display: block; }
 .db-time-btns { display: flex; justify-content: center; border-bottom: 1px solid var(--border); }
 .db-time-btn {
@@ -391,8 +391,9 @@ html.light .theme-btn .icon-sun  { display: block; }
 }
 .db-sub-btn.active { color: var(--orange); }
 .db-sub-btn.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: var(--orange); }
+html.light .db-sub-btn { color: var(--dim); }
 .db-sub-pane { display: none; }
-.db-sub-pane.active { display: block; max-height: 55vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.db-sub-pane.active { display: block; }
 .db-assets-toolbar { display: flex; align-items: center; justify-content: flex-end; padding: 6px 14px; border-bottom: 1px solid var(--border); }
 .db-toggle { display: flex; align-items: center; gap: 7px; cursor: pointer; }
 .db-toggle input { display: none; }
@@ -536,12 +537,6 @@ html.light .theme-btn .icon-sun  { display: block; }
     </button>
   </nav>
   <div class="hdr-right">
-    <div class="hdr-pill">
-      <span class="hdr-label">BTC</span>
-      <span id="hdr-price" class="hdr-val mono">—</span>
-      <span id="hdr-chg" class="mono hdr-hide-sm" style="font-size:11px;color:var(--faint)">—</span>
-    </div>
-    <div class="hdr-sep hdr-hide-sm"></div>
     <div class="hdr-pill hdr-hide-sm">
       <span class="hdr-label">Fund</span>
       <span id="hdr-fund" class="hdr-val mono">—</span>
