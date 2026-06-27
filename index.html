@@ -411,6 +411,49 @@ body {
   .db-asset-header, .db-asset-row { grid-template-columns: 1fr 90px 70px; }
 }
 
+/* ─── MOBILE BOTTOM NAV ───────────────────────────── */
+#mnav { display: none; }
+@media (max-width: 768px) {
+  .tab-nav { display: none !important; }
+  #mnav {
+    display: flex;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 58px;
+    background: rgba(8,8,16,0.97);
+    border-top: 1px solid var(--border);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    z-index: 200;
+    align-items: stretch;
+    safe-area-inset-bottom: env(safe-area-inset-bottom);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .tab-pane { padding-bottom: 68px !important; }
+}
+.mnav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border: none;
+  background: transparent;
+  color: var(--faint);
+  font-size: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  cursor: pointer;
+  transition: color .15s;
+  padding: 0 2px;
+  min-width: 0;
+}
+.mnav-btn.active { color: var(--orange); }
+.mnav-btn svg { width: 20px; height: 20px; flex-shrink: 0; }
+.mnav-lbl { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+
 /* ─── RESPONSIVE ──────────────────────────────────── */
 @media (max-width: 900px) {
   .hide-md { display: none !important; }
@@ -430,27 +473,27 @@ body {
 <div id="header">
   <div class="logo"><b>₿</b> Trade Desk</div>
   <nav class="tab-nav">
-    <button class="tab-btn active" onclick="switchTab('dashboard',this)">
+    <button class="tab-btn active" data-tab="dashboard" onclick="switchTab('dashboard',this)">
       <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x=".5" y=".5" width="4.5" height="5" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/><rect x="6" y=".5" width="4.5" height="2.5" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/><rect x="6" y="4" width="4.5" height="6" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/><rect x=".5" y="6.5" width="4.5" height="4" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/></svg>
       Dashboard
     </button>
-    <button class="tab-btn" onclick="switchTab('carteira',this)">
+    <button class="tab-btn" data-tab="carteira" onclick="switchTab('carteira',this)">
       <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x=".5" y=".5" width="4" height="4" rx="1" stroke="currentColor"/><rect x="6.5" y=".5" width="4" height="4" rx="1" stroke="currentColor"/><rect x=".5" y="6.5" width="4" height="4" rx="1" stroke="currentColor"/><rect x="6.5" y="6.5" width="4" height="4" rx="1" stroke="currentColor"/></svg>
       Carteira
     </button>
-    <button class="tab-btn" onclick="switchTab('mercado',this)">
+    <button class="tab-btn" data-tab="mercado" onclick="switchTab('mercado',this)">
       <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><polyline points="1,8.5 3.5,4.5 6.5,6.5 10,1.5" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
       Mercado
     </button>
-    <button class="tab-btn" onclick="switchTab('estrutura',this)">
+    <button class="tab-btn" data-tab="estrutura" onclick="switchTab('estrutura',this)">
       <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4" stroke="currentColor" stroke-width="1.4" fill="none"/><path d="M5.5 1.5 Q5.5 5.5 9.5 5.5" stroke="currentColor" stroke-width="1.4" fill="none"/></svg>
       Estrutura
     </button>
-    <button class="tab-btn" onclick="switchTab('sentimento',this)">
+    <button class="tab-btn" data-tab="sentimento" onclick="switchTab('sentimento',this)">
       <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4" stroke="currentColor" stroke-width="1.4" fill="none"/><path d="M3.5 7s.8.9 2 .9 2-.9 2-.9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" fill="none"/></svg>
       Sentimento
     </button>
-    <button class="tab-btn" onclick="switchTab('noticias',this)">
+    <button class="tab-btn" data-tab="noticias" onclick="switchTab('noticias',this)">
       <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x=".5" y="1.5" width="10" height="8" rx="1.5" stroke="currentColor" stroke-width="1.4" fill="none"/><line x1="3" y1="4.5" x2="8" y2="4.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><line x1="3" y1="7" x2="6.5" y2="7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
       Notícias
     </button>
@@ -532,7 +575,7 @@ body {
 
       <!-- HISTORY -->
       <div id="db-tab-history" class="db-sub-pane">
-        <div class="db-empty">Histórico de transações não disponível.</div>
+        <div id="db-history-list"><div class="db-empty">A carregar histórico...</div></div>
       </div>
 
       <!-- OPEN POSITIONS -->
@@ -880,6 +923,34 @@ body {
 }
 </style>
 
+<!-- ══ MOBILE BOTTOM NAV ═════════════════════════════════ -->
+<nav id="mnav">
+  <button class="mnav-btn active" data-tab="dashboard" onclick="switchTab('dashboard',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+    <span class="mnav-lbl">Home</span>
+  </button>
+  <button class="mnav-btn" data-tab="carteira" onclick="switchTab('carteira',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M16 12a2 2 0 0 1 4 0v2a2 2 0 0 1-4 0v-2z" fill="currentColor" opacity=".2" stroke="none"/><path d="M16 12a2 2 0 0 1 4 0"/></svg>
+    <span class="mnav-lbl">Carteira</span>
+  </button>
+  <button class="mnav-btn" data-tab="mercado" onclick="switchTab('mercado',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 8 12 13 15 21 7"/><line x1="3" y1="21" x2="21" y2="21"/></svg>
+    <span class="mnav-lbl">Mercado</span>
+  </button>
+  <button class="mnav-btn" data-tab="estrutura" onclick="switchTab('estrutura',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 9 9H12V3z" fill="currentColor" opacity=".2" stroke="none"/><path d="M12 3a9 9 0 0 1 9 9H12V3z"/></svg>
+    <span class="mnav-lbl">Estrutura</span>
+  </button>
+  <button class="mnav-btn" data-tab="sentimento" onclick="switchTab('sentimento',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><circle cx="9.5" cy="10" r=".8" fill="currentColor" stroke="none"/><circle cx="14.5" cy="10" r=".8" fill="currentColor" stroke="none"/></svg>
+    <span class="mnav-lbl">Sentimento</span>
+  </button>
+  <button class="mnav-btn" data-tab="noticias" onclick="switchTab('noticias',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="7" y1="9" x2="17" y2="9"/><line x1="7" y1="13" x2="13" y2="13"/></svg>
+    <span class="mnav-lbl">Notícias</span>
+  </button>
+</nav>
+
 <script src="https://s3.tradingview.com/tv.js"></script>
 <script>
 // ── CONFIG ────────────────────────────────────────────────────────────────────
@@ -908,6 +979,7 @@ const SRC_NAME = { ct: 'Cointelegraph', cd: 'CoinDesk', bm: 'Bitcoin Magazine' }
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let positions = [], btcPrev = 0, fundingTimer = null, currentNewsSrc = 'ct';
 let walletData = null, portfolioHistory = [], dbCurrentSubTab = 'assets';
+let txlogData = [], avgPrices = {};
 let tvChart = null, tvDom = null, tvTotal2 = null, tvTotal3 = null;
 let currentIv = '15', posCharts = {};
 
@@ -934,9 +1006,9 @@ const setStyle = (id, prop, val) => { const e = document.getElementById(id); if 
 // ── TABS ──────────────────────────────────────────────────────────────────────
 function switchTab(id, btn) {
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('[data-tab]').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + id).classList.add('active');
-  if (btn) btn.classList.add('active');
+  document.querySelectorAll(`[data-tab="${id}"]`).forEach(b => b.classList.add('active'));
   if (id === 'dashboard')  { setTimeout(drawPortfolioChart, 60); renderDbAssets(); renderDbPositions(); }
   if (id === 'mercado')    { initMainChart(); renderPosCharts(); }
   if (id === 'estrutura')  initStructureCharts();
@@ -1484,12 +1556,34 @@ async function loadNews() {
 }
 
 // ── WALLET / DASHBOARD ────────────────────────────────────────────────────────
+function computeAvgPrices(txlog) {
+  const buys = {};
+  (txlog || []).forEach(tx => {
+    if (tx.type !== 'TRADE' || tx.side !== 'Buy') return;
+    const base = tx.symbol.replace(/USDT$|USDC$|BUSD$|PERP$|USD$/, '');
+    if (!base || base === tx.symbol) return;
+    const qty   = parseFloat(tx.qty || 0);
+    const price = parseFloat(tx.tradePrice || 0);
+    if (!qty || !price) return;
+    if (!buys[base]) buys[base] = { cost: 0, qty: 0 };
+    buys[base].cost += qty * price;
+    buys[base].qty  += qty;
+  });
+  const result = {};
+  Object.entries(buys).forEach(([coin, d]) => {
+    if (d.qty > 0) result[coin] = d.cost / d.qty;
+  });
+  return result;
+}
+
 async function fetchWalletBalance() {
   try {
     const r = await fetch(WALLET_URL, { headers: { Authorization: `Bearer ${SUPABASE_KEY}` } });
     const d = await r.json();
-    walletData = d?.result?.list?.[0];
+    walletData = d?.balance?.result?.list?.[0];
+    txlogData  = d?.txlog?.result?.list || [];
     if (!walletData) return;
+    avgPrices = computeAvgPrices(txlogData);
     const equity = parseFloat(walletData.totalEquity || 0);
     if (equity > 0) {
       portfolioHistory.push({ ts: Date.now(), v: equity });
@@ -1524,6 +1618,7 @@ function renderDashboard() {
 
   drawPortfolioChart();
   if (dbCurrentSubTab === 'assets')    renderDbAssets();
+  if (dbCurrentSubTab === 'history')   renderDbHistory();
   if (dbCurrentSubTab === 'positions') renderDbPositions();
 }
 
@@ -1600,10 +1695,15 @@ function renderDbAssets() {
   el.innerHTML = coins.map(c => {
     const qty    = parseFloat(c.walletBalance || 0);
     const usdVal = parseFloat(c.usdValue || 0);
-    const unrPnl = parseFloat(c.unrealisedPnl || 0);
     const price  = qty > 0 ? usdVal / qty : 0;
-    const pnlPct = (usdVal - unrPnl) > 0 ? (unrPnl / (usdVal - unrPnl)) * 100 : 0;
-    const isP = unrPnl > 0, isN = unrPnl < 0;
+    let unrPnl   = parseFloat(c.unrealisedPnl || 0);
+    // Compute PnL from avg buy price when API doesn't provide it
+    if (unrPnl === 0 && avgPrices[c.coin] && qty > 0 && price > 0) {
+      unrPnl = (price - avgPrices[c.coin]) * qty;
+    }
+    const cost    = usdVal - unrPnl;
+    const pnlPct  = cost > 0 ? (unrPnl / cost) * 100 : 0;
+    const isP = unrPnl > 0.001, isN = unrPnl < -0.001;
     const cc  = COIN_COLORS[c.coin] || '#7b7fa0';
     const ini = (c.coin || '?')[0];
     const prStr = price > 0
@@ -1673,6 +1773,49 @@ function renderDbPositions() {
   }).join('');
 }
 
+function renderDbHistory() {
+  const el = document.getElementById('db-history-list');
+  if (!el) return;
+  if (!txlogData.length) {
+    el.innerHTML = '<div class="db-empty">Sem histórico disponível. Aguardar próxima atualização.</div>';
+    return;
+  }
+  const trades = txlogData.filter(t => t.type === 'TRADE').slice(0, 60);
+  if (!trades.length) {
+    el.innerHTML = '<div class="db-empty">Sem trades recentes no histórico.</div>';
+    return;
+  }
+  el.innerHTML = trades.map(tx => {
+    const isBuy  = tx.side === 'Buy';
+    const qty    = parseFloat(tx.qty || 0);
+    const price  = parseFloat(tx.tradePrice || 0);
+    const cash   = parseFloat(tx.cashFlow || tx.change || 0);
+    const fee    = parseFloat(tx.fee || 0);
+    const ts     = parseInt(tx.transactionTime || 0);
+    const catTag = tx.category === 'spot' ? '' : `<span class="tag tag-inv" style="font-size:8px">${tx.category}</span>`;
+    return `<div style="display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border)">
+      <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start">
+        <span class="tag ${isBuy ? 'tag-long' : 'tag-short'}">${isBuy ? 'Compra' : 'Venda'}</span>
+        ${catTag}
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--text)">${tx.symbol || '—'}</div>
+        <div style="font-size:10px;color:var(--faint);margin-top:2px;font-family:'JetBrains Mono',monospace">
+          ${qty > 0 ? (qty < 0.001 ? qty.toFixed(8) : fmt(qty, 6)) : '—'}
+          ${price > 0 ? ' @ $' + fmt(price, price < 1 ? 6 : price < 100 ? 3 : 1) : ''}
+          ${fee !== 0 ? ` · taxa $${Math.abs(fee).toFixed(4)}` : ''}
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div class="mono" style="font-size:12px;font-weight:600;color:${cash >= 0 ? 'var(--green)' : 'var(--red)'}">
+          ${cash >= 0 ? '+' : ''}$${Math.abs(cash).toFixed(2)}
+        </div>
+        <div style="font-size:9px;color:var(--faint);margin-top:2px">${ts > 0 ? timeAgo(ts) : '—'}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
 function switchDbTab(tab, btn) {
   dbCurrentSubTab = tab;
   document.querySelectorAll('.db-sub-btn').forEach(b => b.classList.remove('active'));
@@ -1681,6 +1824,7 @@ function switchDbTab(tab, btn) {
   const pane = document.getElementById('db-tab-' + tab);
   if (pane) pane.classList.add('active');
   if (tab === 'assets')    renderDbAssets();
+  if (tab === 'history')   renderDbHistory();
   if (tab === 'positions') renderDbPositions();
 }
 
