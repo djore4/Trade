@@ -434,7 +434,8 @@ html.light .mnav-btn.active { color: var(--orange); }
 .db-empty { padding: 32px 16px; text-align: center; color: var(--faint); font-size: 12px; }
 .db-metrics-bar { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 14px; }
 .db-metric { background: var(--s1); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; text-align: center; }
-.db-metric-lbl { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--faint); margin-bottom: 5px; }
+.db-metric-lbl { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--faint); margin-bottom: 3px; }
+.db-fg-gauge-wrap { margin: 0 -3px; overflow: visible; }
 .db-metric-num { font-size: 17px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); line-height: 1.1; }
 .db-metric-sub { font-size: 9px; color: var(--dim); margin-top: 3px; }
 @media (max-width: 480px) { .db-metric-num { font-size: 14px; } }
@@ -562,9 +563,21 @@ html.light .mnav-btn.active { color: var(--orange); }
 
     <!-- Metrics bar: Fear & Greed · BTC.D · BTC price -->
     <div class="db-metrics-bar">
-      <div class="db-metric">
+      <div class="db-metric" style="padding:8px 10px 6px">
         <div class="db-metric-lbl">Fear &amp; Greed</div>
-        <div id="db-fg-val" class="db-metric-num">—</div>
+        <div class="db-fg-gauge-wrap">
+          <svg id="db-fg-svg" viewBox="0 0 80 46" width="100%" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4,42 A36,36 0 0,1 10.88,20.84 L20.58,27.89 A24,24 0 0,0 16,42 Z" fill="#e53935" stroke="var(--s1)" stroke-width="1.5"/>
+            <path d="M10.88,20.84 A36,36 0 0,1 28.88,7.76 L32.58,19.18 A24,24 0 0,0 20.58,27.89 Z" fill="#f57c00" stroke="var(--s1)" stroke-width="1.5"/>
+            <path d="M28.88,7.76 A36,36 0 0,1 51.13,7.76 L47.42,19.18 A24,24 0 0,0 32.58,19.18 Z" fill="#fdd835" stroke="var(--s1)" stroke-width="1.5"/>
+            <path d="M51.13,7.76 A36,36 0 0,1 69.13,20.84 L59.42,27.89 A24,24 0 0,0 47.42,19.18 Z" fill="#9ccc65" stroke="var(--s1)" stroke-width="1.5"/>
+            <path d="M69.13,20.84 A36,36 0 0,1 76,42 L64,42 A24,24 0 0,0 59.42,27.89 Z" fill="#26a65b" stroke="var(--s1)" stroke-width="1.5"/>
+            <circle cx="40" cy="42" r="22" fill="var(--s1)"/>
+            <line id="db-fg-needle" x1="40" y1="42" x2="7" y2="42" stroke="var(--faint)" stroke-width="2.5" stroke-linecap="round" style="transform-origin:40px 42px;transition:transform .7s ease"/>
+            <text id="db-fg-num" x="40" y="37" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="12" font-weight="700" fill="var(--faint)">—</text>
+            <circle cx="40" cy="42" r="3.5" fill="var(--dim)"/>
+          </svg>
+        </div>
         <div id="db-fg-lbl" class="db-metric-sub">—</div>
       </div>
       <div class="db-metric">
@@ -1283,9 +1296,11 @@ async function fetchFearGreed() {
     if (fgEl) { fgEl.textContent = v.toString(); fgEl.style.color = color; }
     set('fg-text', label);
     set('fg-label', label);
-    // Dashboard F&G chip
-    const dbFg = document.getElementById('db-fg-val');
-    if (dbFg) { dbFg.textContent = v.toString(); dbFg.style.color = color; }
+    // Dashboard F&G gauge
+    const needleEl = document.getElementById('db-fg-needle');
+    if (needleEl) { needleEl.style.transform = `rotate(${v * 1.8}deg)`; needleEl.setAttribute('stroke', color); }
+    const numEl = document.getElementById('db-fg-num');
+    if (numEl) { numEl.textContent = v; numEl.setAttribute('fill', color); }
     set('db-fg-lbl', label);
 
     const ctxFg = document.getElementById('ctx-fg');
