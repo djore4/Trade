@@ -408,8 +408,9 @@ html.light .mnav-btn.active { color: var(--orange); }
   display: grid; grid-template-columns: 1fr 110px 90px;
   padding: 7px 16px; font-size: 9px; font-weight: 600;
   text-transform: uppercase; letter-spacing: .08em; color: var(--faint);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--border); white-space: nowrap;
 }
+.db-asset-header > span { overflow: hidden; text-overflow: ellipsis; }
 .db-asset-row {
   display: grid; grid-template-columns: 1fr 110px 90px;
   align-items: center; padding: 11px 16px;
@@ -433,9 +434,9 @@ html.light .mnav-btn.active { color: var(--orange); }
 .db-asset-price { font-size: 12px; font-weight: 500; color: var(--text); text-align: right; font-family: 'JetBrains Mono', monospace; }
 .db-empty { padding: 32px 16px; text-align: center; color: var(--faint); font-size: 12px; }
 .db-metrics-bar { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 14px; }
-.db-metric { background: var(--s1); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; text-align: center; }
+.db-metric { background: var(--s1); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .db-metric-lbl { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--faint); margin-bottom: 3px; }
-.db-fg-gauge-wrap { margin: 0 -3px; overflow: visible; }
+.db-fg-gauge-wrap { margin: 2px auto 0; max-width: 76px; overflow: visible; }
 .db-metric-num { font-size: 17px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); line-height: 1.1; }
 .db-metric-sub { font-size: 9px; color: var(--dim); margin-top: 3px; }
 @media (max-width: 480px) { .db-metric-num { font-size: 14px; } }
@@ -450,7 +451,8 @@ html.light .mnav-btn.active { color: var(--orange); }
 @media (max-width: 480px) {
   .db-total-value { font-size: 26px; }
   .db-time-btn { padding: 6px 7px; font-size: 10px; }
-  .db-asset-header, .db-asset-row { grid-template-columns: 1fr 90px 70px; }
+  .db-asset-header, .db-asset-row { grid-template-columns: 1fr 100px 80px; }
+  .db-metric-num { font-size: 14px; }
 }
 
 /* ─── MOBILE BOTTOM NAV ───────────────────────────── */
@@ -639,8 +641,8 @@ html.light .mnav-btn.active { color: var(--orange); }
         </div>
         <div class="db-asset-header">
           <span>Ativo</span>
-          <span style="text-align:right">PnL Não Realizado</span>
-          <span style="text-align:right">Preço / Médio</span>
+          <span style="text-align:right">PnL N. Real.</span>
+          <span style="text-align:right">Preço / m$</span>
         </div>
         <div id="db-assets-list"><div class="db-empty">A carregar ativos...</div></div>
       </div>
@@ -1730,9 +1732,12 @@ function renderDashboard() {
 function drawPortfolioChart() {
   const svg = document.getElementById('db-chart-svg');
   if (!svg) return;
-  const rect = svg.getBoundingClientRect();
-  const W = rect.width || svg.parentElement?.clientWidth || 800;
-  const H = rect.height || 130;
+
+  // Fixed internal coordinate space — viewBox scales it to the CSS size so it
+  // renders correctly regardless of when this function is called or the layout width.
+  const W = 800, H = 110;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('preserveAspectRatio', 'none');
 
   // Filter by selected time range (in-session data only)
   const activeRangeBtn = document.querySelector('.db-time-btn.active');
@@ -1742,7 +1747,7 @@ function drawPortfolioChart() {
   const pts = since > 0 ? portfolioHistory.filter(p => p.ts >= since) : [...portfolioHistory];
 
   if (pts.length < 2) {
-    svg.innerHTML = `<line x1="0" y1="${(H/2).toFixed(0)}" x2="${W}" y2="${(H/2).toFixed(0)}" stroke="var(--s3)" stroke-width="1.5" stroke-dasharray="4 4"/>`;
+    svg.innerHTML = `<line x1="0" y1="${H/2}" x2="${W}" y2="${H/2}" stroke="var(--s3)" stroke-width="2" stroke-dasharray="6 6"/>`;
     return;
   }
   const minV = Math.min(...pts.map(p => p.v));
@@ -1775,7 +1780,7 @@ function drawPortfolioChart() {
   </defs>
   <path d="${path} L ${lx} ${H} L ${fx} ${H} Z" fill="url(#dbg)"/>
   <path d="${path}" stroke="${lc}" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="${lx}" cy="${ly}" r="3.5" fill="${lc}" opacity="0.9"/>`;
+  <circle cx="${lx}" cy="${ly}" r="4" fill="${lc}" opacity="0.9"/>`;
 }
 
 const COIN_COLORS = {
