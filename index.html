@@ -225,6 +225,13 @@ html.light .theme-btn .icon-sun  { display: block; }
 .bar-track { height: 3px; background: var(--s3); border-radius: 2px; overflow: hidden; }
 .bar-fill  { height: 100%; border-radius: 2px; transition: width .7s ease; }
 
+.pos-tp-block { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); }
+.pos-tp-toprow { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.pos-tp-profits { display: flex; gap: 1px; background: var(--border); border-radius: 6px; overflow: hidden; margin-top: 8px; }
+.pos-tp-profit-cell { flex: 1; background: var(--s1); padding: 6px 8px; text-align: center; }
+.pos-tp-profit-lbl { font-size: 8.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); margin-bottom: 3px; }
+.pos-tp-profit-val { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; font-weight: 700; }
+
 /* ─── ORDER BOOK SIDE BY SIDE ─────────────────────── */
 .ob-side-grid {
   display: grid;
@@ -1093,6 +1100,8 @@ let positions = [], btcPrev = 0, fundingTimer = null, currentNewsSrc = 'ct';
 let walletData = null, portfolioHistory = [], dbCurrentSubTab = 'assets';
 let exitTargets = {}; try { exitTargets = JSON.parse(localStorage.getItem('exitTargets') || '{}'); } catch(e) { exitTargets = {}; }
 let exitCoinData = {};
+let posExitTargets = {}; try { posExitTargets = JSON.parse(localStorage.getItem('posExitTargets') || '{}'); } catch(e) { posExitTargets = {}; }
+let posTpData = {};
 let txlogData = [], avgPrices = {}, dbFilterSmall = false;
 let tvChart = null, tvDom = null, tvTotal2 = null, tvTotal3 = null;
 let currentIv = '15', posCharts = {};
@@ -1423,10 +1432,34 @@ function renderPortfolio() {
 
   if (!positions.length) {
     container.innerHTML = '<div style="color:var(--faint);font-size:12px;padding:24px 0">Sem posições abertas na Bybit.</div>';
+    posTpData = {};
     return;
   }
 
+  // Refresh per-position data used by the take-profit calculator
+  posTpData = {};
+  positions.forEach(p => {
+    const isInv = p.symbol.includes('USD') && !p.symbol.endsWith('USDT');
+    posTpData[posKeyOf(p)] = {
+      isLong: p.side === 'Buy',
+      isInv,
+      coin: isInv ? p.symbol.replace(/USD$/, '') : 'USDT',
+      entry: parseFloat(p.avgPrice),
+      size: parseFloat(p.size)
+    };
+  });
+
+  const newPosKey = positions.map(posKeyOf).join(',');
+  if (container.dataset.posKey === newPosKey) {
+    // Same set of open positions — only refresh computed numbers, never rebuild
+    // the take-profit inputs, so a user typing a target doesn't lose focus/value.
+    positions.forEach(p => updatePosCardDynamic(p));
+    return;
+  }
+  container.dataset.posKey = newPosKey;
+
   container.innerHTML = positions.map(p => {
+    const posKey = posKeyOf(p);
     const pnl  = parseFloat(p.unrealisedPnl);
     const val  = parseFloat(p.positionValue);
     const lev  = parseFloat(p.leverage);
@@ -1445,6 +1478,7 @@ function renderPortfolio() {
     const pnlC   = pnl >= 0 ? 'var(--green)' : 'var(--red)';
     const roeC   = roe >= 0 ? 'var(--green)' : 'var(--red)';
     const tpProg = tp > 0 ? Math.min(97, Math.max(2, (Math.abs(mark - ent) / Math.abs(tp - ent)) * 100)) : 0;
+    const savedTarget = posExitTargets[posKey];
 
     return `<div class="pos-card">
       <div class="pos-accent ${isLong ? 'pa-long' : 'pa-short'}"></div>
@@ -1458,15 +1492,15 @@ function renderPortfolio() {
           </div>
         </div>
         <div class="pos-pnl-block">
-          <div class="pos-roe" style="color:${roeC}">${roe >= 0 ? '+' : ''}${fmt(roe, 2)}%</div>
-          <div class="pos-usd" style="color:${pnlC}">${pnl >= 0 ? '+' : ''}${fmtUsd(pnl, 2)}</div>
+          <div class="pos-roe" id="pos-roe-${posKey}" style="color:${roeC}">${roe >= 0 ? '+' : ''}${fmt(roe, 2)}%</div>
+          <div class="pos-usd" id="pos-usd-${posKey}" style="color:${pnlC}">${pnl >= 0 ? '+' : ''}${fmtUsd(pnl, 2)}</div>
           <div class="pos-rlbl">ROE / PnL</div>
         </div>
       </div>
       <div class="pos-grid" style="grid-template-columns:repeat(3,1fr)">
         <div class="pos-field"><div class="pf-label">Entrada</div><div class="pf-val">${fmt(ent, 2)}</div></div>
-        <div class="pos-field"><div class="pf-label">Mark</div><div class="pf-val" style="color:var(--orange)">${fmt(mark, 2)}</div></div>
-        <div class="pos-field"><div class="pf-label">Liquidação</div><div class="pf-val ${dLiq < 8 ? 'blink' : ''}" style="color:var(--red)">${liq > 0 ? fmt(liq, 2) : '—'}</div></div>
+        <div class="pos-field"><div class="pf-label">Mark</div><div class="pf-val" id="pf-mark-${posKey}" style="color:var(--orange)">${fmt(mark, 2)}</div></div>
+        <div class="pos-field"><div class="pf-label">Liquidação</div><div class="pf-val ${dLiq < 8 ? 'blink' : ''}" id="pf-liq-${posKey}" style="color:var(--red)">${liq > 0 ? fmt(liq, 2) : '—'}</div></div>
         <div class="pos-field"><div class="pf-label">Tamanho</div><div class="pf-val">${fmtUsd(val)}</div></div>
         <div class="pos-field"><div class="pf-label">Margem</div><div class="pf-val">${fmtUsd(marg, 2)}</div></div>
         <div class="pos-field"><div class="pf-label">TP / SL</div><div class="pf-val">
@@ -1478,18 +1512,128 @@ function renderPortfolio() {
       <div class="pos-footer">
         <div class="dist-row">
           <span class="dist-lbl">Dist. à liquidação</span>
-          <span class="dist-val ${dLiq < 8 ? 'blink' : ''}" style="color:${barCol}">${fmt(dLiq, 1)}%</span>
+          <span class="dist-val ${dLiq < 8 ? 'blink' : ''}" id="dist-val-${posKey}" style="color:${barCol}">${fmt(dLiq, 1)}%</span>
         </div>
-        <div class="bar-track"><div class="bar-fill" style="width:${barW}%;background:${barCol}"></div></div>
-        ${tp > 0 ? `
-        <div class="dist-row" style="margin-top:8px">
-          <span class="dist-lbl">Progresso para TP (${fmt(tp, 0)})</span>
-          <span class="dist-val" style="color:var(--green)">${fmt(tpProg, 0)}%</span>
+        <div class="bar-track"><div class="bar-fill" id="bar-fill-${posKey}" style="width:${barW}%;background:${barCol}"></div></div>
+        <div class="dist-row" id="tp-prog-row-${posKey}" style="margin-top:8px;${tp > 0 ? '' : 'display:none'}">
+          <span class="dist-lbl">Progresso para TP (<span id="tp-prog-lbl-${posKey}">${fmt(tp, 0)}</span>)</span>
+          <span class="dist-val" id="tp-prog-val-${posKey}" style="color:var(--green)">${fmt(tpProg, 0)}%</span>
         </div>
-        <div class="bar-track"><div class="bar-fill" style="width:${tpProg}%;background:var(--green)"></div></div>` : ''}
+        <div class="bar-track" id="tp-prog-track-${posKey}" style="${tp > 0 ? '' : 'display:none'}"><div class="bar-fill" id="tp-prog-fill-${posKey}" style="width:${tpProg}%;background:var(--green)"></div></div>
+        <div class="pos-tp-block">
+          <div class="pos-tp-toprow">
+            <span class="exit-input-lbl">Meu Take Profit</span>
+            <div class="exit-input-group">
+              <span class="exit-input-prefix">$</span>
+              <input type="number" inputmode="decimal" step="any" min="0" class="exit-input" id="pos-tp-input-${posKey}" placeholder="0.00" value="${savedTarget != null ? savedTarget : ''}" oninput="onPosTpInput('${posKey}', this.value)">
+            </div>
+          </div>
+          <div class="pos-tp-profits" id="pos-tp-result-${posKey}"></div>
+        </div>
       </div>
     </div>`;
   }).join('');
+
+  positions.forEach(p => updatePosTpResult(posKeyOf(p)));
+}
+
+function posKeyOf(p) { return `${p.symbol}_${p.side}`; }
+
+function savePosExitTargets() {
+  try { localStorage.setItem('posExitTargets', JSON.stringify(posExitTargets)); } catch(e) {}
+}
+
+function updatePosTpResult(posKey) {
+  const d = posTpData[posKey];
+  const resEl = document.getElementById(`pos-tp-result-${posKey}`);
+  if (!d || !resEl) return;
+  const target = posExitTargets[posKey];
+  if (target && target > 0 && d.entry > 0) {
+    const dir = d.isLong ? 1 : -1;
+    let coinProfit, usdProfit;
+    if (d.isInv) {
+      coinProfit = dir * d.size * (1 / d.entry - 1 / target);
+      usdProfit  = coinProfit * target;
+    } else {
+      coinProfit = dir * d.size * (target - d.entry);
+      usdProfit  = coinProfit;
+    }
+    const col = coinProfit >= 0 ? 'var(--green)' : 'var(--red)';
+    const coinDec = d.isInv ? 6 : 4;
+    resEl.innerHTML = `
+      <div class="pos-tp-profit-cell">
+        <div class="pos-tp-profit-lbl">Lucro (${d.coin})</div>
+        <div class="pos-tp-profit-val" style="color:${col}">${coinProfit >= 0 ? '+' : ''}${fmt(coinProfit, coinDec)}</div>
+      </div>
+      <div class="pos-tp-profit-cell">
+        <div class="pos-tp-profit-lbl">Lucro (USD)</div>
+        <div class="pos-tp-profit-val" style="color:${col}">${usdProfit >= 0 ? '+' : ''}${fmtUsd(usdProfit, 2)}</div>
+      </div>`;
+  } else {
+    resEl.innerHTML = `
+      <div class="pos-tp-profit-cell"><div class="pos-tp-profit-lbl">Lucro (${d.coin})</div><div class="pos-tp-profit-val" style="color:var(--faint)">—</div></div>
+      <div class="pos-tp-profit-cell"><div class="pos-tp-profit-lbl">Lucro (USD)</div><div class="pos-tp-profit-val" style="color:var(--faint)">Define um alvo</div></div>`;
+  }
+}
+
+function onPosTpInput(posKey, val) {
+  const num = parseFloat((val || '').replace(',', '.'));
+  if (val === '' || isNaN(num) || num <= 0) delete posExitTargets[posKey];
+  else posExitTargets[posKey] = num;
+  savePosExitTargets();
+  updatePosTpResult(posKey);
+}
+
+function updatePosCardDynamic(p) {
+  const posKey = posKeyOf(p);
+  const pnl  = parseFloat(p.unrealisedPnl);
+  const val  = parseFloat(p.positionValue);
+  const lev  = parseFloat(p.leverage);
+  const mark = parseFloat(p.markPrice);
+  const ent  = parseFloat(p.avgPrice);
+  const liq  = parseFloat(p.liqPrice);
+  const tp   = parseFloat(p.takeProfit);
+  const marg = val / lev;
+  const roe  = marg > 0 ? (pnl / marg) * 100 : 0;
+  const dLiq = liq > 0 ? Math.abs((liq - mark) / mark) * 100 : 100;
+  const barW   = Math.max(2, Math.min(97, 100 - dLiq));
+  const barCol = dLiq < 8 ? 'var(--red)' : dLiq < 20 ? 'var(--orange)' : 'var(--green)';
+  const pnlC   = pnl >= 0 ? 'var(--green)' : 'var(--red)';
+  const roeC   = roe >= 0 ? 'var(--green)' : 'var(--red)';
+  const tpProg = tp > 0 ? Math.min(97, Math.max(2, (Math.abs(mark - ent) / Math.abs(tp - ent)) * 100)) : 0;
+
+  const roeEl = document.getElementById(`pos-roe-${posKey}`);
+  if (roeEl) { roeEl.textContent = `${roe >= 0 ? '+' : ''}${fmt(roe, 2)}%`; roeEl.style.color = roeC; }
+  const usdEl = document.getElementById(`pos-usd-${posKey}`);
+  if (usdEl) { usdEl.textContent = `${pnl >= 0 ? '+' : ''}${fmtUsd(pnl, 2)}`; usdEl.style.color = pnlC; }
+  const markEl = document.getElementById(`pf-mark-${posKey}`);
+  if (markEl) markEl.textContent = fmt(mark, 2);
+  const liqEl = document.getElementById(`pf-liq-${posKey}`);
+  if (liqEl) { liqEl.textContent = liq > 0 ? fmt(liq, 2) : '—'; liqEl.classList.toggle('blink', dLiq < 8); }
+  const distEl = document.getElementById(`dist-val-${posKey}`);
+  if (distEl) { distEl.textContent = `${fmt(dLiq, 1)}%`; distEl.style.color = barCol; distEl.classList.toggle('blink', dLiq < 8); }
+  const barEl = document.getElementById(`bar-fill-${posKey}`);
+  if (barEl) { barEl.style.width = `${barW}%`; barEl.style.background = barCol; }
+
+  const tpRow   = document.getElementById(`tp-prog-row-${posKey}`);
+  const tpTrack = document.getElementById(`tp-prog-track-${posKey}`);
+  if (tpRow && tpTrack) {
+    if (tp > 0) {
+      tpRow.style.display = '';
+      tpTrack.style.display = '';
+      const tpValEl = document.getElementById(`tp-prog-val-${posKey}`);
+      if (tpValEl) tpValEl.textContent = `${fmt(tpProg, 0)}%`;
+      const tpFillEl = document.getElementById(`tp-prog-fill-${posKey}`);
+      if (tpFillEl) tpFillEl.style.width = `${tpProg}%`;
+      const tpLblEl = document.getElementById(`tp-prog-lbl-${posKey}`);
+      if (tpLblEl) tpLblEl.textContent = fmt(tp, 0);
+    } else {
+      tpRow.style.display = 'none';
+      tpTrack.style.display = 'none';
+    }
+  }
+
+  updatePosTpResult(posKey);
 }
 
 // ── POSITION CHARTS (Mercado tab) ─────────────────────────────────────────────
