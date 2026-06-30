@@ -455,6 +455,28 @@ html.light .mnav-btn.active { color: var(--orange); }
   .db-metric-num { font-size: 14px; }
 }
 
+/* ─── EXIT STRATEGY ───────────────────────────────── */
+.exit-summary { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; background: var(--border); border-bottom: 1px solid var(--border); }
+.exit-summary-cell { background: var(--s1); padding: 12px 10px; text-align: center; }
+.exit-summary-lbl { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--faint); margin-bottom: 5px; }
+.exit-summary-val { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700; color: var(--text); }
+@media (max-width: 480px) { .exit-summary-val { font-size: 12px; } }
+.exit-list { padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.exit-card { background: var(--s2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+.exit-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.exit-card-left { display: flex; align-items: center; gap: 11px; }
+.exit-card-result { text-align: right; flex-shrink: 0; }
+.exit-result-pct { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700; line-height: 1.2; }
+.exit-result-usd { font-family: 'JetBrains Mono', monospace; font-size: 11px; margin-top: 2px; }
+.exit-card-input-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 11px; padding-top: 11px; border-top: 1px solid var(--border); }
+.exit-input-lbl { font-size: 10px; font-weight: 500; color: var(--dim); }
+.exit-input-group { display: flex; align-items: center; gap: 4px; background: var(--s1); border: 1px solid var(--border2); border-radius: 6px; padding: 4px 8px; }
+.exit-input-prefix { font-size: 12px; color: var(--faint); font-family: 'JetBrains Mono', monospace; }
+.exit-input { width: 110px; border: none; background: transparent; outline: none; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 13px; text-align: right; }
+.exit-input::-webkit-outer-spin-button, .exit-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.exit-input[type=number] { -moz-appearance: textfield; }
+.exit-input:focus { color: var(--orange); }
+
 /* ─── MOBILE BOTTOM NAV ───────────────────────────── */
 #mnav { display: none; }
 @media (max-width: 768px) {
@@ -628,6 +650,7 @@ html.light .mnav-btn.active { color: var(--orange); }
         <button class="db-sub-btn active" onclick="switchDbTab('assets',this)">Ativos</button>
         <button class="db-sub-btn" onclick="switchDbTab('history',this)">Histórico</button>
         <button class="db-sub-btn" onclick="switchDbTab('positions',this)">Posições Abertas</button>
+        <button class="db-sub-btn" onclick="switchDbTab('exit',this)">Saída</button>
       </div>
 
       <!-- ASSETS -->
@@ -655,6 +678,25 @@ html.light .mnav-btn.active { color: var(--orange); }
       <!-- OPEN POSITIONS -->
       <div id="db-tab-positions" class="db-sub-pane">
         <div id="db-pos-list"><div class="db-empty">A carregar posições...</div></div>
+      </div>
+
+      <!-- EXIT STRATEGY -->
+      <div id="db-tab-exit" class="db-sub-pane">
+        <div class="exit-summary">
+          <div class="exit-summary-cell">
+            <div class="exit-summary-lbl">Valor Atual</div>
+            <div id="exit-sum-cur" class="exit-summary-val">—</div>
+          </div>
+          <div class="exit-summary-cell">
+            <div class="exit-summary-lbl">Valor Potencial</div>
+            <div id="exit-sum-pot" class="exit-summary-val">—</div>
+          </div>
+          <div class="exit-summary-cell">
+            <div class="exit-summary-lbl">Retorno Potencial</div>
+            <div id="exit-sum-diff" class="exit-summary-val">—</div>
+          </div>
+        </div>
+        <div id="db-exit-list" class="exit-list"><div class="db-empty">A aguardar dados da Bybit...</div></div>
       </div>
 
     </div><!-- /card -->
@@ -1049,6 +1091,8 @@ const SRC_NAME = { ct: 'Cointelegraph', cd: 'CoinDesk', bm: 'Bitcoin Magazine' }
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let positions = [], btcPrev = 0, fundingTimer = null, currentNewsSrc = 'ct';
 let walletData = null, portfolioHistory = [], dbCurrentSubTab = 'assets';
+let exitTargets = {}; try { exitTargets = JSON.parse(localStorage.getItem('exitTargets') || '{}'); } catch(e) { exitTargets = {}; }
+let exitCoinData = {};
 let txlogData = [], avgPrices = {}, dbFilterSmall = false;
 let tvChart = null, tvDom = null, tvTotal2 = null, tvTotal3 = null;
 let currentIv = '15', posCharts = {};
@@ -1727,6 +1771,7 @@ function renderDashboard() {
   if (dbCurrentSubTab === 'assets')    renderDbAssets();
   if (dbCurrentSubTab === 'history')   renderDbHistory();
   if (dbCurrentSubTab === 'positions') renderDbPositions();
+  if (dbCurrentSubTab === 'exit')      renderDbExitStrategy();
 }
 
 function drawPortfolioChart() {
@@ -1897,6 +1942,133 @@ function renderDbPositions() {
   }).join('');
 }
 
+// ── EXIT STRATEGY ─────────────────────────────────────────────────────────────
+function saveExitTargets() {
+  try { localStorage.setItem('exitTargets', JSON.stringify(exitTargets)); } catch(e) {}
+}
+
+function exitRowHtml(c) {
+  const coin = c.coin;
+  const cc   = COIN_COLORS[coin] || '#7b7fa0';
+  const ini  = (coin || '?')[0];
+  const qty  = parseFloat(c.walletBalance || 0);
+  const qStr = qty < 0.0001 ? qty.toFixed(8) : qty < 1 ? qty.toFixed(6) : fmt(qty, qty < 1000 ? 4 : 2);
+  const saved = exitTargets[coin];
+  return `<div class="exit-card" id="exit-row-${coin}">
+    <div class="exit-card-top">
+      <div class="exit-card-left">
+        <div class="db-coin-avatar" style="background:${cc}18;border-color:${cc}40">
+          <img src="https://assets.coincap.io/assets/icons/${coin.toLowerCase()}@2x.png" width="24" height="24" style="border-radius:50%;object-fit:cover" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span style="display:none;color:${cc}">${ini}</span>
+        </div>
+        <div>
+          <div class="db-asset-sym">${coin} <span class="db-asset-qty">${qStr}</span></div>
+          <div class="db-asset-usd" id="exit-cur-${coin}">—</div>
+        </div>
+      </div>
+      <div class="exit-card-result" id="exit-result-${coin}">
+        <div class="exit-result-pct" style="color:var(--faint)">—</div>
+        <div class="exit-result-usd" style="color:var(--faint)">Define um alvo</div>
+      </div>
+    </div>
+    <div class="exit-card-input-row">
+      <span class="exit-input-lbl">Preço de saída</span>
+      <div class="exit-input-group">
+        <span class="exit-input-prefix">$</span>
+        <input type="number" inputmode="decimal" step="any" min="0" class="exit-input" id="exit-input-${coin}" placeholder="0.00" value="${saved != null ? saved : ''}" oninput="onExitInput('${coin}', this.value)">
+      </div>
+    </div>
+  </div>`;
+}
+
+function updateExitRow(coin) {
+  const d = exitCoinData[coin];
+  if (!d) return;
+  const curEl = document.getElementById(`exit-cur-${coin}`);
+  if (curEl) curEl.textContent = `Atual: $${fmt(d.price, d.price < 1 ? 4 : 2)} · ${fmtUsd(d.usdVal, 2)}`;
+
+  const resEl = document.getElementById(`exit-result-${coin}`);
+  if (!resEl) return;
+  const target = exitTargets[coin];
+  if (target && target > 0 && d.qty > 0) {
+    const potVal = d.qty * target;
+    const diff   = potVal - d.usdVal;
+    const pct    = d.usdVal > 0 ? (diff / d.usdVal) * 100 : 0;
+    const isP    = diff >= 0;
+    const col    = isP ? 'var(--green)' : 'var(--red)';
+    resEl.innerHTML = `<div class="exit-result-pct" style="color:${col}">${isP ? '+' : ''}${fmt(pct, 1)}%</div>
+      <div class="exit-result-usd" style="color:${col}">${isP ? '+' : ''}${fmtUsd(diff, 2)}</div>`;
+  } else {
+    resEl.innerHTML = `<div class="exit-result-pct" style="color:var(--faint)">—</div>
+      <div class="exit-result-usd" style="color:var(--faint)">Define um alvo</div>`;
+  }
+}
+
+function updateExitSummary() {
+  let curTotal = 0, potTotal = 0;
+  Object.keys(exitCoinData).forEach(coin => {
+    const d = exitCoinData[coin];
+    curTotal += d.usdVal;
+    const target = exitTargets[coin];
+    potTotal += (target && target > 0) ? d.qty * target : d.usdVal;
+  });
+  const diff = potTotal - curTotal;
+  const pct  = curTotal > 0 ? (diff / curTotal) * 100 : 0;
+  const isP  = diff >= 0;
+  set('exit-sum-cur', fmtUsd(curTotal, 2));
+  set('exit-sum-pot', fmtUsd(potTotal, 2));
+  const diffEl = document.getElementById('exit-sum-diff');
+  if (diffEl) {
+    diffEl.textContent = (diff !== 0 ? (isP ? '+' : '') + fmtUsd(diff, 2) + ' (' + (isP ? '+' : '') + fmt(pct, 2) + '%)' : '—');
+    diffEl.style.color = diff !== 0 ? (isP ? 'var(--green)' : 'var(--red)') : 'var(--dim)';
+  }
+}
+
+function onExitInput(coin, val) {
+  const num = parseFloat((val || '').replace(',', '.'));
+  if (val === '' || isNaN(num) || num <= 0) delete exitTargets[coin];
+  else exitTargets[coin] = num;
+  saveExitTargets();
+  updateExitRow(coin);
+  updateExitSummary();
+}
+
+function renderDbExitStrategy() {
+  const el = document.getElementById('db-exit-list');
+  if (!el) return;
+  if (!walletData) { el.innerHTML = '<div class="db-empty">A aguardar dados da Bybit...</div>'; return; }
+
+  const coins = (walletData.coin || [])
+    .filter(c => parseFloat(c.usdValue || 0) >= 1)
+    .sort((a, b) => parseFloat(b.usdValue || 0) - parseFloat(a.usdValue || 0));
+
+  if (!coins.length) {
+    el.innerHTML = '<div class="db-empty">Sem ativos na conta Bybit.</div>';
+    return;
+  }
+
+  // Refresh per-coin current price/value data
+  exitCoinData = {};
+  coins.forEach(c => {
+    const qty    = parseFloat(c.walletBalance || 0);
+    const usdVal = parseFloat(c.usdValue || 0);
+    const price  = qty > 0 ? usdVal / qty : 0;
+    exitCoinData[c.coin] = { qty, usdVal, price };
+  });
+
+  const newCoinKey = coins.map(c => c.coin).join(',');
+  if (el.dataset.coinKey === newCoinKey) {
+    // Same set of assets — only refresh computed numbers, never rebuild the
+    // input fields, so a user typing a target price doesn't lose focus/value.
+    coins.forEach(c => updateExitRow(c.coin));
+    updateExitSummary();
+    return;
+  }
+  el.dataset.coinKey = newCoinKey;
+  el.innerHTML = coins.map(exitRowHtml).join('');
+  coins.forEach(c => updateExitRow(c.coin));
+  updateExitSummary();
+}
+
 function renderDbHistory() {
   const el = document.getElementById('db-history-list');
   if (!el) return;
@@ -1960,6 +2132,7 @@ function switchDbTab(tab, btn) {
   if (tab === 'assets')    renderDbAssets();
   if (tab === 'history')   renderDbHistory();
   if (tab === 'positions') renderDbPositions();
+  if (tab === 'exit')      renderDbExitStrategy();
 }
 
 function setDbRange(btn) {
