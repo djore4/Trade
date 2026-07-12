@@ -1,22 +1,13 @@
-# Segredos — NUNCA versionar
+# Segredos — NUNCA versionar (não são usados no site estático, mas por segurança)
 .env
 *.key
-
-# Base de dados local e caches
-data/*.db
-data/*.db-wal
-data/*.db-shm
-data/*.sqlite
-
-# Python
-__pycache__/
-*.pyc
-.pytest_cache/
-.venv/
-venv/
-*.egg-info/
 
 # SO / editores
 .DS_Store
 .idea/
 .vscode/
+
+# Python (ferramentas locais de teste, se usadas)
+__pycache__/
+*.pyc
+.pytest_cache/
