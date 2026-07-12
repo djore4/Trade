@@ -1,0 +1,22 @@
+# Segredos — NUNCA versionar
+.env
+*.key
+
+# Base de dados local e caches
+data/*.db
+data/*.db-wal
+data/*.db-shm
+data/*.sqlite
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+
+# SO / editores
+.DS_Store
+.idea/
+.vscode/
