@@ -20,6 +20,7 @@
 body {
   background: var(--bg); color: var(--text); font-family: var(--sans);
   font-size: 14px; line-height: 1.45; -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 .pos { color: var(--green); }
@@ -123,3 +124,48 @@ label.fld { display: block; font-size: 11px; color: var(--dim); text-transform: 
 .kill-on { color: var(--red); }
 hr.sep { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
 .mini { font-size: 11px; color: var(--faint); }
+
+/* =====================================================================
+   MOBILE — barra lateral vira nav horizontal no topo; grids empilham;
+   tabelas mantêm scroll horizontal próprio (não empurram a página).
+   ===================================================================== */
+@media (max-width: 760px) {
+  #app { flex-direction: column; }
+  nav.side {
+    width: 100%; height: auto; position: sticky; top: 0; z-index: 40;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 4px;
+    padding: 8px 10px; border-right: none; border-bottom: 1px solid var(--border);
+  }
+  nav.side .brand { padding: 0 8px 0 4px; font-size: 13px; white-space: nowrap; }
+  nav.side .brand small { display: none; }
+  nav.side a {
+    padding: 8px 12px; border-left: none; border-radius: 8px;
+    font-size: 13px; white-space: nowrap; -webkit-tap-highlight-color: transparent;
+  }
+  nav.side a.active { border-left: none; background: rgba(45,212,160,.12); color: var(--text); }
+
+  main { padding: 16px 12px 44px; }
+  h1 { font-size: 18px; }
+  h2 { font-size: 14px; margin: 18px 0 10px; }
+  .sub { font-size: 12px; margin-bottom: 14px; }
+
+  .grid { gap: 10px; }
+  .cols-4 { grid-template-columns: 1fr 1fr; }
+  .cols-3 { grid-template-columns: 1fr; }
+  .cols-2 { grid-template-columns: 1fr; }
+  .card { padding: 13px 14px; }
+  .card .big { font-size: 20px; }
+
+  th, td { padding: 8px 10px; }
+  .toolbar { gap: 8px; }
+  .toolbar select, .toolbar button { flex: 1 1 auto; }
+
+  /* Formulários dos modais empilham um campo por linha (mais tocável) */
+  .modal { padding: 18px; }
+  .modal .row > div { flex: 1 1 100%; min-width: 100%; }
+}
+
+/* iOS: evitar zoom automático ao focar campos (fonte < 16px provoca zoom) */
+@media (max-width: 760px) {
+  input, select { font-size: 16px; }
+}
