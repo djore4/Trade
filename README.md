@@ -1,28 +1,44 @@
 # Consola de Investimentos
 
-Aplicação **local, single-user** para controlar e simular a minha carteira de
-investimentos (spot cripto, uma ação alavancada, um PPR). Corre na minha
-máquina, os dados são meus e ficam locais (SQLite).
+Aplicação **web estática, single-user**, para controlar e simular a minha
+carteira de investimentos (spot cripto, uma ação alavancada, um PPR). Corre
+**inteiramente no browser** — abre por URL (GitHub Pages) ou o `index.html`
+local. Os dados são meus e ficam **no meu browser** (localStorage), com
+export/import para backup.
 
 > **Isto não é aconselhamento financeiro nem fiscal.** A app apresenta cálculos e
 > sinais da minha regra pré-definida e *estima* números fiscais — não substitui
-> contabilista. **Não executa ordens** e é **read-only**.
+> contabilista. **Não executa ordens.**
 
 Interface em **português (PT-PT)**. Base monetária **EUR** (ativos em USD
 convertidos por uma taxa EUR/USD com override manual).
 
 ---
 
-## O que faz
+## Usar
 
-1. **Tracker** das posições (spot cripto, MSTR, PPR) com valor de mercado, P&L
-   por custo médio e alocação em EUR, por titular e agregado.
-2. **Motor de estratégia**: escada de quedas (DCA base + reserva de volatilidade),
-   orçamento de reserva por ativo com travão, kill-switch e sinal **mNAV** da MSTR.
-3. **Simuladores**: saída de posições alavancadas (linear/inverso, com liquidação
-   e funding) e comparação de cenários de acumulação (DCA linear vs DCA + reserva).
-4. **Fiscalidade PT**: registo lote a lote, regra dos 365 dias, FIFO e estimativa
-   de imposto na venda.
+- **Online:** abre o site (GitHub Pages do repositório).
+- **Local:** abre `index.html` no browser, ou serve a pasta:
+  ```bash
+  python3 -m http.server 8000    # depois abre http://127.0.0.1:8000
+  ```
+
+Não há build step, nem servidor, nem instalação. Funciona **100% em modo
+manual** — as APIs de dados são opcionais e cada uma degrada com elegância para
+entrada manual.
+
+## Os meus dados
+
+Vivem no **localStorage deste browser**. Em *Definições → Dados & backup*:
+
+- **Exportar backup (JSON)** — guarda uma cópia (faz isto com regularidade;
+  limpar o browser apaga os dados).
+- **Importar backup** — repõe de um ficheiro.
+- **Repor scaffold** — volta ao estado inicial (contas + catálogo de ativos).
+
+Nada é enviado para lado nenhum além das APIs públicas de dados (só leitura).
+
+---
 
 ## Módulos
 
@@ -33,118 +49,67 @@ convertidos por uma taxa EUR/USD com override manual).
 | **Lotes & Fiscal** | Transações (CRUD), 365 dias, próximo desbloqueio, simulador de venda FIFO com imposto. |
 | **Inversos** | Posições alavancadas: liquidação (a vermelho), funding, P&L linear **e** inverso, simulação por preço de saída. |
 | **Cenários** | DCA linear vs DCA + reserva sobre a mesma trajetória. Comparação, **não** previsão. |
-| **PPR** | Save & Grow (titularidade da Patrícia). Valores manuais, botão de cotação (degrada para manual). |
-| **Definições** | EUR/USD, cadência DCA, janela do topo, escada, alvos, inputs mNAV, estado das integrações. |
+| **PPR** | Save & Grow (titularidade da Patrícia). Valores manuais. |
+| **Definições** | EUR/USD, cadência DCA, janela do topo, escada, alvos, inputs mNAV, backup. |
 
----
-
-## Arranque (um comando)
-
-```bash
-make install        # instala dependências (FastAPI, uvicorn, httpx)
-make dev            # arranca em http://127.0.0.1:8000
-```
-
-Alternativa sem make:
-
-```bash
-pip install -r requirements.txt
-python3 run.py
-```
-
-A base de dados é criada automaticamente no primeiro arranque, com um *scaffold*
-das contas e do catálogo de ativos (símbolos + quadrante). **Não são inventados**
-quantidades, preços nem cotações — esses são sempre introduzidos por ti.
-
-Funciona **100% em modo manual, sem qualquer chave de API**. As integrações são
-opcionais e cada uma degrada com elegância para entrada manual.
-
----
-
-## Chaves de API (opcional, só de leitura)
-
-As chaves vivem **apenas** no ficheiro `.env` (que está no `.gitignore`). Nunca
-são escritas no código, na base de dados, na UI nem em logs.
-
-```bash
-cp .env.example .env
-# edita .env e coloca chaves Bybit SÓ DE LEITURA (read-only)
-```
-
-- A app **nunca** coloca ordens, nunca move fundos, nunca usa endpoints de trade.
-- Cria a chave Bybit **apenas com permissões de leitura**. Em *Definições →
-  Integrações* a app verifica e avisa se detetar permissões de escrita.
-- Sem chaves, as posições/funding entram manualmente no módulo **Inversos**.
-
-## Fontes de dados
+## Fontes de dados (públicas, do lado do cliente)
 
 | Dado | Fonte | Sem fonte? |
 |---|---|---|
-| Preços cripto + máximo 60–90d | Bybit **pública** (sem chave) | entrada manual do preço/topo |
-| Posições e funding Bybit | Bybit **privada** (chave read-only) | entrada manual |
-| EUR/USD | Frankfurter/BCE (pública) | override manual em Definições |
-| Preço MSTR e BTC | Yahoo Finance (pública) | entrada manual |
-| Posições MSTR | **manual** (Trading 212 sem API de retalho fiável) | — |
-| BTC-treasury / ações (mNAV) | **manual** com data | — |
+| Preços cripto + máximo 60–90d | Bybit pública | entrada manual do preço/topo |
+| Preço BTC (para o mNAV) | Bybit pública | entrada manual |
+| EUR/USD | Frankfurter/BCE | override manual em Definições |
+| Preço MSTR | Yahoo Finance (pode ser bloqueado por CORS) | entrada manual |
+| Posições MSTR / BTC-treasury / ações | **manual** com data | — |
 | Cotação PPR | sem fonte pública fiável → **manual** | — |
 
-O refresh de preços é **manual** (botão no Tracker). Nada depende de estar
-sempre ligado.
+Botão **"Atualizar preços"** no Tracker (manual). Se uma fonte falhar (rede ou
+CORS), o módulo continua a funcionar em modo manual.
+
+### Porque é que não há chaves de API / sync privado da Bybit?
+
+Num site estático **não existe `.env` e uma chave secreta nunca pode viver no
+browser** (ficaria exposta). Por isso a versão web usa **apenas dados públicos**
+(preços/topo) e mantém posições e funding privados em **modo manual** — o que
+respeita a regra "sem segredos na UI" e o âmbito **read-only** (a app nunca
+coloca ordens nem move fundos). Sincronização privada exigiria um backend, o que
+sai fora do modelo de site alojado.
 
 ---
 
 ## Modelos e fórmulas (honestidade dos números)
 
 - **Liquidação** (perps): aproximada, margem isolada, exclui taxas e margem de
-  manutenção real — na prática liquida antes. Marcada como aproximação.
-- **P&L linear vs inverso**: fórmulas distintas. Linear é USDT-margined (payoff
-  linear); inverso é coin-margined (payoff não-linear na margem/ROI). O funding é
-  subtraído ao P&L bruto.
+  manutenção real — na prática liquida antes.
+- **P&L linear vs inverso**: fórmulas distintas (linear USDT-margined; inverso
+  coin-margined, não-linear na margem/ROI). Funding subtraído ao P&L bruto.
 - **Custo médio**: mostra "como estás", **não** serve para decidir vendas — para
   isso usa a vista de **Lotes** (365 dias + FIFO).
 - **365 dias**: mais-valias de cripto spot detida ≥ 365 dias são isentas; abaixo,
-  28%. Lote a lote, cada compra com o seu relógio.
-- **Derivados**: não contam para os 365 dias; tributados à parte; trading
-  frequente pode cair em categoria B. P&L separado do spot.
+  28%. Lote a lote, cada compra com o seu relógio; FIFO na venda.
+- **Derivados**: não contam para os 365 dias; tributados à parte; P&L separado.
 - **PPR**: fiscalidade própria; **titularidade distinta** (Patrícia) — nunca
   somada à minha.
-- **Cenários**: comparação relativa de estratégias sobre a mesma trajetória.
-  **Nunca** uma previsão de retorno.
+- **Cenários**: comparação relativa sobre a mesma trajetória. **Nunca** previsão.
 - **DAC8**: a Bybit reporta à AT. Nota informativa na secção fiscal.
 
 ---
 
 ## Arquitetura
 
-- **Backend**: Python + FastAPI, SQLite (stdlib `sqlite3`, sem ORM). Serviços de
-  dados separados (`backend/services/`), cada um com cache e fallback manual.
-  Motor de cálculo puro e testável em `backend/engine/`.
-- **Frontend**: web local servido pelo backend — HTML + JS *vanilla* (sem build
-  step). Escolhido por ser leve, local-first e adequado à estética de consola
-  (fundo escuro, monospace tabular, verde/vermelho/âmbar, liquidação sempre a
-  vermelho). Sem floreados.
-- **Persistência**: `data/console.db` (no `.gitignore`).
+Site estático, sem backend. Tudo corre no browser:
 
 ```
-backend/
-  main.py            FastAPI + serve o frontend
-  db.py / schema.sql SQLite + scaffold idempotente
-  config.py          .env e definições por omissão (segredos só em env)
-  engine/            ladder, mnav, perp, tax, scenarios  (matemática pura)
-  services/          bybit, fx, stocks, ppr  (degradação elegante)
-  routers/           dashboard, tracker, lots, perps, scenarios, ppr, settings, accounts
-frontend/            index.html, app.js, styles.css
-tests/               test_engine.py
+index.html     estrutura + navegação
+styles.css     tema de consola (escuro, monospace tabular, liquidação a vermelho)
+engine.js      cálculo puro: escada, mNAV, perps (linear/inverso), fiscal (365d/FIFO), cenários
+store.js       persistência local (localStorage) + seed + export/import
+data.js        APIs públicas do lado do cliente, com degradação para manual
+app.js         vistas/UI (dashboard, tracker, lotes, inversos, cenários, ppr, definições)
 ```
 
-## Testes
+O `engine.js` é uma porta fiel (paridade de fórmulas) de um motor validado por
+testes, verificada a correr num browser real (custo médio, escada, FIFO/365 dias
+e estimativa de imposto batem certo).
 
-```bash
-make test   # cobre escada, 365d/FIFO, perps linear+inverso, mNAV e cenários
-```
-
-## Ordem de construção
-
-Fase 1 (núcleo manual) → Fase 2 (motor) → Fase 3 (dados live) → Fase 4 (fiscal)
-→ Fase 5 (cenários). Todas entregues e testáveis; o núcleo funciona sem uma
-única API.
+Publicação: GitHub Pages a servir a raiz do repositório.
