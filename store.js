@@ -11,6 +11,8 @@ const Store = (() => {
     escada_1: '15', escada_2: '25', escada_3: '35', mnav_favoravel: '1.1', mnav_travar: '2.0',
     alvo_L1: '30', alvo_RWA: '15', 'alvo_perp-DEX': '15', 'alvo_BTC-alavancado': '25', alvo_PPR: '15',
     aviso_concentracao: '40',
+    // Proxy read-only da Bybit (opcional). O token é do worker, NÃO é o segredo Bybit.
+    proxy_url: '', proxy_token: '',
   };
 
   function seed() {
@@ -38,6 +40,7 @@ const Store = (() => {
       },
       prices: {}, // simbolo -> {preco, high_60_90d, timestamp, fonte}
       mstr_inputs: null, // {btc_treasury, shares_outstanding, data}
+      live: null, // snapshot ao vivo da Bybit: {saldos, posicoes, ts} — nunca mistura com o manual
       settings: { ...DEFAULT_SETTINGS },
       _seq: { asset: 6, tx: 0, perp: 0, ppr: 1, account: 4 },
     };
@@ -115,6 +118,10 @@ const Store = (() => {
   const mstrInputs = () => state.mstr_inputs;
   function setMstrInputs(m) { state.mstr_inputs = m; save(); }
 
+  // ----- snapshot ao vivo da Bybit (read-only) -----
+  const live = () => state.live;
+  function setLive(l) { state.live = l ? { ...l, ts: new Date().toISOString() } : null; save(); }
+
   // ----- backup -----
   function exportJSON() { return JSON.stringify(state, null, 2); }
   function importJSON(txt) { const s = JSON.parse(txt); s.settings = { ...DEFAULT_SETTINGS, ...(s.settings || {}) }; state = s; save(); }
@@ -123,5 +130,5 @@ const Store = (() => {
   return { get, save, settings, setSetting, setSettings, assets, asset, addAsset, updateAsset, archiveAsset,
     accounts, transactions, addTx, updateTx, deleteTx, perps, addPerp, updatePerp, deletePerp,
     pprs, addPpr, updatePpr, deletePpr, reserve, updateReserve, prices, setPrice, mstrInputs, setMstrInputs,
-    exportJSON, importJSON, reset };
+    live, setLive, exportJSON, importJSON, reset };
 })();

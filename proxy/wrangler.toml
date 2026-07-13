@@ -1,0 +1,9 @@
+# Configuração do Cloudflare Worker (proxy read-only da Bybit).
+# NÃO coloques segredos aqui. As chaves entram por `wrangler secret put`.
+name = "bybit-readonly-proxy"
+main = "bybit-worker.js"
+compatibility_date = "2024-11-01"
+
+[vars]
+# Origem do teu site (GitHub Pages). Ajusta se usares domínio próprio.
+ALLOWED_ORIGIN = "https://djore4.github.io"
