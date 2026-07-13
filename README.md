@@ -66,14 +66,27 @@ Nada é enviado para lado nenhum além das APIs públicas de dados (só leitura)
 Botão **"Atualizar preços"** no Tracker (manual). Se uma fonte falhar (rede ou
 CORS), o módulo continua a funcionar em modo manual.
 
-### Porque é que não há chaves de API / sync privado da Bybit?
+### Portefólio privado da Bybit (opcional, via proxy read-only)
 
-Num site estático **não existe `.env` e uma chave secreta nunca pode viver no
-browser** (ficaria exposta). Por isso a versão web usa **apenas dados públicos**
-(preços/topo) e mantém posições e funding privados em **modo manual** — o que
-respeita a regra "sem segredos na UI" e o âmbito **read-only** (a app nunca
-coloca ordens nem move fundos). Sincronização privada exigiria um backend, o que
-sai fora do modelo de site alojado.
+Os **preços** são públicos e funcionam sempre. Ler o teu **portefólio** (saldos e
+posições abertas, lineares e inversas) exige a **API privada** — chave + segredo +
+assinatura. Num site estático **uma chave secreta nunca pode viver no browser** e
+os endpoints privados da Bybit **não permitem CORS** de browser.
+
+Solução: um **proxy pessoal read-only** (Cloudflare Worker) que guarda a chave
+**só de leitura** como *secret* do servidor, assina os pedidos e devolve o JSON ao
+site. Configuras uma vez e passas a ter:
+
+- **Inversos → "Sincronizar da Bybit"**: posições abertas ao vivo (entrada,
+  liquidação e P&L não realizado autoritativos da Bybit), lineares e inversas.
+- **Tracker → "Saldos ao vivo (Bybit)"**: quantidades reais, com **reconciliação**
+  face às tuas quantidades manuais (os lotes/custo médio para fiscalidade
+  continuam a vir das transações manuais — a Bybit não dá base de custo por lote).
+
+Garantias: **read-only** (o worker só permite endpoints de leitura e só `GET` —
+nunca coloca ordens), o **segredo vive no worker** (nunca no repo, browser, UI ou
+logs), protegido por token de acesso e CORS restrito. Sem isto configurado, o site
+funciona na mesma em **modo manual**. Instruções em [`proxy/README.md`](proxy/README.md).
 
 ---
 
