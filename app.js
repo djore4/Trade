@@ -147,7 +147,7 @@ views.tracker = function () {
   main.innerHTML = `<h1>Tracker</h1>
     <div class="sub">Spot + MSTR · escada de quedas, reserva e sinal mNAV</div>
     <div class="toolbar"><button class="primary" id="refresh">↻ Atualizar preços (públicos)</button><span class="spinner" id="rst"></span>
-      <button id="sync-saldos">↻ Saldos ao vivo (Bybit)</button><span class="spinner" id="sst"></span></div>
+      <button id="sync-saldos">↻ Atualizar saldos (Bybit)</button><span class="spinner" id="sst"></span></div>
     <div class="tbl-wrap"><table><thead><tr><th>Ativo</th><th>Qtd</th><th>Custo médio</th><th>Preço</th><th>Queda</th><th>Valor</th><th>P&amp;L</th><th>P&amp;L %</th><th>Escada</th><th>Sugestão</th><th></th></tr></thead>
       <tbody>${rows.map((r) => r.html).join('') || '<tr><td colspan="11" class="dim">Sem ativos.</td></tr>'}</tbody></table></div>
     <div class="note">O P&amp;L por custo médio mostra 'como estás', NÃO serve para decidir vendas — usa a vista de Lotes (fiscal).</div>
@@ -155,7 +155,7 @@ views.tracker = function () {
     <div id="tracker-live"></div>
     <div class="disclaimer">Sugestões seguem a TUA regra pré-definida (não são recomendações). Atualiza preços antes de decidir.</div>`;
 
-  renderSaldosLive();
+  renderSaldosLive(); autoSync();
   $('#refresh').onclick = () => refreshPrecos($('#rst'));
   $('#sync-saldos').onclick = () => syncBybit($('#sst'));
   $$('[data-reserva]').forEach((b) => b.onclick = () => reservaModal(+b.dataset.reserva));
@@ -167,7 +167,7 @@ function renderSaldosLive() {
   const cfg = (Store.settings().proxy_url || '').trim();
   if (!cfg) { el.innerHTML = ''; return; }
   const live = Store.live() || {}; const saldos = live.saldos || [];
-  const ts = live.ts ? new Date(live.ts).toLocaleString('pt-PT') : '—';
+  const ts = live.ts ? desde(live.ts) : '—';
   const rows = saldos.map((sld) => {
     const asset = Store.assets(true).find((a) => a.simbolo === String(sld.coin).toUpperCase());
     const manualQty = asset ? Engine.posicaoAtivo(Store.transactions(asset.id)).qtd : null;
@@ -179,7 +179,7 @@ function renderSaldosLive() {
   }).join('');
   el.innerHTML = `<h2>Saldos ao vivo (Bybit) <span class="mini">· ${ts}</span></h2>
     <div class="tbl-wrap"><table><thead><tr><th>Moeda</th><th>Qtd Bybit</th><th>Qtd manual</th><th>Diferença</th><th>Valor USD</th></tr></thead>
-      <tbody>${rows || '<tr><td colspan="5" class="dim">Sem saldos (ou não sincronizado). Carrega em "Saldos ao vivo (Bybit)".</td></tr>'}</tbody></table></div>
+      <tbody>${rows || '<tr><td colspan="5" class="dim">Sem saldos de momento.</td></tr>'}</tbody></table></div>
     <div class="note info">Reconciliação: os lotes/custo médio para fiscalidade continuam a vir das tuas transações manuais (a Bybit não dá base de custo por lote). Usa a diferença para corrigir transações em falta.</div>`;
 }
 
@@ -310,14 +310,14 @@ views.inversos = function () {
   main.innerHTML = `<h1>Inversos &amp; alavancados</h1>
     <div class="sub">Liquidação sempre a vermelho · linear e inverso · funding subtraído</div>
     <div class="toolbar"><button class="primary" id="add-perp">+ Posição</button>
-      <button id="sync-bybit">↻ Sincronizar da Bybit</button><span class="spinner" id="sync-st"></span></div>
+      <button id="sync-bybit">↻ Atualizar agora</button><span class="spinner" id="sync-st"></span></div>
     <div id="perp-live"></div>
     <h2>Posições manuais</h2>
     <div class="tbl-wrap"><table><thead><tr><th>Posição</th><th>Entrada</th><th>Mark</th><th>Liquidação</th><th>Dist.</th><th>Alav.</th><th>Funding</th><th>P&amp;L líq USD</th><th>P&amp;L líq EUR</th><th>ROI</th><th></th></tr></thead>
       <tbody>${rows || '<tr><td colspan="11" class="dim">Sem posições.</td></tr>'}</tbody></table></div>
     <div id="perp-sim"></div>
     <div class="note">P&amp;L de derivados é SEPARADO do spot. Liquidação e funding são APROXIMAÇÕES (margem isolada; excluem taxas/margem de manutenção — na prática liquida antes).</div>`;
-  renderPerpLive();
+  renderPerpLive(); autoSync();
   $('#add-perp').onclick = () => perpModal();
   $('#sync-bybit').onclick = () => syncBybit($('#sync-st'));
   $$('[data-edit]').forEach((b) => b.onclick = () => perpModal(Store.perps().find((x) => x.id == b.dataset.edit)));
@@ -325,32 +325,66 @@ views.inversos = function () {
   $$('[data-sim]').forEach((b) => b.onclick = () => simPerp(Store.perps().find((x) => x.id == b.dataset.sim)));
 };
 
+// Ligação à conta Bybit configurada? (URL + token do proxy definidos)
+function bybitLigada() {
+  const s = Store.settings();
+  return !!((s.proxy_url || '').trim() && (s.proxy_token || '').trim());
+}
+// "há X" a partir de um timestamp ISO
+function desde(ts) {
+  if (!ts) return null;
+  const seg = Math.max(0, Math.floor((Date.now() - new Date(ts).getTime()) / 1000));
+  if (seg < 45) return 'agora mesmo';
+  if (seg < 3600) return `há ${Math.round(seg / 60)} min`;
+  if (seg < 86400) return `há ${Math.round(seg / 3600)} h`;
+  return `há ${Math.round(seg / 86400)} d`;
+}
+
 // Sincroniza saldos + posições da Bybit (read-only, via proxy). Guarda snapshot
 // separado do manual e re-renderiza os painéis "ao vivo" existentes.
-async function syncBybit(stEl) {
-  const cfg = (Store.settings().proxy_url || '').trim();
-  if (!cfg) { if (stEl) stEl.textContent = 'proxy desligado'; alert('Liga o proxy read-only em Definições → Integrações.'); return; }
-  if (stEl) stEl.textContent = 'a sincronizar…';
+async function syncBybit(stEl, silencioso = false) {
+  if (!bybitLigada()) {
+    if (stEl) stEl.textContent = 'conta não ligada';
+    if (!silencioso) alert('A tua conta Bybit ainda não está ligada. É opcional e só precisa de uma configuração única — abre Definições → Integrações.');
+    return;
+  }
+  if (stEl) stEl.textContent = 'a atualizar…';
   const coins = [...new Set(Store.assets(true).map((a) => a.simbolo))];
   const [pos, sal] = await Promise.all([Data.posicoesLive(coins), Data.saldosSpot()]);
-  if (pos.naoConfigurado || sal.naoConfigurado) { if (stEl) stEl.textContent = 'proxy desligado'; return; }
+  if (pos.naoConfigurado || sal.naoConfigurado) { if (stEl) stEl.textContent = 'conta não ligada'; return; }
   const prev = Store.live() || {};
   Store.setLive({
     posicoes: pos.ok ? pos.posicoes : (prev.posicoes || []),
     saldos: sal.ok ? sal.saldos : (prev.saldos || []),
   });
   const errs = [pos.ok ? null : pos.erro, sal.ok ? null : sal.erro].filter(Boolean);
-  if (stEl) stEl.textContent = `sincronizado ${new Date().toLocaleTimeString('pt-PT')}${errs.length ? ' · ' + errs.join('; ') : ''}`;
+  if (stEl) stEl.textContent = errs.length ? ('atualizado · ' + errs.join('; ')) : `atualizado ${new Date().toLocaleTimeString('pt-PT')}`;
   if ($('#perp-live')) renderPerpLive();
   if ($('#tracker-live')) renderSaldosLive();
 }
 
+// Leitura AUTOMÁTICA: sincroniza sozinho quando a conta está ligada e o último
+// snapshot já tem alguma idade. Corre no arranque e num intervalo leve.
+async function autoSync() {
+  if (!bybitLigada()) return;
+  const live = Store.live();
+  const idadeSeg = live && live.ts ? (Date.now() - new Date(live.ts).getTime()) / 1000 : Infinity;
+  if (idadeSeg < 60) { // fresco: só re-renderiza os painéis visíveis
+    if ($('#perp-live')) renderPerpLive();
+    if ($('#tracker-live')) renderSaldosLive();
+    return;
+  }
+  await syncBybit(null, true); // silencioso (sem alertas)
+}
+
 function renderPerpLive() {
   const el = $('#perp-live'); if (!el) return;
-  const cfg = (Store.settings().proxy_url || '').trim();
-  if (!cfg) { el.innerHTML = `<div class="note info">Portefólio ao vivo desligado. Liga o proxy read-only em <b>Definições → Integrações</b> para sincronizar posições da Bybit (sem pôr a chave no browser).</div>`; return; }
+  if (!bybitLigada()) {
+    el.innerHTML = `<div class="note info">A tua <b>conta Bybit</b> ainda não está ligada, por isso as posições não são lidas automaticamente. É <b>opcional</b> e separado dos preços. Para ligar (configuração única), vai a <b>Definições → Integrações</b>.</div>`;
+    return;
+  }
   const live = Store.live() || {}; const pos = live.posicoes || []; const fx = eurusd();
-  const ts = live.ts ? new Date(live.ts).toLocaleString('pt-PT') : '—';
+  const ts = live.ts ? desde(live.ts) : '—';
   const rows = pos.map((p) => {
     const pnlEur = p.pnl_usd != null ? p.pnl_usd * fx : null;
     const dist = (p.mark && p.liq) ? (p.mark - p.liq) / p.mark * 100 : null;
@@ -362,10 +396,10 @@ function renderPerpLive() {
       <td class="num ${sgn(p.pnl_usd)}">${p.pnl_usd != null ? usd(p.pnl_usd) : '—'}</td>
       <td class="num ${sgn(pnlEur)}">${pnlEur != null ? eur(pnlEur) : '—'}</td></tr>`;
   }).join('');
-  el.innerHTML = `<h2>Ao vivo (Bybit) <span class="mini">· atualizado ${ts}</span></h2>
+  el.innerHTML = `<h2>Posições ao vivo (Bybit) <span class="mini">· atualizado ${ts}</span></h2>
     <div class="tbl-wrap"><table><thead><tr><th>Posição</th><th>Entrada</th><th>Mark</th><th>Liquidação</th><th>Dist.</th><th>Alav.</th><th>Tamanho</th><th>P&amp;L USD</th><th>P&amp;L EUR</th></tr></thead>
-      <tbody>${rows || '<tr><td colspan="9" class="dim">Sem posições abertas (ou ainda não sincronizado). Carrega em "Sincronizar da Bybit".</td></tr>'}</tbody></table></div>
-    <div class="mini">Valores autoritativos da Bybit (liqPrice, unrealisedPnl). Read-only — a app nunca coloca ordens.</div>`;
+      <tbody>${rows || '<tr><td colspan="9" class="dim">Sem posições abertas de momento.</td></tr>'}</tbody></table></div>
+    <div class="mini">Atualiza automaticamente. Valores da Bybit (liquidação e P&amp;L não realizado). Só leitura — a app nunca coloca ordens.</div>`;
 }
 function perpModal(p) {
   const v = p || { ativo: '', direcao: 'long', contrato: 'inverse', entrada: '', qtd: '', margem: '', alavancagem: 2, funding_acum: 0, mmr: 0.005, mark: '', estado: 'aberta', owner: 'eu' };
@@ -486,14 +520,19 @@ views.definicoes = function () {
       <div><label class="fld">Data</label><input id="mi-data" value="${mi.data ?? Engine.iso(Engine.hojeUTC())}"></div>
       <div style="flex:0"><button id="mi-save">Guardar mNAV</button></div></div>
       <div class="mini">Semi-manual: valores com data. O mNAV é calculado, não obtido.</div></div>
-    <h2>Integrações — portefólio privado da Bybit (opcional)</h2>
+    <h2>Ligar à conta Bybit (opcional)</h2>
     <div class="card">
-      <div class="mini" style="margin-bottom:10px">Para ler saldos e posições da tua conta sem pôr o segredo no browser, usa um <b>proxy read-only</b> (Cloudflare Worker — vê <span class="num">proxy/README.md</span>). A chave Bybit vive no worker; aqui só entra o URL e um token de acesso ao proxy.</div>
-      <div class="row"><div><label class="fld">URL do proxy</label><input id="s-proxy_url" value="${esc(s.proxy_url ?? '')}" placeholder="https://…workers.dev"></div></div>
-      <div class="row" style="margin-top:10px"><div><label class="fld">Token do proxy (não é a chave Bybit)</label><input id="s-proxy_token" type="password" value="${esc(s.proxy_token ?? '')}" placeholder="token do worker"></div>
+      <div class="mini" style="margin-bottom:10px">Depois de ligada, o site lê os teus <b>saldos e posições automaticamente</b>. É opcional e <b>separado dos preços</b>. Por segurança, a tua chave secreta <b>nunca</b> fica no site — vive numa pequena ligação segura tua (gratuita). Passos detalhados em <span class="num">proxy/README.md</span>:</div>
+      <ol class="mini" style="margin:0 0 12px 18px; line-height:1.7">
+        <li>Na Bybit, cria uma chave <b>só de leitura</b> (sem permissões de trade/levantamento).</li>
+        <li>Cria a ligação segura gratuita (Cloudflare Worker) e guarda lá a chave — o worker dá-te um <b>endereço</b> e tu escolhes um <b>código de acesso</b>.</li>
+        <li>Cola o endereço e o código aqui em baixo e carrega em <b>Testar ligação</b>.</li>
+      </ol>
+      <div class="row"><div><label class="fld">Endereço da ligação (URL)</label><input id="s-proxy_url" value="${esc(s.proxy_url ?? '')}" placeholder="https://…workers.dev"></div></div>
+      <div class="row" style="margin-top:10px"><div><label class="fld">Código de acesso (não é a chave Bybit)</label><input id="s-proxy_token" type="password" value="${esc(s.proxy_token ?? '')}" placeholder="o código que escolheste"></div>
         <div style="flex:0"><button id="proxy-test">Testar ligação</button></div></div>
       <div id="proxy-st" class="mini" style="margin-top:8px"></div>
-      <div class="note">Read-only: a app nunca coloca ordens. O worker só permite endpoints de leitura. Sem isto, o site funciona na mesma em modo manual.</div>
+      <div class="note">Só leitura: a app nunca coloca ordens nem move fundos. Sem isto, o site funciona na mesma em modo manual.</div>
     </div>
     <h2>Dados &amp; backup</h2>
     <div class="card"><div class="mini" style="margin-bottom:10px">Os teus dados vivem no localStorage deste browser. Faz backup regularmente — limpar o browser apaga-os.</div>
@@ -501,15 +540,15 @@ views.definicoes = function () {
       <input type="file" id="b-file" accept="application/json" style="display:none"></div>
     <div class="toolbar" style="margin-top:18px"><button class="primary" id="s-save">Guardar definições</button><span class="spinner" id="s-st"></span></div>`;
   const keys = ['eur_usd', 'dca_cadencia', 'janela_topo_dias', 'escada_1', 'escada_2', 'escada_3', 'mnav_favoravel', 'mnav_travar', 'aviso_concentracao', 'alvo_L1', 'alvo_RWA', 'alvo_perp-DEX', 'alvo_BTC-alavancado', 'alvo_PPR', 'proxy_url', 'proxy_token'];
-  $('#s-save').onclick = () => { const o = {}; keys.forEach((k) => o[k] = mval('s-' + k)); o.eur_usd_fonte = 'manual'; Store.setSettings(o); $('#s-st').textContent = 'guardado'; };
+  $('#s-save').onclick = () => { const o = {}; keys.forEach((k) => o[k] = mval('s-' + k)); o.eur_usd_fonte = 'manual'; Store.setSettings(o); $('#s-st').textContent = 'guardado'; autoSync(); };
   $('#proxy-test').onclick = async () => {
     // guarda os valores atuais antes de testar (verificaChave lê das definições)
     Store.setSettings({ proxy_url: mval('s-proxy_url'), proxy_token: mval('s-proxy_token') });
     const st = $('#proxy-st'); st.textContent = 'a testar…';
     const r = await Data.verificaChave();
     if (!r.ok) { st.innerHTML = `<span class="red">falhou: ${esc(r.erro)}</span>`; return; }
-    if (r.readonly) st.innerHTML = '<span class="pos">ligada · read-only ✓</span>';
-    else st.innerHTML = `<span class="red">ligada, mas ${esc(r.aviso)}</span>`;
+    if (r.readonly) { st.innerHTML = '<span class="pos">ligado · só leitura ✓ — a ler o portefólio…</span>'; syncBybit(null, true); }
+    else st.innerHTML = `<span class="red">ligado, mas ${esc(r.aviso)}</span>`;
   };
   $('#mi-save').onclick = () => { Store.setMstrInputs({ btc_treasury: mnum('mi-btc'), shares_outstanding: mnum('mi-shares'), data: mval('mi-data') }); alert('Inputs mNAV guardados.'); };
   $('#b-export').onclick = () => { const blob = new Blob([Store.exportJSON()], { type: 'application/json' });
@@ -522,3 +561,7 @@ views.definicoes = function () {
 
 // ---------- arranque ----------
 go('dashboard');
+// Leitura automática do portefólio (só se a conta Bybit estiver ligada):
+// uma vez no arranque e depois a cada 3 minutos enquanto a app está aberta.
+autoSync();
+setInterval(autoSync, 180000);
