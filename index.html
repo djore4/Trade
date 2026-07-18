@@ -536,6 +536,30 @@ html.light .mnav-btn.active { color: var(--orange); }
   .pos-grid  { grid-template-columns: repeat(2, 1fr) !important; }
   .mkt-stat-grid { grid-template-columns: repeat(2, 1fr) !important; }
 }
+
+/* ─── POSIÇÕES (tab) ─────────────────────────────── */
+.pos-selector { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
+.pos-selector::-webkit-scrollbar { height: 0; }
+.pos-chip {
+  flex-shrink: 0; display: flex; flex-direction: column; gap: 4px; align-items: flex-start;
+  background: var(--s1); border: 1px solid var(--border); border-radius: 10px;
+  padding: 9px 12px; cursor: pointer; min-width: 132px; transition: border-color .12s, background .12s;
+}
+.pos-chip:hover { border-color: var(--border2); }
+.pos-chip.active { border-color: var(--orange); background: rgba(247,147,26,.06); }
+.pos-chip-sym { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 12.5px; }
+.pos-chip-pnl { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; }
+.pos-legend { display: flex; flex-wrap: wrap; gap: 14px; padding: 10px 4px 2px; }
+.pos-legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--dim); }
+.pos-legend-swatch { width: 16px; height: 0; border-top-width: 2px; border-top-style: solid; }
+.pos-metrics {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border);
+  border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-top: 12px;
+}
+.pos-metric { background: var(--s1); padding: 9px 11px; }
+.pos-metric-lbl { font-size: 8.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); margin-bottom: 3px; }
+.pos-metric-val { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; }
+@media (max-width: 600px) { .pos-metrics { grid-template-columns: repeat(2, 1fr); } }
 </style>
 </head>
 <body>
@@ -548,6 +572,10 @@ html.light .mnav-btn.active { color: var(--orange); }
     <button class="tab-btn active" data-tab="dashboard" onclick="switchTab('dashboard',this)">
       <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x=".5" y=".5" width="4.5" height="5" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/><rect x="6" y=".5" width="4.5" height="2.5" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/><rect x="6" y="4" width="4.5" height="6" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/><rect x=".5" y="6.5" width="4.5" height="4" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/></svg>
       Dashboard
+    </button>
+    <button class="tab-btn" data-tab="posicoes" onclick="switchTab('posicoes',this)">
+      <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1 8.5 3.5 5 6 6.5 10 2" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="1" y1="10.2" x2="10" y2="10.2" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+      Posições
     </button>
     <button class="tab-btn" data-tab="carteira" onclick="switchTab('carteira',this)">
       <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x=".5" y=".5" width="4" height="4" rx="1" stroke="currentColor"/><rect x="6.5" y=".5" width="4" height="4" rx="1" stroke="currentColor"/><rect x=".5" y="6.5" width="4" height="4" rx="1" stroke="currentColor"/><rect x="6.5" y="6.5" width="4" height="4" rx="1" stroke="currentColor"/></svg>
@@ -656,7 +684,6 @@ html.light .mnav-btn.active { color: var(--orange); }
       <div class="db-sub-nav">
         <button class="db-sub-btn active" onclick="switchDbTab('assets',this)">Ativos</button>
         <button class="db-sub-btn" onclick="switchDbTab('history',this)">Histórico</button>
-        <button class="db-sub-btn" onclick="switchDbTab('positions',this)">Posições Abertas</button>
         <button class="db-sub-btn" onclick="switchDbTab('exit',this)">Saída</button>
       </div>
 
@@ -680,11 +707,6 @@ html.light .mnav-btn.active { color: var(--orange); }
       <!-- HISTORY -->
       <div id="db-tab-history" class="db-sub-pane">
         <div id="db-history-list"><div class="db-empty">A carregar histórico...</div></div>
-      </div>
-
-      <!-- OPEN POSITIONS -->
-      <div id="db-tab-positions" class="db-sub-pane">
-        <div id="db-pos-list"><div class="db-empty">A carregar posições...</div></div>
       </div>
 
       <!-- EXIT STRATEGY -->
@@ -840,14 +862,29 @@ html.light .mnav-btn.active { color: var(--orange); }
       </div>
     </div>
 
-    <!-- Position charts row -->
-    <div>
-      <div class="sec-label">Gráficos das Posições Abertas</div>
-      <div id="pos-charts-row" style="display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(480px,1fr))">
-        <div style="color:var(--faint);font-size:12px;padding:12px 0">A aguardar posições...</div>
+  </div>
+</div>
+
+<!-- ─── TAB: POSIÇÕES ─────────────────────────────────── -->
+<div class="tab-pane" id="tab-posicoes">
+  <div style="max-width:1400px;margin:0 auto;display:flex;flex-direction:column;gap:14px">
+    <div class="sec-label">Trades abertos</div>
+    <div id="pos-selector" class="pos-selector"><div class="db-empty">A carregar posições...</div></div>
+
+    <div class="card" id="pos-detail-card" style="display:none;border-radius:12px">
+      <div class="card-header">
+        <div class="card-title"><div class="ctdot" id="pd-dot"></div><span id="pd-title">—</span></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="tag" id="pd-type">—</span>
+          <span class="mono" id="pd-mark" style="font-size:12px;color:var(--orange)">—</span>
+        </div>
       </div>
+      <div id="pos-chart" class="chart-wrap" style="height:440px;position:relative"></div>
+      <div class="pos-legend" id="pos-legend"></div>
+      <div class="pos-metrics" id="pos-metrics"></div>
     </div>
 
+    <div id="pos-empty" class="db-empty" style="display:none">Sem posições abertas na Bybit.</div>
   </div>
 </div>
 
@@ -1047,6 +1084,10 @@ html.light .mnav-btn.active { color: var(--orange); }
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
     <span class="mnav-lbl">Home</span>
   </button>
+  <button class="mnav-btn" data-tab="posicoes" onclick="switchTab('posicoes',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 16 9 10 13 13 21 5"/><line x1="3" y1="21" x2="21" y2="21"/><circle cx="13" cy="13" r="1.1" fill="currentColor" stroke="none"/></svg>
+    <span class="mnav-lbl">Posições</span>
+  </button>
   <button class="mnav-btn" data-tab="carteira" onclick="switchTab('carteira',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M16 12a2 2 0 0 1 4 0v2a2 2 0 0 1-4 0v-2z" fill="currentColor" opacity=".2" stroke="none"/><path d="M16 12a2 2 0 0 1 4 0"/></svg>
     <span class="mnav-lbl">Carteira</span>
@@ -1070,6 +1111,7 @@ html.light .mnav-btn.active { color: var(--orange); }
 </nav>
 
 <script src="https://s3.tradingview.com/tv.js"></script>
+<script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
 <script>
 (function() { if (localStorage.getItem('theme') === 'light') document.documentElement.classList.add('light'); })();
 // ── CONFIG ────────────────────────────────────────────────────────────────────
