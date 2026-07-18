@@ -443,7 +443,7 @@ html.light .mnav-btn.active { color: var(--orange); }
 .db-empty { padding: 32px 16px; text-align: center; color: var(--faint); font-size: 12px; }
 .db-metrics-bar { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 14px; }
 .db-metric { background: var(--s1); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-.db-metric-lbl { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--faint); margin-bottom: 3px; }
+.db-metric-lbl { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--dim); margin-bottom: 3px; }
 .db-fg-gauge-wrap { margin: 2px auto 0; max-width: 76px; overflow: visible; }
 .db-metric-num { font-size: 17px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); line-height: 1.1; }
 .db-metric-sub { font-size: 9px; color: var(--dim); margin-top: 3px; }
@@ -577,11 +577,11 @@ html.light .mnav-btn.active { color: var(--orange); }
 .pos-exit-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
 .pos-exit-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--dim); }
 .pos-exit-hint { font-size: 10.5px; color: var(--faint); }
-.pos-exit-row { display: flex; gap: 12px; align-items: stretch; flex-wrap: wrap; }
-.pos-exit-input-group { display: flex; align-items: center; background: var(--bg); border: 1px solid var(--border2); border-radius: 8px; padding: 0 10px; flex: 1 1 160px; }
+.pos-exit-row { display: flex; flex-direction: column; gap: 10px; }
+.pos-exit-input-group { display: flex; align-items: center; background: var(--bg); border: 1px solid var(--border2); border-radius: 8px; padding: 0 10px; width: 100%; }
 .pos-exit-prefix { color: var(--faint); font-family: 'JetBrains Mono', monospace; font-size: 13px; }
 .pos-exit-input { flex: 1; background: transparent; border: none; outline: none; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 14px; padding: 9px 6px; width: 100%; }
-.pos-exit-result { display: flex; gap: 1px; background: var(--border); border-radius: 7px; overflow: hidden; flex: 1; min-width: 200px; }
+.pos-exit-result { display: flex; gap: 1px; background: var(--border); border-radius: 7px; overflow: hidden; width: 100%; }
 .pos-exit-cell { flex: 1; background: var(--s1); padding: 7px 11px; text-align: center; }
 .pos-exit-cell-lbl { font-size: 8.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--faint); margin-bottom: 3px; }
 .pos-exit-cell-val { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 700; }
@@ -1835,7 +1835,7 @@ function renderPosExitResult(p) {
   const roeExit = margUsd > 0 ? (usdProfit / margUsd) * 100 : 0;
   const col = usdProfit >= 0 ? 'var(--green)' : 'var(--red)';
   el.innerHTML =
-    `<div class="pos-exit-cell"><div class="pos-exit-cell-lbl">Lucro (${coin})</div><div class="pos-exit-cell-val" style="color:${col}">${coinProfit >= 0 ? '+' : ''}${fmt(coinProfit, isInv ? 6 : 4)}</div></div>` +
+    `<div class="pos-exit-cell"><div class="pos-exit-cell-lbl">Lucro (${coin})</div><div class="pos-exit-cell-val" style="color:${col}">${coinProfit >= 0 ? '+' : ''}${fmt(coinProfit, Math.abs(coinProfit) >= 1 ? 4 : 6)}</div></div>` +
     `<div class="pos-exit-cell"><div class="pos-exit-cell-lbl">Lucro (USD)</div><div class="pos-exit-cell-val" style="color:${col}">${usdProfit >= 0 ? '+' : ''}${fmtUsd(usdProfit, 2)}</div></div>` +
     `<div class="pos-exit-cell"><div class="pos-exit-cell-lbl">ROE saída</div><div class="pos-exit-cell-val" style="color:${col}">${roeExit >= 0 ? '+' : ''}${fmt(roeExit, 1)}%</div></div>`;
 }
