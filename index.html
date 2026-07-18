@@ -41,7 +41,7 @@ html.light {
   --yellow:  #c49810;
 }
 html.light body { background: var(--bg); color: var(--text); }
-html.light #header { background: rgba(238,240,248,0.97); }
+html.light #header { background: rgb(238,240,248); }
 html.light #mnav   { background: rgba(238,240,248,0.97); border-top-color: var(--border); }
 
 html, body { height: 100%; }
@@ -71,7 +71,7 @@ body {
   padding: 0 16px;
   gap: 0;
   border-bottom: 1px solid var(--border);
-  background: rgba(8,8,16,0.97);
+  background: rgb(8,8,16);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -403,7 +403,7 @@ html.light .mnav-btn { color: var(--faint); }
 html.light .mnav-btn.active { color: var(--orange); }
 .db-sub-pane { display: none; }
 .db-sub-pane.active { display: block; }
-.db-assets-toolbar { display: flex; align-items: center; justify-content: flex-end; padding: 6px 14px; border-bottom: 1px solid var(--border); }
+.db-assets-toolbar { display: flex; align-items: center; justify-content: flex-end; padding: 10px 14px; border-top: 1px solid var(--border); }
 .db-toggle { display: flex; align-items: center; gap: 7px; cursor: pointer; }
 .db-toggle input { display: none; }
 .db-toggle-track { width: 30px; height: 17px; border-radius: 9px; background: var(--s3); position: relative; transition: background .2s; flex-shrink: 0; }
@@ -412,17 +412,18 @@ html.light .mnav-btn.active { color: var(--orange); }
 .db-toggle input:checked + .db-toggle-track .db-toggle-thumb { transform: translateX(13px); }
 .db-toggle-label { font-size: 10px; font-weight: 600; color: var(--dim); user-select: none; }
 .db-asset-header {
-  display: grid; grid-template-columns: 1fr 110px 90px;
+  display: grid; grid-template-columns: 1fr auto;
   padding: 7px 16px; font-size: 9px; font-weight: 600;
   text-transform: uppercase; letter-spacing: .08em; color: var(--faint);
   border-bottom: 1px solid var(--border); white-space: nowrap;
 }
 .db-asset-header > span { overflow: hidden; text-overflow: ellipsis; }
 .db-asset-row {
-  display: grid; grid-template-columns: 1fr 110px 90px;
-  align-items: center; padding: 11px 16px;
+  display: grid; grid-template-columns: 1fr auto;
+  align-items: center; padding: 11px 16px; gap: 12px;
   border-bottom: 1px solid var(--border); transition: background .12s;
 }
+.db-asset-right { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; white-space: nowrap; }
 .db-asset-row:hover { background: var(--s2); }
 .db-asset-row:last-child { border-bottom: none; }
 .db-asset-left { display: flex; align-items: center; gap: 11px; }
@@ -458,7 +459,7 @@ html.light .mnav-btn.active { color: var(--orange); }
 @media (max-width: 480px) {
   .db-total-value { font-size: 26px; }
   .db-time-btn { padding: 6px 7px; font-size: 10px; }
-  .db-asset-header, .db-asset-row { grid-template-columns: 1fr 100px 80px; }
+  .db-asset-header, .db-asset-row { grid-template-columns: 1fr auto; }
   .db-metric-num { font-size: 14px; }
 }
 
@@ -712,6 +713,11 @@ html.light .mnav-btn.active { color: var(--orange); }
 
       <!-- ASSETS -->
       <div id="db-tab-assets" class="db-sub-pane active">
+        <div class="db-asset-header">
+          <span>Ativo</span>
+          <span style="text-align:right">PnL N. Real. · Preço</span>
+        </div>
+        <div id="db-assets-list"><div class="db-empty">A carregar ativos...</div></div>
         <div class="db-assets-toolbar">
           <label class="db-toggle">
             <input type="checkbox" id="chk-filter-small" checked onchange="toggleFilterSmall(this.checked)">
@@ -719,12 +725,6 @@ html.light .mnav-btn.active { color: var(--orange); }
             <span class="db-toggle-label">Ocultar &lt; $5</span>
           </label>
         </div>
-        <div class="db-asset-header">
-          <span>Ativo</span>
-          <span style="text-align:right">PnL N. Real.</span>
-          <span style="text-align:right">Preço / m$</span>
-        </div>
-        <div id="db-assets-list"><div class="db-empty">A carregar ativos...</div></div>
       </div>
 
       <!-- HISTORY -->
@@ -2358,14 +2358,16 @@ function renderDbAssets() {
           <div class="db-asset-usd">${fmtUsd(usdVal, 2)}</div>
         </div>
       </div>
-      <div class="db-asset-pnl" style="display:flex;align-items:center;justify-content:flex-end;gap:4px;flex-wrap:nowrap">
-        <span style="color:${isP ? 'var(--green)' : isN ? 'var(--red)' : 'var(--faint)'}">
-          ${unrPnl !== 0 ? (isP ? '+' : '') + fmtUsd(unrPnl, 2) : '—'}
-        </span>
-        ${unrPnl !== 0 ? `<span class="db-asset-pct ${isP ? 'db-pct-g' : 'db-pct-r'}">${isP ? '▲' : '▼'} ${Math.abs(pnlPct).toFixed(1)}%</span>` : ''}
-      </div>
-      <div class="db-asset-price" style="white-space:nowrap">
-        ${prStr}${avgPrices[c.coin] ? ` <span style="font-size:9px;color:var(--faint)">/ m$${fmt(avgPrices[c.coin], avgPrices[c.coin] < 0.001 ? 6 : avgPrices[c.coin] < 1 ? 4 : avgPrices[c.coin] < 100 ? 2 : 0)}</span>` : ''}
+      <div class="db-asset-right">
+        <div class="db-asset-pnl" style="display:flex;align-items:center;justify-content:flex-end;gap:5px;flex-wrap:nowrap">
+          <span style="color:${isP ? 'var(--green)' : isN ? 'var(--red)' : 'var(--faint)'}">
+            ${unrPnl !== 0 ? (isP ? '+' : '') + fmtUsd(unrPnl, 2) : '—'}
+          </span>
+          ${unrPnl !== 0 ? `<span class="db-asset-pct ${isP ? 'db-pct-g' : 'db-pct-r'}">${isP ? '▲' : '▼'} ${Math.abs(pnlPct).toFixed(1)}%</span>` : ''}
+        </div>
+        <div class="db-asset-price">
+          ${prStr}${avgPrices[c.coin] ? ` <span style="font-size:10px;color:var(--faint)">/ m$${fmt(avgPrices[c.coin], avgPrices[c.coin] < 0.001 ? 6 : avgPrices[c.coin] < 1 ? 4 : avgPrices[c.coin] < 100 ? 2 : 0)}</span>` : ''}
+        </div>
       </div>
     </div>`;
   }).join('');
