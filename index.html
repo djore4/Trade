@@ -554,13 +554,11 @@ html.light .mnav-btn.active { color: var(--orange); }
 .pos-legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--dim); }
 .pos-legend-swatch { width: 16px; height: 0; border-top-width: 2px; border-top-style: solid; }
 .pos-metrics {
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border);
-  border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-top: 12px;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px;
+  background: var(--s1); border: 1px solid var(--border); border-radius: 9px;
+  padding: 10px 14px; margin-top: 12px; font-size: 12px;
 }
-.pos-metric { background: var(--s1); padding: 9px 11px; }
-.pos-metric-lbl { font-size: 8.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); margin-bottom: 3px; }
-.pos-metric-val { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; }
-@media (max-width: 600px) { .pos-metrics { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .pos-metrics .ps-sep { display: none; } .pos-metrics { gap: 6px 14px; } }
 .pos-iv-bar { display: flex; gap: 4px; margin: 4px 0 12px; }
 /* Resumo macro condensado: faixa inline compacta */
 .pos-summary {
@@ -856,8 +854,9 @@ html.light .mnav-btn.active { color: var(--orange); }
     <div class="card" id="pos-detail-card" style="display:none;border-radius:12px">
       <div class="card-header">
         <div class="card-title"><div class="ctdot" id="pd-dot"></div><span id="pd-title">—</span></div>
-        <div style="display:flex;gap:8px;align-items:center">
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
           <span class="tag" id="pd-type">—</span>
+          <span class="mono" id="pd-funding" style="font-size:11px"></span>
           <span class="mono" id="pd-mark" style="font-size:12px;color:var(--orange)">—</span>
         </div>
       </div>
@@ -1761,6 +1760,7 @@ function refreshPosTab() {
   const p = positions.find(x => posKeyOf(x) === selectedPosKey);
   if (!p) { renderPosTab(); return; }
   renderPosMetrics(p);
+  fetchPosFunding(p);
   renderPosExitResult(p);
   const mk = document.getElementById('pd-mark');
   if (mk) mk.textContent = fmt(parseFloat(p.markPrice), 2);
@@ -1883,6 +1883,7 @@ function selectPos(key) {
   const mk = document.getElementById('pd-mark'); if (mk) mk.textContent = fmt(parseFloat(p.markPrice), 2);
 
   renderPosMetrics(p);
+  fetchPosFunding(p);
   // cenário de saída: repõe o alvo guardado desta posição no input
   const exitInput = document.getElementById('pos-exit-input');
   if (exitInput) exitInput.value = posExitTargets[key] != null ? posExitTargets[key] : '';
@@ -1891,30 +1892,56 @@ function selectPos(key) {
 }
 
 function posTargets(p) {
-  // TP: da Bybit ou alvo manual guardado (posExitTargets); SL: da Bybit
-  const tp = parseFloat(p.takeProfit) || parseFloat(posExitTargets[posKeyOf(p)]) || 0;
+  // Alvo de saída (linha verde) = valor do cenário de saída (posExitTargets,
+  // guardado no Supabase). É a ÚNICA fonte — igual ao input e à tabela. SL: da Bybit.
+  const tp = parseFloat(posExitTargets[posKeyOf(p)]) || 0;
   const sl = parseFloat(p.stopLoss) || 0;
   return { ent: parseFloat(p.avgPrice), liq: parseFloat(p.liqPrice), tp, sl };
 }
 
 function renderPosMetrics(p) {
   const el = document.getElementById('pos-metrics'); if (!el) return;
-  const { ent, liq, tp, sl } = posTargets(p);
+  const { ent, liq, sl } = posTargets(p);
   const mark = parseFloat(p.markPrice), lev = parseFloat(p.leverage);
   const val = parseFloat(p.positionValue), pnlUsd = posPnlUsd(p);
-  const marg = lev > 0 ? val / lev : 0, roe = marg > 0 ? (parseFloat(p.unrealisedPnl) / marg) * 100 : 0;
+  const marg = lev > 0 ? val / lev : 0;
+  // ROE = PnL(USD) / margem inicial (= notional/alavancagem) -> reflete a alavancagem (ROI Bybit)
+  const roe = marg > 0 ? (pnlUsd / marg) * 100 : 0;
   const dLiq = liq > 0 ? Math.abs((liq - mark) / mark) * 100 : 0;
-  const liqCol = dLiq > 0 && dLiq < 8 ? 'var(--red)' : dLiq < 20 ? 'var(--orange)' : 'var(--green)';
-  const cell = (lbl, val, col) => `<div class="pos-metric"><div class="pos-metric-lbl">${lbl}</div><div class="pos-metric-val"${col ? ` style="color:${col}"` : ''}>${val}</div></div>`;
-  el.innerHTML =
-    cell('Entrada', fmt(ent, 2)) +
-    cell('Mark', fmt(mark, 2), 'var(--orange)') +
-    cell('ROE', `${roe >= 0 ? '+' : ''}${fmt(roe, 2)}%`, roe >= 0 ? 'var(--green)' : 'var(--red)') +
-    cell('PnL', `${pnlUsd >= 0 ? '+' : ''}${fmtUsd(pnlUsd, 2)}`, pnlUsd >= 0 ? 'var(--green)' : 'var(--red)') +
-    cell('Take Profit', tp > 0 ? fmt(tp, 2) : '—', tp > 0 ? 'var(--green)' : 'var(--faint)') +
-    cell('Stop Loss', sl > 0 ? fmt(sl, 2) : '—', sl > 0 ? 'var(--red)' : 'var(--faint)') +
-    cell('Liquidação', liq > 0 ? fmt(liq, 2) : '—', 'var(--red)') +
-    cell('Dist. liq.', liq > 0 ? `${fmt(dLiq, 1)}%` : '—', liqCol);
+  const distC = dLiq > 0 && dLiq < 8 ? 'var(--red)' : dLiq < 20 ? 'var(--orange)' : 'var(--green)';
+  const pnlC = pnlUsd >= 0 ? 'var(--green)' : 'var(--red)';
+  const item = (lbl, v, col) => `<span class="ps-item"><span class="ps-lbl">${lbl}</span><span class="ps-val"${col ? ` style="color:${col}"` : ''}>${v}</span></span>`;
+  const sep = '<span class="ps-sep"></span>';
+  el.innerHTML = [
+    item('PnL', `${pnlUsd >= 0 ? '+' : ''}${fmtUsd(pnlUsd, 2)}`, pnlC),
+    item('ROE', `${roe >= 0 ? '+' : ''}${fmt(roe, 1)}%`, pnlC),
+    item('Entrada', fmt(ent, 2)),
+    item('Liq.', liq > 0 ? fmt(liq, 2) : '—', 'var(--red)'),
+    item('Dist.', liq > 0 ? `${fmt(dLiq, 1)}%` : '—', distC),
+    item('SL', sl > 0 ? fmt(sl, 2) : '—', sl > 0 ? 'var(--red)' : 'var(--faint)'),
+  ].join(sep);
+}
+
+// Funding rate do símbolo selecionado (topo do gráfico). Cor: paga=vermelho, recebe=verde.
+async function fetchPosFunding(p) {
+  const el = document.getElementById('pd-funding'); if (!el) return;
+  try {
+    const cat = posCat(p.symbol);
+    const r = await fetch(`${BYBIT}/v5/market/tickers?category=${cat}&symbol=${p.symbol}`);
+    const d = await r.json();
+    const t = d?.result?.list?.[0];
+    if (!t || t.fundingRate == null || t.fundingRate === '') { el.innerHTML = ''; return; }
+    const fr = parseFloat(t.fundingRate) * 100;
+    const isLong = p.side === 'Buy';
+    const pays = (fr > 0 && isLong) || (fr < 0 && !isLong);
+    const col = fr === 0 ? 'var(--faint)' : (pays ? 'var(--red)' : 'var(--green)');
+    let next = '';
+    if (t.nextFundingTime) {
+      const ms = parseInt(t.nextFundingTime) - Date.now();
+      if (ms > 0) { const h = Math.floor(ms / 3600000), m = Math.floor((ms % 3600000) / 60000); next = ` <span style="color:var(--faint)">${h}h${String(m).padStart(2, '0')}</span>`; }
+    }
+    el.innerHTML = `<span style="color:var(--faint)">funding</span> <span style="color:${col}">${fr >= 0 ? '+' : ''}${fmt(fr, 4)}%</span>${next}`;
+  } catch (e) { el.innerHTML = ''; }
 }
 
 function posChartOpts() {
@@ -1994,18 +2021,19 @@ function addPosPriceLines(p) {
   posPriceLines = [];
   const { ent, liq, tp, sl } = posTargets(p);
   const LS = LightweightCharts.LineStyle;
-  const add = (price, color, title, dashed) => {
+  // Sem título na linha (poluía a leitura) — o preço aparece na escala à direita.
+  const add = (price, color, dashed) => {
     if (!(price > 0)) return;
     posPriceLines.push(posSeries.createPriceLine({
       price, color, lineWidth: dashed ? 1 : 2,
       lineStyle: dashed ? LS.Dashed : LS.Solid,
-      axisLabelVisible: true, title,
+      axisLabelVisible: true, title: '',
     }));
   };
-  add(ent, '#7c8fff', 'Entrada', false);
-  add(tp,  '#2dd4a0', 'TP', false);
-  add(sl,  '#f7647a', 'SL', false);
-  add(liq, '#f7647a', 'Liq. teórica', true);   // liquidação a tracejado
+  add(ent, '#7c8fff', false);
+  add(tp,  '#2dd4a0', false);
+  add(sl,  '#f7647a', false);
+  add(liq, '#f7647a', true);   // liquidação a tracejado
   renderPosLegend(p);
 }
 
