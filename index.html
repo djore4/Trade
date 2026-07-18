@@ -554,11 +554,10 @@ html.light .mnav-btn.active { color: var(--orange); }
 .pos-legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--dim); }
 .pos-legend-swatch { width: 16px; height: 0; border-top-width: 2px; border-top-style: solid; }
 .pos-metrics {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px;
-  background: var(--s1); border: 1px solid var(--border); border-radius: 9px;
-  padding: 10px 14px; margin-top: 12px; font-size: 12px;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px;
+  padding: 13px 0 2px; margin-top: 13px; border-top: 1px solid var(--border); font-size: 12px;
 }
-@media (max-width: 600px) { .pos-metrics .ps-sep { display: none; } .pos-metrics { gap: 6px 14px; } }
+@media (max-width: 600px) { .pos-metrics .ps-sep { display: none; } .pos-metrics { gap: 8px 16px; } }
 .pos-iv-bar { display: flex; gap: 4px; margin: 4px 0 12px; }
 /* Resumo macro condensado: faixa inline compacta */
 .pos-summary {
@@ -574,12 +573,12 @@ html.light .mnav-btn.active { color: var(--orange); }
 @media (max-width: 600px) { .pos-summary .ps-sep { display: none; } .pos-summary { gap: 4px 14px; } }
 
 /* Cenário de saída */
-.pos-exit { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border); }
+.pos-exit { margin-top: 13px; padding-top: 13px; border-top: 1px solid var(--border); }
 .pos-exit-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
 .pos-exit-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--dim); }
 .pos-exit-hint { font-size: 10.5px; color: var(--faint); }
 .pos-exit-row { display: flex; gap: 12px; align-items: stretch; flex-wrap: wrap; }
-.pos-exit-input-group { display: flex; align-items: center; background: var(--bg); border: 1px solid var(--border2); border-radius: 8px; padding: 0 10px; min-width: 160px; }
+.pos-exit-input-group { display: flex; align-items: center; background: var(--bg); border: 1px solid var(--border2); border-radius: 8px; padding: 0 10px; flex: 1 1 160px; }
 .pos-exit-prefix { color: var(--faint); font-family: 'JetBrains Mono', monospace; font-size: 13px; }
 .pos-exit-input { flex: 1; background: transparent; border: none; outline: none; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 14px; padding: 9px 6px; width: 100%; }
 .pos-exit-result { display: flex; gap: 1px; background: var(--border); border-radius: 7px; overflow: hidden; flex: 1; min-width: 200px; }
@@ -844,7 +843,7 @@ html.light .mnav-btn.active { color: var(--orange); }
 
 <!-- ─── TAB: POSIÇÕES ─────────────────────────────────── -->
 <div class="tab-pane" id="tab-posicoes">
-  <div style="max-width:1400px;margin:0 auto;display:flex;flex-direction:column;gap:14px">
+  <div style="max-width:1400px;margin:0 auto;display:flex;flex-direction:column;gap:14px;padding-bottom:96px">
     <div class="sec-label">Trades abertos</div>
     <div id="pos-selector" class="pos-selector"><div class="db-empty">A carregar posições...</div></div>
 
@@ -1735,6 +1734,21 @@ function posPnlUsd(p) {
   const pnl = parseFloat(p.unrealisedPnl), mark = parseFloat(p.markPrice);
   return (posCat(p.symbol) === 'inverse' && mark > 0) ? pnl * mark : pnl;
 }
+// Nocional e margem inicial em USD (inversos: positionValue vem em moeda base -> ×mark).
+// Necessário para o ROE/margem ficarem consistentes (USD/USD) e correto p/ inverso.
+function posNotionalUsd(p) {
+  const v = parseFloat(p.positionValue), mark = parseFloat(p.markPrice);
+  return (posCat(p.symbol) === 'inverse' && mark > 0) ? v * mark : v;
+}
+function posMarginUsd(p) {
+  const lev = parseFloat(p.leverage);
+  return lev > 0 ? posNotionalUsd(p) / lev : 0;
+}
+// ROE = ROI da posição = PnL(USD) / margem inicial(USD). Reflete a alavancagem.
+function posRoe(p) {
+  const m = posMarginUsd(p);
+  return m > 0 ? (posPnlUsd(p) / m) * 100 : 0;
+}
 
 function renderPosTab() {
   const empty = document.getElementById('pos-empty');
@@ -1774,11 +1788,10 @@ function renderPosSummary() {
   el.style.display = '';
   let pnlUsd = 0, exp = 0, marg = 0, longs = 0, shorts = 0, minDist = Infinity;
   positions.forEach(p => {
-    const val = parseFloat(p.positionValue), lev = parseFloat(p.leverage);
     const mark = parseFloat(p.markPrice), liq = parseFloat(p.liqPrice);
     pnlUsd += posPnlUsd(p);
-    exp += val;
-    marg += lev > 0 ? val / lev : 0;
+    exp += posNotionalUsd(p);   // nocional em USD (inverso convertido)
+    marg += posMarginUsd(p);    // margem em USD (inverso convertido)
     if (p.side === 'Buy') longs++; else shorts++;
     if (liq > 0 && mark > 0) { const dd = Math.abs((liq - mark) / mark) * 100; if (dd < minDist) minDist = dd; }
   });
@@ -1815,8 +1828,7 @@ function renderPosExitResult(p) {
   }
   const dir = p.side === 'Buy' ? 1 : -1;
   const entry = parseFloat(p.avgPrice), size = parseFloat(p.size);
-  const lev = parseFloat(p.leverage), val = parseFloat(p.positionValue);
-  const margUsd = lev > 0 ? val / lev : 0;
+  const margUsd = posMarginUsd(p);
   let coinProfit, usdProfit;
   if (isInv) { coinProfit = dir * size * (1 / entry - 1 / target); usdProfit = coinProfit * target; }
   else { coinProfit = dir * size * (target - entry); usdProfit = coinProfit; }
@@ -1857,11 +1869,13 @@ function renderPosSelector() {
   if (!positions.length) { el.innerHTML = '<div class="db-empty">Sem posições abertas.</div>'; return; }
   el.innerHTML = positions.map(p => {
     const k = posKeyOf(p), isLong = p.side === 'Buy', pnl = posPnlUsd(p);
+    const lev = parseFloat(p.leverage), roe = posRoe(p);
+    const col = pnl >= 0 ? 'var(--green)' : 'var(--red)';
     const active = k === selectedPosKey ? ' active' : '';
     return `<button class="pos-chip${active}" onclick="selectPos('${k}')">
       <span class="pos-chip-sym">${p.symbol}</span>
-      <span class="tag ${isLong ? 'tag-long' : 'tag-short'}">${isLong ? 'Long' : 'Short'} ${parseFloat(p.leverage)}×</span>
-      <span class="pos-chip-pnl" style="color:${pnl >= 0 ? 'var(--green)' : 'var(--red)'}">${pnl >= 0 ? '+' : ''}${fmtUsd(pnl, 0)}</span>
+      <span class="tag ${isLong ? 'tag-long' : 'tag-short'}">${isLong ? 'Long' : 'Short'} ${lev}×</span>
+      <span class="pos-chip-pnl" style="color:${col}">${pnl >= 0 ? '+' : ''}${fmtUsd(pnl, 0)} <span style="opacity:.85">${roe >= 0 ? '+' : ''}${fmt(roe, 1)}%</span></span>
     </button>`;
   }).join('');
 }
@@ -1902,11 +1916,8 @@ function posTargets(p) {
 function renderPosMetrics(p) {
   const el = document.getElementById('pos-metrics'); if (!el) return;
   const { ent, liq, sl } = posTargets(p);
-  const mark = parseFloat(p.markPrice), lev = parseFloat(p.leverage);
-  const val = parseFloat(p.positionValue), pnlUsd = posPnlUsd(p);
-  const marg = lev > 0 ? val / lev : 0;
-  // ROE = PnL(USD) / margem inicial (= notional/alavancagem) -> reflete a alavancagem (ROI Bybit)
-  const roe = marg > 0 ? (pnlUsd / marg) * 100 : 0;
+  const mark = parseFloat(p.markPrice), pnlUsd = posPnlUsd(p);
+  const roe = posRoe(p); // ROI correto (USD/USD) — funciona p/ linear e inverso
   const dLiq = liq > 0 ? Math.abs((liq - mark) / mark) * 100 : 0;
   const distC = dLiq > 0 && dLiq < 8 ? 'var(--red)' : dLiq < 20 ? 'var(--orange)' : 'var(--green)';
   const pnlC = pnlUsd >= 0 ? 'var(--green)' : 'var(--red)';
