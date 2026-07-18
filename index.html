@@ -1174,8 +1174,9 @@ function switchTab(id, btn) {
   document.querySelectorAll('[data-tab]').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + id).classList.add('active');
   document.querySelectorAll(`[data-tab="${id}"]`).forEach(b => b.classList.add('active'));
-  if (id === 'dashboard')  { setTimeout(drawPortfolioChart, 60); renderDbAssets(); renderDbPositions(); }
-  if (id === 'mercado')    { initMainChart(); renderPosCharts(); }
+  if (id === 'dashboard')  { setTimeout(drawPortfolioChart, 60); renderDbAssets(); }
+  if (id === 'posicoes')   renderPosTab();
+  if (id === 'mercado')    initMainChart();
   if (id === 'estrutura')  initStructureCharts();
 }
 
@@ -1427,6 +1428,7 @@ async function fetchPositions() {
     positions = raw.filter(p => parseFloat(p.size) !== 0);
     console.log('Positions fetched:', positions.length, positions.map(p => p.symbol + ' ' + p.side));
     renderPortfolio();
+    if (document.getElementById('tab-posicoes')?.classList.contains('active')) refreshPosTab();
   } catch(e) {
     console.error('fetchPositions error:', e);
   }
@@ -1678,55 +1680,174 @@ function updatePosCardDynamic(p) {
   updatePosTpResult(posKey);
 }
 
-// ── POSITION CHARTS (Mercado tab) ─────────────────────────────────────────────
-function renderPosCharts() {
-  const container = document.getElementById('pos-charts-row');
-  if (!container || !positions.length) {
-    if (container) container.innerHTML = '<div style="color:var(--faint);font-size:12px;padding:12px 0">Sem posições abertas para mostrar gráfico.</div>';
+// ── POSIÇÕES (tab próprio): seletor + gráfico único com linhas ────────────────
+let posChart = null, posSeries = null, posPriceLines = [], selectedPosKey = null;
+
+// Categoria Bybit: inversos terminam em USD (não USDT)
+function posCat(sym) { return (sym.endsWith('USD') && !sym.endsWith('USDT')) ? 'inverse' : 'linear'; }
+// PnL em USD (inversos vêm em moeda base -> converter pelo mark)
+function posPnlUsd(p) {
+  const pnl = parseFloat(p.unrealisedPnl), mark = parseFloat(p.markPrice);
+  return (posCat(p.symbol) === 'inverse' && mark > 0) ? pnl * mark : pnl;
+}
+
+function renderPosTab() {
+  const empty = document.getElementById('pos-empty');
+  const card  = document.getElementById('pos-detail-card');
+  renderPosSelector();
+  if (!positions.length) {
+    if (card) card.style.display = 'none';
+    if (empty) empty.style.display = '';
     return;
   }
+  if (empty) empty.style.display = 'none';
+  const keys = positions.map(posKeyOf);
+  if (!selectedPosKey || !keys.includes(selectedPosKey)) selectedPosKey = keys[0];
+  selectPos(selectedPosKey);
+}
 
-  // Build chart cards for each position if not already built
-  positions.forEach(p => {
-    const chartId = `tv-pos-${p.symbol}`;
-    const wrId    = `tv-pos-wr-${p.symbol}`;
+// Atualização em ciclo: refresca seletor + métricas + linhas sem reconstruir o gráfico
+function refreshPosTab() {
+  if (!positions.length) { renderPosTab(); return; }
+  renderPosSelector();
+  const p = positions.find(x => posKeyOf(x) === selectedPosKey);
+  if (!p) { renderPosTab(); return; }
+  renderPosMetrics(p);
+  const mk = document.getElementById('pd-mark');
+  if (mk) mk.textContent = fmt(parseFloat(p.markPrice), 2);
+  addPosPriceLines(p);
+}
 
-    // Add card if not present
-    if (!document.getElementById(wrId)) {
-      const isLong = p.side === 'Buy';
-      const isInv  = p.symbol.includes('USD') && !p.symbol.endsWith('USDT');
-      const tvSym  = isInv ? `BYBIT:${p.symbol}` : `BYBIT:${p.symbol}.P`;
+function renderPosSelector() {
+  const el = document.getElementById('pos-selector');
+  if (!el) return;
+  if (!positions.length) { el.innerHTML = '<div class="db-empty">Sem posições abertas.</div>'; return; }
+  el.innerHTML = positions.map(p => {
+    const k = posKeyOf(p), isLong = p.side === 'Buy', pnl = posPnlUsd(p);
+    const active = k === selectedPosKey ? ' active' : '';
+    return `<button class="pos-chip${active}" onclick="selectPos('${k}')">
+      <span class="pos-chip-sym">${p.symbol}</span>
+      <span class="tag ${isLong ? 'tag-long' : 'tag-short'}">${isLong ? 'Long' : 'Short'} ${parseFloat(p.leverage)}×</span>
+      <span class="pos-chip-pnl" style="color:${pnl >= 0 ? 'var(--green)' : 'var(--red)'}">${pnl >= 0 ? '+' : ''}${fmtUsd(pnl, 0)}</span>
+    </button>`;
+  }).join('');
+}
 
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.innerHTML = `
-        <div class="card-header">
-          <div class="card-title">
-            <div class="ctdot" style="background:${isLong ? 'var(--green)' : 'var(--red)'}"></div>
-            ${p.symbol} — ${isLong ? 'Long' : 'Short'} ${p.leverage}×
-          </div>
-          <div style="display:flex;gap:6px;align-items:center">
-            <span class="tag ${isInv ? 'tag-inv' : 'tag-lin'}">${isInv ? 'Inverse' : 'Linear'}</span>
-            <span class="mono" style="font-size:10px;color:var(--orange)">${fmt(parseFloat(p.markPrice), 2)}</span>
-          </div>
-        </div>
-        <div id="${chartId}" class="chart-wrap" style="height:360px"></div>`;
-      container.appendChild(card);
+function selectPos(key) {
+  const p = positions.find(x => posKeyOf(x) === key);
+  if (!p) return;
+  const changed = key !== selectedPosKey;
+  selectedPosKey = key;
+  renderPosSelector();
+  const card = document.getElementById('pos-detail-card');
+  if (card) card.style.display = '';
+  const empty = document.getElementById('pos-empty'); if (empty) empty.style.display = 'none';
 
-      // Init chart
-      setTimeout(() => {
-        if (!posCharts[p.symbol]) {
-          posCharts[p.symbol] = new TradingView.widget({
-            autosize: true, symbol: tvSym, interval: '15',
-            theme: 'dark', style: '1', toolbar_bg: '#080810',
-            enable_publishing: false, hide_side_toolbar: false, allow_symbol_change: false,
-            studies: ['RSI@tv-basicstudies', 'MACD@tv-basicstudies'],
-            container_id: chartId
-          });
-        }
-      }, 100);
-    }
+  const isLong = p.side === 'Buy', isInv = posCat(p.symbol) === 'inverse';
+  const dot = document.getElementById('pd-dot'); if (dot) dot.style.background = isLong ? 'var(--green)' : 'var(--red)';
+  const title = document.getElementById('pd-title'); if (title) title.textContent = `${p.symbol} — ${isLong ? 'Long' : 'Short'} ${parseFloat(p.leverage)}×`;
+  const type = document.getElementById('pd-type'); if (type) { type.textContent = isInv ? 'Inverse' : 'Linear'; type.className = 'tag ' + (isInv ? 'tag-inv' : 'tag-lin'); }
+  const mk = document.getElementById('pd-mark'); if (mk) mk.textContent = fmt(parseFloat(p.markPrice), 2);
+
+  renderPosMetrics(p);
+  loadPosChart(p);
+}
+
+function posTargets(p) {
+  // TP: da Bybit ou alvo manual guardado (posExitTargets); SL: da Bybit
+  const tp = parseFloat(p.takeProfit) || parseFloat(posExitTargets[posKeyOf(p)]) || 0;
+  const sl = parseFloat(p.stopLoss) || 0;
+  return { ent: parseFloat(p.avgPrice), liq: parseFloat(p.liqPrice), tp, sl };
+}
+
+function renderPosMetrics(p) {
+  const el = document.getElementById('pos-metrics'); if (!el) return;
+  const { ent, liq, tp, sl } = posTargets(p);
+  const mark = parseFloat(p.markPrice), lev = parseFloat(p.leverage);
+  const val = parseFloat(p.positionValue), pnlUsd = posPnlUsd(p);
+  const marg = lev > 0 ? val / lev : 0, roe = marg > 0 ? (parseFloat(p.unrealisedPnl) / marg) * 100 : 0;
+  const dLiq = liq > 0 ? Math.abs((liq - mark) / mark) * 100 : 0;
+  const liqCol = dLiq > 0 && dLiq < 8 ? 'var(--red)' : dLiq < 20 ? 'var(--orange)' : 'var(--green)';
+  const cell = (lbl, val, col) => `<div class="pos-metric"><div class="pos-metric-lbl">${lbl}</div><div class="pos-metric-val"${col ? ` style="color:${col}"` : ''}>${val}</div></div>`;
+  el.innerHTML =
+    cell('Entrada', fmt(ent, 2)) +
+    cell('Mark', fmt(mark, 2), 'var(--orange)') +
+    cell('ROE', `${roe >= 0 ? '+' : ''}${fmt(roe, 2)}%`, roe >= 0 ? 'var(--green)' : 'var(--red)') +
+    cell('PnL', `${pnlUsd >= 0 ? '+' : ''}${fmtUsd(pnlUsd, 2)}`, pnlUsd >= 0 ? 'var(--green)' : 'var(--red)') +
+    cell('Take Profit', tp > 0 ? fmt(tp, 2) : '—', tp > 0 ? 'var(--green)' : 'var(--faint)') +
+    cell('Stop Loss', sl > 0 ? fmt(sl, 2) : '—', sl > 0 ? 'var(--red)' : 'var(--faint)') +
+    cell('Liquidação', liq > 0 ? fmt(liq, 2) : '—', 'var(--red)') +
+    cell('Dist. liq.', liq > 0 ? `${fmt(dLiq, 1)}%` : '—', liqCol);
+}
+
+function posChartOpts() {
+  const light = document.documentElement.classList.contains('light');
+  return {
+    autoSize: true,
+    layout: { background: { color: 'transparent' }, textColor: light ? '#3a3d50' : '#7b7fa0', fontFamily: 'JetBrains Mono, monospace' },
+    grid: { vertLines: { color: light ? 'rgba(0,0,0,.05)' : 'rgba(255,255,255,.04)' }, horzLines: { color: light ? 'rgba(0,0,0,.05)' : 'rgba(255,255,255,.04)' } },
+    rightPriceScale: { borderColor: light ? 'rgba(0,0,0,.1)' : 'rgba(255,255,255,.08)' },
+    timeScale: { borderColor: light ? 'rgba(0,0,0,.1)' : 'rgba(255,255,255,.08)', timeVisible: true },
+    crosshair: { mode: 0 },
+  };
+}
+
+async function loadPosChart(p) {
+  const cont = document.getElementById('pos-chart'); if (!cont) return;
+  if (typeof LightweightCharts === 'undefined') {
+    cont.innerHTML = '<div style="padding:24px;color:var(--faint);font-size:12px">Biblioteca de gráfico indisponível (sem ligação).</div>';
+    return;
+  }
+  cont.innerHTML = '';
+  posPriceLines = [];
+  posChart = LightweightCharts.createChart(cont, posChartOpts());
+  posSeries = posChart.addCandlestickSeries({
+    upColor: '#2dd4a0', downColor: '#f7647a', borderVisible: false,
+    wickUpColor: '#2dd4a0', wickDownColor: '#f7647a',
   });
+  try {
+    const cat = posCat(p.symbol);
+    const r = await fetch(`${BYBIT}/v5/market/kline?category=${cat}&symbol=${p.symbol}&interval=15&limit=200`);
+    const d = await r.json();
+    const list = (d?.result?.list || [])
+      .map(k => ({ time: Math.floor(parseInt(k[0]) / 1000), open: +k[1], high: +k[2], low: +k[3], close: +k[4] }))
+      .sort((a, b) => a.time - b.time);
+    if (list.length) posSeries.setData(list);
+  } catch (e) { console.error('kline error', e); }
+  addPosPriceLines(p);
+  if (posChart) posChart.timeScale().fitContent();
+}
+
+function addPosPriceLines(p) {
+  if (!posSeries || typeof LightweightCharts === 'undefined') return;
+  posPriceLines.forEach(l => { try { posSeries.removePriceLine(l); } catch (e) {} });
+  posPriceLines = [];
+  const { ent, liq, tp, sl } = posTargets(p);
+  const LS = LightweightCharts.LineStyle;
+  const add = (price, color, title, dashed) => {
+    if (!(price > 0)) return;
+    posPriceLines.push(posSeries.createPriceLine({
+      price, color, lineWidth: dashed ? 1 : 2,
+      lineStyle: dashed ? LS.Dashed : LS.Solid,
+      axisLabelVisible: true, title,
+    }));
+  };
+  add(ent, '#7c8fff', 'Entrada', false);
+  add(tp,  '#2dd4a0', 'TP', false);
+  add(sl,  '#f7647a', 'SL', false);
+  add(liq, '#f7647a', 'Liq. teórica', true);   // liquidação a tracejado
+  renderPosLegend(p);
+}
+
+function renderPosLegend(p) {
+  const el = document.getElementById('pos-legend'); if (!el) return;
+  const { ent, liq, tp, sl } = posTargets(p);
+  const item = (color, lbl, dashed) => `<span class="pos-legend-item"><span class="pos-legend-swatch" style="border-top-color:${color};border-top-style:${dashed ? 'dashed' : 'solid'}"></span>${lbl}</span>`;
+  let html = item('#7c8fff', 'Entrada');
+  if (tp > 0)  html += item('#2dd4a0', 'Take Profit');
+  if (sl > 0)  html += item('#f7647a', 'Stop Loss');
+  if (liq > 0) html += item('#f7647a', 'Liquidação teórica', true);
+  el.innerHTML = html;
 }
 
 // ── TRADINGVIEW CHARTS ────────────────────────────────────────────────────────
