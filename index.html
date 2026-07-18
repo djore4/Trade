@@ -1174,7 +1174,7 @@ function switchTab(id, btn) {
   document.querySelectorAll('[data-tab]').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + id).classList.add('active');
   document.querySelectorAll(`[data-tab="${id}"]`).forEach(b => b.classList.add('active'));
-  if (id === 'dashboard')  { setTimeout(drawPortfolioChart, 60); renderDbAssets(); }
+  if (id === 'dashboard')  { setTimeout(() => loadPortfolioSeries(dbCurrentRange()), 60); renderDbAssets(); }
   if (id === 'posicoes')   renderPosTab();
   if (id === 'mercado')    initMainChart();
   if (id === 'estrutura')  initStructureCharts();
@@ -2283,42 +2283,122 @@ function renderDashboard() {
     hp.style.color = isPos ? 'var(--green)' : 'var(--red)';
   }
 
-  drawPortfolioChart();
+  if (pfCache[pfRange]) { pfSeries = anchorSeries(pfCache[pfRange]); drawPortfolioChart(); }
+  else loadPortfolioSeries(pfRange);
   if (dbCurrentSubTab === 'assets')    renderDbAssets();
   if (dbCurrentSubTab === 'history')   renderDbHistory();
   if (dbCurrentSubTab === 'positions') renderDbPositions();
   if (dbCurrentSubTab === 'exit')      renderDbExitStrategy();
 }
 
+// ── VALOR DO PORTEFÓLIO AO LONGO DO TEMPO ─────────────────────────────────────
+// Reconstruído a partir das klines públicas das moedas detidas
+// (Σ qtd × preço no tempo), ancorado ao total atual (totalEquity). Por time-frame.
+const PF_RANGE_CFG = {
+  '24H': { interval: '5',   limit: 288 },
+  '1S':  { interval: '60',  limit: 168 },
+  '1M':  { interval: '240', limit: 180 },
+  '3M':  { interval: 'D',   limit: 90  },
+  '6M':  { interval: 'D',   limit: 180 },
+  '1A':  { interval: 'D',   limit: 365 },
+  'TUDO':{ interval: 'W',   limit: 208 },
+};
+const PF_STABLE = new Set(['USDT','USDC','USDD','DAI','TUSD','FDUSD','BUSD','USDE']);
+let pfSeries = [], pfCache = {}, pfRange = '24H', pfToken = 0;
+
+function dbCurrentRange() {
+  const b = document.querySelector('.db-time-btn.active');
+  return (b && b.textContent.trim()) || '24H';
+}
+
+// Ancora o último ponto da série ao total atual (offset constante -> mantém a forma).
+function anchorSeries(raw) {
+  if (!raw || !raw.length) return [];
+  const target = parseFloat((walletData && walletData.totalEquity) || 0);
+  const offset = target > 0 ? target - raw[raw.length - 1].v : 0;
+  return raw.map(p => ({ t: p.t, v: p.v + offset }));
+}
+
+async function loadPortfolioSeries(range) {
+  range = range || dbCurrentRange();
+  pfRange = range;
+  if (pfCache[range]) { pfSeries = anchorSeries(pfCache[range]); drawPortfolioChart(); return; }
+  const token = ++pfToken;
+  drawPortfolioChart(); // placeholder imediato
+  if (!walletData) return;
+  const cfg = PF_RANGE_CFG[range] || PF_RANGE_CFG['24H'];
+  const held = (walletData.coin || [])
+    .map(c => ({ coin: c.coin, qty: parseFloat(c.walletBalance || 0), usd: parseFloat(c.usdValue || 0) }))
+    .filter(c => c.qty > 0 && c.usd >= 1);
+  let stableVal = 0; const priced = [];
+  held.forEach(c => { if (PF_STABLE.has(c.coin)) stableVal += c.usd; else priced.push(c); });
+
+  const seriesList = await Promise.all(priced.map(async c => {
+    try {
+      const r = await fetch(`${BYBIT}/v5/market/kline?category=spot&symbol=${c.coin}USDT&interval=${cfg.interval}&limit=${cfg.limit}`);
+      const d = await r.json();
+      const arr = (d?.result?.list || []).map(k => ({ t: Math.floor(parseInt(k[0]) / 1000), c: +k[4] })).sort((a, b) => a.t - b.t);
+      return { qty: c.qty, arr };
+    } catch (e) { return { qty: c.qty, arr: [] }; }
+  }));
+  if (token !== pfToken) return; // o time-frame mudou entretanto
+
+  const tsSet = new Set();
+  seriesList.forEach(s => s.arr.forEach(p => tsSet.add(p.t)));
+  const timeline = [...tsSet].sort((a, b) => a - b);
+  if (timeline.length < 2) { pfSeries = []; drawPortfolioChart(); return; }
+  seriesList.forEach(s => { s.i = 0; s.last = s.arr.length ? s.arr[0].c : 0; });
+  const raw = timeline.map(t => {
+    let v = stableVal;
+    seriesList.forEach(s => {
+      if (!s.arr.length) return;
+      while (s.i < s.arr.length && s.arr[s.i].t <= t) { s.last = s.arr[s.i].c; s.i++; }
+      v += s.qty * s.last;
+    });
+    return { t, v };
+  });
+  pfCache[range] = raw;
+  pfSeries = anchorSeries(raw);
+  drawPortfolioChart();
+}
+
+// Atualiza o valor + variação (do time-frame) no cabeçalho a partir da série.
+function updatePfPnl(pts) {
+  const puEl = document.getElementById('db-pnl-usd');
+  const ppEl = document.getElementById('db-pnl-pct');
+  if (!puEl || !ppEl || !pts || pts.length < 2) return;
+  const first = pts[0].v, last = pts[pts.length - 1].v;
+  const d = last - first;
+  const pct = first > 0 ? (d / first) * 100 : 0;
+  const isPos = d >= 0;
+  const col = d !== 0 ? (isPos ? 'var(--green)' : 'var(--red)') : 'var(--dim)';
+  puEl.textContent = (d >= 0 ? '+' : '') + fmtUsd(d, 2);
+  puEl.style.color = col;
+  ppEl.textContent = (isPos ? '▲' : '▼') + ' ' + Math.abs(pct).toFixed(2) + '%';
+  ppEl.style.background = isPos ? 'rgba(45,212,160,.12)' : 'rgba(247,100,122,.12)';
+  ppEl.style.color = col;
+}
+
 function drawPortfolioChart() {
   const svg = document.getElementById('db-chart-svg');
   if (!svg) return;
-
-  // Fixed internal coordinate space — viewBox scales it to the CSS size so it
-  // renders correctly regardless of when this function is called or the layout width.
   const W = 800, H = 110;
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
   svg.setAttribute('preserveAspectRatio', 'none');
 
-  // Filter by selected time range (in-session data only)
-  const activeRangeBtn = document.querySelector('.db-time-btn.active');
-  const rangeLabel = activeRangeBtn?.textContent?.trim() || 'TUDO';
-  const rangeCutoffs = { '24H': 86400e3, '1S': 604800e3, '1M': 2592000e3, '3M': 7776000e3, '6M': 15552000e3, '1A': 31536000e3 };
-  const since = rangeCutoffs[rangeLabel] ? Date.now() - rangeCutoffs[rangeLabel] : 0;
-  const pts = since > 0 ? portfolioHistory.filter(p => p.ts >= since) : [...portfolioHistory];
-
-  if (pts.length < 2) {
+  const pts = pfSeries;
+  if (!pts || pts.length < 2) {
     svg.innerHTML = `<line x1="0" y1="${H/2}" x2="${W}" y2="${H/2}" stroke="var(--s3)" stroke-width="2" stroke-dasharray="6 6"/>`;
     return;
   }
   const minV = Math.min(...pts.map(p => p.v));
   const maxV = Math.max(...pts.map(p => p.v));
   const vRng = maxV - minV || 1;
-  const tRng = pts[pts.length-1].ts - pts[0].ts || 1;
+  const tRng = pts[pts.length-1].t - pts[0].t || 1;
   const pad  = 10;
-  const toX  = t => ((t - pts[0].ts) / tRng) * W;
+  const toX  = t => ((t - pts[0].t) / tRng) * W;
   const toY  = v => H - pad - ((v - minV) / vRng) * (H - pad * 2);
-  const coords = pts.map(p => [toX(p.ts), toY(p.v)]);
+  const coords = pts.map(p => [toX(p.t), toY(p.v)]);
 
   let path = `M ${coords[0][0].toFixed(1)} ${coords[0][1].toFixed(1)}`;
   for (let i = 1; i < coords.length; i++) {
@@ -2342,6 +2422,8 @@ function drawPortfolioChart() {
   <path d="${path} L ${lx} ${H} L ${fx} ${H} Z" fill="url(#dbg)"/>
   <path d="${path}" stroke="${lc}" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
   <circle cx="${lx}" cy="${ly}" r="4" fill="${lc}" opacity="0.9"/>`;
+
+  updatePfPnl(pts);
 }
 
 const COIN_COLORS = {
@@ -2656,7 +2738,7 @@ function switchDbTab(tab, btn) {
 function setDbRange(btn) {
   document.querySelectorAll('.db-time-btn').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
-  drawPortfolioChart();
+  loadPortfolioSeries(btn ? btn.textContent.trim() : dbCurrentRange());
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
