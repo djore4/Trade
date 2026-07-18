@@ -561,16 +561,32 @@ html.light .mnav-btn.active { color: var(--orange); }
 .pos-metric-val { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; }
 @media (max-width: 600px) { .pos-metrics { grid-template-columns: repeat(2, 1fr); } }
 .pos-iv-bar { display: flex; gap: 4px; margin: 4px 0 12px; }
+/* Resumo macro condensado: faixa inline compacta */
 .pos-summary {
-  display: grid; grid-template-columns: repeat(6, 1fr); gap: 1px; background: var(--border);
-  border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px;
+  background: var(--s1); border: 1px solid var(--border); border-radius: 9px;
+  padding: 9px 14px; font-size: 12px;
 }
-.pos-sum-cell { background: var(--s1); padding: 11px 13px; }
-.pos-sum-lbl { font-size: 8.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); margin-bottom: 4px; }
-.pos-sum-val { font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 700; }
-.pos-sum-sub { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--faint); margin-top: 2px; }
-@media (max-width: 900px) { .pos-summary { grid-template-columns: repeat(3, 1fr); } }
-@media (max-width: 600px) { .pos-summary { grid-template-columns: repeat(2, 1fr); } }
+.ps-item { display: inline-flex; align-items: baseline; gap: 5px; white-space: nowrap; }
+.ps-lbl { color: var(--faint); font-size: 10px; text-transform: uppercase; letter-spacing: .05em; }
+.ps-val { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 12.5px; }
+.ps-sub { font-family: 'JetBrains Mono', monospace; color: var(--faint); font-size: 10.5px; }
+.ps-sep { width: 1px; height: 14px; background: var(--border); }
+@media (max-width: 600px) { .pos-summary .ps-sep { display: none; } .pos-summary { gap: 4px 14px; } }
+
+/* Cenário de saída */
+.pos-exit { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border); }
+.pos-exit-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.pos-exit-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--dim); }
+.pos-exit-hint { font-size: 10.5px; color: var(--faint); }
+.pos-exit-row { display: flex; gap: 12px; align-items: stretch; flex-wrap: wrap; }
+.pos-exit-input-group { display: flex; align-items: center; background: var(--bg); border: 1px solid var(--border2); border-radius: 8px; padding: 0 10px; min-width: 160px; }
+.pos-exit-prefix { color: var(--faint); font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+.pos-exit-input { flex: 1; background: transparent; border: none; outline: none; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 14px; padding: 9px 6px; width: 100%; }
+.pos-exit-result { display: flex; gap: 1px; background: var(--border); border-radius: 7px; overflow: hidden; flex: 1; min-width: 200px; }
+.pos-exit-cell { flex: 1; background: var(--s1); padding: 7px 11px; text-align: center; }
+.pos-exit-cell-lbl { font-size: 8.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--faint); margin-bottom: 3px; }
+.pos-exit-cell-val { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 700; }
 </style>
 </head>
 <body>
@@ -587,10 +603,6 @@ html.light .mnav-btn.active { color: var(--orange); }
     <button class="tab-btn" data-tab="posicoes" onclick="switchTab('posicoes',this)">
       <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1 8.5 3.5 5 6 6.5 10 2" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="1" y1="10.2" x2="10" y2="10.2" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
       Posições
-    </button>
-    <button class="tab-btn" data-tab="carteira" onclick="switchTab('carteira',this)">
-      <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x=".5" y=".5" width="4" height="4" rx="1" stroke="currentColor"/><rect x="6.5" y=".5" width="4" height="4" rx="1" stroke="currentColor"/><rect x=".5" y="6.5" width="4" height="4" rx="1" stroke="currentColor"/><rect x="6.5" y="6.5" width="4" height="4" rx="1" stroke="currentColor"/></svg>
-      Carteira
     </button>
     <button class="tab-btn" data-tab="mercado" onclick="switchTab('mercado',this)">
       <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><polyline points="1,8.5 3.5,4.5 6.5,6.5 10,1.5" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -744,50 +756,6 @@ html.light .mnav-btn.active { color: var(--orange); }
 </div>
 
 <!-- ─── TAB: CARTEIRA ─────────────────────────────────── -->
-<div class="tab-pane" id="tab-carteira">
-  <div style="max-width:1400px;margin:0 auto;display:flex;flex-direction:column;gap:18px">
-
-    <div>
-      <div class="sec-label">Portefólio</div>
-      <div class="kpi-strip" style="grid-template-columns:repeat(5,1fr)">
-        <div class="kpi-cell">
-          <div class="kpi-label">PnL Aberto</div>
-          <div id="k-pnl" class="kpi-num">—</div>
-          <div id="k-roe" class="kpi-sub">ROE —</div>
-        </div>
-        <div class="kpi-cell">
-          <div class="kpi-label">Exposição</div>
-          <div id="k-exp" class="kpi-num">—</div>
-          <div class="kpi-sub">nocional USD</div>
-        </div>
-        <div class="kpi-cell">
-          <div class="kpi-label">Margem usada</div>
-          <div id="k-margin" class="kpi-num">—</div>
-          <div id="k-lev" class="kpi-sub">Lev. —</div>
-        </div>
-        <div class="kpi-cell">
-          <div class="kpi-label">Posições</div>
-          <div id="k-count" class="kpi-num">—</div>
-          <div class="kpi-sub">abertas</div>
-        </div>
-        <div class="kpi-cell">
-          <div class="kpi-label">Maior risco</div>
-          <div id="k-risk" class="kpi-num">—</div>
-          <div class="kpi-sub">dist. liquidação</div>
-        </div>
-      </div>
-    </div>
-
-    <div>
-      <div class="sec-label">Posições abertas</div>
-      <div id="pos-list" style="display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(320px,1fr))">
-        <div style="color:var(--faint);font-size:12px;padding:24px 0">A carregar posições...</div>
-      </div>
-    </div>
-
-  </div>
-</div>
-
 <!-- ─── TAB: MERCADO ──────────────────────────────────── -->
 <div class="tab-pane" id="tab-mercado">
   <div style="max-width:1600px;margin:0 auto;display:flex;flex-direction:column;gap:14px">
@@ -904,6 +872,21 @@ html.light .mnav-btn.active { color: var(--orange); }
       <div id="pos-chart" class="chart-wrap" style="height:440px;position:relative"></div>
       <div class="pos-legend" id="pos-legend"></div>
       <div class="pos-metrics" id="pos-metrics"></div>
+
+      <!-- Cenário de saída (simulador por posição) -->
+      <div class="pos-exit">
+        <div class="pos-exit-head">
+          <span class="pos-exit-title">Cenário de saída</span>
+          <span class="pos-exit-hint">preço a que fechas — desenha o alvo (verde) no gráfico</span>
+        </div>
+        <div class="pos-exit-row">
+          <div class="pos-exit-input-group">
+            <span class="pos-exit-prefix">$</span>
+            <input type="number" inputmode="decimal" step="any" min="0" id="pos-exit-input" class="pos-exit-input" placeholder="preço de saída" oninput="onPosExitPrice(this.value)">
+          </div>
+          <div class="pos-exit-result" id="pos-exit-result"></div>
+        </div>
+      </div>
     </div>
 
     <div id="pos-empty" class="db-empty" style="display:none">Sem posições abertas na Bybit.</div>
@@ -1109,10 +1092,6 @@ html.light .mnav-btn.active { color: var(--orange); }
   <button class="mnav-btn" data-tab="posicoes" onclick="switchTab('posicoes',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 16 9 10 13 13 21 5"/><line x1="3" y1="21" x2="21" y2="21"/><circle cx="13" cy="13" r="1.1" fill="currentColor" stroke="none"/></svg>
     <span class="mnav-lbl">Posições</span>
-  </button>
-  <button class="mnav-btn" data-tab="carteira" onclick="switchTab('carteira',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M16 12a2 2 0 0 1 4 0v2a2 2 0 0 1-4 0v-2z" fill="currentColor" opacity=".2" stroke="none"/><path d="M16 12a2 2 0 0 1 4 0"/></svg>
-    <span class="mnav-lbl">Carteira</span>
   </button>
   <button class="mnav-btn" data-tab="mercado" onclick="switchTab('mercado',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 8 12 13 15 21 7"/><line x1="3" y1="21" x2="21" y2="21"/></svg>
@@ -1740,12 +1719,13 @@ function refreshPosTab() {
   const p = positions.find(x => posKeyOf(x) === selectedPosKey);
   if (!p) { renderPosTab(); return; }
   renderPosMetrics(p);
+  renderPosExitResult(p);
   const mk = document.getElementById('pd-mark');
   if (mk) mk.textContent = fmt(parseFloat(p.markPrice), 2);
   addPosPriceLines(p);
 }
 
-// Resumo macro que compila TODAS as posições abertas
+// Resumo macro condensado: compila TODAS as posições numa faixa inline
 function renderPosSummary() {
   const el = document.getElementById('pos-summary'); if (!el) return;
   if (!positions.length) { el.style.display = 'none'; return; }
@@ -1764,15 +1744,59 @@ function renderPosSummary() {
   const avgLev = marg > 0 ? exp / marg : 0;
   const pnlC = pnlUsd >= 0 ? 'var(--green)' : 'var(--red)';
   const distC = minDist < 8 ? 'var(--red)' : minDist < 20 ? 'var(--orange)' : 'var(--green)';
-  const cell = (lbl, val, col, sub) =>
-    `<div class="pos-sum-cell"><div class="pos-sum-lbl">${lbl}</div><div class="pos-sum-val"${col ? ` style="color:${col}"` : ''}>${val}</div>${sub ? `<div class="pos-sum-sub">${sub}</div>` : ''}</div>`;
+  const item = (lbl, val, col, sub) =>
+    `<span class="ps-item"><span class="ps-lbl">${lbl}</span><span class="ps-val"${col ? ` style="color:${col}"` : ''}>${val}</span>${sub ? `<span class="ps-sub">${sub}</span>` : ''}</span>`;
+  const sep = '<span class="ps-sep"></span>';
+  el.innerHTML = [
+    item('Trades', String(positions.length), null, `${longs}L·${shorts}S`),
+    item('PnL', `${pnlUsd >= 0 ? '+' : ''}${fmtUsd(pnlUsd, 0)}`, pnlC),
+    item('ROE', `${roe >= 0 ? '+' : ''}${fmt(roe, 1)}%`, pnlC),
+    item('Exp.', fmtUsd(exp, 0), null, `${fmt(avgLev, 1)}×`),
+    item('Margem', fmtUsd(marg, 0)),
+    item('Liq.', minDist < Infinity ? `${fmt(minDist, 1)}%` : '—', distC),
+  ].join(sep);
+}
+
+// Cenário de saída: lucro (coin/USD) e ROE ao preço de saída (fórmula linear/inversa)
+function renderPosExitResult(p) {
+  const el = document.getElementById('pos-exit-result'); if (!el || !p) return;
+  const key = posKeyOf(p);
+  const target = parseFloat(posExitTargets[key]);
+  const isInv = posCat(p.symbol) === 'inverse';
+  const coin = isInv ? p.symbol.replace(/USD$/, '') : 'USDT';
+  if (!(target > 0)) {
+    el.innerHTML =
+      `<div class="pos-exit-cell"><div class="pos-exit-cell-lbl">Lucro (${coin})</div><div class="pos-exit-cell-val" style="color:var(--faint)">—</div></div>` +
+      `<div class="pos-exit-cell"><div class="pos-exit-cell-lbl">Lucro (USD)</div><div class="pos-exit-cell-val" style="color:var(--faint)">define um preço</div></div>` +
+      `<div class="pos-exit-cell"><div class="pos-exit-cell-lbl">ROE saída</div><div class="pos-exit-cell-val" style="color:var(--faint)">—</div></div>`;
+    return;
+  }
+  const dir = p.side === 'Buy' ? 1 : -1;
+  const entry = parseFloat(p.avgPrice), size = parseFloat(p.size);
+  const lev = parseFloat(p.leverage), val = parseFloat(p.positionValue);
+  const margUsd = lev > 0 ? val / lev : 0;
+  let coinProfit, usdProfit;
+  if (isInv) { coinProfit = dir * size * (1 / entry - 1 / target); usdProfit = coinProfit * target; }
+  else { coinProfit = dir * size * (target - entry); usdProfit = coinProfit; }
+  const roeExit = margUsd > 0 ? (usdProfit / margUsd) * 100 : 0;
+  const col = usdProfit >= 0 ? 'var(--green)' : 'var(--red)';
   el.innerHTML =
-    cell('Trades', String(positions.length), null, `${longs}L · ${shorts}S`) +
-    cell('PnL total', `${pnlUsd >= 0 ? '+' : ''}${fmtUsd(pnlUsd, 2)}`, pnlC) +
-    cell('ROE agreg.', `${roe >= 0 ? '+' : ''}${fmt(roe, 2)}%`, pnlC) +
-    cell('Exposição', fmtUsd(exp, 0), null, `Lev. ${fmt(avgLev, 2)}×`) +
-    cell('Margem', fmtUsd(marg, 0)) +
-    cell('Liq. + próx.', minDist < Infinity ? `${fmt(minDist, 1)}%` : '—', distC, 'dist. mín.');
+    `<div class="pos-exit-cell"><div class="pos-exit-cell-lbl">Lucro (${coin})</div><div class="pos-exit-cell-val" style="color:${col}">${coinProfit >= 0 ? '+' : ''}${fmt(coinProfit, isInv ? 6 : 4)}</div></div>` +
+    `<div class="pos-exit-cell"><div class="pos-exit-cell-lbl">Lucro (USD)</div><div class="pos-exit-cell-val" style="color:${col}">${usdProfit >= 0 ? '+' : ''}${fmtUsd(usdProfit, 2)}</div></div>` +
+    `<div class="pos-exit-cell"><div class="pos-exit-cell-lbl">ROE saída</div><div class="pos-exit-cell-val" style="color:${col}">${roeExit >= 0 ? '+' : ''}${fmt(roeExit, 1)}%</div></div>`;
+}
+
+// Input do preço de saída -> guarda alvo, atualiza resultado + linha TP + métricas
+function onPosExitPrice(val) {
+  const p = positions.find(x => posKeyOf(x) === selectedPosKey); if (!p) return;
+  const key = posKeyOf(p);
+  const num = parseFloat((val || '').replace(',', '.'));
+  if (val === '' || isNaN(num) || num <= 0) delete posExitTargets[key];
+  else posExitTargets[key] = num;
+  savePosExitTargets();
+  renderPosExitResult(p);
+  renderPosMetrics(p);      // atualiza a métrica de Take Profit
+  addPosPriceLines(p);      // move a linha verde (alvo) no gráfico
 }
 
 // Mudar timeframe -> recarrega o gráfico da posição selecionada
@@ -1816,6 +1840,10 @@ function selectPos(key) {
   const mk = document.getElementById('pd-mark'); if (mk) mk.textContent = fmt(parseFloat(p.markPrice), 2);
 
   renderPosMetrics(p);
+  // cenário de saída: repõe o alvo guardado desta posição no input
+  const exitInput = document.getElementById('pos-exit-input');
+  if (exitInput) exitInput.value = posExitTargets[key] != null ? posExitTargets[key] : '';
+  renderPosExitResult(p);
   loadPosChart(p);
 }
 
