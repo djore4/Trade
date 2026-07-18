@@ -714,7 +714,7 @@ html.light .mnav-btn.active { color: var(--orange); }
       <div id="db-tab-assets" class="db-sub-pane active">
         <div class="db-assets-toolbar">
           <label class="db-toggle">
-            <input type="checkbox" id="chk-filter-small" onchange="toggleFilterSmall(this.checked)">
+            <input type="checkbox" id="chk-filter-small" checked onchange="toggleFilterSmall(this.checked)">
             <span class="db-toggle-track"><span class="db-toggle-thumb"></span></span>
             <span class="db-toggle-label">Ocultar &lt; $5</span>
           </label>
@@ -1120,6 +1120,7 @@ const POSITIONS_URL = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/get
 const SUPABASE_KEY  = 'sb_publishable_xHjsFJbSuAhO6r6BUylTCw_tDE-nFXT';
 const BYBIT         = 'https://api.bybit.com';
 const WALLET_URL    = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/get-bybit-wallet';
+const SUPABASE_REST = 'https://yifxgiwmibjaornighvt.supabase.co/rest/v1'; // alvos de saída (transversal)
 
 // Multiple RSS fallbacks per source
 const RSS_SOURCES = {
@@ -1145,7 +1146,7 @@ let exitTargets = {}; try { exitTargets = JSON.parse(localStorage.getItem('exitT
 let exitCoinData = {};
 let posExitTargets = {}; try { posExitTargets = JSON.parse(localStorage.getItem('posExitTargets') || '{}'); } catch(e) { posExitTargets = {}; }
 let posTpData = {};
-let txlogData = [], avgPrices = {}, dbFilterSmall = false;
+let txlogData = [], avgPrices = {}, dbFilterSmall = true; // por defeito oculta ativos < $5
 let tvChart = null, tvDom = null, tvTotal2 = null, tvTotal3 = null;
 let currentIv = '15', posCharts = {};
 
@@ -1588,6 +1589,47 @@ function savePosExitTargets() {
   try { localStorage.setItem('posExitTargets', JSON.stringify(posExitTargets)); } catch(e) {}
 }
 
+// ── ALVOS DE SAÍDA no Supabase (transversal entre dispositivos) ───────────────
+function sbHeaders(extra) {
+  return Object.assign({ apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }, extra || {});
+}
+
+// Ao arrancar: carrega os alvos guardados no Supabase (fonte transversal).
+// localStorage serve de cache offline; se o Supabase responder, prevalece.
+async function loadExitTargetsRemote() {
+  const local = { ...posExitTargets }; // já veio do localStorage no arranque
+  try {
+    const r = await fetch(`${SUPABASE_REST}/exit_targets?select=pos_key,target`, { headers: sbHeaders() });
+    if (!r.ok) return;
+    const rows = await r.json();
+    const remote = {};
+    (rows || []).forEach(x => { const t = parseFloat(x.target); if (t > 0) remote[x.pos_key] = t; });
+    // Funde: o remoto (transversal) prevalece; alvos que só existem localmente
+    // são migrados para o Supabase para não se perderem.
+    posExitTargets = Object.assign({}, local, remote);
+    try { localStorage.setItem('posExitTargets', JSON.stringify(posExitTargets)); } catch(e) {}
+    Object.keys(local).forEach(k => { if (remote[k] == null) syncExitTargetRemote(k); });
+    if (document.getElementById('tab-posicoes')?.classList.contains('active')) refreshPosTab();
+  } catch(e) { /* offline -> mantém o que veio do localStorage */ }
+}
+
+// Sincroniza um alvo (upsert) ou remove-o no Supabase.
+async function syncExitTargetRemote(key) {
+  try {
+    if (posExitTargets[key] != null) {
+      await fetch(`${SUPABASE_REST}/exit_targets`, {
+        method: 'POST',
+        headers: sbHeaders({ 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' }),
+        body: JSON.stringify([{ pos_key: key, target: posExitTargets[key], updated_at: new Date().toISOString() }]),
+      });
+    } else {
+      await fetch(`${SUPABASE_REST}/exit_targets?pos_key=eq.${encodeURIComponent(key)}`, {
+        method: 'DELETE', headers: sbHeaders({ Prefer: 'return=minimal' }),
+      });
+    }
+  } catch(e) { /* offline -> localStorage já guardou; sincroniza na próxima */ }
+}
+
 function updatePosTpResult(posKey) {
   const d = posTpData[posKey];
   const resEl = document.getElementById(`pos-tp-result-${posKey}`);
@@ -1794,6 +1836,7 @@ function onPosExitPrice(val) {
   if (val === '' || isNaN(num) || num <= 0) delete posExitTargets[key];
   else posExitTargets[key] = num;
   savePosExitTargets();
+  syncExitTargetRemote(key); // transversal: guarda no Supabase
   renderPosExitResult(p);
   renderPosMetrics(p);      // atualiza a métrica de Take Profit
   addPosPriceLines(p);      // move a linha verde (alvo) no gráfico
@@ -2585,7 +2628,8 @@ function setDbRange(btn) {
     fetchFearGreed(),
     fetchLiquidations(),
     fetchMacro(),
-    loadNews()
+    loadNews(),
+    loadExitTargetsRemote()
   ]);
   setInterval(fetchMarket,        5000);
   setInterval(fetchPositions,    10000);
