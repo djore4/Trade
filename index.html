@@ -2703,12 +2703,14 @@ async function fetchT212Holdings() {
         const ticker = String(p.ticker || '').split('_')[0] || p.ticker || '?';
         return { ticker, name: 'Trading 212', qty, usd: qty * cur, pnl, avg: parseFloat(p.averagePrice || 0), price: cur };
       });
-    } else {
+    } else if (!t212HasRealData()) {
+      // Erro transitório (ex.: 429/502 por rate-limit da T212) NÃO apaga bons dados.
       t212Holdings = T212_PLACEHOLDER.slice(); // sem credenciais / sem posições
     }
-  } catch (e) { t212Holdings = T212_PLACEHOLDER.slice(); }
+  } catch (e) { if (!t212HasRealData()) t212Holdings = T212_PLACEHOLDER.slice(); }
   return t212Holdings;
 }
+function t212HasRealData() { return t212Holdings.some(h => (parseFloat(h.usd) || 0) > 0); }
 
 const COIN_COLORS = {
   BTC:'#f7931a', ETH:'#7c8fff', USDT:'#26a17b', BNB:'#f3ba2f',
