@@ -1145,6 +1145,7 @@ const POSITIONS_URL = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/get
 const SUPABASE_KEY  = 'sb_publishable_xHjsFJbSuAhO6r6BUylTCw_tDE-nFXT';
 const BYBIT         = 'https://api.bybit.com';
 const WALLET_URL    = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/get-bybit-wallet';
+const T212_URL      = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/get-t212-portfolio';
 const SUPABASE_REST = 'https://yifxgiwmibjaornighvt.supabase.co/rest/v1'; // alvos de saída (transversal)
 
 // Multiple RSS fallbacks per source
@@ -2683,20 +2684,28 @@ function updateHeaderInvPnl() {
   el.style.color = sum > 0.001 ? 'var(--green)' : sum < -0.001 ? 'var(--red)' : 'var(--text)';
 }
 
-// ── TRADING 212 (ações) — scaffold pronto para ligar API ──────────────────────
-// A chave da Trading 212 NUNCA é versionada nem vive no browser em claro: quando
-// existir, virá de um proxy (como o padrão da Bybit). Sem ligação, mostramos os
-// ativos conhecidos como marcadores (placeholder) para já aparecerem na lista.
+// ── TRADING 212 (ações) — via Edge Function get-t212-portfolio ─────────────────
+// A chave/segredo da Trading 212 vivem SÓ como secrets da Edge Function (Supabase),
+// nunca no browser nem no repositório. Sem credenciais, a função devolve erro e
+// mostramos o marcador (placeholder) para o ativo continuar visível na lista.
 const T212_PLACEHOLDER = [{ ticker: 'MSTR', name: 'MicroStrategy', qty: 0, usd: 0, pnl: 0 }];
 let t212Holdings = [];
 async function fetchT212Holdings() {
-  const proxy = (localStorage.getItem('t212_proxy') || '').trim();
-  if (!proxy) { t212Holdings = T212_PLACEHOLDER.slice(); return t212Holdings; }
   try {
-    // TODO: quando o proxy T212 estiver pronto, mapear a resposta real:
-    // const r = await fetch(`${proxy}/portfolio`); const d = await r.json();
-    // t212Holdings = d.map(x => ({ ticker:x.ticker, name:x.name, qty:x.quantity, usd:x.value, pnl:x.ppl }));
-    t212Holdings = T212_PLACEHOLDER.slice();
+    const r = await fetch(T212_URL, { headers: { Authorization: `Bearer ${SUPABASE_KEY}` } });
+    const d = await r.json();
+    const list = Array.isArray(d?.positions) ? d.positions : null;
+    if (list && list.length) {
+      t212Holdings = list.map(p => {
+        const qty = parseFloat(p.quantity || 0);
+        const cur = parseFloat(p.currentPrice || 0);
+        const pnl = parseFloat(p.ppl || 0) + parseFloat(p.fxPpl || 0);
+        const ticker = String(p.ticker || '').split('_')[0] || p.ticker || '?';
+        return { ticker, name: 'Trading 212', qty, usd: qty * cur, pnl, avg: parseFloat(p.averagePrice || 0), price: cur };
+      });
+    } else {
+      t212Holdings = T212_PLACEHOLDER.slice(); // sem credenciais / sem posições
+    }
   } catch (e) { t212Holdings = T212_PLACEHOLDER.slice(); }
   return t212Holdings;
 }
@@ -2799,21 +2808,21 @@ function renderDbAssets() {
 // Linhas dos ativos da Trading 212 (ações), abaixo dos ativos Bybit.
 function renderT212Rows() {
   if (!t212Holdings || !t212Holdings.length) return '';
-  const linked = !!(localStorage.getItem('t212_proxy') || '').trim();
   return t212Holdings.map(h => {
     const usd = parseFloat(h.usd || 0), pnl = parseFloat(h.pnl || 0);
     const isP = pnl > 0.001, isN = pnl < -0.001;
     const ini = (h.ticker || '?')[0];
     const cc = '#7c8fff';
-    const right = linked && usd > 0
+    const qStr = h.qty > 0 ? (h.qty < 1 ? h.qty.toFixed(4) : fmt(h.qty, 2)) : '';
+    const right = usd > 0
       ? `<div class="db-asset-pnl"><span style="color:${isP ? 'var(--green)' : isN ? 'var(--red)' : 'var(--faint)'}">${pnl !== 0 ? (isP ? '+' : '') + fmtUsd(pnl, 2) : '—'}</span></div>
-         <div class="db-asset-price">${fmtUsd(usd, 2)}</div>`
+         <div class="db-asset-price">${fmtUsd(usd, 2)}${h.price ? ` <span style="font-size:10px;color:var(--faint)">$${fmt(h.price, h.price < 100 ? 2 : 0)}</span>` : ''}</div>`
       : `<div class="db-asset-price" style="color:var(--faint);font-size:10px">ligar API</div>`;
     return `<div class="db-asset-row" title="Trading 212 — ${h.name || h.ticker}">
       <div class="db-asset-left">
         <div class="db-coin-avatar" style="background:${cc}18;border-color:${cc}40"><span style="color:${cc}">${ini}</span></div>
         <div>
-          <div class="db-asset-sym">${h.ticker}<span class="db-src-badge db-src-t212">T212</span></div>
+          <div class="db-asset-sym">${h.ticker}<span class="db-src-badge db-src-t212">T212</span>${qStr ? ` <span class="db-asset-qty">${qStr}</span>` : ''}</div>
           <div class="db-asset-usd">${h.name || 'Trading 212'}</div>
         </div>
       </div>
@@ -3093,6 +3102,7 @@ function setDbRange(btn) {
   setInterval(fetchLiquidations, 30000);
   setInterval(fetchMacro,      120000);
   setInterval(fetchHashrate,   600000);
+  setInterval(async () => { await fetchT212Holdings(); if (dbCurrentSubTab === 'assets') renderDbAssets(); }, 180000);
 })();
 </script>
 </body>
