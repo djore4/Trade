@@ -1153,21 +1153,22 @@ const BYBIT         = 'https://api.bybit.com';
 const WALLET_URL    = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/get-bybit-wallet';
 const T212_URL      = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/get-t212-portfolio';
 const STOCK_URL     = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/get-stock-history';
+const NEWS_URL      = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/get-news';
 const SUPABASE_REST = 'https://yifxgiwmibjaornighvt.supabase.co/rest/v1'; // alvos de saída (transversal)
 
-// Multiple RSS fallbacks per source
+// Feeds RSS por fonte (com fallbacks). Passam pelo proxy get-news (server-side).
 const RSS_SOURCES = {
   ct: [
-    'https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fcointelegraph.com%2Frss&count=25',
-    'https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fcointelegraph.com%2Frss%2Ftag%2Fbitcoin&count=25'
+    'https://cointelegraph.com/rss',
+    'https://cointelegraph.com/rss/tag/bitcoin'
   ],
   cd: [
-    'https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fwww.coindesk.com%2Farc%2Foutboundfeeds%2Frss%2F&count=25',
-    'https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Ffeeds.feedburner.com%2FCoinDesk&count=25'
+    'https://www.coindesk.com/arc/outboundfeeds/rss/',
+    'https://feeds.feedburner.com/CoinDesk'
   ],
   bm: [
-    'https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fbitcoinmagazine.com%2F.rss%2Ffull&count=20',
-    'https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fbitcoinmagazine.com%2Ffeed&count=20'
+    'https://bitcoinmagazine.com/feed',
+    'https://bitcoinmagazine.com/.rss/full'
   ]
 };
 const SRC_NAME = { ct: 'Cointelegraph', cd: 'CoinDesk', bm: 'Bitcoin Magazine' };
@@ -2384,9 +2385,12 @@ async function loadNews() {
   const urls = RSS_SOURCES[currentNewsSrc];
   let items = null;
 
-  for (const url of urls) {
+  for (const feed of urls) {
     try {
-      const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
+      const r = await fetch(`${NEWS_URL}?feed=${encodeURIComponent(feed)}`, {
+        headers: { Authorization: `Bearer ${SUPABASE_KEY}` },
+        signal: AbortSignal.timeout(10000)
+      });
       if (!r.ok) continue;
       const d = await r.json();
       if (d?.items?.length) { items = d.items; break; }
