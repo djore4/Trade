@@ -126,7 +126,8 @@ body {
   border-left: 1px solid var(--border);
   padding-left: 12px;
 }
-@media (max-width: 600px) { .hdr-right { gap: 8px; padding-left: 8px; margin-left: 8px; } }
+@media (max-width: 768px) { .hdr-right { margin-left: auto; } }
+@media (max-width: 600px) { .hdr-right { gap: 7px; padding-left: 8px; } .hdr-right .hdr-label { font-size: 8px; } .hdr-right .hdr-val { font-size: 11px; } }
 
 .hdr-pill { display: flex; align-items: center; gap: 5px; }
 .hdr-label { font-size: 9px; color: var(--faint); text-transform: uppercase; letter-spacing: .08em; }
@@ -442,7 +443,8 @@ html.light .mnav-btn.active { color: var(--orange); }
 .db-pct-r { background: rgba(247,100,122,.1); color: var(--red); }
 .db-asset-price { font-size: 12px; font-weight: 500; color: var(--text); text-align: right; font-family: 'JetBrains Mono', monospace; }
 .db-empty { padding: 32px 16px; text-align: center; color: var(--faint); font-size: 12px; }
-.db-metrics-bar { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 14px; }
+.db-metrics-bar { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 14px; }
+.db-hr-spark { width: 100%; height: 30px; display: block; margin: 3px 0 1px; overflow: visible; }
 .db-metric { background: var(--s1); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .db-metric-lbl { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--dim); margin-bottom: 3px; }
 .db-fg-gauge-wrap { margin: 2px auto 0; max-width: 76px; overflow: visible; }
@@ -462,7 +464,13 @@ html.light .mnav-btn.active { color: var(--orange); }
   .db-time-btn { padding: 6px 7px; font-size: 10px; }
   .db-asset-header, .db-asset-row { grid-template-columns: 1fr auto; }
   .db-metric-num { font-size: 14px; }
+  .db-metrics-bar { grid-template-columns: repeat(2,1fr); }
 }
+/* Ativo clicável (isolar no gráfico) */
+.db-asset-row.clickable { cursor: pointer; }
+.db-asset-row.isolated { background: rgba(45,212,160,.08); box-shadow: inset 3px 0 0 var(--green); }
+.db-src-badge { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 1px 4px; border-radius: 3px; margin-left: 5px; vertical-align: middle; }
+.db-src-t212 { background: rgba(124,143,255,.14); color: #7c8fff; }
 
 /* ─── EXIT STRATEGY ───────────────────────────────── */
 .exit-summary { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; background: var(--border); border-bottom: 1px solid var(--border); }
@@ -621,11 +629,16 @@ html.light .mnav-btn.active { color: var(--orange); }
     </button>
   </nav>
   <div class="hdr-right">
-    <div class="hdr-pill hdr-hide-sm">
+    <div class="hdr-pill">
       <span class="hdr-label">Fund</span>
       <span id="hdr-fund" class="hdr-val mono">—</span>
     </div>
-    <div class="hdr-sep hdr-hide-sm"></div>
+    <div class="hdr-sep"></div>
+    <div class="hdr-pill" title="PnL somado dos trades inversos (futuros)">
+      <span class="hdr-label">Inv</span>
+      <span id="hdr-inv-pnl" class="hdr-val mono">—</span>
+    </div>
+    <div class="hdr-sep"></div>
     <button class="theme-btn" onclick="toggleTheme()" title="Alternar tema">
       <svg class="icon-moon" width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M12.5 9A5.5 5.5 0 0 1 6 2.5a5.5 5.5 0 1 0 6.5 6.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" fill="none"/></svg>
       <svg class="icon-sun"  width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="2.8" stroke="currentColor" stroke-width="1.3" fill="none"/><g stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><line x1="7.5" y1="0.5" x2="7.5" y2="2.5"/><line x1="7.5" y1="12.5" x2="7.5" y2="14.5"/><line x1="0.5" y1="7.5" x2="2.5" y2="7.5"/><line x1="12.5" y1="7.5" x2="14.5" y2="7.5"/><line x1="2.6" y1="2.6" x2="4" y2="4"/><line x1="11" y1="11" x2="12.4" y2="12.4"/><line x1="11" y1="4" x2="12.4" y2="2.6"/><line x1="2.6" y1="12.4" x2="4" y2="11"/></g></svg>
@@ -674,11 +687,16 @@ html.light .mnav-btn.active { color: var(--orange); }
         <div id="db-btcp-val" class="db-metric-num">—</div>
         <div id="db-btcp-chg" class="db-metric-sub">—</div>
       </div>
+      <div class="db-metric" style="padding:8px 10px 6px">
+        <div class="db-metric-lbl">Hashrate BTC</div>
+        <svg id="db-hr-svg" class="db-hr-spark" viewBox="0 0 100 30" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"></svg>
+        <div id="db-hr-val" class="db-metric-sub">—</div>
+      </div>
     </div>
 
     <!-- Hero: total value -->
     <div class="db-hero">
-      <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--faint);margin-bottom:10px">Portfólio Total · Bybit</div>
+      <div id="db-hero-lbl" style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--faint);margin-bottom:10px">Portfólio Total · Bybit</div>
       <div id="db-total-value" class="db-total-value">—</div>
       <div class="db-pnl-row">
         <span id="db-pnl-usd" class="db-pnl-usd" style="color:var(--dim)">—</span>
@@ -1483,6 +1501,7 @@ async function fetchPositions() {
     positions = raw.filter(p => parseFloat(p.size) !== 0);
     console.log('Positions fetched:', positions.length, positions.map(p => p.symbol + ' ' + p.side));
     renderPortfolio();
+    updateHeaderInvPnl();
     if (document.getElementById('tab-posicoes')?.classList.contains('active')) refreshPosTab();
   } catch(e) {
     console.error('fetchPositions error:', e);
@@ -2427,7 +2446,8 @@ function renderDashboard() {
     hp.style.color = isPos ? 'var(--green)' : 'var(--red)';
   }
 
-  if (pfCache[pfRange]) { pfSeries = anchorSeries(pfCache[pfRange]); drawPortfolioChart(); }
+  updateDbHero();
+  if (pfCache[pfCacheKey(pfRange)]) { pfSeries = anchorSeries(pfCache[pfCacheKey(pfRange)]); drawPortfolioChart(); }
   else loadPortfolioSeries(pfRange);
   if (dbCurrentSubTab === 'assets')    renderDbAssets();
   if (dbCurrentSubTab === 'history')   renderDbHistory();
@@ -2452,31 +2472,46 @@ const PF_RANGE_CFG = {
 };
 const PF_STABLE = new Set(['USDT','USDC','USDD','DAI','TUSD','FDUSD','BUSD','USDE']);
 let pfSeries = [], pfCache = {}, pfRange = '24H', pfToken = 0;
+let pfIsolate = null; // moeda isolada no gráfico (null = portefólio total)
+
+// Alvo de ancoragem: valor atual da moeda isolada, ou o total do portefólio.
+function pfAnchorTarget() {
+  if (pfIsolate) {
+    const c = (walletData && walletData.coin || []).find(x => x.coin === pfIsolate);
+    return c ? parseFloat(c.usdValue || 0) : 0;
+  }
+  return parseFloat((walletData && walletData.totalEquity) || 0);
+}
 
 function dbCurrentRange() {
   const b = document.querySelector('.db-time-btn.active');
   return (b && b.textContent.trim()) || '24H';
 }
 
-// Ancora o último ponto da série ao total atual (offset constante -> mantém a forma).
+// Ancora o último ponto da série ao valor atual (offset constante -> mantém a forma).
 function anchorSeries(raw) {
   if (!raw || !raw.length) return [];
-  const target = parseFloat((walletData && walletData.totalEquity) || 0);
+  const target = pfAnchorTarget();
   const offset = target > 0 ? target - raw[raw.length - 1].v : 0;
   return raw.map(p => ({ t: p.t, v: p.v + offset }));
 }
 
+// Chave de cache: inclui o time-frame e a moeda isolada (ou o total).
+function pfCacheKey(range) { return range + '|' + (pfIsolate || 'ALL'); }
+
 async function loadPortfolioSeries(range) {
   range = range || dbCurrentRange();
   pfRange = range;
-  if (pfCache[range]) { pfSeries = anchorSeries(pfCache[range]); drawPortfolioChart(); return; }
+  const ckey = pfCacheKey(range);
+  if (pfCache[ckey]) { pfSeries = anchorSeries(pfCache[ckey]); drawPortfolioChart(); return; }
   const token = ++pfToken;
   drawPortfolioChart(); // placeholder imediato
   if (!walletData) return;
   const cfg = PF_RANGE_CFG[range] || PF_RANGE_CFG['24H'];
-  const held = (walletData.coin || [])
+  let held = (walletData.coin || [])
     .map(c => ({ coin: c.coin, qty: parseFloat(c.walletBalance || 0), usd: parseFloat(c.usdValue || 0) }))
     .filter(c => c.qty > 0 && c.usd >= 1);
+  if (pfIsolate) held = held.filter(c => c.coin === pfIsolate); // isolar 1 moeda
   let stableVal = 0; const priced = [];
   held.forEach(c => { if (PF_STABLE.has(c.coin)) stableVal += c.usd; else priced.push(c); });
 
@@ -2504,7 +2539,7 @@ async function loadPortfolioSeries(range) {
     });
     return { t, v };
   });
-  pfCache[range] = raw;
+  pfCache[ckey] = raw;
   pfSeries = anchorSeries(raw);
   drawPortfolioChart();
 }
@@ -2573,6 +2608,68 @@ function drawPortfolioChart() {
   updatePfPnl(pts);
 }
 
+// ── HASHRATE BTC (mini gráfico no topo) ───────────────────────────────────────
+async function fetchHashrate() {
+  const svg = document.getElementById('db-hr-svg'), val = document.getElementById('db-hr-val');
+  if (!svg && !val) return;
+  try {
+    const r = await fetch('https://mempool.space/api/v1/mining/hashrate/1y');
+    const d = await r.json();
+    const hs = (d.hashrates || []).map(h => +h.avgHashrate).filter(v => v > 0);
+    const cur = +d.currentHashrate || (hs.length ? hs[hs.length - 1] : 0);
+    drawHashrateSpark(hs);
+    if (val && cur > 0) {
+      const eh = cur / 1e18;               // H/s -> EH/s
+      val.textContent = fmt(eh, eh >= 100 ? 0 : 1) + ' EH/s';
+    }
+  } catch (e) { /* mantém placeholder */ }
+}
+
+function drawHashrateSpark(hs) {
+  const svg = document.getElementById('db-hr-svg'); if (!svg) return;
+  if (!hs || hs.length < 2) { svg.innerHTML = ''; return; }
+  const W = 100, H = 30, pad = 3;
+  const min = Math.min(...hs), max = Math.max(...hs), rng = max - min || 1;
+  const toX = i => (i / (hs.length - 1)) * W;
+  const toY = v => H - pad - ((v - min) / rng) * (H - pad * 2);
+  let path = `M ${toX(0).toFixed(1)} ${toY(hs[0]).toFixed(1)}`;
+  for (let i = 1; i < hs.length; i++) path += ` L ${toX(i).toFixed(1)} ${toY(hs[i]).toFixed(1)}`;
+  const up = hs[hs.length - 1] >= hs[0];
+  const col = up ? '#2dd4a0' : '#f7647a';
+  const fill = up ? 'rgba(45,212,160,.14)' : 'rgba(247,100,122,.14)';
+  svg.innerHTML =
+    `<path d="${path} L ${W} ${H} L 0 ${H} Z" fill="${fill}"/>` +
+    `<path d="${path}" stroke="${col}" stroke-width="1.5" fill="none" stroke-linejoin="round"/>`;
+}
+
+// ── PnL somado dos trades INVERSOS (futuros) -> pill no header ─────────────────
+function updateHeaderInvPnl() {
+  const el = document.getElementById('hdr-inv-pnl'); if (!el) return;
+  const inv = positions.filter(p => posCat(p.symbol) === 'inverse');
+  if (!inv.length) { el.textContent = '—'; el.style.color = 'var(--text)'; return; }
+  const sum = inv.reduce((a, p) => a + posPnlUsd(p), 0);
+  el.textContent = (sum >= 0 ? '+' : '') + fmtUsd(sum, 2);
+  el.style.color = sum > 0.001 ? 'var(--green)' : sum < -0.001 ? 'var(--red)' : 'var(--text)';
+}
+
+// ── TRADING 212 (ações) — scaffold pronto para ligar API ──────────────────────
+// A chave da Trading 212 NUNCA é versionada nem vive no browser em claro: quando
+// existir, virá de um proxy (como o padrão da Bybit). Sem ligação, mostramos os
+// ativos conhecidos como marcadores (placeholder) para já aparecerem na lista.
+const T212_PLACEHOLDER = [{ ticker: 'MSTR', name: 'MicroStrategy', qty: 0, usd: 0, pnl: 0 }];
+let t212Holdings = [];
+async function fetchT212Holdings() {
+  const proxy = (localStorage.getItem('t212_proxy') || '').trim();
+  if (!proxy) { t212Holdings = T212_PLACEHOLDER.slice(); return t212Holdings; }
+  try {
+    // TODO: quando o proxy T212 estiver pronto, mapear a resposta real:
+    // const r = await fetch(`${proxy}/portfolio`); const d = await r.json();
+    // t212Holdings = d.map(x => ({ ticker:x.ticker, name:x.name, qty:x.quantity, usd:x.value, pnl:x.ppl }));
+    t212Holdings = T212_PLACEHOLDER.slice();
+  } catch (e) { t212Holdings = T212_PLACEHOLDER.slice(); }
+  return t212Holdings;
+}
+
 const COIN_COLORS = {
   BTC:'#f7931a', ETH:'#7c8fff', USDT:'#26a17b', BNB:'#f3ba2f',
   SOL:'#9945ff', XRP:'#346aa9', ADA:'#0033ad', AVAX:'#e84142',
@@ -2582,6 +2679,30 @@ const COIN_COLORS = {
   TRX:'#ef0027', LTC:'#bfbbbb', BCH:'#8dc351', ETC:'#328332',
   PEPE:'#2ecc71', WIF:'#9b59b6', BONK:'#e67e22',
 };
+
+// Isolar/desselecionar uma moeda: o gráfico passa a mostrar só essa moeda; novo
+// clique volta ao portefólio total.
+function toggleAssetIsolate(coin) {
+  pfIsolate = (pfIsolate === coin) ? null : coin;
+  updateDbHero();
+  renderDbAssets();                      // atualiza estado ativo/realce
+  loadPortfolioSeries(dbCurrentRange()); // recarrega a curva (isolada ou total)
+}
+
+// Cabeçalho do herói: total do portefólio, ou o valor da moeda isolada.
+function updateDbHero() {
+  const lbl = document.getElementById('db-hero-lbl');
+  const tv  = document.getElementById('db-total-value');
+  if (pfIsolate) {
+    const c = (walletData && walletData.coin || []).find(x => x.coin === pfIsolate);
+    const usd = c ? parseFloat(c.usdValue || 0) : 0;
+    if (lbl) lbl.textContent = 'Isolado · ' + pfIsolate;
+    if (tv)  tv.textContent = '$' + fmt(usd, 2);
+  } else {
+    if (lbl) lbl.textContent = 'Portfólio Total · Bybit';
+    if (tv && walletData) tv.textContent = '$' + fmt(parseFloat(walletData.totalEquity || 0), 2);
+  }
+}
 
 function renderDbAssets() {
   const el = document.getElementById('db-assets-list');
@@ -2616,7 +2737,10 @@ function renderDbAssets() {
       ? '$' + fmt(price, price < 0.001 ? 6 : price < 1 ? 4 : price < 100 ? 3 : price < 10000 ? 1 : 0)
       : '—';
     const qStr = qty < 0.0001 ? qty.toFixed(8) : qty < 1 ? qty.toFixed(6) : fmt(qty, qty < 1000 ? 4 : 2);
-    return `<div class="db-asset-row">
+    const canIsolate = usdVal >= 1 && !PF_STABLE.has(c.coin);
+    const cls = 'db-asset-row' + (canIsolate ? ' clickable' : '') + (pfIsolate === c.coin ? ' isolated' : '');
+    const onc = canIsolate ? ` onclick="toggleAssetIsolate('${c.coin}')" title="Isolar ${c.coin} no gráfico"` : '';
+    return `<div class="${cls}"${onc}>
       <div class="db-asset-left">
         <div class="db-coin-avatar" style="background:${cc}18;border-color:${cc}40">
           <img src="https://assets.coincap.io/assets/icons/${c.coin.toLowerCase()}@2x.png" width="24" height="24" style="border-radius:50%;object-fit:cover" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span style="display:none;color:${cc}">${ini}</span>
@@ -2637,6 +2761,32 @@ function renderDbAssets() {
           ${prStr}${avgPrices[c.coin] ? ` <span style="font-size:10px;color:var(--faint)">/ m$${fmt(avgPrices[c.coin], avgPrices[c.coin] < 0.001 ? 6 : avgPrices[c.coin] < 1 ? 4 : avgPrices[c.coin] < 100 ? 2 : 0)}</span>` : ''}
         </div>
       </div>
+    </div>`;
+  }).join('') + renderT212Rows();
+}
+
+// Linhas dos ativos da Trading 212 (ações), abaixo dos ativos Bybit.
+function renderT212Rows() {
+  if (!t212Holdings || !t212Holdings.length) return '';
+  const linked = !!(localStorage.getItem('t212_proxy') || '').trim();
+  return t212Holdings.map(h => {
+    const usd = parseFloat(h.usd || 0), pnl = parseFloat(h.pnl || 0);
+    const isP = pnl > 0.001, isN = pnl < -0.001;
+    const ini = (h.ticker || '?')[0];
+    const cc = '#7c8fff';
+    const right = linked && usd > 0
+      ? `<div class="db-asset-pnl"><span style="color:${isP ? 'var(--green)' : isN ? 'var(--red)' : 'var(--faint)'}">${pnl !== 0 ? (isP ? '+' : '') + fmtUsd(pnl, 2) : '—'}</span></div>
+         <div class="db-asset-price">${fmtUsd(usd, 2)}</div>`
+      : `<div class="db-asset-price" style="color:var(--faint);font-size:10px">ligar API</div>`;
+    return `<div class="db-asset-row" title="Trading 212 — ${h.name || h.ticker}">
+      <div class="db-asset-left">
+        <div class="db-coin-avatar" style="background:${cc}18;border-color:${cc}40"><span style="color:${cc}">${ini}</span></div>
+        <div>
+          <div class="db-asset-sym">${h.ticker}<span class="db-src-badge db-src-t212">T212</span></div>
+          <div class="db-asset-usd">${h.name || 'Trading 212'}</div>
+        </div>
+      </div>
+      <div class="db-asset-right">${right}</div>
     </div>`;
   }).join('');
 }
@@ -2898,9 +3048,12 @@ function setDbRange(btn) {
     fetchFearGreed(),
     fetchLiquidations(),
     fetchMacro(),
+    fetchHashrate(),
+    fetchT212Holdings(),
     loadNews(),
     loadExitTargetsRemote()
   ]);
+  renderDbAssets(); // reflete ativos T212 assim que carregam
   setInterval(fetchMarket,        5000);
   setInterval(fetchPositions,    10000);
   setInterval(fetchWalletBalance, 30000);
@@ -2908,6 +3061,7 @@ function setDbRange(btn) {
   setInterval(fetchFearGreed,  300000);
   setInterval(fetchLiquidations, 30000);
   setInterval(fetchMacro,      120000);
+  setInterval(fetchHashrate,   600000);
 })();
 </script>
 </body>
