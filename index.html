@@ -579,6 +579,10 @@ html.light .mnav-btn.active { color: var(--orange); }
 .db-hr-dots { display: flex; gap: 4px; justify-content: center; margin-top: 4px; }
 .db-hr-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--s3); cursor: pointer; transition: background .15s, transform .15s; }
 .db-hr-dot.active { background: var(--orange); transform: scale(1.25); }
+.db-tkr-metric { cursor: grab; touch-action: pan-y; user-select: none; position: relative; overflow: hidden; }
+.db-tkr-metric:active { cursor: grabbing; }
+.db-tkr-dots { flex-wrap: wrap; max-width: 100%; }
+.db-tkr-metric .db-metric-lbl { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .db-metric { background: var(--s1); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 90px; }
 .db-metric-lbl { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--dim); margin-bottom: 3px; }
 .db-fg-gauge-wrap { margin: 1px auto 0; max-width: 58px; overflow: visible; }
@@ -812,10 +816,14 @@ html.light .mnav-btn.active { color: var(--orange); }
         </div>
         <div id="db-btcd-chg" class="db-metric-sub">dominância</div>
       </div>
-      <div class="db-metric">
-        <div class="db-metric-lbl">Bitcoin</div>
-        <div id="db-btcp-val" class="db-metric-num">—</div>
-        <div id="db-btcp-chg" class="db-metric-sub">—</div>
+      <div class="db-metric db-tkr-metric" id="db-tkr-card" title="Desliza ou toca nos pontos para ver outros ativos">
+        <div class="db-metric-lbl" id="db-tkr-name">Bitcoin</div>
+        <div id="db-tkr-val" class="db-metric-num">—</div>
+        <div id="db-tkr-chg" class="db-metric-sub">—</div>
+        <div id="db-tkr-dots" class="db-hr-dots db-tkr-dots"></div>
+        <!-- Espelho oculto do BTC ao vivo (mantém IDs usados pelo agente e pelo ticker Bybit) -->
+        <span id="db-btcp-val" style="display:none"></span>
+        <span id="db-btcp-chg" style="display:none"></span>
       </div>
       <div class="db-metric db-hr-metric" id="db-hr-card" style="padding:8px 10px 6px" title="Desliza ou toca nos pontos para mudar o período">
         <div class="db-metric-lbl">Hashrate · <span id="db-hr-tf">1 mês</span></div>
@@ -1471,11 +1479,14 @@ async function fetchMarket() {
       }
       const ce = document.getElementById('hdr-chg');
       if (ce) { ce.textContent = (chPct >= 0 ? '+' : '') + fmt(chPct, 2) + '%'; ce.style.color = chPct >= 0 ? 'var(--green)' : 'var(--red)'; }
-      // Dashboard BTC chip
+      // Dashboard BTC chip (espelho oculto — usado pelo agente)
       const dbBp = document.getElementById('db-btcp-val');
       if (dbBp) dbBp.textContent = '$' + fmt(price, 0);
       const dbBc = document.getElementById('db-btcp-chg');
       if (dbBc) { dbBc.textContent = (chPct >= 0 ? '+' : '') + fmt(chPct, 2) + '% 24h'; dbBc.style.color = chPct >= 0 ? 'var(--green)' : 'var(--red)'; }
+      // Alimenta o widget de cotações deslizável (BTC ao vivo via Bybit)
+      tkrData['BTC'] = { price, chgPct: chPct };
+      if (typeof TKRS !== 'undefined' && TKRS[tkrIdx] && TKRS[tkrIdx].key === 'BTC') renderTkrCard();
 
       // funding
       const frStr = (fr >= 0 ? '+' : '') + fr.toFixed(4) + '%';
@@ -3473,6 +3484,98 @@ function drawHashrateSpark(hs) {
     `<path d="${path}" stroke="${col}" stroke-width="1.5" fill="none" stroke-linejoin="round"/>`;
 }
 
+// ── Widget de cotações deslizável (BTC + ações · índices · commodities) ────────
+// BTC vem ao vivo da Bybit (fetchTicker). Os restantes vêm do proxy get-stock-history
+// (Yahoo, do lado do servidor — evita CORS), tal como as ações da Trading 212.
+const TKRS = [
+  { key: 'BTC',     name: 'Bitcoin',          src: 'bybit' },
+  { key: 'ETH-USD', name: 'Ethereum',         src: 'yh' },
+  { key: 'SPY',     name: 'S&P 500 · SPY',    src: 'yh' },
+  { key: 'QQQ',     name: 'Nasdaq 100 · QQQ', src: 'yh' },
+  { key: '^IXIC',   name: 'Nasdaq Composite', src: 'yh' },
+  { key: 'AAPL',    name: 'Apple',            src: 'yh' },
+  { key: 'MSFT',    name: 'Microsoft',        src: 'yh' },
+  { key: 'GOOGL',   name: 'Alphabet',         src: 'yh' },
+  { key: 'TSLA',    name: 'Tesla',            src: 'yh' },
+  { key: 'MSTR',    name: 'MicroStrategy',    src: 'yh' },
+  { key: '^GSPC',   name: 'S&P 500 · SPX',    src: 'yh' },
+  { key: 'NVDA',    name: 'Nvidia',           src: 'yh' },
+  { key: 'COIN',    name: 'Coinbase',         src: 'yh' },
+  { key: 'CL=F',    name: 'Petróleo WTI',     src: 'yh' },
+];
+let tkrIdx = 0;
+const tkrData = {};   // key -> { price, chgPct }
+
+function renderTkrCard() {
+  const t = TKRS[tkrIdx]; if (!t) return;
+  const nm = document.getElementById('db-tkr-name'); if (nm) nm.textContent = t.name;
+  renderTkrDots();
+  const d = tkrData[t.key];
+  const vEl = document.getElementById('db-tkr-val');
+  const cEl = document.getElementById('db-tkr-chg');
+  if (!d || d.price == null) {
+    if (vEl) vEl.textContent = t._loading ? '…' : '—';
+    if (cEl) { cEl.textContent = '—'; cEl.style.color = 'var(--dim)'; }
+    return;
+  }
+  if (vEl) vEl.textContent = '$' + fmtPx(d.price);
+  if (cEl) {
+    const c = d.chgPct;
+    if (c == null || isNaN(c)) { cEl.textContent = '—'; cEl.style.color = 'var(--dim)'; }
+    else { cEl.textContent = (c >= 0 ? '+' : '') + fmt(c, 2) + '% 24h'; cEl.style.color = c >= 0 ? 'var(--green)' : 'var(--red)'; }
+  }
+}
+
+function renderTkrDots() {
+  const el = document.getElementById('db-tkr-dots'); if (!el) return;
+  el.innerHTML = TKRS.map((t, i) =>
+    `<span class="db-hr-dot${i === tkrIdx ? ' active' : ''}" title="${t.name}" onclick="event.stopPropagation();setTkr(${i})"></span>`
+  ).join('');
+}
+
+function setTkr(idx) {
+  tkrIdx = (idx % TKRS.length + TKRS.length) % TKRS.length;   // circular
+  const t = TKRS[tkrIdx];
+  if (t.src === 'yh' && !tkrData[t.key]) { t._loading = true; renderTkrCard(); loadTkrQuote(t).then(() => { t._loading = false; renderTkrCard(); }); }
+  else renderTkrCard();
+}
+
+async function loadTkrQuote(t) {
+  if (t.src !== 'yh') return;                        // BTC vem da Bybit ao vivo
+  try {
+    const r = await fetch(`${STOCK_URL}?symbol=${encodeURIComponent(t.key)}&range=5d&interval=1d`,
+                          { headers: { Authorization: `Bearer ${SUPABASE_KEY}` } });
+    const d = await r.json();
+    const pts = (Array.isArray(d?.points) ? d.points : []).filter(p => p && p.c != null);
+    if (pts.length) {
+      const last = pts[pts.length - 1].c;
+      const prev = pts.length > 1 ? pts[pts.length - 2].c : last;
+      tkrData[t.key] = { price: last, chgPct: prev ? (last - prev) / prev * 100 : null };
+    }
+  } catch (e) { /* mantém o valor anterior, se houver */ }
+}
+
+async function fetchTkrQuotes() {
+  await Promise.all(TKRS.filter(t => t.src === 'yh').map(loadTkrQuote));
+  renderTkrCard();
+}
+
+// Deslizar (swipe) horizontal muda o ativo; também há os pontos por baixo.
+function initTkrSwipe() {
+  const card = document.getElementById('db-tkr-card');
+  if (!card || card._tkrInit) return;
+  card._tkrInit = true;
+  let x0 = null;
+  card.addEventListener('pointerdown', e => { x0 = e.clientX; });
+  card.addEventListener('pointerup', e => {
+    if (x0 == null) return;
+    const dx = e.clientX - x0; x0 = null;
+    if (Math.abs(dx) > 28) setTkr(tkrIdx + (dx < 0 ? 1 : -1)); // esquerda→próximo
+  });
+  card.addEventListener('pointercancel', () => { x0 = null; });
+  renderTkrCard();
+}
+
 // ── PnL somado dos trades INVERSOS (futuros) -> pill no header ─────────────────
 function updateHeaderInvPnl() {
   const el = document.getElementById('hdr-inv-pnl'); if (!el) return;
@@ -4029,6 +4132,8 @@ function setDbRange(btn) {
   fetchT212Daily().then(() => { if (dbCurrentSubTab === 'assets') renderDbAssets(); });
   refreshAfterT212(); // total + curva passam a incluir a Trading 212
   initHrSwipe();      // widget do hashrate deslizável (períodos)
+  initTkrSwipe();     // widget de cotações deslizável (BTC · ações · índices · commodities)
+  fetchTkrQuotes();   // cotações de ações/índices/commodities (BTC já vem do fetchMarket)
   setInterval(fetchMarket,        5000);
   setInterval(fetchPositions,    10000);
   setInterval(fetchWalletBalance, 30000);
@@ -4037,6 +4142,7 @@ function setDbRange(btn) {
   setInterval(fetchLiquidations, 30000);
   setInterval(fetchMacro,      120000);
   setInterval(() => { hrCache = {}; fetchHashrate(); }, 600000);
+  setInterval(fetchTkrQuotes, 60000);   // atualiza cotações de ações/índices/commodities
   setInterval(async () => { await fetchSpotTickers24h(); if (dbCurrentSubTab === 'assets' && dbAssetView === 'daily') renderDbAssets(); }, 60000);
   setInterval(async () => { await fetchT212Holdings(); await fetchT212Daily(); refreshAfterT212(); }, 180000);
 })();
