@@ -59,8 +59,8 @@ body {
 .mono { font-family: 'JetBrains Mono', monospace; }
 
 /* ─── APP SHELL ───────────────────────────────────── */
-#app { display: flex; flex-direction: column; height: 100vh; }
-@media (max-width: 768px) { #app { height: 100vh; } }
+#app { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
+@media (max-width: 768px) { #app { height: 100dvh; } }
 
 /* ─── HEADER ──────────────────────────────────────── */
 #header {
@@ -307,7 +307,10 @@ html.light .theme-btn .icon-sun  { display: block; }
 .news-title  { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.55; margin-top: 5px; }
 
 /* ── Agente estratégico (chat) ── */
-.agent-wrap { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; height: calc(100vh - 150px); min-height: 420px; }
+/* Preenche o espaço disponível por flexbox (sem alturas mágicas em vh, que no
+   telemóvel cortavam a caixa de texto por baixo da barra de navegação). */
+#tab-agente.tab-pane.active { display: flex; flex-direction: column; }
+.agent-wrap { flex: 1; min-height: 0; width: 100%; max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; }
 .agent-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
 .agent-brief { background: linear-gradient(135deg, var(--orange), #e6862a); color: #1a1206; border: none; font-size: 12px; font-weight: 600; padding: 7px 14px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
 .agent-brief:hover { filter: brightness(1.07); }
@@ -342,7 +345,7 @@ html.light .theme-btn .icon-sun  { display: block; }
 .agent-send { flex-shrink: 0; width: 40px; height: 40px; border-radius: 10px; background: var(--orange); color: #1a1206; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 .agent-send:hover { filter: brightness(1.07); }
 .agent-send:disabled { opacity: .5; cursor: default; }
-@media (max-width: 600px) { .agent-wrap { height: calc(100vh - 170px); } .agent-bubble { max-width: 88%; } }
+@media (max-width: 600px) { .agent-bubble { max-width: 88%; } }
 
 /* ─── CONTEXT SIDEBAR ─────────────────────────────── */
 .ctx-row { display: flex; flex-direction: column; padding: 10px 14px; border-bottom: 1px solid var(--border); gap: 3px; }
@@ -519,6 +522,10 @@ html.light .mnav-btn.active { color: var(--orange); }
 .db-empty { padding: 32px 16px; text-align: center; color: var(--faint); font-size: 12px; }
 .db-metrics-bar { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 14px; }
 .db-hr-spark { width: 100%; height: 24px; display: block; margin: 2px 0 1px; overflow: visible; }
+.db-hr-metric { cursor: grab; touch-action: pan-y; user-select: none; }
+.db-hr-dots { display: flex; gap: 4px; justify-content: center; margin-top: 4px; }
+.db-hr-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--s3); cursor: pointer; transition: background .15s, transform .15s; }
+.db-hr-dot.active { background: var(--orange); transform: scale(1.25); }
 .db-metric { background: var(--s1); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 90px; }
 .db-metric-lbl { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--dim); margin-bottom: 3px; }
 .db-fg-gauge-wrap { margin: 1px auto 0; max-width: 58px; overflow: visible; }
@@ -757,10 +764,11 @@ html.light .mnav-btn.active { color: var(--orange); }
         <div id="db-btcp-val" class="db-metric-num">—</div>
         <div id="db-btcp-chg" class="db-metric-sub">—</div>
       </div>
-      <div class="db-metric" style="padding:8px 10px 6px">
-        <div class="db-metric-lbl">Hashrate · 1 ano</div>
+      <div class="db-metric db-hr-metric" id="db-hr-card" style="padding:8px 10px 6px" title="Desliza ou toca nos pontos para mudar o período">
+        <div class="db-metric-lbl">Hashrate · <span id="db-hr-tf">1 mês</span></div>
         <svg id="db-hr-svg" class="db-hr-spark" viewBox="0 0 100 30" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"></svg>
         <div id="db-hr-val" class="db-metric-sub">—</div>
+        <div id="db-hr-dots" class="db-hr-dots"></div>
       </div>
     </div>
 
@@ -3031,21 +3039,77 @@ function drawPortfolioChart() {
   updatePfPnl(pts);
 }
 
-// ── HASHRATE BTC (mini gráfico no topo) ───────────────────────────────────────
-async function fetchHashrate() {
-  const svg = document.getElementById('db-hr-svg'), val = document.getElementById('db-hr-val');
-  if (!svg && !val) return;
+// ── HASHRATE BTC (mini gráfico no topo, com períodos deslizáveis) ─────────────
+// O hashrate é uma métrica lenta (recalculada com a dificuldade, ~cada 2 semanas),
+// por isso a janela mais curta legível é 1 semana. Períodos: 1S · 1M · 3M · 6M · 1A.
+const HR_TFS = [
+  { key: '1S', period: '1m', slice: 7, lbl: '1 semana' },
+  { key: '1M', period: '1m',           lbl: '1 mês' },
+  { key: '3M', period: '3m',           lbl: '3 meses' },
+  { key: '6M', period: '6m',           lbl: '6 meses' },
+  { key: '1A', period: '1y',           lbl: '1 ano' },
+];
+let hrTfIdx = 1;              // por defeito: 1 mês (legível)
+let hrCache = {};            // period -> { hs:[], cur }
+
+async function loadHrPeriod(period) {
+  if (hrCache[period]) return hrCache[period];
   try {
-    const r = await fetch('https://mempool.space/api/v1/mining/hashrate/1y');
+    const r = await fetch(`https://mempool.space/api/v1/mining/hashrate/${period}`);
     const d = await r.json();
     const hs = (d.hashrates || []).map(h => +h.avgHashrate).filter(v => v > 0);
     const cur = +d.currentHashrate || (hs.length ? hs[hs.length - 1] : 0);
-    drawHashrateSpark(hs);
-    if (val && cur > 0) {
-      const eh = cur / 1e18;               // H/s -> EH/s
-      val.textContent = fmt(eh, eh >= 100 ? 0 : 1) + ' EH/s';
-    }
-  } catch (e) { /* mantém placeholder */ }
+    hrCache[period] = { hs, cur };
+  } catch (e) { /* mantém o que houver */ }
+  return hrCache[period];
+}
+
+async function fetchHashrate() {
+  if (!document.getElementById('db-hr-svg')) return;
+  await loadHrPeriod(HR_TFS[hrTfIdx].period);
+  drawHr();
+}
+
+function drawHr() {
+  const tf = HR_TFS[hrTfIdx];
+  const tfEl = document.getElementById('db-hr-tf'); if (tfEl) tfEl.textContent = tf.lbl;
+  renderHrDots();
+  const data = hrCache[tf.period];
+  if (!data) return;
+  let hs = data.hs;
+  if (tf.slice && hs.length > tf.slice) hs = hs.slice(-tf.slice);
+  drawHashrateSpark(hs);
+  const val = document.getElementById('db-hr-val');
+  if (val && data.cur > 0) { const eh = data.cur / 1e18; val.textContent = fmt(eh, eh >= 100 ? 0 : 1) + ' EH/s'; }
+}
+
+function renderHrDots() {
+  const el = document.getElementById('db-hr-dots'); if (!el) return;
+  el.innerHTML = HR_TFS.map((t, i) =>
+    `<span class="db-hr-dot${i === hrTfIdx ? ' active' : ''}" title="${t.lbl}" onclick="event.stopPropagation();setHrTf(${i})"></span>`
+  ).join('');
+}
+
+async function setHrTf(idx) {
+  hrTfIdx = Math.max(0, Math.min(HR_TFS.length - 1, idx));
+  drawHr();                                   // atualiza rótulo/pontos já
+  await loadHrPeriod(HR_TFS[hrTfIdx].period);  // busca (com cache) se preciso
+  drawHr();
+}
+
+// Deslizar (swipe) horizontal no widget muda o período; também há os pontos.
+function initHrSwipe() {
+  const card = document.getElementById('db-hr-card');
+  if (!card || card._hrInit) return;
+  card._hrInit = true;
+  let x0 = null;
+  card.addEventListener('pointerdown', e => { x0 = e.clientX; });
+  card.addEventListener('pointerup', e => {
+    if (x0 == null) return;
+    const dx = e.clientX - x0; x0 = null;
+    if (Math.abs(dx) > 28) setHrTf(hrTfIdx + (dx < 0 ? 1 : -1)); // esquerda→mais longo
+  });
+  card.addEventListener('pointercancel', () => { x0 = null; });
 }
 
 function drawHashrateSpark(hs) {
@@ -3473,7 +3537,9 @@ function exitItems() {
       items.push({ sym: c.coin, qty, usdVal, price: qty > 0 ? usdVal / qty : 0, color: COIN_COLORS[c.coin] || '#7b7fa0', isT212: false });
     });
   (t212Holdings || [])
-    .filter(h => (parseFloat(h.usd) || 0) > 0)
+    // Basta deter a posição (qty>0). Não depende do usd, que pode vir 0 num
+    // erro transitório da API T212 — assim a MSTR aparece sempre na Saída.
+    .filter(h => (parseFloat(h.qty) || 0) > 0 || (parseFloat(h.usd) || 0) > 0)
     .forEach(h => {
       const qty = parseFloat(h.qty || 0), usdVal = parseFloat(h.usd || 0);
       items.push({ sym: h.ticker, qty, usdVal, price: parseFloat(h.price || 0), color: '#7c8fff', isT212: true });
@@ -3618,6 +3684,7 @@ function setDbRange(btn) {
   ]);
   fetchT212Daily().then(() => { if (dbCurrentSubTab === 'assets') renderDbAssets(); });
   refreshAfterT212(); // total + curva passam a incluir a Trading 212
+  initHrSwipe();      // widget do hashrate deslizável (períodos)
   setInterval(fetchMarket,        5000);
   setInterval(fetchPositions,    10000);
   setInterval(fetchWalletBalance, 30000);
@@ -3625,7 +3692,7 @@ function setDbRange(btn) {
   setInterval(fetchFearGreed,  300000);
   setInterval(fetchLiquidations, 30000);
   setInterval(fetchMacro,      120000);
-  setInterval(fetchHashrate,   600000);
+  setInterval(() => { hrCache = {}; fetchHashrate(); }, 600000);
   setInterval(async () => { await fetchSpotTickers24h(); if (dbCurrentSubTab === 'assets' && dbAssetView === 'daily') renderDbAssets(); }, 60000);
   setInterval(async () => { await fetchT212Holdings(); await fetchT212Daily(); refreshAfterT212(); }, 180000);
 })();
