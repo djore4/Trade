@@ -406,6 +406,9 @@ html.light .mnav-btn.active { color: var(--orange); }
 .db-sub-pane { display: none; }
 .db-sub-pane.active { display: block; }
 .db-assets-toolbar { display: flex; align-items: center; justify-content: flex-end; padding: 10px 14px; border-top: 1px solid var(--border); }
+.db-view-toggle { display: flex; gap: 4px; padding: 8px 14px 0; }
+.db-vt-btn { flex: 0 0 auto; padding: 4px 12px; font-size: 11px; font-weight: 600; border: 1px solid var(--border); background: var(--s1); color: var(--dim); border-radius: 6px; cursor: pointer; transition: all .15s; }
+.db-vt-btn.active { background: var(--s3); color: var(--text); border-color: var(--s3); }
 .db-toggle { display: flex; align-items: center; gap: 7px; cursor: pointer; }
 .db-toggle input { display: none; }
 .db-toggle-track { width: 30px; height: 17px; border-radius: 9px; background: var(--s3); position: relative; transition: background .2s; flex-shrink: 0; }
@@ -735,9 +738,13 @@ html.light .mnav-btn.active { color: var(--orange); }
 
       <!-- ASSETS -->
       <div id="db-tab-assets" class="db-sub-pane active">
+        <div class="db-view-toggle">
+          <button class="db-vt-btn active" onclick="setDbAssetView('real',this)">PnL Real</button>
+          <button class="db-vt-btn" onclick="setDbAssetView('daily',this)">24h</button>
+        </div>
         <div class="db-asset-header">
           <span>Ativo</span>
-          <span style="text-align:right">PnL N. Real. · Preço</span>
+          <span id="db-asset-header-r" style="text-align:right">PnL N. Real. · Preço</span>
         </div>
         <div id="db-assets-list"><div class="db-empty">A carregar ativos...</div></div>
         <div class="db-assets-toolbar">
@@ -2765,6 +2772,50 @@ async function fetchT212Holdings() {
 }
 function t212HasRealData() { return t212Holdings.some(h => (parseFloat(h.usd) || 0) > 0); }
 
+// ── VISTA DE PnL DOS ATIVOS: real (não realizado) vs diário (24h) ─────────────
+let dbAssetView = 'real';   // 'real' | 'daily'
+let spot24h = {};           // COIN -> price24hPcnt (fração) da Bybit spot
+
+function setDbAssetView(v, btn) {
+  dbAssetView = v;
+  document.querySelectorAll('.db-vt-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const hr = document.getElementById('db-asset-header-r');
+  if (hr) hr.textContent = v === 'daily' ? 'PnL 24h · Preço' : 'PnL N. Real. · Preço';
+  renderDbAssets();
+}
+
+// Variação 24h de todas as moedas spot (uma chamada), para a vista diária.
+async function fetchSpotTickers24h() {
+  try {
+    const r = await fetch(`${BYBIT}/v5/market/tickers?category=spot`);
+    const d = await r.json();
+    const m = {};
+    (d?.result?.list || []).forEach(t => {
+      const s = t.symbol || '';
+      if (s.endsWith('USDT')) { const p = parseFloat(t.price24hPcnt); if (isFinite(p)) m[s.slice(0, -4)] = p; }
+    });
+    spot24h = m;
+  } catch (e) { /* mantém o anterior */ }
+}
+
+// Variação 24h das ações T212 (último fecho vs anterior), guardada em cada holding.
+async function fetchT212Daily() {
+  const real = t212Holdings.filter(h => (parseFloat(h.usd) || 0) > 0);
+  await Promise.all(real.map(async h => {
+    try {
+      const r = await fetch(`${STOCK_URL}?symbol=${encodeURIComponent(h.ticker)}&range=5d&interval=1d`, { headers: { Authorization: `Bearer ${SUPABASE_KEY}` } });
+      const d = await r.json();
+      const pts = Array.isArray(d?.points) ? d.points : [];
+      if (pts.length >= 2) {
+        const prev = pts[pts.length - 2].c, last = pts[pts.length - 1].c;
+        h.chg24Pct = prev > 0 ? (last - prev) / prev * 100 : 0;
+        h.chg24Usd = parseFloat(h.qty || 0) * (last - prev);
+      }
+    } catch (e) { /* deixa indefinido -> mostra — na vista 24h */ }
+  }));
+}
+
 // Após atualizar a T212, o total e a curva do portefólio mudam: invalida o cache
 // do portefólio total e recalcula (a menos que esteja um ativo isolado).
 function refreshAfterT212() {
@@ -2832,7 +2883,17 @@ function renderDbAssets() {
     }
     const cost    = usdVal - unrPnl;
     const pnlPct  = cost > 0 ? (unrPnl / cost) * 100 : 0;
-    const isP = unrPnl > 0.001, isN = unrPnl < -0.001;
+    // Vista: PnL real (não realizado) OU variação diária (24h).
+    let pAmt, pPct, hasP;
+    if (dbAssetView === 'daily') {
+      const pcnt = spot24h[c.coin];
+      hasP = pcnt != null && isFinite(pcnt);
+      pPct = hasP ? pcnt * 100 : 0;
+      pAmt = hasP ? usdVal * (pcnt / (1 + pcnt)) : 0;   // ganho/perda em USD nas últimas 24h
+    } else {
+      pAmt = unrPnl; pPct = pnlPct; hasP = unrPnl !== 0;
+    }
+    const isP = pAmt > 0.001, isN = pAmt < -0.001;
     const cc  = COIN_COLORS[c.coin] || '#7b7fa0';
     const ini = (c.coin || '?')[0];
     const prStr = price > 0
@@ -2855,9 +2916,9 @@ function renderDbAssets() {
       <div class="db-asset-right">
         <div class="db-asset-pnl" style="display:flex;align-items:center;justify-content:flex-end;gap:5px;flex-wrap:nowrap">
           <span style="color:${isP ? 'var(--green)' : isN ? 'var(--red)' : 'var(--faint)'}">
-            ${unrPnl !== 0 ? (isP ? '+' : '') + fmtUsd(unrPnl, 2) : '—'}
+            ${hasP ? (pAmt >= 0 ? '+' : '') + fmtUsd(pAmt, 2) : '—'}
           </span>
-          ${unrPnl !== 0 ? `<span class="db-asset-pct ${isP ? 'db-pct-g' : 'db-pct-r'}">${isP ? '▲' : '▼'} ${Math.abs(pnlPct).toFixed(1)}%</span>` : ''}
+          ${hasP ? `<span class="db-asset-pct ${isP ? 'db-pct-g' : isN ? 'db-pct-r' : ''}">${isP ? '▲' : isN ? '▼' : ''} ${Math.abs(pPct).toFixed(1)}%</span>` : ''}
         </div>
         <div class="db-asset-price">
           ${prStr}${avgPrices[c.coin] ? ` <span style="font-size:10px;color:var(--faint)">/ m$${fmt(avgPrices[c.coin], avgPrices[c.coin] < 0.001 ? 6 : avgPrices[c.coin] < 1 ? 4 : avgPrices[c.coin] < 100 ? 2 : 0)}</span>` : ''}
@@ -2872,12 +2933,22 @@ function renderT212Rows() {
   if (!t212Holdings || !t212Holdings.length) return '';
   return t212Holdings.map(h => {
     const usd = parseFloat(h.usd || 0), pnl = parseFloat(h.pnl || 0);
-    const isP = pnl > 0.001, isN = pnl < -0.001;
     const ini = (h.ticker || '?')[0];
     const cc = '#7c8fff';
     const qStr = h.qty > 0 ? (h.qty < 1 ? h.qty.toFixed(4) : fmt(h.qty, 2)) : '';
+    // Vista: PnL real (ppl total) OU variação diária (24h) da ação.
+    let pAmt, pPct, hasP;
+    if (dbAssetView === 'daily') {
+      hasP = h.chg24Usd != null;
+      pAmt = hasP ? h.chg24Usd : 0;
+      pPct = hasP ? (h.chg24Pct || 0) : 0;
+    } else {
+      pAmt = pnl; hasP = pnl !== 0;
+      pPct = (h.avg > 0 && h.price > 0) ? (h.price / h.avg - 1) * 100 : 0;
+    }
+    const isP = pAmt > 0.001, isN = pAmt < -0.001;
     const right = usd > 0
-      ? `<div class="db-asset-pnl"><span style="color:${isP ? 'var(--green)' : isN ? 'var(--red)' : 'var(--faint)'}">${pnl !== 0 ? (isP ? '+' : '') + fmtUsd(pnl, 2) : '—'}</span></div>
+      ? `<div class="db-asset-pnl" style="display:flex;align-items:center;justify-content:flex-end;gap:5px;flex-wrap:nowrap"><span style="color:${isP ? 'var(--green)' : isN ? 'var(--red)' : 'var(--faint)'}">${hasP ? (pAmt >= 0 ? '+' : '') + fmtUsd(pAmt, 2) : '—'}</span>${hasP ? `<span class="db-asset-pct ${isP ? 'db-pct-g' : isN ? 'db-pct-r' : ''}">${isP ? '▲' : isN ? '▼' : ''} ${Math.abs(pPct).toFixed(1)}%</span>` : ''}</div>
          <div class="db-asset-price">${fmtUsd(usd, 2)}${h.price ? ` <span style="font-size:10px;color:var(--faint)">$${fmt(h.price, h.price < 100 ? 2 : 0)}</span>` : ''}</div>`
       : `<div class="db-asset-price" style="color:var(--faint);font-size:10px">ligar API</div>`;
     const canIsolate = usd > 0;
@@ -3155,9 +3226,11 @@ function setDbRange(btn) {
     fetchMacro(),
     fetchHashrate(),
     fetchT212Holdings(),
+    fetchSpotTickers24h(),
     loadNews(),
     loadExitTargetsRemote()
   ]);
+  fetchT212Daily().then(() => { if (dbCurrentSubTab === 'assets') renderDbAssets(); });
   refreshAfterT212(); // total + curva passam a incluir a Trading 212
   setInterval(fetchMarket,        5000);
   setInterval(fetchPositions,    10000);
@@ -3167,7 +3240,8 @@ function setDbRange(btn) {
   setInterval(fetchLiquidations, 30000);
   setInterval(fetchMacro,      120000);
   setInterval(fetchHashrate,   600000);
-  setInterval(async () => { await fetchT212Holdings(); refreshAfterT212(); }, 180000);
+  setInterval(async () => { await fetchSpotTickers24h(); if (dbCurrentSubTab === 'assets' && dbAssetView === 'daily') renderDbAssets(); }, 60000);
+  setInterval(async () => { await fetchT212Holdings(); await fetchT212Daily(); refreshAfterT212(); }, 180000);
 })();
 </script>
 </body>
