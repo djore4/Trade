@@ -457,9 +457,29 @@ html.light .mnav-btn.active { color: var(--orange); }
 .mkt-section.active { display: block; }
 @keyframes mktFade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 @media (max-width: 600px) { .mkt-sub-nav { top: 8px; } .mkt-sub-btn { padding: 8px 6px; font-size: 11.5px; } .mkt-sub-btn .mkt-sub-ic { font-size: 13px; } }
-.db-view-toggle { display: flex; gap: 4px; padding: 8px 14px 0; }
+.db-view-toggle { display: flex; gap: 4px; padding: 8px 14px 0; align-items: center; flex-wrap: wrap; }
 .db-vt-btn { flex: 0 0 auto; padding: 4px 12px; font-size: 11px; font-weight: 600; border: 1px solid var(--border); background: var(--s1); color: var(--dim); border-radius: 6px; cursor: pointer; transition: all .15s; }
 .db-vt-btn.active { background: var(--s3); color: var(--text); border-color: var(--s3); }
+.db-sort-wrap { margin-left: auto; display: flex; align-items: center; gap: 4px; }
+.db-sort-lbl { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--faint); }
+.db-sort-btn { flex: 0 0 auto; padding: 3px 9px; font-size: 10px; font-weight: 600; border: 1px solid var(--border); background: var(--s1); color: var(--dim); border-radius: 6px; cursor: pointer; transition: all .15s; }
+.db-sort-btn.active { background: rgba(240,148,52,.14); color: var(--orange); border-color: rgba(240,148,52,.4); }
+/* Distribuição (gráfico de queijo) */
+.dist-wrap { padding: 16px; display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+.dist-chart { flex: 0 0 auto; position: relative; width: 180px; height: 180px; }
+.dist-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; pointer-events: none; }
+.dist-center-lbl { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--faint); }
+.dist-center-val { font-size: 17px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); margin-top: 2px; }
+.dist-legend { flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 2px; }
+.dist-row { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 10px; padding: 7px 4px; border-bottom: 1px solid var(--border); }
+.dist-row:last-child { border-bottom: none; }
+.dist-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+.dist-sym { font-size: 12px; font-weight: 600; color: var(--text); }
+.dist-sym .db-src-badge { margin-left: 5px; }
+.dist-qty { font-size: 10px; color: var(--faint); font-family: 'JetBrains Mono', monospace; }
+.dist-usd { font-size: 12px; font-weight: 600; color: var(--text); font-family: 'JetBrains Mono', monospace; text-align: right; }
+.dist-pct { font-size: 11px; font-weight: 700; color: var(--dim); font-family: 'JetBrains Mono', monospace; text-align: right; min-width: 46px; }
+@media (max-width: 600px) { .dist-wrap { justify-content: center; } .dist-legend { min-width: 100%; } }
 .db-toggle { display: flex; align-items: center; gap: 7px; cursor: pointer; }
 .db-toggle input { display: none; }
 .db-toggle-track { width: 30px; height: 17px; border-radius: 9px; background: var(--s3); position: relative; transition: background .2s; flex-shrink: 0; }
@@ -498,10 +518,10 @@ html.light .mnav-btn.active { color: var(--orange); }
 .db-asset-price { font-size: 12px; font-weight: 500; color: var(--text); text-align: right; font-family: 'JetBrains Mono', monospace; }
 .db-empty { padding: 32px 16px; text-align: center; color: var(--faint); font-size: 12px; }
 .db-metrics-bar { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 14px; }
-.db-hr-spark { width: 100%; height: 30px; display: block; margin: 3px 0 1px; overflow: visible; }
-.db-metric { background: var(--s1); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.db-hr-spark { width: 100%; height: 24px; display: block; margin: 2px 0 1px; overflow: visible; }
+.db-metric { background: var(--s1); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 90px; }
 .db-metric-lbl { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--dim); margin-bottom: 3px; }
-.db-fg-gauge-wrap { margin: 2px auto 0; max-width: 76px; overflow: visible; }
+.db-fg-gauge-wrap { margin: 1px auto 0; max-width: 58px; overflow: visible; }
 .db-metric-num { font-size: 17px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); line-height: 1.1; }
 .db-metric-sub { font-size: 9px; color: var(--dim); margin-top: 3px; }
 @media (max-width: 480px) { .db-metric-num { font-size: 14px; } }
@@ -738,7 +758,7 @@ html.light .mnav-btn.active { color: var(--orange); }
         <div id="db-btcp-chg" class="db-metric-sub">—</div>
       </div>
       <div class="db-metric" style="padding:8px 10px 6px">
-        <div class="db-metric-lbl">Hashrate BTC</div>
+        <div class="db-metric-lbl">Hashrate · 1 ano</div>
         <svg id="db-hr-svg" class="db-hr-spark" viewBox="0 0 100 30" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"></svg>
         <div id="db-hr-val" class="db-metric-sub">—</div>
       </div>
@@ -779,7 +799,7 @@ html.light .mnav-btn.active { color: var(--orange); }
       <!-- Sub-tab navigation -->
       <div class="db-sub-nav">
         <button class="db-sub-btn active" onclick="switchDbTab('assets',this)">Ativos</button>
-        <button class="db-sub-btn" onclick="switchDbTab('history',this)">Histórico</button>
+        <button class="db-sub-btn" onclick="switchDbTab('distribuicao',this)">Distribuição</button>
         <button class="db-sub-btn" onclick="switchDbTab('exit',this)">Saída</button>
       </div>
 
@@ -788,6 +808,12 @@ html.light .mnav-btn.active { color: var(--orange); }
         <div class="db-view-toggle">
           <button class="db-vt-btn active" onclick="setDbAssetView('real',this)">PnL Real</button>
           <button class="db-vt-btn" onclick="setDbAssetView('daily',this)">24h</button>
+          <div class="db-sort-wrap">
+            <span class="db-sort-lbl">Ordenar</span>
+            <button class="db-sort-btn active" data-sort="pnl" onclick="setDbAssetSort('pnl',this)">PnL</button>
+            <button class="db-sort-btn" data-sort="price" onclick="setDbAssetSort('price',this)">Preço</button>
+            <button class="db-sort-btn" data-sort="name" onclick="setDbAssetSort('name',this)">Ativo</button>
+          </div>
         </div>
         <div class="db-asset-header">
           <span>Ativo</span>
@@ -803,9 +829,9 @@ html.light .mnav-btn.active { color: var(--orange); }
         </div>
       </div>
 
-      <!-- HISTORY -->
-      <div id="db-tab-history" class="db-sub-pane">
-        <div id="db-history-list"><div class="db-empty">A carregar histórico...</div></div>
+      <!-- DISTRIBUIÇÃO -->
+      <div id="db-tab-distribuicao" class="db-sub-pane">
+        <div id="db-dist" class="dist-wrap"><div class="db-empty">A aguardar dados...</div></div>
       </div>
 
       <!-- EXIT STRATEGY -->
@@ -2794,10 +2820,10 @@ function renderDashboard() {
   updateDbHero();
   if (pfCache[pfCacheKey(pfRange)]) { pfSeries = anchorSeries(pfCache[pfCacheKey(pfRange)]); drawPortfolioChart(); }
   else loadPortfolioSeries(pfRange);
-  if (dbCurrentSubTab === 'assets')    renderDbAssets();
-  if (dbCurrentSubTab === 'history')   renderDbHistory();
-  if (dbCurrentSubTab === 'positions') renderDbPositions();
-  if (dbCurrentSubTab === 'exit')      renderDbExitStrategy();
+  if (dbCurrentSubTab === 'assets')       renderDbAssets();
+  if (dbCurrentSubTab === 'distribuicao') renderDbDistribution();
+  if (dbCurrentSubTab === 'positions')    renderDbPositions();
+  if (dbCurrentSubTab === 'exit')         renderDbExitStrategy();
 }
 
 // ── VALOR DO PORTEFÓLIO AO LONGO DO TEMPO ─────────────────────────────────────
@@ -3079,7 +3105,14 @@ function t212HasRealData() { return t212Holdings.some(h => (parseFloat(h.usd) ||
 
 // ── VISTA DE PnL DOS ATIVOS: real (não realizado) vs diário (24h) ─────────────
 let dbAssetView = 'real';   // 'real' | 'daily'
+let dbSortKey = 'pnl';      // 'pnl' (real) | 'price' | 'name'
 let spot24h = {};           // COIN -> price24hPcnt (fração) da Bybit spot
+
+function setDbAssetSort(k, btn) {
+  dbSortKey = k;
+  document.querySelectorAll('.db-sort-btn').forEach(b => b.classList.toggle('active', b.dataset.sort === k));
+  renderDbAssets();
+}
 
 function setDbAssetView(v, btn) {
   dbAssetView = v;
@@ -3127,7 +3160,9 @@ function refreshAfterT212() {
   Object.keys(pfCache).forEach(k => { if (k.endsWith('|ALL')) delete pfCache[k]; });
   updateDbHero();
   if (!pfIsolate) loadPortfolioSeries(pfRange);
-  if (dbCurrentSubTab === 'assets') renderDbAssets();
+  if (dbCurrentSubTab === 'assets')       renderDbAssets();
+  if (dbCurrentSubTab === 'exit')         renderDbExitStrategy();
+  if (dbCurrentSubTab === 'distribuicao') renderDbDistribution();
 }
 
 const COIN_COLORS = {
@@ -3162,114 +3197,128 @@ function updateDbHero() {
   }
 }
 
+// PnL não-realizado (real) de uma moeda spot da Bybit, em USD.
+function coinRealPnl(c) {
+  const qty = parseFloat(c.walletBalance || 0), usdVal = parseFloat(c.usdValue || 0);
+  const price = qty > 0 ? usdVal / qty : 0;
+  let unrPnl = parseFloat(c.unrealisedPnl || 0);
+  if (unrPnl === 0 && avgPrices[c.coin] && qty > 0 && price > 0) unrPnl = (price - avgPrices[c.coin]) * qty;
+  return unrPnl;
+}
+
+// Descritores unificados (Bybit + Trading 212) para poder ordenar tudo em conjunto.
+function dbAssetItems() {
+  const minVal = dbFilterSmall ? 5 : 0.01;
+  const items = [];
+  (walletData?.coin || []).forEach(c => {
+    const usdVal = parseFloat(c.usdValue || 0);
+    if (usdVal < minVal) return;
+    const qty = parseFloat(c.walletBalance || 0);
+    items.push({ kind: 'coin', sym: c.coin, qty, usdVal, price: qty > 0 ? usdVal / qty : 0, realPnl: coinRealPnl(c), raw: c });
+  });
+  (t212Holdings || []).forEach(h => {
+    const usd = parseFloat(h.usd || 0);
+    if (usd <= 0) { items.push({ kind: 't212', sym: h.ticker, qty: parseFloat(h.qty || 0), usdVal: 0, price: parseFloat(h.price || 0), realPnl: 0, raw: h }); return; }
+    items.push({ kind: 't212', sym: h.ticker, qty: parseFloat(h.qty || 0), usdVal: usd, price: parseFloat(h.price || 0), realPnl: parseFloat(h.pnl || 0), raw: h });
+  });
+  const cmp = {
+    pnl:   (a, b) => b.realPnl - a.realPnl,
+    price: (a, b) => b.price - a.price,
+    name:  (a, b) => a.sym.localeCompare(b.sym),
+  }[dbSortKey] || ((a, b) => b.usdVal - a.usdVal);
+  return items.sort(cmp);
+}
+
 function renderDbAssets() {
   const el = document.getElementById('db-assets-list');
   if (!el) return;
   if (!walletData) { el.innerHTML = '<div class="db-empty">A aguardar dados da Bybit...</div>'; return; }
 
-  const minVal = dbFilterSmall ? 5 : 0.01;
-  const coins = (walletData.coin || [])
-    .filter(c => parseFloat(c.usdValue || 0) >= minVal)
-    .sort((a, b) => parseFloat(b.usdValue || 0) - parseFloat(a.usdValue || 0));
-
-  if (!coins.length) {
-    el.innerHTML = '<div class="db-empty">Sem ativos na conta Bybit.</div>';
-    return;
-  }
-
-  el.innerHTML = coins.map(c => {
-    const qty    = parseFloat(c.walletBalance || 0);
-    const usdVal = parseFloat(c.usdValue || 0);
-    const price  = qty > 0 ? usdVal / qty : 0;
-    let unrPnl   = parseFloat(c.unrealisedPnl || 0);
-    // Compute PnL from avg buy price when API doesn't provide it
-    if (unrPnl === 0 && avgPrices[c.coin] && qty > 0 && price > 0) {
-      unrPnl = (price - avgPrices[c.coin]) * qty;
-    }
-    const cost    = usdVal - unrPnl;
-    const pnlPct  = cost > 0 ? (unrPnl / cost) * 100 : 0;
-    // Vista: PnL real (não realizado) OU variação diária (24h).
-    let pAmt, pPct, hasP;
-    if (dbAssetView === 'daily') {
-      const pcnt = spot24h[c.coin];
-      hasP = pcnt != null && isFinite(pcnt);
-      pPct = hasP ? pcnt * 100 : 0;
-      pAmt = hasP ? usdVal * (pcnt / (1 + pcnt)) : 0;   // ganho/perda em USD nas últimas 24h
-    } else {
-      pAmt = unrPnl; pPct = pnlPct; hasP = unrPnl !== 0;
-    }
-    const isP = pAmt > 0.001, isN = pAmt < -0.001;
-    const cc  = COIN_COLORS[c.coin] || '#7b7fa0';
-    const ini = (c.coin || '?')[0];
-    const prStr = price > 0
-      ? '$' + fmt(price, price < 0.001 ? 6 : price < 1 ? 4 : price < 100 ? 3 : price < 10000 ? 1 : 0)
-      : '—';
-    const qStr = qty < 0.0001 ? qty.toFixed(8) : qty < 1 ? qty.toFixed(6) : fmt(qty, qty < 1000 ? 4 : 2);
-    const canIsolate = usdVal >= 1 && !PF_STABLE.has(c.coin);
-    const cls = 'db-asset-row' + (canIsolate ? ' clickable' : '') + (pfIsolate === c.coin ? ' isolated' : '');
-    const onc = canIsolate ? ` onclick="toggleAssetIsolate('${c.coin}')" title="Isolar ${c.coin} no gráfico"` : '';
-    return `<div class="${cls}"${onc}>
-      <div class="db-asset-left">
-        <div class="db-coin-avatar" style="background:${cc}18;border-color:${cc}40">
-          <img src="https://assets.coincap.io/assets/icons/${c.coin.toLowerCase()}@2x.png" width="24" height="24" style="border-radius:50%;object-fit:cover" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span style="display:none;color:${cc}">${ini}</span>
-        </div>
-        <div>
-          <div class="db-asset-sym">${c.coin} <span class="db-asset-qty">${qStr}</span></div>
-          <div class="db-asset-usd">${fmtUsd(usdVal, 2)}</div>
-        </div>
-      </div>
-      <div class="db-asset-right">
-        <div class="db-asset-pnl" style="display:flex;align-items:center;justify-content:flex-end;gap:5px;flex-wrap:nowrap">
-          <span style="color:${isP ? 'var(--green)' : isN ? 'var(--red)' : 'var(--faint)'}">
-            ${hasP ? (pAmt >= 0 ? '+' : '') + fmtUsd(pAmt, 2) : '—'}
-          </span>
-          ${hasP ? `<span class="db-asset-pct ${isP ? 'db-pct-g' : isN ? 'db-pct-r' : ''}">${isP ? '▲' : isN ? '▼' : ''} ${Math.abs(pPct).toFixed(1)}%</span>` : ''}
-        </div>
-        <div class="db-asset-price">
-          ${prStr}${avgPrices[c.coin] ? ` <span style="font-size:10px;color:var(--faint)">/ m$${fmt(avgPrices[c.coin], avgPrices[c.coin] < 0.001 ? 6 : avgPrices[c.coin] < 1 ? 4 : avgPrices[c.coin] < 100 ? 2 : 0)}</span>` : ''}
-        </div>
-      </div>
-    </div>`;
-  }).join('') + renderT212Rows();
+  const items = dbAssetItems();
+  if (!items.length) { el.innerHTML = '<div class="db-empty">Sem ativos na conta.</div>'; return; }
+  el.innerHTML = items.map(it => it.kind === 'coin' ? coinRowHtml(it) : t212RowHtml(it)).join('');
 }
 
-// Linhas dos ativos da Trading 212 (ações), abaixo dos ativos Bybit.
-function renderT212Rows() {
-  if (!t212Holdings || !t212Holdings.length) return '';
-  return t212Holdings.map(h => {
-    const usd = parseFloat(h.usd || 0), pnl = parseFloat(h.pnl || 0);
-    const ini = (h.ticker || '?')[0];
-    const cc = '#7c8fff';
-    const qStr = h.qty > 0 ? (h.qty < 1 ? h.qty.toFixed(4) : fmt(h.qty, 2)) : '';
-    // Vista: PnL real (ppl total) OU variação diária (24h) da ação.
-    let pAmt, pPct, hasP;
-    if (dbAssetView === 'daily') {
-      hasP = h.chg24Usd != null;
-      pAmt = hasP ? h.chg24Usd : 0;
-      pPct = hasP ? (h.chg24Pct || 0) : 0;
-    } else {
-      pAmt = pnl; hasP = pnl !== 0;
-      pPct = (h.avg > 0 && h.price > 0) ? (h.price / h.avg - 1) * 100 : 0;
-    }
-    const isP = pAmt > 0.001, isN = pAmt < -0.001;
-    const right = usd > 0
-      ? `<div class="db-asset-pnl" style="display:flex;align-items:center;justify-content:flex-end;gap:5px;flex-wrap:nowrap"><span style="color:${isP ? 'var(--green)' : isN ? 'var(--red)' : 'var(--faint)'}">${hasP ? (pAmt >= 0 ? '+' : '') + fmtUsd(pAmt, 2) : '—'}</span>${hasP ? `<span class="db-asset-pct ${isP ? 'db-pct-g' : isN ? 'db-pct-r' : ''}">${isP ? '▲' : isN ? '▼' : ''} ${Math.abs(pPct).toFixed(1)}%</span>` : ''}</div>
-         <div class="db-asset-price">${fmtUsd(usd, 2)}${h.price ? ` <span style="font-size:10px;color:var(--faint)">$${fmt(h.price, h.price < 100 ? 2 : 0)}</span>` : ''}</div>`
-      : `<div class="db-asset-price" style="color:var(--faint);font-size:10px">ligar API</div>`;
-    const canIsolate = usd > 0;
-    const cls = 'db-asset-row' + (canIsolate ? ' clickable' : '') + (pfIsolate === h.ticker ? ' isolated' : '');
-    const onc = canIsolate ? ` onclick="toggleAssetIsolate('${h.ticker}')" title="Isolar ${h.ticker} no gráfico"` : ` title="Trading 212 — ${h.name || h.ticker}"`;
-    return `<div class="${cls}"${onc}>
-      <div class="db-asset-left">
-        <div class="db-coin-avatar" style="background:${cc}18;border-color:${cc}40"><span style="color:${cc}">${ini}</span></div>
-        <div>
-          <div class="db-asset-sym">${h.ticker}<span class="db-src-badge db-src-t212">T212</span>${qStr ? ` <span class="db-asset-qty">${qStr}</span>` : ''}</div>
-          <div class="db-asset-usd">${h.name || 'Trading 212'}</div>
-        </div>
+// Linha de uma moeda spot da Bybit.
+function coinRowHtml(it) {
+  const c = it.raw, usdVal = it.usdVal, qty = it.qty, price = it.price;
+  const pnlPct = (usdVal - it.realPnl) > 0 ? (it.realPnl / (usdVal - it.realPnl)) * 100 : 0;
+  let pAmt, pPct, hasP;
+  if (dbAssetView === 'daily') {
+    const pcnt = spot24h[c.coin];
+    hasP = pcnt != null && isFinite(pcnt);
+    pPct = hasP ? pcnt * 100 : 0;
+    pAmt = hasP ? usdVal * (pcnt / (1 + pcnt)) : 0;
+  } else {
+    pAmt = it.realPnl; pPct = pnlPct; hasP = it.realPnl !== 0;
+  }
+  const isP = pAmt > 0.001, isN = pAmt < -0.001;
+  const cc  = COIN_COLORS[c.coin] || '#7b7fa0';
+  const ini = (c.coin || '?')[0];
+  const prStr = price > 0
+    ? '$' + fmt(price, price < 0.001 ? 6 : price < 1 ? 4 : price < 100 ? 3 : price < 10000 ? 1 : 0)
+    : '—';
+  const qStr = qty < 0.0001 ? qty.toFixed(8) : qty < 1 ? qty.toFixed(6) : fmt(qty, qty < 1000 ? 4 : 2);
+  const canIsolate = usdVal >= 1 && !PF_STABLE.has(c.coin);
+  const cls = 'db-asset-row' + (canIsolate ? ' clickable' : '') + (pfIsolate === c.coin ? ' isolated' : '');
+  const onc = canIsolate ? ` onclick="toggleAssetIsolate('${c.coin}')" title="Isolar ${c.coin} no gráfico"` : '';
+  return `<div class="${cls}"${onc}>
+    <div class="db-asset-left">
+      <div class="db-coin-avatar" style="background:${cc}18;border-color:${cc}40">
+        <img src="https://assets.coincap.io/assets/icons/${c.coin.toLowerCase()}@2x.png" width="24" height="24" style="border-radius:50%;object-fit:cover" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span style="display:none;color:${cc}">${ini}</span>
       </div>
-      <div class="db-asset-right">${right}</div>
-    </div>`;
-  }).join('');
+      <div>
+        <div class="db-asset-sym">${c.coin} <span class="db-asset-qty">${qStr}</span></div>
+        <div class="db-asset-usd">${fmtUsd(usdVal, 2)}</div>
+      </div>
+    </div>
+    <div class="db-asset-right">
+      <div class="db-asset-pnl" style="display:flex;align-items:center;justify-content:flex-end;gap:5px;flex-wrap:nowrap">
+        <span style="color:${isP ? 'var(--green)' : isN ? 'var(--red)' : 'var(--faint)'}">
+          ${hasP ? (pAmt >= 0 ? '+' : '') + fmtUsd(pAmt, 2) : '—'}
+        </span>
+        ${hasP ? `<span class="db-asset-pct ${isP ? 'db-pct-g' : isN ? 'db-pct-r' : ''}">${isP ? '▲' : isN ? '▼' : ''} ${Math.abs(pPct).toFixed(1)}%</span>` : ''}
+      </div>
+      <div class="db-asset-price">
+        ${prStr}${avgPrices[c.coin] ? ` <span style="font-size:10px;color:var(--faint)">/ m$${fmt(avgPrices[c.coin], avgPrices[c.coin] < 0.001 ? 6 : avgPrices[c.coin] < 1 ? 4 : avgPrices[c.coin] < 100 ? 2 : 0)}</span>` : ''}
+      </div>
+    </div>
+  </div>`;
+}
+
+// Linha de um ativo da Trading 212 (ação).
+function t212RowHtml(it) {
+  const h = it.raw, usd = it.usdVal, pnl = it.realPnl;
+  const ini = (h.ticker || '?')[0];
+  const cc = '#7c8fff';
+  const qStr = h.qty > 0 ? (h.qty < 1 ? h.qty.toFixed(4) : fmt(h.qty, 2)) : '';
+  let pAmt, pPct, hasP;
+  if (dbAssetView === 'daily') {
+    hasP = h.chg24Usd != null;
+    pAmt = hasP ? h.chg24Usd : 0;
+    pPct = hasP ? (h.chg24Pct || 0) : 0;
+  } else {
+    pAmt = pnl; hasP = pnl !== 0;
+    pPct = (h.avg > 0 && h.price > 0) ? (h.price / h.avg - 1) * 100 : 0;
+  }
+  const isP = pAmt > 0.001, isN = pAmt < -0.001;
+  const right = usd > 0
+    ? `<div class="db-asset-pnl" style="display:flex;align-items:center;justify-content:flex-end;gap:5px;flex-wrap:nowrap"><span style="color:${isP ? 'var(--green)' : isN ? 'var(--red)' : 'var(--faint)'}">${hasP ? (pAmt >= 0 ? '+' : '') + fmtUsd(pAmt, 2) : '—'}</span>${hasP ? `<span class="db-asset-pct ${isP ? 'db-pct-g' : isN ? 'db-pct-r' : ''}">${isP ? '▲' : isN ? '▼' : ''} ${Math.abs(pPct).toFixed(1)}%</span>` : ''}</div>
+       <div class="db-asset-price">${fmtUsd(usd, 2)}${h.price ? ` <span style="font-size:10px;color:var(--faint)">$${fmt(h.price, h.price < 100 ? 2 : 0)}</span>` : ''}</div>`
+    : `<div class="db-asset-price" style="color:var(--faint);font-size:10px">ligar API</div>`;
+  const canIsolate = usd > 0;
+  const cls = 'db-asset-row' + (canIsolate ? ' clickable' : '') + (pfIsolate === h.ticker ? ' isolated' : '');
+  const onc = canIsolate ? ` onclick="toggleAssetIsolate('${h.ticker}')" title="Isolar ${h.ticker} no gráfico"` : ` title="Trading 212 — ${h.name || h.ticker}"`;
+  return `<div class="${cls}"${onc}>
+    <div class="db-asset-left">
+      <div class="db-coin-avatar" style="background:${cc}18;border-color:${cc}40"><span style="color:${cc}">${ini}</span></div>
+      <div>
+        <div class="db-asset-sym">${h.ticker}<span class="db-src-badge db-src-t212">T212</span>${qStr ? ` <span class="db-asset-qty">${qStr}</span>` : ''}</div>
+        <div class="db-asset-usd">${h.name || 'Trading 212'}</div>
+      </div>
+    </div>
+    <div class="db-asset-right">${right}</div>
+  </div>`;
 }
 
 function renderDbPositions() {
@@ -3325,25 +3374,29 @@ function saveExitTargets() {
   try { localStorage.setItem('exitTargets', JSON.stringify(exitTargets)); } catch(e) {}
 }
 
-function exitRowHtml(c) {
-  const coin = c.coin;
-  const cc   = COIN_COLORS[coin] || '#7b7fa0';
-  const ini  = (coin || '?')[0];
-  const qty  = parseFloat(c.walletBalance || 0);
+function exitRowHtml(it) {
+  const sym  = it.sym;
+  const cc   = it.color;
+  const ini  = (sym || '?')[0];
+  const qty  = it.qty;
   const qStr = qty < 0.0001 ? qty.toFixed(8) : qty < 1 ? qty.toFixed(6) : fmt(qty, qty < 1000 ? 4 : 2);
-  const saved = exitTargets[coin];
-  return `<div class="exit-card" id="exit-row-${coin}">
+  const saved = exitTargets[sym];
+  const avatar = it.isT212
+    ? `<div class="db-coin-avatar" style="background:${cc}18;border-color:${cc}40"><span style="color:${cc}">${ini}</span></div>`
+    : `<div class="db-coin-avatar" style="background:${cc}18;border-color:${cc}40">
+        <img src="https://assets.coincap.io/assets/icons/${sym.toLowerCase()}@2x.png" width="24" height="24" style="border-radius:50%;object-fit:cover" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span style="display:none;color:${cc}">${ini}</span>
+      </div>`;
+  const badge = it.isT212 ? `<span class="db-src-badge db-src-t212">T212</span>` : '';
+  return `<div class="exit-card" id="exit-row-${sym}">
     <div class="exit-card-top">
       <div class="exit-card-left">
-        <div class="db-coin-avatar" style="background:${cc}18;border-color:${cc}40">
-          <img src="https://assets.coincap.io/assets/icons/${coin.toLowerCase()}@2x.png" width="24" height="24" style="border-radius:50%;object-fit:cover" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span style="display:none;color:${cc}">${ini}</span>
-        </div>
+        ${avatar}
         <div>
-          <div class="db-asset-sym">${coin} <span class="db-asset-qty">${qStr}</span></div>
-          <div class="db-asset-usd" id="exit-cur-${coin}">—</div>
+          <div class="db-asset-sym">${sym}${badge} <span class="db-asset-qty">${qStr}</span></div>
+          <div class="db-asset-usd" id="exit-cur-${sym}">—</div>
         </div>
       </div>
-      <div class="exit-card-result" id="exit-result-${coin}">
+      <div class="exit-card-result" id="exit-result-${sym}">
         <div class="exit-result-pct" style="color:var(--faint)">—</div>
         <div class="exit-result-usd" style="color:var(--faint)">Define um alvo</div>
       </div>
@@ -3352,7 +3405,7 @@ function exitRowHtml(c) {
       <span class="exit-input-lbl">Preço de saída</span>
       <div class="exit-input-group">
         <span class="exit-input-prefix">$</span>
-        <input type="number" inputmode="decimal" step="any" min="0" class="exit-input" id="exit-input-${coin}" placeholder="0.00" value="${saved != null ? saved : ''}" oninput="onExitInput('${coin}', this.value)">
+        <input type="number" inputmode="decimal" step="any" min="0" class="exit-input" id="exit-input-${sym}" placeholder="0.00" value="${saved != null ? saved : ''}" oninput="onExitInput('${sym}', this.value)">
       </div>
     </div>
   </div>`;
@@ -3410,84 +3463,112 @@ function onExitInput(coin, val) {
   updateExitSummary();
 }
 
+// Ativos elegíveis para alvo de saída: moedas Bybit (≥ $1) + ações Trading 212.
+function exitItems() {
+  const items = [];
+  (walletData?.coin || [])
+    .filter(c => parseFloat(c.usdValue || 0) >= 1)
+    .forEach(c => {
+      const qty = parseFloat(c.walletBalance || 0), usdVal = parseFloat(c.usdValue || 0);
+      items.push({ sym: c.coin, qty, usdVal, price: qty > 0 ? usdVal / qty : 0, color: COIN_COLORS[c.coin] || '#7b7fa0', isT212: false });
+    });
+  (t212Holdings || [])
+    .filter(h => (parseFloat(h.usd) || 0) > 0)
+    .forEach(h => {
+      const qty = parseFloat(h.qty || 0), usdVal = parseFloat(h.usd || 0);
+      items.push({ sym: h.ticker, qty, usdVal, price: parseFloat(h.price || 0), color: '#7c8fff', isT212: true });
+    });
+  return items.sort((a, b) => b.usdVal - a.usdVal);
+}
+
 function renderDbExitStrategy() {
   const el = document.getElementById('db-exit-list');
   if (!el) return;
   if (!walletData) { el.innerHTML = '<div class="db-empty">A aguardar dados da Bybit...</div>'; return; }
 
-  const coins = (walletData.coin || [])
-    .filter(c => parseFloat(c.usdValue || 0) >= 1)
-    .sort((a, b) => parseFloat(b.usdValue || 0) - parseFloat(a.usdValue || 0));
+  const items = exitItems();
+  if (!items.length) { el.innerHTML = '<div class="db-empty">Sem ativos elegíveis.</div>'; return; }
 
-  if (!coins.length) {
-    el.innerHTML = '<div class="db-empty">Sem ativos na conta Bybit.</div>';
-    return;
-  }
-
-  // Refresh per-coin current price/value data
+  // Refresh per-asset current price/value data
   exitCoinData = {};
-  coins.forEach(c => {
-    const qty    = parseFloat(c.walletBalance || 0);
-    const usdVal = parseFloat(c.usdValue || 0);
-    const price  = qty > 0 ? usdVal / qty : 0;
-    exitCoinData[c.coin] = { qty, usdVal, price };
-  });
+  items.forEach(it => { exitCoinData[it.sym] = { qty: it.qty, usdVal: it.usdVal, price: it.price }; });
 
-  const newCoinKey = coins.map(c => c.coin).join(',');
-  if (el.dataset.coinKey === newCoinKey) {
+  const newKey = items.map(it => it.sym).join(',');
+  if (el.dataset.coinKey === newKey) {
     // Same set of assets — only refresh computed numbers, never rebuild the
     // input fields, so a user typing a target price doesn't lose focus/value.
-    coins.forEach(c => updateExitRow(c.coin));
+    items.forEach(it => updateExitRow(it.sym));
     updateExitSummary();
     return;
   }
-  el.dataset.coinKey = newCoinKey;
-  el.innerHTML = coins.map(exitRowHtml).join('');
-  coins.forEach(c => updateExitRow(c.coin));
+  el.dataset.coinKey = newKey;
+  el.innerHTML = items.map(exitRowHtml).join('');
+  items.forEach(it => updateExitRow(it.sym));
   updateExitSummary();
 }
 
-function renderDbHistory() {
-  const el = document.getElementById('db-history-list');
+// Paleta de recurso para ativos sem cor definida (determinística por índice).
+const DIST_FALLBACK = ['#f7931a','#7c8fff','#2dd4a0','#f7647a','#f3ba2f','#9945ff','#28a0f0','#e6007a','#8dc351','#ff007a','#6fbcf0','#c3a634'];
+
+// Distribuição do portefólio: junta moedas Bybit + ações T212, calcula peso %.
+function renderDbDistribution() {
+  const el = document.getElementById('db-dist');
   if (!el) return;
-  if (!txlogData.length) {
-    el.innerHTML = '<div class="db-empty">Sem histórico disponível. Aguardar próxima atualização.</div>';
-    return;
-  }
-  const trades = txlogData.filter(t => t.type === 'TRADE').slice(0, 60);
-  if (!trades.length) {
-    el.innerHTML = '<div class="db-empty">Sem trades recentes no histórico.</div>';
-    return;
-  }
-  el.innerHTML = trades.map(tx => {
-    const isBuy  = tx.side === 'Buy';
-    const qty    = parseFloat(tx.qty || 0);
-    const price  = parseFloat(tx.tradePrice || 0);
-    const cash   = parseFloat(tx.cashFlow || tx.change || 0);
-    const fee    = parseFloat(tx.fee || 0);
-    const ts     = parseInt(tx.transactionTime || 0);
-    const catTag = tx.category === 'spot' ? '' : `<span class="tag tag-inv" style="font-size:8px">${tx.category}</span>`;
-    return `<div style="display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border)">
-      <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start">
-        <span class="tag ${isBuy ? 'tag-long' : 'tag-short'}">${isBuy ? 'Compra' : 'Venda'}</span>
-        ${catTag}
-      </div>
-      <div>
-        <div style="font-size:12px;font-weight:600;color:var(--text)">${tx.symbol || '—'}</div>
-        <div style="font-size:10px;color:var(--faint);margin-top:2px;font-family:'JetBrains Mono',monospace">
-          ${qty > 0 ? (qty < 0.001 ? qty.toFixed(8) : fmt(qty, 6)) : '—'}
-          ${price > 0 ? ' @ $' + fmt(price, price < 1 ? 6 : price < 100 ? 3 : 1) : ''}
-          ${fee !== 0 ? ` · taxa $${Math.abs(fee).toFixed(4)}` : ''}
-        </div>
-      </div>
-      <div style="text-align:right">
-        <div class="mono" style="font-size:12px;font-weight:600;color:${cash >= 0 ? 'var(--green)' : 'var(--red)'}">
-          ${cash >= 0 ? '+' : ''}$${Math.abs(cash).toFixed(2)}
-        </div>
-        <div style="font-size:9px;color:var(--faint);margin-top:2px">${ts > 0 ? timeAgo(ts) : '—'}</div>
-      </div>
+  if (!walletData) { el.innerHTML = '<div class="db-empty">A aguardar dados...</div>'; return; }
+
+  const items = [];
+  (walletData.coin || []).forEach(c => {
+    const usd = parseFloat(c.usdValue || 0);
+    if (usd < 0.01) return;
+    const qty = parseFloat(c.walletBalance || 0);
+    items.push({ sym: c.coin, qty, usd, price: qty > 0 ? usd / qty : 0, color: COIN_COLORS[c.coin], isT212: false });
+  });
+  (t212Holdings || []).forEach(h => {
+    const usd = parseFloat(h.usd || 0);
+    if (usd <= 0) return;
+    // Cor distinta da ETH (#7c8fff) para os arcos não se confundirem no donut.
+    items.push({ sym: h.ticker, qty: parseFloat(h.qty || 0), usd, price: parseFloat(h.price || 0), color: '#c084fc', isT212: true });
+  });
+
+  if (!items.length) { el.innerHTML = '<div class="db-empty">Sem ativos para distribuir.</div>'; return; }
+
+  items.sort((a, b) => b.usd - a.usd);
+  const total = items.reduce((s, it) => s + it.usd, 0);
+  items.forEach((it, i) => { it.pct = total > 0 ? (it.usd / total) * 100 : 0; if (!it.color) it.color = DIST_FALLBACK[i % DIST_FALLBACK.length]; });
+
+  // Donut SVG (stroke-dasharray), a começar no topo.
+  const C = 2 * Math.PI * 70;
+  let acc = 0;
+  const segs = items.filter(it => it.pct > 0.15).map(it => {
+    const dash = (it.pct / 100) * C;
+    const seg = `<circle cx="90" cy="90" r="70" fill="none" stroke="${it.color}" stroke-width="26" stroke-dasharray="${dash.toFixed(2)} ${(C - dash).toFixed(2)}" stroke-dashoffset="${(-acc).toFixed(2)}" transform="rotate(-90 90 90)"></circle>`;
+    acc += dash;
+    return seg;
+  }).join('');
+
+  const legend = items.map(it => {
+    const qStr = it.qty > 0 ? (it.qty < 0.0001 ? it.qty.toFixed(8) : it.qty < 1 ? it.qty.toFixed(6) : fmt(it.qty, it.qty < 1000 ? 4 : 2)) : '';
+    const badge = it.isT212 ? '<span class="db-src-badge db-src-t212">T212</span>' : '';
+    return `<div class="dist-row">
+      <span class="dist-dot" style="background:${it.color}"></span>
+      <span class="dist-sym">${it.sym}${badge}${qStr ? ` <span class="dist-qty">${qStr}</span>` : ''}</span>
+      <span class="dist-usd">${fmtUsd(it.usd, 2)}</span>
+      <span class="dist-pct">${it.pct.toFixed(1)}%</span>
     </div>`;
   }).join('');
+
+  el.innerHTML = `
+    <div class="dist-chart">
+      <svg viewBox="0 0 180 180" width="180" height="180" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="90" cy="90" r="70" fill="none" stroke="var(--border)" stroke-width="26"></circle>
+        ${segs}
+      </svg>
+      <div class="dist-center">
+        <div class="dist-center-lbl">${items.length} ativos</div>
+        <div class="dist-center-val">${fmtUsd(total, 0)}</div>
+      </div>
+    </div>
+    <div class="dist-legend">${legend}</div>`;
 }
 
 function toggleFilterSmall(checked) {
@@ -3507,10 +3588,10 @@ function switchDbTab(tab, btn) {
   document.querySelectorAll('.db-sub-pane').forEach(p => p.classList.remove('active'));
   const pane = document.getElementById('db-tab-' + tab);
   if (pane) pane.classList.add('active');
-  if (tab === 'assets')    renderDbAssets();
-  if (tab === 'history')   renderDbHistory();
-  if (tab === 'positions') renderDbPositions();
-  if (tab === 'exit')      renderDbExitStrategy();
+  if (tab === 'assets')       renderDbAssets();
+  if (tab === 'distribuicao') renderDbDistribution();
+  if (tab === 'positions')    renderDbPositions();
+  if (tab === 'exit')         renderDbExitStrategy();
 }
 
 function setDbRange(btn) {
