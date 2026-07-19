@@ -1860,14 +1860,13 @@ function renderPosSummary() {
   const el = document.getElementById('pos-summary'); if (!el) return;
   if (!positions.length) { el.style.display = 'none'; return; }
   el.style.display = '';
-  let pnlUsd = 0, exp = 0, marg = 0, longs = 0, shorts = 0, minDist = Infinity, minLiqPx = 0;
+  let pnlUsd = 0, exp = 0, marg = 0, minDist = Infinity;
   positions.forEach(p => {
     const mark = parseFloat(p.markPrice), liq = parseFloat(p.liqPrice);
     pnlUsd += posPnlUsd(p);
     exp += posNotionalUsd(p);   // nocional em USD (inverso convertido)
     marg += posMarginUsd(p);    // margem em USD (inverso convertido)
-    if (p.side === 'Buy') longs++; else shorts++;
-    if (liq > 0 && mark > 0) { const dd = Math.abs((liq - mark) / mark) * 100; if (dd < minDist) { minDist = dd; minLiqPx = liq; } }
+    if (liq > 0 && mark > 0) { const dd = Math.abs((liq - mark) / mark) * 100; if (dd < minDist) minDist = dd; }
   });
   const roe = marg > 0 ? (pnlUsd / marg) * 100 : 0;
   const avgLev = marg > 0 ? exp / marg : 0;
@@ -1877,12 +1876,12 @@ function renderPosSummary() {
     `<span class="ps-item"><span class="ps-lbl">${lbl}</span><span class="ps-val"${col ? ` style="color:${col}"` : ''}>${val}</span>${sub ? `<span class="ps-sub">${sub}</span>` : ''}</span>`;
   const sep = '<span class="ps-sep"></span>';
   el.innerHTML = [
-    item('Trades', String(positions.length), null, `${longs}L·${shorts}S`),
+    item('Trades', String(positions.length)),
     item('PnL', `${pnlUsd >= 0 ? '+' : ''}${fmtUsd(pnlUsd, 0)}`, pnlC),
     item('ROE', `${roe >= 0 ? '+' : ''}${fmt(roe, 1)}%`, pnlC),
     item('Exp.', fmtUsd(exp, 0), null, `${fmt(avgLev, 1)}×`),
-    item('Margem', fmtUsd(marg, 0), null, `s/ alav. ${fmtUsd(exp, 0)}`),
-    item('Liq.', minDist < Infinity ? `${fmt(minDist, 1)}%` : '—', distC, minLiqPx > 0 ? `@ ${fmtPx(minLiqPx)}` : null),
+    item('Margem', fmtUsd(marg, 0)),
+    item('Liq.', minDist < Infinity ? `${fmt(minDist, 1)}%` : '—', distC),
   ].join(sep);
 }
 
@@ -2155,19 +2154,22 @@ function buildPosMeasureLayer(cont) {
     e.preventDefault();
     try { layer.setPointerCapture(e.pointerId); } catch (err) {}
     posMeasureStart = getXY(e);
-    drawPosMeasure(posMeasureStart, posMeasureStart);
+    drawPosMeasureCursor(posMeasureStart); // marca o ponto de início
   });
   layer.addEventListener('pointermove', e => {
-    if (!posMeasureOn || !posMeasureStart) return;
-    drawPosMeasure(posMeasureStart, getXY(e));
+    if (!posMeasureOn) return;
+    const pt = getXY(e);
+    if (posMeasureStart) drawPosMeasure(posMeasureStart, pt); // a medir
+    else drawPosMeasureCursor(pt);                            // apontador (onde vai começar)
   });
   const end = e => {
     if (!posMeasureOn || !posMeasureStart) return;
     drawPosMeasure(posMeasureStart, getXY(e));
-    posMeasureStart = null; // mantém o traçado até novo arrasto
+    posMeasureStart = null; // mantém o traçado até novo movimento/arrasto
   };
   layer.addEventListener('pointerup', end);
   layer.addEventListener('pointercancel', end);
+  layer.addEventListener('pointerleave', () => { if (posMeasureOn && !posMeasureStart) clearPosMeasure(); });
 }
 
 function togglePosMeasure(btn) {
@@ -2177,7 +2179,34 @@ function togglePosMeasure(btn) {
   if (layer) layer.style.pointerEvents = posMeasureOn ? 'auto' : 'none';
   const chartEl = document.getElementById('pos-chart');
   if (chartEl) chartEl.style.cursor = posMeasureOn ? 'crosshair' : '';
-  if (!posMeasureOn) clearPosMeasure();
+  if (posMeasureOn) drawPosMeasureCursor({ x: layerSize().w / 2, y: layerSize().h / 2 }); // apontador inicial
+  else clearPosMeasure();
+}
+
+// Apontador (crosshair): mostra onde a medição vai começar + o preço nesse ponto.
+function drawPosMeasureCursor(pt) {
+  const svg = document.getElementById('pos-measure-svg');
+  const box = document.getElementById('pos-measure-box');
+  if (!svg) return;
+  const { w: lw, h: lh } = layerSize();
+  const C = '#8b90b5';
+  svg.innerHTML =
+    `<line x1="${pt.x.toFixed(1)}" y1="0" x2="${pt.x.toFixed(1)}" y2="${lh}" stroke="${C}" stroke-width="1" stroke-dasharray="3 3" opacity=".65"/>` +
+    `<line x1="0" y1="${pt.y.toFixed(1)}" x2="${lw}" y2="${pt.y.toFixed(1)}" stroke="${C}" stroke-width="1" stroke-dasharray="3 3" opacity=".65"/>` +
+    `<circle cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="4.5" fill="none" stroke="${C}" stroke-width="1.5"/>` +
+    `<circle cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="1.5" fill="${C}"/>`;
+  if (box && posSeries && typeof posSeries.coordinateToPrice === 'function') {
+    const pr = posSeries.coordinateToPrice(pt.y);
+    if (pr != null) {
+      box.style.display = '';
+      box.style.borderColor = 'var(--border)';
+      box.style.color = 'var(--dim)';
+      box.textContent = 'início · ' + fmtPx(pr);
+      const bw = box.offsetWidth || 100, bh = box.offsetHeight || 22;
+      box.style.left = Math.max(2, Math.min(pt.x + 12, lw - bw - 2)) + 'px';
+      box.style.top  = Math.max(2, Math.min(pt.y + 10, lh - bh - 2)) + 'px';
+    } else { box.style.display = 'none'; }
+  }
 }
 
 function clearPosMeasure() {
@@ -2206,7 +2235,9 @@ function drawPosMeasure(a, b) {
   const x = Math.min(a.x, b.x), y = Math.min(a.y, b.y), w = Math.abs(b.x - a.x), h = Math.abs(b.y - a.y);
   svg.innerHTML =
     `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" stroke="${col}" stroke-width="1" stroke-dasharray="4 3"/>` +
-    `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="${col}" stroke-width="1.5"/>`;
+    `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="${col}" stroke-width="1.5"/>` +
+    `<circle cx="${a.x}" cy="${a.y}" r="4" fill="${col}"/>` +                               // início
+    `<circle cx="${b.x}" cy="${b.y}" r="4" fill="none" stroke="${col}" stroke-width="1.5"/>`; // fim
   box.style.display = '';
   box.style.borderColor = col;
   box.style.color = col;
