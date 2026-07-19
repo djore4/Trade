@@ -476,6 +476,41 @@ html.light .mnav-btn.active { color: var(--orange); }
 .liqhm-legend { display: flex; gap: 14px; align-items: center; margin: 10px 0 2px; font-size: 10px; color: var(--dim); }
 .liqhm-legend span { display: inline-flex; align-items: center; gap: 5px; }
 .liqhm-legdot { width: 10px; height: 10px; border-radius: 3px; }
+/* Seletor de moeda (dropdown + pesquisa) do heatmap */
+.coin-select { position: relative; }
+.coin-select-btn {
+  display: inline-flex; align-items: center; gap: 7px; min-width: 96px;
+  background: var(--s2); border: 1px solid var(--border); color: var(--text);
+  font-size: 12px; font-weight: 700; font-family: 'JetBrains Mono', monospace;
+  padding: 6px 10px; border-radius: 7px; cursor: pointer; transition: border-color .15s, background .15s;
+}
+.coin-select-btn:hover { background: var(--s3); border-color: var(--orange); }
+.coin-select-caret { margin-left: auto; font-size: 9px; color: var(--dim); }
+.coin-dropdown {
+  position: absolute; top: calc(100% + 6px); right: 0; z-index: 40;
+  width: 240px; max-width: 78vw; background: var(--s1); border: 1px solid var(--border);
+  border-radius: 10px; box-shadow: 0 12px 30px rgba(0,0,0,.45); padding: 8px;
+  display: none;
+}
+.coin-select.open .coin-dropdown { display: block; }
+.coin-search {
+  width: 100%; box-sizing: border-box; background: var(--s2); border: 1px solid var(--border);
+  color: var(--text); font-size: 12px; padding: 8px 10px; border-radius: 7px; outline: none;
+  margin-bottom: 8px;
+}
+.coin-search:focus { border-color: var(--orange); }
+.coin-search::placeholder { color: var(--faint); }
+.coin-options { max-height: 280px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+.coin-opt {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  padding: 7px 9px; border-radius: 6px; cursor: pointer; transition: background .12s;
+}
+.coin-opt:hover, .coin-opt.hl { background: var(--s2); }
+.coin-opt.sel { background: rgba(240,148,52,.14); }
+.coin-opt-sym { font-size: 12px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); }
+.coin-opt.sel .coin-opt-sym { color: var(--orange); }
+.coin-opt-vol { font-size: 9.5px; color: var(--faint); font-family: 'JetBrains Mono', monospace; }
+.coin-opt-empty { padding: 12px 9px; font-size: 11px; color: var(--faint); text-align: center; }
 @keyframes mktFade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 @media (max-width: 600px) { .mkt-sub-nav { top: 8px; } .mkt-sub-btn { padding: 8px 6px; font-size: 11.5px; } .mkt-sub-btn .mkt-sub-ic { font-size: 13px; } }
 .db-view-toggle { display: flex; gap: 4px; padding: 8px 14px 0; align-items: center; flex-wrap: wrap; }
@@ -1118,11 +1153,24 @@ html.light .mnav-btn.active { color: var(--orange); }
       <div style="max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:14px">
         <div class="card">
           <div class="card-header">
-            <div class="card-title"><div class="ctdot" style="background:var(--orange)"></div>Mapa de Liquidações · BTC</div>
-            <div style="display:flex;gap:3px" id="liqhm-range-btns">
-              <button class="iv-btn on" onclick="setLiqHmRange(5,this)">±5%</button>
-              <button class="iv-btn" onclick="setLiqHmRange(10,this)">±10%</button>
-              <button class="iv-btn" onclick="setLiqHmRange(20,this)">±20%</button>
+            <div class="card-title"><div class="ctdot" style="background:var(--orange)"></div>Mapa de Liquidações · <span id="liqhm-coin-name">BTC</span></div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <div class="coin-select" id="liqhm-coin-select">
+                <button class="coin-select-btn" id="liqhm-coin-btn" onclick="toggleCoinDropdown(event)">
+                  <span id="liqhm-coin-label">BTC</span><span class="coin-select-caret">▾</span>
+                </button>
+                <div class="coin-dropdown" id="liqhm-coin-dropdown">
+                  <input type="text" class="coin-search" id="liqhm-coin-search" placeholder="Procurar moeda…" autocomplete="off"
+                         oninput="filterCoinDropdown(this.value)" onclick="event.stopPropagation()"
+                         onkeydown="onCoinSearchKey(event)">
+                  <div class="coin-options" id="liqhm-coin-options"><div class="coin-opt-empty">A carregar moedas…</div></div>
+                </div>
+              </div>
+              <div style="display:flex;gap:3px" id="liqhm-range-btns">
+                <button class="iv-btn on" onclick="setLiqHmRange(5,this)">±5%</button>
+                <button class="iv-btn" onclick="setLiqHmRange(10,this)">±10%</button>
+                <button class="iv-btn" onclick="setLiqHmRange(20,this)">±20%</button>
+              </div>
             </div>
           </div>
           <div style="padding:14px">
@@ -2511,6 +2559,9 @@ async function fetchLiquidations() {
 
 // ── HEATMAP DE LIQUIDAÇÕES (estimativa a partir do OI + escalões) ─────────────
 let liqHmRange = 10;
+let liqHmSymbol = 'BTCUSDT';      // perpétuo linear USDT selecionado
+let liqHmCoins = [];              // { symbol, coin, turnover } — mercados disponíveis
+let liqHmCoinsLoaded = false;
 
 function setLiqHmRange(r, btn) {
   liqHmRange = r;
@@ -2518,6 +2569,82 @@ function setLiqHmRange(r, btn) {
   if (btn) btn.classList.add('on');
   renderLiqHeatmap();
 }
+
+// Deriva o nome curto da moeda a partir do símbolo do perpétuo (BTCUSDT -> BTC).
+const coinOf = sym => sym.replace(/USDT$/, '');
+
+// ── Seletor de moeda (dropdown + pesquisa) ──────────────────────────────────
+async function loadLiqHmCoins() {
+  if (liqHmCoinsLoaded) return;
+  try {
+    const r = await fetch(`${BYBIT}/v5/market/tickers?category=linear`);
+    const d = await r.json();
+    const list = d?.result?.list || [];
+    liqHmCoins = list
+      .filter(t => /USDT$/.test(t.symbol) && !/[0-9]/.test(coinOf(t.symbol)))  // só perpétuos ...USDT
+      .map(t => ({ symbol: t.symbol, coin: coinOf(t.symbol), turnover: parseFloat(t.turnover24h) || 0 }))
+      .sort((a, b) => b.turnover - a.turnover);
+    liqHmCoinsLoaded = liqHmCoins.length > 0;
+  } catch (e) { liqHmCoins = []; }
+  renderCoinOptions(document.getElementById('liqhm-coin-search')?.value || '');
+}
+
+function renderCoinOptions(q) {
+  const box = document.getElementById('liqhm-coin-options');
+  if (!box) return;
+  if (!liqHmCoins.length) { box.innerHTML = '<div class="coin-opt-empty">Sem moedas disponíveis.</div>'; return; }
+  const term = (q || '').trim().toUpperCase();
+  const matches = (term ? liqHmCoins.filter(c => c.coin.includes(term) || c.symbol.includes(term)) : liqHmCoins).slice(0, 60);
+  if (!matches.length) { box.innerHTML = '<div class="coin-opt-empty">Nada encontrado.</div>'; return; }
+  box.innerHTML = matches.map(c =>
+    `<div class="coin-opt${c.symbol === liqHmSymbol ? ' sel' : ''}" data-sym="${c.symbol}" data-coin="${c.coin}"
+          onclick="selectLiqHmCoin('${c.symbol}','${c.coin}')">
+       <span class="coin-opt-sym">${c.coin}<span style="color:var(--faint);font-weight:400">USDT</span></span>
+       <span class="coin-opt-vol">${fmtUsd(c.turnover)}</span>
+     </div>`).join('');
+}
+
+function filterCoinDropdown(q) { renderCoinOptions(q); }
+
+function onCoinSearchKey(e) {
+  if (e.key === 'Escape') { closeCoinDropdown(); document.getElementById('liqhm-coin-btn')?.focus(); return; }
+  if (e.key === 'Enter') {
+    const first = document.querySelector('#liqhm-coin-options .coin-opt');
+    if (first) selectLiqHmCoin(first.dataset.sym, first.dataset.coin);
+  }
+}
+
+function toggleCoinDropdown(e) {
+  if (e) e.stopPropagation();
+  const sel = document.getElementById('liqhm-coin-select');
+  if (!sel) return;
+  const willOpen = !sel.classList.contains('open');
+  sel.classList.toggle('open', willOpen);
+  if (willOpen) {
+    loadLiqHmCoins();
+    renderCoinOptions('');
+    const s = document.getElementById('liqhm-coin-search');
+    if (s) { s.value = ''; setTimeout(() => s.focus(), 0); }
+  }
+}
+
+function closeCoinDropdown() {
+  document.getElementById('liqhm-coin-select')?.classList.remove('open');
+}
+
+function selectLiqHmCoin(symbol, coin) {
+  liqHmSymbol = symbol;
+  const lbl = document.getElementById('liqhm-coin-label'); if (lbl) lbl.textContent = coin;
+  const nm  = document.getElementById('liqhm-coin-name');  if (nm)  nm.textContent  = coin;
+  closeCoinDropdown();
+  renderLiqHeatmap();
+}
+
+// Fecha o dropdown ao clicar fora dele.
+document.addEventListener('click', e => {
+  const sel = document.getElementById('liqhm-coin-select');
+  if (sel && sel.classList.contains('open') && !sel.contains(e.target)) closeCoinDropdown();
+});
 
 function liqStat(lbl, val) {
   return `<div class="liqhm-stat"><div class="liqhm-stat-lbl">${lbl}</div><div class="liqhm-stat-val">${val}</div></div>`;
@@ -2545,8 +2672,11 @@ function computeLiqHeatmap(P, oiUsd, longShare, rangePct, bins) {
 async function renderLiqHeatmap() {
   const wrap = document.getElementById('liqhm-wrap');
   if (!wrap) return;
+  const coin = coinOf(liqHmSymbol);
+  wrap.innerHTML = '<div class="db-empty">A calcular mapa de liquidações…</div>';
   try {
-    const r = await fetch(`${BYBIT}/v5/market/tickers?category=linear&symbol=BTCUSDT`);
+    loadLiqHmCoins();
+    const r = await fetch(`${BYBIT}/v5/market/tickers?category=linear&symbol=${liqHmSymbol}`);
     const d = await r.json();
     const t = d?.result?.list?.[0];
     if (!t) { wrap.innerHTML = '<div class="db-empty">Sem dados de mercado.</div>'; return; }
@@ -2581,7 +2711,7 @@ async function renderLiqHeatmap() {
       const tier = tierAt[i] ? `<span class="liqhm-tier">${tierAt[i]}</span>` : '';
       return `<div class="liqhm-row${now}">
         <div class="liqhm-track"><div class="liqhm-bar" style="width:${w}%;background:rgba(${col},${op})"></div>${tier}</div>
-        <div class="liqhm-price">$${fmt(b.price, 0)}</div>
+        <div class="liqhm-price">$${fmtPx(b.price)}</div>
       </div>`;
     }).join('');
 
@@ -2595,11 +2725,11 @@ async function renderLiqHeatmap() {
 
     const stats = document.getElementById('liqhm-stats');
     if (stats) stats.innerHTML =
-      liqStat('Preço BTC', '$' + fmt(P, 0)) +
+      liqStat('Preço ' + coin, '$' + fmtPx(P)) +
       liqStat('Open Interest', fmtUsd(oiUsd)) +
       liqStat('Funding', (funding * 100 >= 0 ? '+' : '') + (funding * 100).toFixed(4) + '%') +
-      liqStat('Íman ↑ (shorts)', above ? '$' + fmt(above.price, 0) : '—') +
-      liqStat('Íman ↓ (longs)', below ? '$' + fmt(below.price, 0) : '—');
+      liqStat('Íman ↑ (shorts)', above ? '$' + fmtPx(above.price) : '—') +
+      liqStat('Íman ↓ (longs)', below ? '$' + fmtPx(below.price) : '—');
 
     const lg = document.getElementById('liqhm-legend');
     if (lg) lg.innerHTML =
