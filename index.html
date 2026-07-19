@@ -458,6 +458,24 @@ html.light .mnav-btn.active { color: var(--orange); }
 .mkt-sub-btn.active { color: var(--text); background: var(--s3); box-shadow: 0 1px 3px rgba(0,0,0,.25); }
 .mkt-section { display: none; animation: mktFade .22s ease; }
 .mkt-section.active { display: block; }
+/* Heatmap de liquidações */
+.liqhm-stats { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.liqhm-stat { flex: 1; min-width: 120px; background: var(--s2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 11px; }
+.liqhm-stat-lbl { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: var(--faint); }
+.liqhm-stat-val { font-size: 15px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); margin-top: 3px; }
+.liqhm-wrap { display: flex; flex-direction: column; gap: 2px; }
+.liqhm-row { position: relative; display: grid; grid-template-columns: 1fr 84px; align-items: center; gap: 8px; height: 15px; }
+.liqhm-track { position: relative; height: 13px; border-radius: 3px; background: var(--s2); overflow: hidden; }
+.liqhm-bar { position: absolute; top: 0; left: 0; height: 100%; border-radius: 3px; min-width: 1px; }
+.liqhm-price { font-size: 10px; font-family: 'JetBrains Mono', monospace; color: var(--dim); text-align: right; white-space: nowrap; }
+.liqhm-row.now .liqhm-track { background: rgba(240,148,52,.15); box-shadow: inset 0 0 0 1px rgba(240,148,52,.5); }
+.liqhm-row.now .liqhm-price { color: var(--orange); font-weight: 700; }
+.liqhm-tier { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); font-size: 8px; font-weight: 700; color: rgba(255,255,255,.75); font-family: 'JetBrains Mono', monospace; pointer-events: none; }
+.liqhm-note { margin-top: 12px; font-size: 10.5px; line-height: 1.6; color: var(--faint); }
+.liqhm-note b { color: var(--dim); font-weight: 600; }
+.liqhm-legend { display: flex; gap: 14px; align-items: center; margin: 10px 0 2px; font-size: 10px; color: var(--dim); }
+.liqhm-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.liqhm-legdot { width: 10px; height: 10px; border-radius: 3px; }
 @keyframes mktFade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 @media (max-width: 600px) { .mkt-sub-nav { top: 8px; } .mkt-sub-btn { padding: 8px 6px; font-size: 11.5px; } .mkt-sub-btn .mkt-sub-ic { font-size: 13px; } }
 .db-view-toggle { display: flex; gap: 4px; padding: 8px 14px 0; align-items: center; flex-wrap: wrap; }
@@ -873,6 +891,7 @@ html.light .mnav-btn.active { color: var(--orange); }
       <button class="mkt-sub-btn active" data-sec="preco" onclick="switchMktSection('preco',this)"><span class="mkt-sub-ic">📈</span> Preço</button>
       <button class="mkt-sub-btn" data-sec="estrutura" onclick="switchMktSection('estrutura',this)"><span class="mkt-sub-ic">🧬</span> Estrutura</button>
       <button class="mkt-sub-btn" data-sec="sentimento" onclick="switchMktSection('sentimento',this)"><span class="mkt-sub-ic">🌡️</span> Sentimento</button>
+      <button class="mkt-sub-btn" data-sec="heatmap" onclick="switchMktSection('heatmap',this)"><span class="mkt-sub-ic">🔥</span> Heatmap</button>
     </div>
     <div id="mkt-sec-preco" class="mkt-section active">
   <div style="max-width:1600px;margin:0 auto;display:flex;flex-direction:column;gap:14px">
@@ -1093,6 +1112,33 @@ html.light .mnav-btn.active { color: var(--orange); }
     </div>
   </div>
     </div>
+
+    <!-- ── Sub-secção: Heatmap de liquidações ── -->
+    <div id="mkt-sec-heatmap" class="mkt-section">
+      <div style="max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:14px">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><div class="ctdot" style="background:var(--orange)"></div>Mapa de Liquidações · BTC</div>
+            <div style="display:flex;gap:3px" id="liqhm-range-btns">
+              <button class="iv-btn on" onclick="setLiqHmRange(5,this)">±5%</button>
+              <button class="iv-btn" onclick="setLiqHmRange(10,this)">±10%</button>
+              <button class="iv-btn" onclick="setLiqHmRange(20,this)">±20%</button>
+            </div>
+          </div>
+          <div style="padding:14px">
+            <div id="liqhm-stats" class="liqhm-stats"></div>
+            <div id="liqhm-legend" class="liqhm-legend"></div>
+            <div id="liqhm-wrap" class="liqhm-wrap"><div class="db-empty">A calcular mapa de liquidações...</div></div>
+            <div class="liqhm-note">
+              Estimativa a partir do <b>open interest</b> e dos escalões de alavancagem habituais (10× · 25× · 50× · 100×),
+              enviesada pelo <b>funding</b>. Não são dados reais de liquidações da exchange — é um modelo para identificar
+              <b>zonas-íman</b> de preço (onde a liquidez de posições alavancadas tende a acumular).
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -1338,7 +1384,7 @@ function switchTab(id, btn) {
   if (id === 'agente')     renderAgentTab();
 }
 
-// Secções do tab Mercado: Preço · Estrutura · Sentimento (com init lazy dos gráficos).
+// Secções do tab Mercado: Preço · Estrutura · Sentimento · Heatmap (init lazy).
 let mktSection = 'preco';
 function switchMktSection(sec, btn) {
   mktSection = sec;
@@ -1347,6 +1393,7 @@ function switchMktSection(sec, btn) {
   const el = document.getElementById('mkt-sec-' + sec); if (el) el.classList.add('active');
   if (sec === 'preco')          setTimeout(initMainChart, 40);
   else if (sec === 'estrutura') setTimeout(initStructureCharts, 40);
+  else if (sec === 'heatmap')   renderLiqHeatmap();
 }
 
 // ── MARKET DATA ───────────────────────────────────────────────────────────────
@@ -2459,6 +2506,107 @@ async function fetchLiquidations() {
       </div>`;
     }).join('');
   } catch(e) {}
+}
+
+// ── HEATMAP DE LIQUIDAÇÕES (estimativa a partir do OI + escalões) ─────────────
+let liqHmRange = 10;
+
+function setLiqHmRange(r, btn) {
+  liqHmRange = r;
+  document.querySelectorAll('#liqhm-range-btns .iv-btn').forEach(b => b.classList.remove('on'));
+  if (btn) btn.classList.add('on');
+  renderLiqHeatmap();
+}
+
+function liqStat(lbl, val) {
+  return `<div class="liqhm-stat"><div class="liqhm-stat-lbl">${lbl}</div><div class="liqhm-stat-val">${val}</div></div>`;
+}
+
+// Modelo: distribui o open interest por escalões de alavancagem; cada escalão
+// gera um blob gaussiano no seu preço de liquidação (longs abaixo, shorts acima).
+function computeLiqHeatmap(P, oiUsd, longShare, rangePct, bins) {
+  const tiers = [[10, 0.15], [25, 0.25], [50, 0.30], [100, 0.30]];
+  const hi = P * (1 + rangePct / 100), lo = P * (1 - rangePct / 100);
+  const step = (hi - lo) / bins;
+  const arr = [];
+  for (let i = 0; i < bins; i++) arr.push({ price: hi - (i + 0.5) * step, long: 0, short: 0 });
+  const sigma = step * 1.4;
+  const addBlob = (price, weight, side) => {
+    arr.forEach(b => { const dd = b.price - price; b[side] += weight * Math.exp(-(dd * dd) / (2 * sigma * sigma)); });
+  };
+  tiers.forEach(([lev, w]) => {
+    addBlob(P * (1 - 1 / lev), oiUsd * w * longShare, 'long');
+    addBlob(P * (1 + 1 / lev), oiUsd * w * (1 - longShare), 'short');
+  });
+  return arr;
+}
+
+async function renderLiqHeatmap() {
+  const wrap = document.getElementById('liqhm-wrap');
+  if (!wrap) return;
+  try {
+    const r = await fetch(`${BYBIT}/v5/market/tickers?category=linear&symbol=BTCUSDT`);
+    const d = await r.json();
+    const t = d?.result?.list?.[0];
+    if (!t) { wrap.innerHTML = '<div class="db-empty">Sem dados de mercado.</div>'; return; }
+    const P = parseFloat(t.lastPrice);
+    const oiUsd = parseFloat(t.openInterestValue) || 0;
+    const funding = parseFloat(t.fundingRate) || 0;
+    const longShare = Math.max(0.3, Math.min(0.7, 0.5 + funding * 400)); // viés pelo funding
+
+    const bins = 41;
+    const data = computeLiqHeatmap(P, oiUsd, longShare, liqHmRange, bins);
+    const maxI = Math.max(...data.map(b => b.long + b.short), 1e-9);
+
+    // bin do preço atual + escalões cujo preço de liquidação cai no intervalo
+    let nowIdx = 0, best = Infinity;
+    data.forEach((b, i) => { const dd = Math.abs(b.price - P); if (dd < best) { best = dd; nowIdx = i; } });
+    const tierAt = {};
+    [10, 25, 50, 100].forEach(lev => {
+      [P * (1 - 1 / lev), P * (1 + 1 / lev)].forEach(pr => {
+        if (pr > data[0].price || pr < data[data.length - 1].price) return;
+        let bi = 0, bb = Infinity; data.forEach((b, i) => { const dd = Math.abs(b.price - pr); if (dd < bb) { bb = dd; bi = i; } });
+        tierAt[bi] = lev + '×';
+      });
+    });
+
+    wrap.innerHTML = data.map((b, i) => {
+      const inten = (b.long + b.short) / maxI;
+      const isLong = b.long >= b.short;           // longs (abaixo) vermelho · shorts (acima) verde
+      const col = isLong ? '247,100,122' : '45,212,160';
+      const w = (6 + inten * 94).toFixed(1);
+      const op = (0.26 + inten * 0.74).toFixed(2);
+      const now = i === nowIdx ? ' now' : '';
+      const tier = tierAt[i] ? `<span class="liqhm-tier">${tierAt[i]}</span>` : '';
+      return `<div class="liqhm-row${now}">
+        <div class="liqhm-track"><div class="liqhm-bar" style="width:${w}%;background:rgba(${col},${op})"></div>${tier}</div>
+        <div class="liqhm-price">$${fmt(b.price, 0)}</div>
+      </div>`;
+    }).join('');
+
+    // maiores clusters acima/abaixo do preço
+    let above = null, below = null;
+    data.forEach(b => {
+      const inten = b.long + b.short;
+      if (b.price > P) { if (!above || inten > above.long + above.short) above = b; }
+      else             { if (!below || inten > below.long + below.short) below = b; }
+    });
+
+    const stats = document.getElementById('liqhm-stats');
+    if (stats) stats.innerHTML =
+      liqStat('Preço BTC', '$' + fmt(P, 0)) +
+      liqStat('Open Interest', fmtUsd(oiUsd)) +
+      liqStat('Funding', (funding * 100 >= 0 ? '+' : '') + (funding * 100).toFixed(4) + '%') +
+      liqStat('Íman ↑ (shorts)', above ? '$' + fmt(above.price, 0) : '—') +
+      liqStat('Íman ↓ (longs)', below ? '$' + fmt(below.price, 0) : '—');
+
+    const lg = document.getElementById('liqhm-legend');
+    if (lg) lg.innerHTML =
+      `<span><span class="liqhm-legdot" style="background:rgba(45,212,160,.8)"></span>Liquidação de shorts (acima do preço)</span>` +
+      `<span><span class="liqhm-legdot" style="background:rgba(247,100,122,.8)"></span>Liquidação de longs (abaixo do preço)</span>`;
+  } catch (e) {
+    wrap.innerHTML = '<div class="db-empty">Não foi possível calcular o mapa agora.</div>';
+  }
 }
 
 // ── MACRO ─────────────────────────────────────────────────────────────────────
