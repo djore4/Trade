@@ -378,7 +378,8 @@ html.light .theme-btn .icon-sun  { display: block; }
 .db-pnl-pct { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 5px; }
 .db-chart-wrap { height: 110px; margin: 14px 0 0; position: relative; overflow: hidden; }
 .db-chart-svg { width: 100%; height: 100%; display: block; }
-.db-time-btns { display: flex; justify-content: center; border-bottom: 1px solid var(--border); }
+.db-time-btns { display: flex; justify-content: center; border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+.db-time-btns::-webkit-scrollbar { display: none; }
 .db-time-btn {
   padding: 7px 11px; font-size: 11px; font-weight: 600; color: var(--faint);
   border: none; background: transparent; cursor: pointer; position: relative;
@@ -662,8 +663,11 @@ html.light .mnav-btn.active { color: var(--orange); }
       </div>
       <div class="db-metric">
         <div class="db-metric-lbl">BTC.D</div>
-        <div id="db-btcd-val" class="db-metric-num">—</div>
-        <div class="db-metric-sub">dominância</div>
+        <div class="db-metric-num" style="display:flex;align-items:center;justify-content:center;gap:4px">
+          <span id="db-btcd-val">—</span>
+          <span id="db-btcd-arrow" class="db-btcd-arrow" style="font-size:12px;line-height:1"></span>
+        </div>
+        <div id="db-btcd-chg" class="db-metric-sub">dominância</div>
       </div>
       <div class="db-metric">
         <div class="db-metric-lbl">Bitcoin</div>
@@ -689,6 +693,9 @@ html.light .mnav-btn.active { color: var(--orange); }
 
     <!-- Time range buttons -->
     <div class="db-time-btns">
+      <button class="db-time-btn" onclick="setDbRange(this)">1H</button>
+      <button class="db-time-btn" onclick="setDbRange(this)">4H</button>
+      <button class="db-time-btn" onclick="setDbRange(this)">12H</button>
       <button class="db-time-btn active" onclick="setDbRange(this)">24H</button>
       <button class="db-time-btn" onclick="setDbRange(this)">1S</button>
       <button class="db-time-btn" onclick="setDbRange(this)">1M</button>
@@ -1347,6 +1354,41 @@ function computeSignals(t) {
 }
 
 // ── GLOBAL / DOMINANCE ────────────────────────────────────────────────────────
+// Indicador de movimento da dominância BTC: guarda amostras (até 24h) e compara
+// com a mais antiga da janela -> seta ▲/▼ + variação em pontos percentuais.
+function updateBtcdMovement(dom) {
+  const arrow = document.getElementById('db-btcd-arrow');
+  const sub   = document.getElementById('db-btcd-chg');
+  if (!arrow || !sub || !isFinite(dom)) return;
+  const K = 'btcdHist', now = Date.now();
+  let hist = [];
+  try { hist = JSON.parse(localStorage.getItem(K) || '[]'); } catch (e) { hist = []; }
+  if (!Array.isArray(hist)) hist = [];
+  hist.push({ v: dom, t: now });
+  hist = hist.filter(x => x && isFinite(x.v) && (now - x.t) <= 24 * 3600000);
+  if (hist.length > 300) hist = hist.slice(-300);
+  try { localStorage.setItem(K, JSON.stringify(hist)); } catch (e) {}
+
+  const base  = hist[0];
+  const delta = dom - base.v;                 // pontos percentuais
+  const hrs   = (now - base.t) / 3600000;
+  const span  = hrs >= 1 ? Math.round(hrs) + 'h' : Math.max(1, Math.round(hrs * 60)) + 'm';
+  const flat  = Math.abs(delta) < 0.05;       // < 0.05 pp -> estável
+
+  if (flat) {
+    arrow.textContent = '→';
+    arrow.style.color = 'var(--dim)';
+    sub.textContent   = 'estável';
+    sub.style.color   = 'var(--dim)';
+  } else {
+    const up = delta > 0;
+    arrow.textContent = up ? '▲' : '▼';
+    arrow.style.color = up ? 'var(--green)' : 'var(--red)';
+    sub.textContent   = (up ? '+' : '−') + Math.abs(delta).toFixed(2) + ' pp · ' + span;
+    sub.style.color   = up ? 'var(--green)' : 'var(--red)';
+  }
+}
+
 async function fetchGlobal() {
   try {
     const r = await fetch('https://api.coingecko.com/api/v3/global');
@@ -1360,6 +1402,7 @@ async function fetchGlobal() {
 
     set('s-dom',       fmt(dom, 1) + '%');
     set('db-btcd-val', fmt(dom, 1) + '%');
+    updateBtcdMovement(dom);
     set('s-total',     fmtUsd(total));
     set('s-total2',    fmtUsd(total2));
     set('s-total3',    fmtUsd(total3));
@@ -2295,6 +2338,9 @@ function renderDashboard() {
 // Reconstruído a partir das klines públicas das moedas detidas
 // (Σ qtd × preço no tempo), ancorado ao total atual (totalEquity). Por time-frame.
 const PF_RANGE_CFG = {
+  '1H':  { interval: '1',   limit: 60  },
+  '4H':  { interval: '5',   limit: 48  },
+  '12H': { interval: '15',  limit: 48  },
   '24H': { interval: '5',   limit: 288 },
   '1S':  { interval: '60',  limit: 168 },
   '1M':  { interval: '240', limit: 180 },
