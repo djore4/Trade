@@ -306,6 +306,44 @@ html.light .theme-btn .icon-sun  { display: block; }
 .news-age    { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--faint); }
 .news-title  { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.55; margin-top: 5px; }
 
+/* ── Agente estratégico (chat) ── */
+.agent-wrap { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; height: calc(100vh - 150px); min-height: 420px; }
+.agent-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.agent-brief { background: linear-gradient(135deg, var(--orange), #e6862a); color: #1a1206; border: none; font-size: 12px; font-weight: 600; padding: 7px 14px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+.agent-brief:hover { filter: brightness(1.07); }
+.agent-brief:disabled { opacity: .55; cursor: default; }
+.agent-clear { background: var(--s2); border: 1px solid var(--border); color: var(--dim); font-size: 14px; width: 30px; height: 30px; border-radius: 8px; cursor: pointer; }
+.agent-clear:hover { color: var(--text); }
+.agent-ctx-strip { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.agent-chip { font-family: 'JetBrains Mono', monospace; font-size: 10px; background: var(--s2); border: 1px solid var(--border); color: var(--dim); padding: 3px 8px; border-radius: 6px; white-space: nowrap; }
+.agent-chip b { color: var(--text); font-weight: 600; }
+.agent-msgs { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding: 6px 2px 10px; }
+.agent-empty { margin: auto; text-align: center; color: var(--faint); font-size: 12px; line-height: 1.7; max-width: 420px; }
+.agent-empty .ae-ico { font-size: 26px; margin-bottom: 8px; opacity: .8; }
+.agent-msg { display: flex; gap: 10px; max-width: 100%; }
+.agent-msg.user { flex-direction: row-reverse; }
+.agent-ava { width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+.agent-msg.assistant .agent-ava { background: rgba(240,148,52,.14); color: var(--orange); }
+.agent-msg.user .agent-ava { background: var(--s2); color: var(--dim); }
+.agent-bubble { font-size: 13px; line-height: 1.6; color: var(--text); border-radius: 12px; padding: 10px 13px; max-width: 84%; overflow-wrap: anywhere; }
+.agent-msg.assistant .agent-bubble { background: var(--s1); border: 1px solid var(--border); }
+.agent-msg.user .agent-bubble { background: rgba(240,148,52,.10); border: 1px solid rgba(240,148,52,.22); }
+.agent-bubble p { margin: 0 0 8px; } .agent-bubble p:last-child { margin-bottom: 0; }
+.agent-bubble ul { margin: 4px 0 8px; padding-left: 18px; } .agent-bubble li { margin: 2px 0; }
+.agent-bubble strong { color: var(--text); font-weight: 700; }
+.agent-bubble code { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; background: var(--s2); padding: 1px 5px; border-radius: 4px; }
+.agent-typing { display: inline-flex; gap: 4px; align-items: center; }
+.agent-typing span { width: 6px; height: 6px; border-radius: 50%; background: var(--faint); animation: agentBlink 1.2s infinite; }
+.agent-typing span:nth-child(2) { animation-delay: .2s; } .agent-typing span:nth-child(3) { animation-delay: .4s; }
+@keyframes agentBlink { 0%,60%,100% { opacity: .25; } 30% { opacity: 1; } }
+.agent-input-row { display: flex; gap: 8px; align-items: flex-end; border-top: 1px solid var(--border); padding-top: 12px; }
+.agent-input { flex: 1; resize: none; max-height: 140px; background: var(--s1); border: 1px solid var(--border); color: var(--text); font-family: inherit; font-size: 13px; line-height: 1.5; padding: 10px 12px; border-radius: 10px; outline: none; }
+.agent-input:focus { border-color: rgba(240,148,52,.5); }
+.agent-send { flex-shrink: 0; width: 40px; height: 40px; border-radius: 10px; background: var(--orange); color: #1a1206; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.agent-send:hover { filter: brightness(1.07); }
+.agent-send:disabled { opacity: .5; cursor: default; }
+@media (max-width: 600px) { .agent-wrap { height: calc(100vh - 170px); } .agent-bubble { max-width: 88%; } }
+
 /* ─── CONTEXT SIDEBAR ─────────────────────────────── */
 .ctx-row { display: flex; flex-direction: column; padding: 10px 14px; border-bottom: 1px solid var(--border); gap: 3px; }
 .ctx-row:last-child { border-bottom: none; }
@@ -634,6 +672,10 @@ html.light .mnav-btn.active { color: var(--orange); }
     <button class="tab-btn" data-tab="noticias" onclick="switchTab('noticias',this)">
       <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x=".5" y="1.5" width="10" height="8" rx="1.5" stroke="currentColor" stroke-width="1.4" fill="none"/><line x1="3" y1="4.5" x2="8" y2="4.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><line x1="3" y1="7" x2="6.5" y2="7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
       Notícias
+    </button>
+    <button class="tab-btn" data-tab="agente" onclick="switchTab('agente',this)">
+      <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M5.5.8 6.7 4l3.3 1.2L6.7 6.5 5.5 9.7 4.3 6.5 1 5.2 4.3 4z" stroke="currentColor" stroke-width="1.1" fill="none" stroke-linejoin="round"/></svg>
+      Agente
     </button>
   </nav>
   <div class="hdr-right">
@@ -1105,6 +1147,33 @@ html.light .mnav-btn.active { color: var(--orange); }
   </div>
 </div>
 
+<!-- ─── TAB: AGENTE ───────────────────────────────────── -->
+<div class="tab-pane" id="tab-agente">
+  <div class="agent-wrap">
+    <div class="agent-head">
+      <div>
+        <div class="sec-label" style="margin-bottom:2px">Agente Estratégico</div>
+        <div style="font-size:11px;color:var(--faint)">Lê o mercado e as notícias, debate ideias e aponta pontos cegos do teu portefólio.</div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
+        <button id="agent-brief-btn" class="agent-brief" onclick="agentBriefing()">✦ Analisar agora</button>
+        <button class="agent-clear" onclick="clearAgentChat()" title="Limpar conversa">↺</button>
+      </div>
+    </div>
+
+    <div id="agent-ctx-strip" class="agent-ctx-strip"></div>
+
+    <div id="agent-msgs" class="agent-msgs"></div>
+
+    <div class="agent-input-row">
+      <textarea id="agent-input" class="agent-input" rows="1" placeholder="Debate uma ideia, pede uma opinião, pergunta o que estás a desconsiderar…" oninput="agentAutoGrow(this)" onkeydown="agentKeydown(event)"></textarea>
+      <button id="agent-send" class="agent-send" onclick="sendAgentMessage()" title="Enviar">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
 </div><!-- #content -->
 </div><!-- #app -->
 
@@ -1143,6 +1212,10 @@ html.light .mnav-btn.active { color: var(--orange); }
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="7" y1="9" x2="17" y2="9"/><line x1="7" y1="13" x2="13" y2="13"/></svg>
     <span class="mnav-lbl">Notícias</span>
   </button>
+  <button class="mnav-btn" data-tab="agente" onclick="switchTab('agente',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 13.9 8l5.5 1.9L13.9 12 12 17.5 10.1 12 4.5 9.9 10.1 8z"/></svg>
+    <span class="mnav-lbl">Agente</span>
+  </button>
 </nav>
 
 <script src="https://s3.tradingview.com/tv.js"></script>
@@ -1157,6 +1230,7 @@ const WALLET_URL    = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/get
 const T212_URL      = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/get-t212-portfolio';
 const STOCK_URL     = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/get-stock-history';
 const NEWS_URL      = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/get-news';
+const AGENT_URL     = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/trade-advisor';
 const SUPABASE_REST = 'https://yifxgiwmibjaornighvt.supabase.co/rest/v1'; // alvos de saída (transversal)
 
 // Feeds RSS por fonte (com fallbacks). Passam pelo proxy get-news (server-side).
@@ -1178,6 +1252,7 @@ const SRC_NAME = { ct: 'Cointelegraph', cd: 'CoinDesk', bm: 'Bitcoin Magazine' }
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let positions = [], btcPrev = 0, fundingTimer = null, currentNewsSrc = 'ct';
+let lastNewsItems = [];
 let walletData = null, portfolioHistory = [], dbCurrentSubTab = 'assets';
 let exitTargets = {}; try { exitTargets = JSON.parse(localStorage.getItem('exitTargets') || '{}'); } catch(e) { exitTargets = {}; }
 let exitCoinData = {};
@@ -1226,6 +1301,7 @@ function switchTab(id, btn) {
   if (id === 'dashboard')  { setTimeout(() => loadPortfolioSeries(dbCurrentRange()), 60); renderDbAssets(); }
   if (id === 'posicoes')   renderPosTab();
   if (id === 'mercado')    switchMktSection(mktSection);
+  if (id === 'agente')     renderAgentTab();
 }
 
 // Secções do tab Mercado: Preço · Estrutura · Sentimento (com init lazy dos gráficos).
@@ -2405,6 +2481,8 @@ async function loadNews() {
     return;
   }
 
+  lastNewsItems = items.map(it => ({ title: it.title || '', pubDate: it.pubDate || '', source: SRC_NAME[currentNewsSrc] }));
+
   el.innerHTML = items.map(item => {
     const img = (item.image || '').replace(/"/g, '%22');
     const thumb = img ? `<img class="news-thumb" src="${img}" loading="lazy" alt="" onerror="this.remove()">` : '';
@@ -2421,6 +2499,210 @@ async function loadNews() {
       ${thumb}
     </div>`;
   }).join('');
+}
+
+// ── AGENTE ESTRATÉGICO ────────────────────────────────────────────────────────
+let agentMsgs = [];        // { role:'user'|'assistant', content:string }
+let agentBusy = false;
+
+// Lê um valor de texto de um elemento (fallback '—' -> null).
+function agentTxt(id) {
+  const el = document.getElementById(id);
+  const t = el ? (el.textContent || '').trim() : '';
+  return (!t || t === '—') ? null : t;
+}
+
+// Reúne um snapshot do mercado + portefólio para dar ao agente como base factual.
+function buildAgentContext() {
+  const L = [];
+
+  // Mercado
+  const mkt = [];
+  const price = agentTxt('db-btcp-val') || agentTxt('ctx-price') || agentTxt('hdr-price');
+  if (price) mkt.push(`BTC: ${price.startsWith('$') ? price : '$' + price}`);
+  const chg = agentTxt('ctx-chg') || agentTxt('hdr-chg');   if (chg)  mkt.push(`24h: ${chg}`);
+  const fund = agentTxt('ctx-fund') || agentTxt('hdr-fund'); if (fund) mkt.push(`funding: ${fund}`);
+  const dom = agentTxt('db-btcd-val') || agentTxt('ctx-dom'); if (dom) mkt.push(`dominância BTC: ${dom}`);
+  const fgN = agentTxt('db-fg-num') || agentTxt('ctx-fg'), fgL = agentTxt('db-fg-lbl');
+  if (fgN) mkt.push(`Fear & Greed: ${fgN}${fgL ? ' (' + fgL + ')' : ''}`);
+  if (mkt.length) L.push('MERCADO — ' + mkt.join(' · '));
+
+  // Portefólio (totais)
+  const totBybit = walletData ? parseFloat(walletData.totalEquity || 0) : 0;
+  const totT212 = t212TotalUsd();
+  const tot = portfolioTotalUsd();
+  if (tot > 0) {
+    const parts = [];
+    if (totBybit) parts.push(`Bybit ${fmtUsd(totBybit, 0)}`);
+    if (totT212)  parts.push(`Trading 212 ${fmtUsd(totT212, 0)}`);
+    L.push(`PORTEFÓLIO — total ${fmtUsd(tot, 0)}${parts.length ? ' (' + parts.join(' + ') + ')' : ''}`);
+  }
+
+  // Saldos spot (Bybit)
+  if (walletData && Array.isArray(walletData.coin)) {
+    const coins = walletData.coin
+      .map(c => ({ coin: c.coin, usd: parseFloat(c.usdValue || 0) }))
+      .filter(c => c.usd > 1)
+      .sort((a, b) => b.usd - a.usd)
+      .slice(0, 12)
+      .map(c => `${c.coin} ${fmtUsd(c.usd, 0)}`);
+    if (coins.length) L.push('SALDOS SPOT (Bybit) — ' + coins.join(', '));
+  }
+
+  // Posições abertas (futuros lineares/inversos)
+  if (positions && positions.length) {
+    const rows = positions.map(p => {
+      const cat = posCat(p.symbol);
+      const pnl = posPnlUsd(p), roe = posRoe(p), lev = parseFloat(p.leverage) || 0;
+      const liq = parseFloat(p.liqPrice), mark = parseFloat(p.markPrice);
+      const liqDist = (liq > 0 && mark > 0) ? Math.abs(mark - liq) / mark * 100 : null;
+      return `${p.symbol} ${p.side === 'Buy' ? 'Long' : 'Short'} ${lev}x [${cat}]`
+        + ` · PnL ${pnl >= 0 ? '+' : ''}${fmtUsd(pnl, 2)} (ROE ${roe >= 0 ? '+' : ''}${roe.toFixed(1)}%)`
+        + (liqDist != null ? ` · liq. a ${liqDist.toFixed(1)}%` : '');
+    });
+    L.push('POSIÇÕES ABERTAS (futuros):\n- ' + rows.join('\n- '));
+  } else {
+    L.push('POSIÇÕES ABERTAS (futuros): nenhuma.');
+  }
+
+  // Trading 212 (ações)
+  if (t212Holdings && t212Holdings.length && t212HasRealData && t212HasRealData()) {
+    const rows = t212Holdings.map(h => {
+      const usd = parseFloat(h.usd || 0), pnl = parseFloat(h.pnl || 0);
+      return `${h.ticker} ${fmtUsd(usd, 0)}${isFinite(pnl) ? ` (PnL ${pnl >= 0 ? '+' : ''}${fmtUsd(pnl, 0)})` : ''}`;
+    });
+    if (rows.length) L.push('AÇÕES (Trading 212) — ' + rows.join(', '));
+  }
+
+  // Notícias recentes (títulos)
+  if (lastNewsItems && lastNewsItems.length) {
+    const heads = lastNewsItems.slice(0, 10).map(n => `- [${n.source}] ${n.title}`);
+    L.push('NOTÍCIAS RECENTES:\n' + heads.join('\n'));
+  }
+
+  return L.join('\n\n');
+}
+
+// Renderiza os "chips" de contexto no topo do chat.
+function renderAgentCtxStrip() {
+  const el = document.getElementById('agent-ctx-strip');
+  if (!el) return;
+  const chips = [];
+  const price = agentTxt('db-btcp-val') || agentTxt('hdr-price');
+  if (price) chips.push(['BTC', price.startsWith('$') ? price : '$' + price]);
+  const tot = portfolioTotalUsd();
+  if (tot > 0) chips.push(['Portefólio', fmtUsd(tot, 0)]);
+  if (positions && positions.length) chips.push(['Posições', String(positions.length)]);
+  const fgN = agentTxt('db-fg-num'); if (fgN) chips.push(['F&G', fgN]);
+  const dom = agentTxt('db-btcd-val'); if (dom) chips.push(['BTC.D', dom]);
+  el.innerHTML = chips.map(([k, v]) => `<span class="agent-chip">${k} <b>${v}</b></span>`).join('');
+}
+
+// Markdown mínimo -> HTML (negrito, itálico, code, listas, parágrafos). Escapa HTML.
+function agentMd(src) {
+  let s = (src || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+  s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
+  const blocks = s.split(/\n{2,}/).map(block => {
+    const lines = block.split('\n');
+    if (lines.every(l => /^\s*([-*•]|\d+\.)\s+/.test(l))) {
+      const items = lines.map(l => '<li>' + l.replace(/^\s*([-*•]|\d+\.)\s+/, '') + '</li>').join('');
+      return '<ul>' + items + '</ul>';
+    }
+    return '<p>' + block.replace(/\n/g, '<br>') + '</p>';
+  });
+  return blocks.join('');
+}
+
+function renderAgentMsgs() {
+  const box = document.getElementById('agent-msgs');
+  if (!box) return;
+  if (!agentMsgs.length && !agentBusy) {
+    box.innerHTML = `<div class="agent-empty">
+      <div class="ae-ico">✦</div>
+      Sou o teu analista estratégico. Carrega em <b>✦ Analisar agora</b> para um briefing do momento,
+      ou escreve uma ideia para debatermos.<br><br>
+      Vejo as tuas posições, saldos, o estado do mercado e as últimas notícias.</div>`;
+    return;
+  }
+  let html = agentMsgs.map(m => `
+    <div class="agent-msg ${m.role}">
+      <div class="agent-ava">${m.role === 'user' ? '🧑' : '✦'}</div>
+      <div class="agent-bubble">${m.role === 'assistant' ? agentMd(m.content) : agentMd(m.content)}</div>
+    </div>`).join('');
+  if (agentBusy) {
+    html += `<div class="agent-msg assistant">
+      <div class="agent-ava">✦</div>
+      <div class="agent-bubble"><span class="agent-typing"><span></span><span></span><span></span></span></div>
+    </div>`;
+  }
+  box.innerHTML = html;
+  box.scrollTop = box.scrollHeight;
+}
+
+function renderAgentTab() {
+  renderAgentCtxStrip();
+  renderAgentMsgs();
+}
+
+function agentAutoGrow(t) {
+  t.style.height = 'auto';
+  t.style.height = Math.min(t.scrollHeight, 140) + 'px';
+}
+function agentKeydown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAgentMessage(); }
+}
+
+function clearAgentChat() {
+  agentMsgs = [];
+  renderAgentMsgs();
+}
+
+// Chama a Edge Function com o histórico + snapshot de contexto.
+async function callAgent() {
+  agentBusy = true;
+  renderAgentCtxStrip();
+  renderAgentMsgs();
+  const btn = document.getElementById('agent-send'), brief = document.getElementById('agent-brief-btn');
+  if (btn) btn.disabled = true;
+  if (brief) brief.disabled = true;
+  try {
+    const r = await fetch(AGENT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${SUPABASE_KEY}` },
+      body: JSON.stringify({ messages: agentMsgs, context: buildAgentContext() }),
+      signal: AbortSignal.timeout(120000)
+    });
+    const d = await r.json().catch(() => ({}));
+    const reply = d.insight || d.error || 'Não obtive resposta. Verifica se a ANTHROPIC_API_KEY está configurada no Supabase.';
+    agentMsgs.push({ role: 'assistant', content: reply });
+  } catch (e) {
+    agentMsgs.push({ role: 'assistant', content: 'Falha ao contactar o agente (' + (e.name === 'TimeoutError' ? 'tempo esgotado' : e.message) + '). Tenta novamente.' });
+  } finally {
+    agentBusy = false;
+    if (btn) btn.disabled = false;
+    if (brief) brief.disabled = false;
+    renderAgentMsgs();
+  }
+}
+
+function sendAgentMessage() {
+  if (agentBusy) return;
+  const inp = document.getElementById('agent-input');
+  const txt = (inp.value || '').trim();
+  if (!txt) return;
+  inp.value = '';
+  agentAutoGrow(inp);
+  agentMsgs.push({ role: 'user', content: txt });
+  callAgent();
+}
+
+function agentBriefing() {
+  if (agentBusy) return;
+  agentMsgs.push({ role: 'user', content: 'Faz-me um briefing estratégico do momento: lê o mercado e as notícias, resume o que importa para o meu portefólio, e aponta o principal risco ou ponto cego que eu possa estar a desconsiderar agora.' });
+  renderAgentMsgs();
+  callAgent();
 }
 
 // ── WALLET / DASHBOARD ────────────────────────────────────────────────────────
