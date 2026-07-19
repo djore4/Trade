@@ -2521,8 +2521,11 @@ let pfSeries = [], pfCache = {}, pfRange = '24H', pfToken = 0;
 let pfIsolate = null; // ativo isolado no gráfico (moeda ou ticker T212; null = total)
 
 function isT212Ticker(sym) { return t212Holdings.some(h => h.ticker === sym); }
+function t212TotalUsd() { return t212Holdings.reduce((a, h) => a + (parseFloat(h.usd) || 0), 0); }
+// Total do portefólio = Bybit (totalEquity) + Trading 212 (soma das posições).
+function portfolioTotalUsd() { return parseFloat((walletData && walletData.totalEquity) || 0) + t212TotalUsd(); }
 
-// Alvo de ancoragem: valor atual do ativo isolado (cripto ou T212), ou o total.
+// Alvo de ancoragem: valor atual do ativo isolado (cripto ou T212), ou o total (Bybit+T212).
 function pfAnchorTarget() {
   if (pfIsolate) {
     const t = t212Holdings.find(h => h.ticker === pfIsolate);
@@ -2530,7 +2533,7 @@ function pfAnchorTarget() {
     const c = (walletData && walletData.coin || []).find(x => x.coin === pfIsolate);
     return c ? parseFloat(c.usdValue || 0) : 0;
   }
-  return parseFloat((walletData && walletData.totalEquity) || 0);
+  return portfolioTotalUsd();
 }
 
 function dbCurrentRange() {
@@ -2585,14 +2588,26 @@ async function loadPortfolioSeries(range) {
   let stableVal = 0; const priced = [];
   held.forEach(c => { if (PF_STABLE.has(c.coin)) stableVal += c.usd; else priced.push(c); });
 
-  const seriesList = await Promise.all(priced.map(async c => {
+  // Cripto (Bybit) — séries de qty × close por moeda.
+  const cryptoP = priced.map(async c => {
     try {
       const r = await fetch(`${BYBIT}/v5/market/kline?category=spot&symbol=${c.coin}USDT&interval=${cfg.interval}&limit=${cfg.limit}`);
       const d = await r.json();
       const arr = (d?.result?.list || []).map(k => ({ t: Math.floor(parseInt(k[0]) / 1000), c: +k[4] })).sort((a, b) => a.t - b.t);
       return { qty: c.qty, arr };
     } catch (e) { return { qty: c.qty, arr: [] }; }
-  }));
+  });
+  // Ações (Trading 212) — séries de qty × preço histórico (via proxy), somadas ao total.
+  const stockCfg = STOCK_RANGE_CFG[range] || STOCK_RANGE_CFG['6M'];
+  const stockP = t212Holdings.filter(h => (parseFloat(h.usd) || 0) > 0).map(async h => {
+    try {
+      const r = await fetch(`${STOCK_URL}?symbol=${encodeURIComponent(h.ticker)}&range=${stockCfg.range}&interval=${stockCfg.interval}`, { headers: { Authorization: `Bearer ${SUPABASE_KEY}` } });
+      const d = await r.json();
+      const arr = (Array.isArray(d?.points) ? d.points : []).map(p => ({ t: p.t, c: p.c })).sort((a, b) => a.t - b.t);
+      return { qty: parseFloat(h.qty || 0), arr };
+    } catch (e) { return { qty: parseFloat(h.qty || 0), arr: [] }; }
+  });
+  const seriesList = await Promise.all([...cryptoP, ...stockP]);
   if (token !== pfToken) return; // o time-frame mudou entretanto
 
   const tsSet = new Set();
@@ -2750,6 +2765,15 @@ async function fetchT212Holdings() {
 }
 function t212HasRealData() { return t212Holdings.some(h => (parseFloat(h.usd) || 0) > 0); }
 
+// Após atualizar a T212, o total e a curva do portefólio mudam: invalida o cache
+// do portefólio total e recalcula (a menos que esteja um ativo isolado).
+function refreshAfterT212() {
+  Object.keys(pfCache).forEach(k => { if (k.endsWith('|ALL')) delete pfCache[k]; });
+  updateDbHero();
+  if (!pfIsolate) loadPortfolioSeries(pfRange);
+  if (dbCurrentSubTab === 'assets') renderDbAssets();
+}
+
 const COIN_COLORS = {
   BTC:'#f7931a', ETH:'#7c8fff', USDT:'#26a17b', BNB:'#f3ba2f',
   SOL:'#9945ff', XRP:'#346aa9', ADA:'#0033ad', AVAX:'#e84142',
@@ -2777,8 +2801,8 @@ function updateDbHero() {
     if (lbl) lbl.textContent = 'Isolado · ' + pfIsolate;
     if (tv)  tv.textContent = '$' + fmt(pfAnchorTarget(), 2); // cripto ou T212
   } else {
-    if (lbl) lbl.textContent = 'Portfólio Total · Bybit';
-    if (tv && walletData) tv.textContent = '$' + fmt(parseFloat(walletData.totalEquity || 0), 2);
+    if (lbl) lbl.textContent = t212TotalUsd() > 0 ? 'Portfólio Total · Bybit + T212' : 'Portfólio Total · Bybit';
+    if (tv && walletData) tv.textContent = '$' + fmt(portfolioTotalUsd(), 2);
   }
 }
 
@@ -3134,7 +3158,7 @@ function setDbRange(btn) {
     loadNews(),
     loadExitTargetsRemote()
   ]);
-  renderDbAssets(); // reflete ativos T212 assim que carregam
+  refreshAfterT212(); // total + curva passam a incluir a Trading 212
   setInterval(fetchMarket,        5000);
   setInterval(fetchPositions,    10000);
   setInterval(fetchWalletBalance, 30000);
@@ -3143,7 +3167,7 @@ function setDbRange(btn) {
   setInterval(fetchLiquidations, 30000);
   setInterval(fetchMacro,      120000);
   setInterval(fetchHashrate,   600000);
-  setInterval(async () => { await fetchT212Holdings(); if (dbCurrentSubTab === 'assets') renderDbAssets(); }, 180000);
+  setInterval(async () => { await fetchT212Holdings(); refreshAfterT212(); }, 180000);
 })();
 </script>
 </body>
