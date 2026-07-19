@@ -296,9 +296,12 @@ html.light .theme-btn .icon-sun  { display: block; }
 .signal-val   { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600; white-space: nowrap; text-align: right; flex-shrink: 0; }
 
 /* ─── NEWS ────────────────────────────────────────── */
-.news-item { padding: 13px 0; border-bottom: 1px solid var(--border); cursor: pointer; transition: padding-left .15s; }
+.news-item { display: flex; gap: 12px; align-items: flex-start; padding: 13px 0; border-bottom: 1px solid var(--border); cursor: pointer; transition: padding-left .15s; }
 .news-item:hover { padding-left: 4px; }
 .news-item:last-child { border-bottom: none; }
+.news-item-body { flex: 1; min-width: 0; }
+.news-thumb { width: 84px; height: 60px; flex-shrink: 0; border-radius: 8px; object-fit: cover; background: var(--s2); border: 1px solid var(--border); }
+@media (max-width: 600px) { .news-thumb { width: 68px; height: 50px; } }
 .news-source { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--orange); }
 .news-age    { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--faint); }
 .news-title  { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.55; margin-top: 5px; }
@@ -2402,15 +2405,22 @@ async function loadNews() {
     return;
   }
 
-  el.innerHTML = items.map(item => `
+  el.innerHTML = items.map(item => {
+    const img = (item.image || '').replace(/"/g, '%22');
+    const thumb = img ? `<img class="news-thumb" src="${img}" loading="lazy" alt="" onerror="this.remove()">` : '';
+    return `
     <div class="news-item" onclick="window.open('${(item.link||'').replace(/'/g,"\\'")}','_blank')">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
-        <span class="news-source">${SRC_NAME[currentNewsSrc]}</span>
-        <span style="width:2px;height:2px;border-radius:50%;background:var(--faint);flex-shrink:0;display:inline-block"></span>
-        <span class="news-age">${timeAgo(item.pubDate)}</span>
+      <div class="news-item-body">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+          <span class="news-source">${SRC_NAME[currentNewsSrc]}</span>
+          <span style="width:2px;height:2px;border-radius:50%;background:var(--faint);flex-shrink:0;display:inline-block"></span>
+          <span class="news-age">${timeAgo(item.pubDate)}</span>
+        </div>
+        <div class="news-title">${item.title || ''}</div>
       </div>
-      <div class="news-title">${item.title || ''}</div>
-    </div>`).join('');
+      ${thumb}
+    </div>`;
+  }).join('');
 }
 
 // ── WALLET / DASHBOARD ────────────────────────────────────────────────────────
