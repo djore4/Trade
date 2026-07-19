@@ -3127,10 +3127,29 @@ async function loadPortfolioSeries(range) {
 function updatePfPnl(pts) {
   const puEl = document.getElementById('db-pnl-usd');
   const ppEl = document.getElementById('db-pnl-pct');
-  if (!puEl || !ppEl || !pts || pts.length < 2) return;
-  const first = pts[0].v, last = pts[pts.length - 1].v;
-  const d = last - first;
-  const pct = first > 0 ? (d / first) * 100 : 0;
+  if (!puEl || !ppEl) return;
+
+  let d, pct, has = false;
+  // COERÊNCIA: para um ativo isolado no time-frame diário (24H), a variação usa
+  // EXATAMENTE a mesma fonte da lista de ativos (24h oficial da exchange / T212),
+  // para não haver dois valores diferentes para a mesma "variação diária".
+  if (pfIsolate && pfRange === '24H') {
+    const usd = pfAnchorTarget();
+    const t = t212Holdings.find(h => h.ticker === pfIsolate);
+    if (t) {
+      if (t.chg24Usd != null) { d = t.chg24Usd; pct = t.chg24Pct || 0; has = true; }
+    } else {
+      const pc = spot24h[pfIsolate];
+      if (pc != null && isFinite(pc)) { pct = pc * 100; d = usd * (pc / (1 + pc)); has = true; }
+    }
+  }
+  if (!has) {
+    if (!pts || pts.length < 2) return;
+    const first = pts[0].v, last = pts[pts.length - 1].v;
+    d = last - first;
+    pct = first > 0 ? (d / first) * 100 : 0;
+  }
+
   const isPos = d >= 0;
   const col = d !== 0 ? (isPos ? 'var(--green)' : 'var(--red)') : 'var(--dim)';
   puEl.textContent = (d >= 0 ? '+' : '') + fmtUsd(d, 2);
