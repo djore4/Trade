@@ -143,12 +143,11 @@ html.light .theme-btn .icon-sun  { display: block; }
 html.hide-values .privacy-btn .icon-eye     { display: none; }
 html.hide-values .privacy-btn .icon-eye-off { display: flex; }
 html.hide-values .privacy-btn { color: var(--orange); }
-/* Modo privado: desfoca todos os valores relativos a ativos/portefólio (todos os tabs) */
+/* Modo privado: substitui os valores por *** (todos os tabs/sub-tabs) */
 html.hide-values #db-total-value,
 html.hide-values #db-pnl-usd,
 html.hide-values #db-pnl-pct,
 html.hide-values #hdr-inv-pnl,
-html.hide-values .db-chart-svg,
 html.hide-values .db-asset-usd,
 html.hide-values .db-asset-qty,
 html.hide-values .db-asset-pnl,
@@ -160,12 +159,39 @@ html.hide-values .ps-val,
 html.hide-values .pos-chip-pnl,
 html.hide-values .pos-exit-cell-val,
 html.hide-values .agent-chip.sens b {
-  filter: blur(7px);
-  -webkit-filter: blur(7px);
-  user-select: none;
-  pointer-events: none;
-  transition: filter .12s ease;
+  position: relative;
+  visibility: hidden;          /* esconde o número e quaisquer filhos, mantendo o espaço */
 }
+html.hide-values #db-total-value::after,
+html.hide-values #db-pnl-usd::after,
+html.hide-values #db-pnl-pct::after,
+html.hide-values #hdr-inv-pnl::after,
+html.hide-values .db-asset-usd::after,
+html.hide-values .db-asset-qty::after,
+html.hide-values .db-asset-pnl::after,
+html.hide-values .dist-val::after,
+html.hide-values .exit-summary-val::after,
+html.hide-values .exit-result-usd::after,
+html.hide-values .exit-result-pct::after,
+html.hide-values .ps-val::after,
+html.hide-values .pos-chip-pnl::after,
+html.hide-values .pos-exit-cell-val::after,
+html.hide-values .agent-chip.sens b::after {
+  content: "***";
+  visibility: visible;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--dim);
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: .08em;
+  pointer-events: none;
+  white-space: nowrap;
+}
+/* A curva do portefólio não tem números para mascarar — oculta-se por inteiro */
+html.hide-values .db-chart-svg { visibility: hidden; }
 @media (max-width: 600px) { .hdr-hide-sm { display: none; } }
 
 .pulse-dot {
