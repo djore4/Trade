@@ -138,6 +138,34 @@ body {
 .theme-btn .icon-sun { display: none; }
 html.light .theme-btn .icon-moon { display: none; }
 html.light .theme-btn .icon-sun  { display: block; }
+/* Botão de privacidade (ocultar valores do portefólio) */
+.privacy-btn .icon-eye-off { display: none; }
+html.hide-values .privacy-btn .icon-eye     { display: none; }
+html.hide-values .privacy-btn .icon-eye-off { display: flex; }
+html.hide-values .privacy-btn { color: var(--orange); }
+/* Modo privado: desfoca todos os valores relativos a ativos/portefólio (todos os tabs) */
+html.hide-values #db-total-value,
+html.hide-values #db-pnl-usd,
+html.hide-values #db-pnl-pct,
+html.hide-values #hdr-inv-pnl,
+html.hide-values .db-chart-svg,
+html.hide-values .db-asset-usd,
+html.hide-values .db-asset-qty,
+html.hide-values .db-asset-pnl,
+html.hide-values .dist-val,
+html.hide-values .exit-summary-val,
+html.hide-values .exit-result-usd,
+html.hide-values .exit-result-pct,
+html.hide-values .ps-val,
+html.hide-values .pos-chip-pnl,
+html.hide-values .pos-exit-cell-val,
+html.hide-values .agent-chip.sens b {
+  filter: blur(7px);
+  -webkit-filter: blur(7px);
+  user-select: none;
+  pointer-events: none;
+  transition: filter .12s ease;
+}
 @media (max-width: 600px) { .hdr-hide-sm { display: none; } }
 
 .pulse-dot {
@@ -773,6 +801,11 @@ html.light .mnav-btn.active { color: var(--orange); }
       <span id="hdr-inv-pnl" class="hdr-val mono">—</span>
     </div>
     <div class="hdr-sep"></div>
+    <button class="theme-btn privacy-btn" id="privacy-btn" onclick="togglePrivacy()" title="Ocultar / mostrar valores do portefólio">
+      <svg class="icon-eye" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-4.5 7-4.5S15 8 15 8s-2.5 4.5-7 4.5S1 8 1 8Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><circle cx="8" cy="8" r="2.1" stroke="currentColor" stroke-width="1.3"/></svg>
+      <svg class="icon-eye-off" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6.3 3.7A6.8 6.8 0 0 1 8 3.5c4.5 0 7 4.5 7 4.5a12.7 12.7 0 0 1-2.2 2.7M3.3 4.9A12.6 12.6 0 0 0 1 8s2.5 4.5 7 4.5a6.7 6.7 0 0 0 2.6-.5M6.6 6.6a2.1 2.1 0 0 0 2.8 2.8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+    </button>
+    <div class="hdr-sep"></div>
     <button class="theme-btn" onclick="toggleTheme()" title="Alternar tema">
       <svg class="icon-moon" width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M12.5 9A5.5 5.5 0 0 1 6 2.5a5.5 5.5 0 1 0 6.5 6.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" fill="none"/></svg>
       <svg class="icon-sun"  width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="2.8" stroke="currentColor" stroke-width="1.3" fill="none"/><g stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><line x1="7.5" y1="0.5" x2="7.5" y2="2.5"/><line x1="7.5" y1="12.5" x2="7.5" y2="14.5"/><line x1="0.5" y1="7.5" x2="2.5" y2="7.5"/><line x1="12.5" y1="7.5" x2="14.5" y2="7.5"/><line x1="2.6" y1="2.6" x2="4" y2="4"/><line x1="11" y1="11" x2="12.4" y2="12.4"/><line x1="11" y1="4" x2="12.4" y2="2.6"/><line x1="2.6" y1="12.4" x2="4" y2="11"/></g></svg>
@@ -1358,6 +1391,7 @@ html.light .mnav-btn.active { color: var(--orange); }
 <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
 <script>
 (function() { if (localStorage.getItem('theme') === 'light') document.documentElement.classList.add('light'); })();
+(function() { if (localStorage.getItem('hideValues') === '1') document.documentElement.classList.add('hide-values'); })();
 // ── CONFIG ────────────────────────────────────────────────────────────────────
 const POSITIONS_URL = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/get-bybit-positions';
 const SUPABASE_KEY  = 'sb_publishable_xHjsFJbSuAhO6r6BUylTCw_tDE-nFXT';
@@ -2915,11 +2949,11 @@ function renderAgentCtxStrip() {
   const price = agentTxt('db-btcp-val') || agentTxt('hdr-price');
   if (price) chips.push(['BTC', price.startsWith('$') ? price : '$' + price]);
   const tot = portfolioTotalUsd();
-  if (tot > 0) chips.push(['Portefólio', fmtUsd(tot, 0)]);
+  if (tot > 0) chips.push(['Portefólio', fmtUsd(tot, 0), true]);
   if (positions && positions.length) chips.push(['Posições', String(positions.length)]);
   const fgN = agentTxt('db-fg-num'); if (fgN) chips.push(['F&G', fgN]);
   const dom = agentTxt('db-btcd-val'); if (dom) chips.push(['BTC.D', dom]);
-  el.innerHTML = chips.map(([k, v]) => `<span class="agent-chip">${k} <b>${v}</b></span>`).join('');
+  el.innerHTML = chips.map(([k, v, sens]) => `<span class="agent-chip${sens ? ' sens' : ''}">${k} <b>${v}</b></span>`).join('');
 }
 
 // Markdown mínimo -> HTML (negrito, itálico, code, listas, parágrafos). Escapa HTML.
@@ -3491,7 +3525,6 @@ const TKRS = [
   { key: 'BTC',     name: 'Bitcoin',          src: 'bybit' },
   { key: 'ETH-USD', name: 'Ethereum',         src: 'yh' },
   { key: 'QQQ',     name: 'Nasdaq 100 · QQQ', src: 'yh' },
-  { key: '^IXIC',   name: 'Nasdaq Composite', src: 'yh' },
   { key: 'AAPL',    name: 'Apple',            src: 'yh' },
   { key: 'MSFT',    name: 'Microsoft',        src: 'yh' },
   { key: 'GOOGL',   name: 'Alphabet',         src: 'yh' },
@@ -4091,6 +4124,12 @@ function toggleFilterSmall(checked) {
 function toggleTheme() {
   const isLight = document.documentElement.classList.toggle('light');
   localStorage.setItem('theme', isLight ? 'light' : 'dark');
+}
+
+// Modo privado: oculta (desfoca) todos os valores do portefólio/ativos em todos os tabs.
+function togglePrivacy() {
+  const hidden = document.documentElement.classList.toggle('hide-values');
+  localStorage.setItem('hideValues', hidden ? '1' : '0');
 }
 
 function switchDbTab(tab, btn) {
