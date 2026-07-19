@@ -1146,6 +1146,7 @@ const SUPABASE_KEY  = 'sb_publishable_xHjsFJbSuAhO6r6BUylTCw_tDE-nFXT';
 const BYBIT         = 'https://api.bybit.com';
 const WALLET_URL    = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/get-bybit-wallet';
 const T212_URL      = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/get-t212-portfolio';
+const STOCK_URL     = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/get-stock-history';
 const SUPABASE_REST = 'https://yifxgiwmibjaornighvt.supabase.co/rest/v1'; // alvos de saída (transversal)
 
 // Multiple RSS fallbacks per source
@@ -2503,12 +2504,29 @@ const PF_RANGE_CFG = {
   'TUDO':{ interval: 'W',   limit: 208 },
 };
 const PF_STABLE = new Set(['USDT','USDC','USDD','DAI','TUSD','FDUSD','BUSD','USDE']);
+// Time-frames -> range/interval do Yahoo (para ações T212 isoladas).
+const STOCK_RANGE_CFG = {
+  '1H':  { range: '1d',  interval: '5m'  },
+  '4H':  { range: '1d',  interval: '5m'  },
+  '12H': { range: '1d',  interval: '15m' },
+  '24H': { range: '1d',  interval: '5m'  },
+  '1S':  { range: '5d',  interval: '30m' },
+  '1M':  { range: '1mo', interval: '1d'  },
+  '3M':  { range: '3mo', interval: '1d'  },
+  '6M':  { range: '6mo', interval: '1d'  },
+  '1A':  { range: '1y',  interval: '1d'  },
+  'TUDO':{ range: 'max', interval: '1wk' },
+};
 let pfSeries = [], pfCache = {}, pfRange = '24H', pfToken = 0;
-let pfIsolate = null; // moeda isolada no gráfico (null = portefólio total)
+let pfIsolate = null; // ativo isolado no gráfico (moeda ou ticker T212; null = total)
 
-// Alvo de ancoragem: valor atual da moeda isolada, ou o total do portefólio.
+function isT212Ticker(sym) { return t212Holdings.some(h => h.ticker === sym); }
+
+// Alvo de ancoragem: valor atual do ativo isolado (cripto ou T212), ou o total.
 function pfAnchorTarget() {
   if (pfIsolate) {
+    const t = t212Holdings.find(h => h.ticker === pfIsolate);
+    if (t) return parseFloat(t.usd || 0);
     const c = (walletData && walletData.coin || []).find(x => x.coin === pfIsolate);
     return c ? parseFloat(c.usdValue || 0) : 0;
   }
@@ -2538,6 +2556,26 @@ async function loadPortfolioSeries(range) {
   if (pfCache[ckey]) { pfSeries = anchorSeries(pfCache[ckey]); drawPortfolioChart(); return; }
   const token = ++pfToken;
   drawPortfolioChart(); // placeholder imediato
+
+  // Ativo T212 (ação) isolado -> histórico de preço via proxy (Yahoo) × quantidade.
+  if (pfIsolate && isT212Ticker(pfIsolate)) {
+    const h = t212Holdings.find(x => x.ticker === pfIsolate);
+    const qty = h ? parseFloat(h.qty || 0) : 0;
+    const m = STOCK_RANGE_CFG[range] || STOCK_RANGE_CFG['6M'];
+    try {
+      const r = await fetch(`${STOCK_URL}?symbol=${encodeURIComponent(pfIsolate)}&range=${m.range}&interval=${m.interval}`, { headers: { Authorization: `Bearer ${SUPABASE_KEY}` } });
+      const d = await r.json();
+      if (token !== pfToken) return;
+      const pts = Array.isArray(d?.points) ? d.points : [];
+      if (pts.length < 2) { pfSeries = []; drawPortfolioChart(); return; }
+      const raw = pts.map(p => ({ t: p.t, v: qty * p.c }));
+      pfCache[ckey] = raw;
+      pfSeries = anchorSeries(raw);
+      drawPortfolioChart();
+    } catch (e) { if (token === pfToken) { pfSeries = []; drawPortfolioChart(); } }
+    return;
+  }
+
   if (!walletData) return;
   const cfg = PF_RANGE_CFG[range] || PF_RANGE_CFG['24H'];
   let held = (walletData.coin || [])
@@ -2736,10 +2774,8 @@ function updateDbHero() {
   const lbl = document.getElementById('db-hero-lbl');
   const tv  = document.getElementById('db-total-value');
   if (pfIsolate) {
-    const c = (walletData && walletData.coin || []).find(x => x.coin === pfIsolate);
-    const usd = c ? parseFloat(c.usdValue || 0) : 0;
     if (lbl) lbl.textContent = 'Isolado · ' + pfIsolate;
-    if (tv)  tv.textContent = '$' + fmt(usd, 2);
+    if (tv)  tv.textContent = '$' + fmt(pfAnchorTarget(), 2); // cripto ou T212
   } else {
     if (lbl) lbl.textContent = 'Portfólio Total · Bybit';
     if (tv && walletData) tv.textContent = '$' + fmt(parseFloat(walletData.totalEquity || 0), 2);
@@ -2820,7 +2856,10 @@ function renderT212Rows() {
       ? `<div class="db-asset-pnl"><span style="color:${isP ? 'var(--green)' : isN ? 'var(--red)' : 'var(--faint)'}">${pnl !== 0 ? (isP ? '+' : '') + fmtUsd(pnl, 2) : '—'}</span></div>
          <div class="db-asset-price">${fmtUsd(usd, 2)}${h.price ? ` <span style="font-size:10px;color:var(--faint)">$${fmt(h.price, h.price < 100 ? 2 : 0)}</span>` : ''}</div>`
       : `<div class="db-asset-price" style="color:var(--faint);font-size:10px">ligar API</div>`;
-    return `<div class="db-asset-row" title="Trading 212 — ${h.name || h.ticker}">
+    const canIsolate = usd > 0;
+    const cls = 'db-asset-row' + (canIsolate ? ' clickable' : '') + (pfIsolate === h.ticker ? ' isolated' : '');
+    const onc = canIsolate ? ` onclick="toggleAssetIsolate('${h.ticker}')" title="Isolar ${h.ticker} no gráfico"` : ` title="Trading 212 — ${h.name || h.ticker}"`;
+    return `<div class="${cls}"${onc}>
       <div class="db-asset-left">
         <div class="db-coin-avatar" style="background:${cc}18;border-color:${cc}40"><span style="color:${cc}">${ini}</span></div>
         <div>
