@@ -1339,6 +1339,7 @@ let exitCoinData = {};
 let posExitTargets = {}; try { posExitTargets = JSON.parse(localStorage.getItem('posExitTargets') || '{}'); } catch(e) { posExitTargets = {}; }
 let posTpData = {};
 let txlogData = [], avgPrices = {}, dbFilterSmall = true; // por defeito oculta ativos < $5
+let spotFlows = {}, spotFlowsKey = '';   // fluxos de compra/venda por moeda (histórico)
 let tvChart = null, tvDom = null, tvTotal2 = null, tvTotal3 = null;
 let currentIv = '15', posCharts = {};
 
@@ -2917,6 +2918,27 @@ function computeAvgPrices(orders) {
   return result;
 }
 
+// Fluxos de quantidade por moeda a partir das ordens spot preenchidas:
+// { COIN: [{ t(seg), dq(+compra/-venda) }] } ordenado por tempo. Serve para
+// reconstruir a quantidade DETIDA em cada instante (ver loadPortfolioSeries):
+// um ativo comprado recentemente não é contado no passado.
+function computeSpotFlows(orders) {
+  const flows = {};
+  (orders || []).forEach(o => {
+    const base = (o.symbol || '').replace(/USDT$|USDC$|BUSD$|PERP$|USD$/, '');
+    if (!base || base === o.symbol) return;
+    const qty = parseFloat(o.cumExecQty || 0);
+    if (!qty) return;
+    const tms = parseInt(o.updatedTime || o.createdTime || 0);
+    if (!tms) return;
+    const dq = o.side === 'Buy' ? qty : o.side === 'Sell' ? -qty : 0;
+    if (!dq) return;
+    (flows[base] = flows[base] || []).push({ t: Math.floor(tms / 1000), dq });
+  });
+  Object.values(flows).forEach(a => a.sort((x, y) => x.t - y.t));
+  return flows;
+}
+
 async function fetchWalletBalance() {
   try {
     const r = await fetch(WALLET_URL, { headers: { Authorization: `Bearer ${SUPABASE_KEY}` } });
@@ -2925,7 +2947,16 @@ async function fetchWalletBalance() {
     txlogData  = d?.txlog?.result?.list || [];
     if (!walletData) return;
     // Use filled spot orders (avgPrice per order) for cost basis — much deeper history than tx log
-    avgPrices = computeAvgPrices(d?.spotOrders?.result?.list || []);
+    const spotOrders = d?.spotOrders?.result?.list || [];
+    avgPrices = computeAvgPrices(spotOrders);
+    // Fluxos de quantidade (histórico) -> curva reconstruída por transações.
+    spotFlows = computeSpotFlows(spotOrders);
+    const flowsKey = JSON.stringify(Object.keys(spotFlows).sort().map(c => [c, spotFlows[c].length]));
+    if (flowsKey !== spotFlowsKey) {
+      spotFlowsKey = flowsKey;
+      pfCache = {};                          // ordens mudaram -> recalcular a curva
+      if (document.getElementById('tab-dashboard')?.classList.contains('active')) loadPortfolioSeries(pfRange);
+    }
     const equity = parseFloat(walletData.totalEquity || 0);
     if (equity > 0) {
       portfolioHistory.push({ ts: Date.now(), v: equity });
@@ -3082,14 +3113,16 @@ async function loadPortfolioSeries(range) {
   let stableVal = 0; const priced = [];
   held.forEach(c => { if (PF_STABLE.has(c.coin)) stableVal += c.usd; else priced.push(c); });
 
-  // Cripto (Bybit) — séries de qty × close por moeda.
+  // Cripto (Bybit) — séries de qty × close por moeda. `flows` = compras/vendas
+  // históricas desta moeda, para reconstruir a quantidade detida ao longo do tempo.
   const cryptoP = priced.map(async c => {
+    const flows = spotFlows[c.coin] || [];
     try {
       const r = await fetch(`${BYBIT}/v5/market/kline?category=spot&symbol=${c.coin}USDT&interval=${cfg.interval}&limit=${cfg.limit}`);
       const d = await r.json();
       const arr = (d?.result?.list || []).map(k => ({ t: Math.floor(parseInt(k[0]) / 1000), c: +k[4] })).sort((a, b) => a.t - b.t);
-      return { qty: c.qty, arr };
-    } catch (e) { return { qty: c.qty, arr: [] }; }
+      return { qty: c.qty, arr, flows };
+    } catch (e) { return { qty: c.qty, arr: [], flows }; }
   });
   // Ações (Trading 212) — séries de qty × preço histórico (via proxy), somadas ao total.
   const stockCfg = STOCK_RANGE_CFG[range] || STOCK_RANGE_CFG['6M'];
@@ -3108,13 +3141,27 @@ async function loadPortfolioSeries(range) {
   seriesList.forEach(s => s.arr.forEach(p => tsSet.add(p.t)));
   const timeline = [...tsSet].sort((a, b) => a - b);
   if (timeline.length < 2) { pfSeries = []; drawPortfolioChart(); return; }
-  seriesList.forEach(s => { s.i = 0; s.last = s.arr.length ? s.arr[0].c : 0; });
+  // Reconstrução por transações: a quantidade "antes" das ordens conhecidas é
+  // (qty_atual − Σ fluxos); ao avançar no tempo, cada compra/venda ajusta a qty.
+  // Assim um ativo comprado há pouco vale $0 no passado (e só aparece na data real).
+  seriesList.forEach(s => {
+    s.i = 0; s.last = s.arr.length ? s.arr[0].c : 0;
+    if (s.flows && s.flows.length) {
+      const total = s.flows.reduce((a, f) => a + f.dq, 0);
+      s.fi = 0; s.qtyRun = s.qty - total;   // saldo antes do 1.º fluxo conhecido
+    }
+  });
   const raw = timeline.map(t => {
     let v = stableVal;
     seriesList.forEach(s => {
       if (!s.arr.length) return;
       while (s.i < s.arr.length && s.arr[s.i].t <= t) { s.last = s.arr[s.i].c; s.i++; }
-      v += s.qty * s.last;
+      let q = s.qty;
+      if (s.flows && s.flows.length) {
+        while (s.fi < s.flows.length && s.flows[s.fi].t <= t) { s.qtyRun += s.flows[s.fi].dq; s.fi++; }
+        q = Math.max(0, s.qtyRun);
+      }
+      v += q * s.last;
     });
     return { t, v };
   });
