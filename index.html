@@ -851,11 +851,11 @@ html.light .mnav-btn.active { color: var(--orange); }
 <!-- ─── TAB: POSIÇÕES ─────────────────────────────────── -->
 <div class="tab-pane" id="tab-posicoes">
   <div style="max-width:1400px;margin:0 auto;display:flex;flex-direction:column;gap:14px;padding-bottom:96px">
+    <!-- Resumo macro de todas as posições (topo — visão agregada) -->
+    <div id="pos-summary" class="pos-summary" style="display:none"></div>
+
     <div class="sec-label">Trades abertos</div>
     <div id="pos-selector" class="pos-selector"><div class="db-empty">A carregar posições...</div></div>
-
-    <!-- Resumo macro de todas as posições -->
-    <div id="pos-summary" class="pos-summary" style="display:none"></div>
 
     <div class="card" id="pos-detail-card" style="display:none;border-radius:12px">
       <div class="card-header">
@@ -873,6 +873,8 @@ html.light .mnav-btn.active { color: var(--orange); }
         <button class="iv-btn" data-iv="240" onclick="setPosIv('240',this)">4h</button>
         <button class="iv-btn" data-iv="D"   onclick="setPosIv('D',this)">1D</button>
         <button class="iv-btn" data-iv="W"   onclick="setPosIv('W',this)">1W</button>
+        <span style="flex:1"></span>
+        <button class="iv-btn" id="pos-measure-btn" onclick="togglePosMeasure(this)" title="Régua — medir variação de preço e nº de barras">📏 Régua</button>
       </div>
       <div id="pos-chart" class="chart-wrap" style="height:440px;position:relative"></div>
       <div class="pos-legend" id="pos-legend"></div>
@@ -1168,6 +1170,16 @@ const fmtUsd = (n, d = 0) => {
   if (abs >= 1e3) return `${s}$${fmt(abs/1e3,1)}K`;
   return `${s}$${fmt(abs, d)}`;
 };
+// Casas decimais "inteligentes" por preço: ~5 algarismos significativos.
+// BTC (60000) -> 0 casas; HYPE (63.5) -> 3; ADA (0.163) -> 5; micro-caps -> mais.
+const pxDecimals = (price) => {
+  const a = Math.abs(Number(price));
+  if (!isFinite(a) || a === 0) return 2;
+  if (a >= 1000) return 0;                       // valor absoluto grande -> inteiro
+  return Math.min(8, Math.max(0, 4 - Math.floor(Math.log10(a))));
+};
+// Formata um preço com resolução adaptada à sua magnitude.
+const fmtPx = (price) => fmt(price, pxDecimals(price));
 const timeAgo = s => {
   const m = Math.floor((Date.now() - new Date(s)) / 60000);
   return m < 1 ? 'agora' : m < 60 ? `${m}m` : m < 1440 ? `${Math.floor(m/60)}h` : `${Math.floor(m/1440)}d`;
@@ -1820,7 +1832,7 @@ function refreshPosTab() {
   fetchPosFunding(p);
   renderPosExitResult(p);
   const mk = document.getElementById('pd-mark');
-  if (mk) mk.textContent = fmt(parseFloat(p.markPrice), 2);
+  if (mk) mk.textContent = fmtPx(parseFloat(p.markPrice));
   addPosPriceLines(p);
 }
 
@@ -1829,14 +1841,14 @@ function renderPosSummary() {
   const el = document.getElementById('pos-summary'); if (!el) return;
   if (!positions.length) { el.style.display = 'none'; return; }
   el.style.display = '';
-  let pnlUsd = 0, exp = 0, marg = 0, longs = 0, shorts = 0, minDist = Infinity;
+  let pnlUsd = 0, exp = 0, marg = 0, longs = 0, shorts = 0, minDist = Infinity, minLiqPx = 0;
   positions.forEach(p => {
     const mark = parseFloat(p.markPrice), liq = parseFloat(p.liqPrice);
     pnlUsd += posPnlUsd(p);
     exp += posNotionalUsd(p);   // nocional em USD (inverso convertido)
     marg += posMarginUsd(p);    // margem em USD (inverso convertido)
     if (p.side === 'Buy') longs++; else shorts++;
-    if (liq > 0 && mark > 0) { const dd = Math.abs((liq - mark) / mark) * 100; if (dd < minDist) minDist = dd; }
+    if (liq > 0 && mark > 0) { const dd = Math.abs((liq - mark) / mark) * 100; if (dd < minDist) { minDist = dd; minLiqPx = liq; } }
   });
   const roe = marg > 0 ? (pnlUsd / marg) * 100 : 0;
   const avgLev = marg > 0 ? exp / marg : 0;
@@ -1850,8 +1862,8 @@ function renderPosSummary() {
     item('PnL', `${pnlUsd >= 0 ? '+' : ''}${fmtUsd(pnlUsd, 0)}`, pnlC),
     item('ROE', `${roe >= 0 ? '+' : ''}${fmt(roe, 1)}%`, pnlC),
     item('Exp.', fmtUsd(exp, 0), null, `${fmt(avgLev, 1)}×`),
-    item('Margem', fmtUsd(marg, 0)),
-    item('Liq.', minDist < Infinity ? `${fmt(minDist, 1)}%` : '—', distC),
+    item('Margem', fmtUsd(marg, 0), null, `s/ alav. ${fmtUsd(exp, 0)}`),
+    item('Liq.', minDist < Infinity ? `${fmt(minDist, 1)}%` : '—', distC, minLiqPx > 0 ? `@ ${fmtPx(minLiqPx)}` : null),
   ].join(sep);
 }
 
@@ -1937,7 +1949,7 @@ function selectPos(key) {
   const dot = document.getElementById('pd-dot'); if (dot) dot.style.background = isLong ? 'var(--green)' : 'var(--red)';
   const title = document.getElementById('pd-title'); if (title) title.textContent = `${p.symbol} — ${isLong ? 'Long' : 'Short'} ${parseFloat(p.leverage)}×`;
   const type = document.getElementById('pd-type'); if (type) { type.textContent = isInv ? 'Inverse' : 'Linear'; type.className = 'tag ' + (isInv ? 'tag-inv' : 'tag-lin'); }
-  const mk = document.getElementById('pd-mark'); if (mk) mk.textContent = fmt(parseFloat(p.markPrice), 2);
+  const mk = document.getElementById('pd-mark'); if (mk) mk.textContent = fmtPx(parseFloat(p.markPrice));
 
   renderPosMetrics(p);
   fetchPosFunding(p);
@@ -1969,10 +1981,10 @@ function renderPosMetrics(p) {
   el.innerHTML = [
     item('PnL', `${pnlUsd >= 0 ? '+' : ''}${fmtUsd(pnlUsd, 2)}`, pnlC),
     item('ROE', `${roe >= 0 ? '+' : ''}${fmt(roe, 1)}%`, pnlC),
-    item('Entrada', fmt(ent, 2)),
-    item('Liq.', liq > 0 ? fmt(liq, 2) : '—', 'var(--red)'),
+    item('Entrada', fmtPx(ent)),
+    item('Liq.', liq > 0 ? fmtPx(liq) : '—', 'var(--red)'),
     item('Dist.', liq > 0 ? `${fmt(dLiq, 1)}%` : '—', distC),
-    item('SL', sl > 0 ? fmt(sl, 2) : '—', sl > 0 ? 'var(--red)' : 'var(--faint)'),
+    item('SL', sl > 0 ? fmtPx(sl) : '—', sl > 0 ? 'var(--red)' : 'var(--faint)'),
   ].join(sep);
 }
 
@@ -2033,14 +2045,17 @@ async function loadPosChart(p) {
   cont.innerHTML = '';
   posPriceLines = []; posBars = []; posOldestMs = null; posLoadingOlder = false; posNoMore = false;
   posChart = LightweightCharts.createChart(cont, posChartOpts());
+  const pxDec = pxDecimals(parseFloat(p.avgPrice) || parseFloat(p.markPrice));
   posSeries = posChart.addCandlestickSeries({
     upColor: '#2dd4a0', downColor: '#f7647a', borderVisible: false,
     wickUpColor: '#2dd4a0', wickDownColor: '#f7647a',
+    priceFormat: { type: 'price', precision: pxDec, minMove: Math.pow(10, -pxDec) },
   });
   // Histórico infinito: ao aproximar-se do início, carrega candles mais antigos
   posChart.timeScale().subscribeVisibleLogicalRangeChange(range => {
     if (range && range.from < 10) loadOlderBars(p, reqId);
   });
+  buildPosMeasureLayer(cont);
   try {
     const bars = await fetchKlines(p.symbol, posInterval, null);
     if (reqId !== posReqId) return; // a seleção/timeframe mudou entretanto
@@ -2100,6 +2115,92 @@ function renderPosLegend(p) {
   if (sl > 0)  html += item('#f7647a', 'Stop Loss');
   if (liq > 0) html += item('#f7647a', 'Liquidação teórica', true);
   el.innerHTML = html;
+}
+
+// ── RÉGUA / MEASURE (ferramenta no gráfico da posição) ────────────────────────
+let posMeasureOn = false, posMeasureStart = null;
+
+// Cria a camada de sobreposição (SVG + caixa) sobre o gráfico da posição.
+function buildPosMeasureLayer(cont) {
+  const layer = document.createElement('div');
+  layer.id = 'pos-measure-layer';
+  layer.style.cssText = 'position:absolute;inset:0;z-index:5;touch-action:none;pointer-events:' + (posMeasureOn ? 'auto' : 'none');
+  layer.innerHTML =
+    '<svg id="pos-measure-svg" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none"></svg>' +
+    '<div id="pos-measure-box" style="display:none;position:absolute;pointer-events:none;z-index:6;background:var(--s1);border:1px solid var(--border);border-radius:6px;padding:3px 7px;font-family:JetBrains Mono,monospace;font-size:11px;font-weight:700;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.4)"></div>';
+  cont.appendChild(layer);
+
+  const getXY = e => { const r = layer.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+  layer.addEventListener('pointerdown', e => {
+    if (!posMeasureOn) return;
+    e.preventDefault();
+    try { layer.setPointerCapture(e.pointerId); } catch (err) {}
+    posMeasureStart = getXY(e);
+    drawPosMeasure(posMeasureStart, posMeasureStart);
+  });
+  layer.addEventListener('pointermove', e => {
+    if (!posMeasureOn || !posMeasureStart) return;
+    drawPosMeasure(posMeasureStart, getXY(e));
+  });
+  const end = e => {
+    if (!posMeasureOn || !posMeasureStart) return;
+    drawPosMeasure(posMeasureStart, getXY(e));
+    posMeasureStart = null; // mantém o traçado até novo arrasto
+  };
+  layer.addEventListener('pointerup', end);
+  layer.addEventListener('pointercancel', end);
+}
+
+function togglePosMeasure(btn) {
+  posMeasureOn = !posMeasureOn;
+  if (btn) btn.classList.toggle('on', posMeasureOn);
+  const layer = document.getElementById('pos-measure-layer');
+  if (layer) layer.style.pointerEvents = posMeasureOn ? 'auto' : 'none';
+  const chartEl = document.getElementById('pos-chart');
+  if (chartEl) chartEl.style.cursor = posMeasureOn ? 'crosshair' : '';
+  if (!posMeasureOn) clearPosMeasure();
+}
+
+function clearPosMeasure() {
+  posMeasureStart = null;
+  const svg = document.getElementById('pos-measure-svg'); if (svg) svg.innerHTML = '';
+  const box = document.getElementById('pos-measure-box'); if (box) box.style.display = 'none';
+}
+
+function drawPosMeasure(a, b) {
+  const svg = document.getElementById('pos-measure-svg');
+  const box = document.getElementById('pos-measure-box');
+  if (!svg || !box || !posSeries || typeof posSeries.coordinateToPrice !== 'function') return;
+  const p1 = posSeries.coordinateToPrice(a.y), p2 = posSeries.coordinateToPrice(b.y);
+  if (p1 == null || p2 == null) return;
+  const dPrice = p2 - p1;
+  const pct = p1 ? (dPrice / p1) * 100 : 0;
+  const up = dPrice >= 0;
+  const col = up ? '#2dd4a0' : '#f7647a';
+  const fill = up ? 'rgba(45,212,160,.10)' : 'rgba(247,100,122,.10)';
+  let bars = '';
+  try {
+    const ts = posChart.timeScale();
+    const l1 = ts.coordinateToLogical(a.x), l2 = ts.coordinateToLogical(b.x);
+    if (l1 != null && l2 != null) { const n = Math.abs(Math.round(l2 - l1)); bars = n + (n === 1 ? ' barra' : ' barras'); }
+  } catch (e) {}
+  const x = Math.min(a.x, b.x), y = Math.min(a.y, b.y), w = Math.abs(b.x - a.x), h = Math.abs(b.y - a.y);
+  svg.innerHTML =
+    `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" stroke="${col}" stroke-width="1" stroke-dasharray="4 3"/>` +
+    `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="${col}" stroke-width="1.5"/>`;
+  box.style.display = '';
+  box.style.borderColor = col;
+  box.style.color = col;
+  box.textContent = `${up ? '+' : ''}${fmtPx(dPrice)} · ${up ? '+' : ''}${fmt(pct, 2)}%${bars ? ` · ${bars}` : ''}`;
+  const lw = layerSize().w, lh = layerSize().h;
+  const bw = box.offsetWidth || 120, bh = box.offsetHeight || 22;
+  box.style.left = Math.max(2, Math.min(b.x + 10, lw - bw - 2)) + 'px';
+  box.style.top  = Math.max(2, Math.min(b.y - bh - 6, lh - bh - 2)) + 'px';
+}
+
+function layerSize() {
+  const l = document.getElementById('pos-measure-layer');
+  return l ? { w: l.clientWidth, h: l.clientHeight } : { w: 0, h: 0 };
 }
 
 // ── TRADINGVIEW CHARTS ────────────────────────────────────────────────────────
