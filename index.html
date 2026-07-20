@@ -428,6 +428,10 @@ html.hide-values .privacy-btn { color: var(--orange); }
 .db-pnl-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 4px; }
 .db-pnl-usd { font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 500; }
 .db-pnl-pct { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 5px; }
+.db-roi-row { display: flex; align-items: center; justify-content: center; gap: 7px; margin-top: 6px; }
+.db-roi-lbl { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: var(--faint); }
+.db-roi-usd { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; }
+.db-roi-pct { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 5px; }
 .db-chart-wrap { height: 110px; margin: 14px 0 0; position: relative; overflow: hidden; }
 .db-chart-svg { width: 100%; height: 100%; display: block; }
 .db-chart-legend { display: flex; justify-content: center; gap: 16px; margin-top: 8px; }
@@ -876,6 +880,11 @@ html.light .mnav-btn.active { color: var(--orange); }
       <div class="db-pnl-row">
         <span id="db-pnl-usd" class="db-pnl-usd" style="color:var(--dim)">—</span>
         <span id="db-pnl-pct" class="db-pnl-pct" style="background:var(--s3);color:var(--dim)">—</span>
+      </div>
+      <div id="db-roi-row" class="db-roi-row" style="display:none">
+        <span class="db-roi-lbl">ROI</span>
+        <span id="db-roi-usd" class="db-roi-usd">—</span>
+        <span id="db-roi-pct" class="db-roi-pct">—</span>
       </div>
     </div>
 
@@ -3480,6 +3489,7 @@ function drawPortfolioChart() {
   if (!pts || pts.length < 2) {
     svg.innerHTML = `<line x1="0" y1="${H/2}" x2="${W}" y2="${H/2}" stroke="var(--s3)" stroke-width="2" stroke-dasharray="6 6"/>`;
     updatePfChartLegend(false);
+    updatePfRoi(null, null);
     return;
   }
 
@@ -3537,7 +3547,32 @@ function drawPortfolioChart() {
   <circle cx="${lx}" cy="${ly}" r="4" fill="${lc}" opacity="0.9"/>`;
 
   updatePfChartLegend(!!flow, isUp);
+  updatePfRoi(pts, flow);
   updatePfPnl(pts);
+}
+
+// ROI real do portefólio = distância entre a linha de valor e a de inflows
+// no ponto atual (valor − capital investido), em USD e em % sobre o investido.
+function updatePfRoi(pts, flow) {
+  const row = document.getElementById('db-roi-row');
+  if (!row) return;
+  if (!flow || !flow.length || !pts || !pts.length) { row.style.display = 'none'; return; }
+  const value = pts[pts.length - 1].v;
+  const invested = flow[flow.length - 1].v;
+  if (!(invested > 0)) { row.style.display = 'none'; return; }
+  const diff = value - invested;
+  const pct = (diff / invested) * 100;
+  const isPos = diff >= 0;
+  const col = diff !== 0 ? (isPos ? 'var(--green)' : 'var(--red)') : 'var(--dim)';
+  row.style.display = 'flex';
+  const u = document.getElementById('db-roi-usd');
+  const p = document.getElementById('db-roi-pct');
+  if (u) { u.textContent = (isPos ? '+' : '') + fmtUsd(diff, 2); u.style.color = col; }
+  if (p) {
+    p.textContent = (isPos ? '▲' : '▼') + ' ' + Math.abs(pct).toFixed(2) + '%';
+    p.style.background = isPos ? 'rgba(45,212,160,.12)' : 'rgba(247,100,122,.12)';
+    p.style.color = col;
+  }
 }
 
 // Legenda das duas séries do gráfico principal (valor vs inflows).
@@ -3981,7 +4016,7 @@ function t212RowHtml(it) {
       <div class="db-coin-avatar" style="background:${cc}18;border-color:${cc}40"><span style="color:${cc}">${ini}</span></div>
       <div>
         <div class="db-asset-sym">${h.ticker}<span class="db-src-badge db-src-t212">T212</span>${qStr ? ` <span class="db-asset-qty">${qStr}</span>` : ''}</div>
-        <div class="db-asset-usd">${h.name || 'Trading 212'}</div>
+        <div class="db-asset-usd">${usd > 0 ? fmtUsd(usd, 2) : (h.name || 'Trading 212')}</div>
       </div>
     </div>
     <div class="db-asset-right">${right}</div>
@@ -4320,9 +4355,10 @@ function toggleTheme() {
 // Modo privado: troca cada dígito dos valores por '*', mantendo font, tamanho,
 // cor e todo o layout (só se altera o texto dos nós, nunca a estrutura/estilos).
 // Um MutationObserver reaplica a máscara após cada re-render.
-const PV_SEL = '#db-total-value, #db-pnl-usd, #db-pnl-pct, #hdr-inv-pnl, .db-asset-usd,' +
-  ' .db-asset-qty, .db-asset-pnl, .dist-val, .exit-summary-val, .exit-result-usd,' +
-  ' .exit-result-pct, .ps-val, .pos-chip-pnl, .pos-exit-cell-val, .agent-chip.sens b';
+const PV_SEL = '#db-total-value, #db-pnl-usd, #db-pnl-pct, #db-roi-usd, #db-roi-pct,' +
+  ' #hdr-inv-pnl, .db-asset-usd, .db-asset-qty, .db-asset-pnl, .dist-val, .dist-d-val,' +
+  ' .exit-summary-val, .exit-result-usd, .exit-result-pct, .ps-val, .pos-chip-pnl,' +
+  ' .pos-exit-cell-val, .agent-chip.sens b';
 let pvOn = false, pvObserver = null, pvScheduled = false;
 
 function pvMaskEl(el) {
