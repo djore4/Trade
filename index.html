@@ -458,7 +458,7 @@ html.light .mnav-btn.active { color: var(--orange); }
 .db-sub-pane.active { display: block; }
 .db-assets-toolbar { display: flex; align-items: center; justify-content: flex-end; padding: 10px 14px; border-top: 1px solid var(--border); }
 /* Sub-navegação do tab Mercado (Preço · Estrutura · Sentimento) */
-.mkt-sub-nav { display: flex; gap: 6px; padding: 4px; margin-bottom: 14px; background: var(--s1); border: 1px solid var(--border); border-radius: 12px; position: sticky; top: 60px; z-index: 40; }
+.mkt-sub-nav { display: flex; gap: 6px; padding: 4px; margin-bottom: 14px; background: var(--s1); border: 1px solid var(--border); border-radius: 12px; position: relative; z-index: 5; }
 .mkt-sub-btn { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 9px 10px; font-size: 12.5px; font-weight: 600; color: var(--dim); background: transparent; border: none; border-radius: 9px; cursor: pointer; transition: color .15s, background .15s; white-space: nowrap; }
 .mkt-sub-btn .mkt-sub-ic { font-size: 14px; line-height: 1; }
 .mkt-sub-btn:hover:not(.active) { color: var(--text); }
@@ -519,7 +519,7 @@ html.light .mnav-btn.active { color: var(--orange); }
 .coin-opt-vol { font-size: 9.5px; color: var(--faint); font-family: 'JetBrains Mono', monospace; }
 .coin-opt-empty { padding: 12px 9px; font-size: 11px; color: var(--faint); text-align: center; }
 @keyframes mktFade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
-@media (max-width: 600px) { .mkt-sub-nav { top: 8px; } .mkt-sub-btn { padding: 8px 6px; font-size: 11.5px; } .mkt-sub-btn .mkt-sub-ic { font-size: 13px; } }
+@media (max-width: 600px) { .mkt-sub-btn { padding: 8px 6px; font-size: 11.5px; } .mkt-sub-btn .mkt-sub-ic { font-size: 13px; } }
 .db-view-toggle { display: flex; gap: 4px; padding: 8px 14px 0; align-items: center; flex-wrap: wrap; }
 .db-vt-btn { flex: 0 0 auto; padding: 4px 12px; font-size: 11px; font-weight: 600; border: 1px solid var(--border); background: var(--s1); color: var(--dim); border-radius: 6px; cursor: pointer; transition: all .15s; }
 .db-vt-btn.active { background: var(--s3); color: var(--text); border-color: var(--s3); }
@@ -1171,9 +1171,27 @@ html.light .mnav-btn.active { color: var(--orange); }
     <!-- ── Sub-secção: Heatmap de liquidações ── -->
     <div id="mkt-sec-heatmap" class="mkt-section">
       <div style="max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:14px">
+
+        <!-- Acesso ao Liquidation Heatmap REAL (Coinglass) -->
         <div class="card">
           <div class="card-header">
-            <div class="card-title"><div class="ctdot" style="background:var(--orange)"></div>Mapa de Liquidações · <span id="liqhm-coin-name">BTC</span></div>
+            <div class="card-title"><div class="ctdot" style="background:var(--red)"></div>Liquidation Heatmap — dados reais</div>
+            <span class="tag" style="background:rgba(247,100,122,.12);color:var(--red)">Coinglass</span>
+          </div>
+          <div style="padding:14px">
+            <div class="heatmap-link" onclick="openCoinglassHeatmap()">
+              <div class="heatmap-link-icon">🔥</div>
+              <div class="heatmap-link-title">Abrir Liquidation Heatmap real</div>
+              <div class="heatmap-link-sub">Mapa de calor real das liquidações (níveis de alavancagem, preço × tempo) no Coinglass. Os dados são proprietários e a página não permite ser embebida — por isso abre num separador novo.</div>
+              <div class="heatmap-link-btn" style="margin-top:2px">Abrir no Coinglass ↗</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Estimativa própria (modelo a partir do open interest) -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><div class="ctdot" style="background:var(--orange)"></div>Estimativa de zonas de liquidação · <span id="liqhm-coin-name">BTC</span></div>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <div class="coin-select" id="liqhm-coin-select">
                 <button class="coin-select-btn" id="liqhm-coin-btn" onclick="toggleCoinDropdown(event)">
@@ -2672,6 +2690,12 @@ document.addEventListener('click', e => {
 
 function liqStat(lbl, val) {
   return `<div class="liqhm-stat"><div class="liqhm-stat-lbl">${lbl}</div><div class="liqhm-stat-val">${val}</div></div>`;
+}
+
+// Abre o Liquidation Heatmap REAL do Coinglass (dados proprietários; não embebível
+// em iframe nem disponível por API gratuita — por isso abre em separador novo).
+function openCoinglassHeatmap() {
+  window.open('https://www.coinglass.com/pro/futures/LiquidationHeatMap', '_blank', 'noopener');
 }
 
 // Modelo: distribui o open interest por escalões de alavancagem; cada escalão
