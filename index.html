@@ -143,55 +143,8 @@ html.light .theme-btn .icon-sun  { display: block; }
 html.hide-values .privacy-btn .icon-eye     { display: none; }
 html.hide-values .privacy-btn .icon-eye-off { display: flex; }
 html.hide-values .privacy-btn { color: var(--orange); }
-/* Modo privado: substitui os valores por *** (todos os tabs/sub-tabs) */
-html.hide-values #db-total-value,
-html.hide-values #db-pnl-usd,
-html.hide-values #db-pnl-pct,
-html.hide-values #hdr-inv-pnl,
-html.hide-values .db-asset-usd,
-html.hide-values .db-asset-qty,
-html.hide-values .db-asset-pnl,
-html.hide-values .dist-val,
-html.hide-values .exit-summary-val,
-html.hide-values .exit-result-usd,
-html.hide-values .exit-result-pct,
-html.hide-values .ps-val,
-html.hide-values .pos-chip-pnl,
-html.hide-values .pos-exit-cell-val,
-html.hide-values .agent-chip.sens b {
-  position: relative;
-  visibility: hidden;          /* esconde o número e quaisquer filhos, mantendo o espaço */
-}
-html.hide-values #db-total-value::after,
-html.hide-values #db-pnl-usd::after,
-html.hide-values #db-pnl-pct::after,
-html.hide-values #hdr-inv-pnl::after,
-html.hide-values .db-asset-usd::after,
-html.hide-values .db-asset-qty::after,
-html.hide-values .db-asset-pnl::after,
-html.hide-values .dist-val::after,
-html.hide-values .exit-summary-val::after,
-html.hide-values .exit-result-usd::after,
-html.hide-values .exit-result-pct::after,
-html.hide-values .ps-val::after,
-html.hide-values .pos-chip-pnl::after,
-html.hide-values .pos-exit-cell-val::after,
-html.hide-values .agent-chip.sens b::after {
-  content: "***";
-  visibility: visible;
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--dim);
-  font-family: 'JetBrains Mono', monospace;
-  letter-spacing: .08em;
-  pointer-events: none;
-  white-space: nowrap;
-}
-/* A curva do portefólio não tem números para mascarar — oculta-se por inteiro */
-html.hide-values .db-chart-svg { visibility: hidden; }
+/* Modo privado: os dígitos dos valores são trocados por '*' via JS (ver pv* no script),
+   mantendo font, tamanho, cor e todo o layout iguais à versão visível. */
 @media (max-width: 600px) { .hdr-hide-sm { display: none; } }
 
 .pulse-dot {
@@ -4153,10 +4106,65 @@ function toggleTheme() {
 }
 
 // Modo privado: oculta (desfoca) todos os valores do portefólio/ativos em todos os tabs.
+// Modo privado: troca cada dígito dos valores por '*', mantendo font, tamanho,
+// cor e todo o layout (só se altera o texto dos nós, nunca a estrutura/estilos).
+// Um MutationObserver reaplica a máscara após cada re-render.
+const PV_SEL = '#db-total-value, #db-pnl-usd, #db-pnl-pct, #hdr-inv-pnl, .db-asset-usd,' +
+  ' .db-asset-qty, .db-asset-pnl, .dist-val, .exit-summary-val, .exit-result-usd,' +
+  ' .exit-result-pct, .ps-val, .pos-chip-pnl, .pos-exit-cell-val, .agent-chip.sens b';
+let pvOn = false, pvObserver = null, pvScheduled = false;
+
+function pvMaskEl(el) {
+  const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  let t;
+  while ((t = w.nextNode())) {
+    if (t.__pvMasked) continue;              // já mascarado (nó existente)
+    if (/\d/.test(t.nodeValue)) {
+      t.__pvReal = t.nodeValue;              // guarda o original para restaurar
+      t.nodeValue = t.nodeValue.replace(/\d/g, '*');
+      t.__pvMasked = true;
+    }
+  }
+}
+
+function pvUnmaskEl(el) {
+  const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  let t;
+  while ((t = w.nextNode())) {
+    if (t.__pvMasked) { t.nodeValue = t.__pvReal; t.__pvMasked = false; t.__pvReal = null; }
+  }
+}
+
+function pvApply()   { document.querySelectorAll(PV_SEL).forEach(pvMaskEl); }
+function pvUnmask()  { document.querySelectorAll(PV_SEL).forEach(pvUnmaskEl); }
+
+function pvScheduleApply() {
+  if (pvScheduled) return;
+  pvScheduled = true;
+  requestAnimationFrame(() => { pvScheduled = false; if (pvOn) pvApply(); });
+}
+
+function pvEnable() {
+  pvOn = true;
+  pvApply();
+  if (!pvObserver) pvObserver = new MutationObserver(() => { if (pvOn) pvScheduleApply(); });
+  pvObserver.observe(document.body, { subtree: true, childList: true, characterData: true });
+}
+
+function pvDisable() {
+  pvOn = false;
+  if (pvObserver) pvObserver.disconnect();
+  pvUnmask();
+}
+
 function togglePrivacy() {
   const hidden = document.documentElement.classList.toggle('hide-values');
   localStorage.setItem('hideValues', hidden ? '1' : '0');
+  if (hidden) pvEnable(); else pvDisable();
 }
+
+// Arranque: se o modo privado estava ativo, aplica a máscara assim que o DOM existe.
+function pvInit() { if (document.documentElement.classList.contains('hide-values')) pvEnable(); }
 
 function switchDbTab(tab, btn) {
   dbCurrentSubTab = tab;
@@ -4198,6 +4206,7 @@ function setDbRange(btn) {
   initHrSwipe();      // widget do hashrate deslizável (períodos)
   initTkrSwipe();     // widget de cotações deslizável (BTC · ações · índices · commodities)
   fetchTkrQuotes();   // cotações de ações/índices/commodities (BTC já vem do fetchMarket)
+  pvInit();           // modo privado: reaplica a máscara de valores se estiver ativo
   setInterval(fetchMarket,        5000);
   setInterval(fetchPositions,    10000);
   setInterval(fetchWalletBalance, 30000);
