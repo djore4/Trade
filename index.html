@@ -430,6 +430,10 @@ html.hide-values .privacy-btn { color: var(--orange); }
 .db-pnl-pct { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 5px; }
 .db-chart-wrap { height: 110px; margin: 14px 0 0; position: relative; overflow: hidden; }
 .db-chart-svg { width: 100%; height: 100%; display: block; }
+.db-chart-legend { display: flex; justify-content: center; gap: 16px; margin-top: 8px; }
+.db-cl-item { display: flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 600; color: var(--dim); text-transform: uppercase; letter-spacing: .06em; }
+.db-cl-line { width: 16px; height: 3px; border-radius: 2px; display: inline-block; }
+.db-cl-dash { background: none !important; background-image: linear-gradient(90deg, #f7931a 0 5px, transparent 5px 9px) !important; background-size: 9px 3px !important; background-repeat: repeat-x !important; }
 .db-time-btns { display: flex; justify-content: center; border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
 .db-time-btns::-webkit-scrollbar { display: none; }
 .db-time-btn {
@@ -533,16 +537,36 @@ html.light .mnav-btn.active { color: var(--orange); }
 .dist-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; pointer-events: none; }
 .dist-center-lbl { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--faint); }
 .dist-center-val { font-size: 17px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); margin-top: 2px; }
-.dist-legend { flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 2px; }
-.dist-row { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 10px; padding: 7px 4px; border-bottom: 1px solid var(--border); }
+.dist-center-lbl, .dist-center-val { transition: color .18s; }
+.dist-seg { cursor: pointer; transition: stroke-width .18s ease, opacity .18s ease; }
+.dist-seg:hover { stroke-width: 30; }
+.dist-seg.sel { filter: drop-shadow(0 0 4px currentColor); }
+.dist-side { flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 10px; }
+.dist-legend { display: flex; flex-direction: column; gap: 2px; }
+.dist-row { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 10px; padding: 7px 4px; border-bottom: 1px solid var(--border); cursor: pointer; border-radius: 6px; transition: background .14s; }
+.dist-row:hover { background: var(--s2); }
+.dist-row.sel { background: var(--s2); box-shadow: inset 2px 0 0 currentColor; }
 .dist-row:last-child { border-bottom: none; }
 .dist-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+/* Painel de detalhe do ativo destacado */
+.dist-detail { background: var(--s1); border: 1px solid var(--border); border-left: 3px solid var(--orange); border-radius: 10px; padding: 12px 14px; animation: distFade .18s ease; }
+@keyframes distFade { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.dist-d-head { display: flex; align-items: center; gap: 8px; }
+.dist-d-sym { font-size: 14px; font-weight: 700; color: var(--text); }
+.dist-d-close { margin-left: auto; background: none; border: none; color: var(--faint); font-size: 12px; cursor: pointer; padding: 2px 4px; line-height: 1; border-radius: 4px; }
+.dist-d-close:hover { color: var(--text); background: var(--s3); }
+.dist-d-val { font-size: 22px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); margin-top: 8px; }
+.dist-d-sub { font-size: 11px; color: var(--dim); margin-top: 2px; }
+.dist-d-grid { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+.dist-d-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.dist-d-k { font-size: 11px; color: var(--faint); }
+.dist-d-v { font-size: 12px; font-weight: 600; color: var(--text); font-family: 'JetBrains Mono', monospace; text-align: right; }
 .dist-sym { font-size: 12px; font-weight: 600; color: var(--text); }
 .dist-sym .db-src-badge { margin-left: 5px; }
 .dist-qty { font-size: 10px; color: var(--faint); font-family: 'JetBrains Mono', monospace; }
 .dist-usd { font-size: 12px; font-weight: 600; color: var(--text); font-family: 'JetBrains Mono', monospace; text-align: right; }
 .dist-pct { font-size: 11px; font-weight: 700; color: var(--dim); font-family: 'JetBrains Mono', monospace; text-align: right; min-width: 46px; }
-@media (max-width: 600px) { .dist-wrap { justify-content: center; } .dist-legend { min-width: 100%; } }
+@media (max-width: 600px) { .dist-wrap { justify-content: center; } .dist-side { min-width: 100%; } }
 .db-toggle { display: flex; align-items: center; gap: 7px; cursor: pointer; }
 .db-toggle input { display: none; }
 .db-toggle-track { width: 30px; height: 17px; border-radius: 9px; background: var(--s3); position: relative; transition: background .2s; flex-shrink: 0; }
@@ -859,6 +883,7 @@ html.light .mnav-btn.active { color: var(--orange); }
     <div class="db-chart-wrap">
       <svg id="db-chart-svg" class="db-chart-svg" xmlns="http://www.w3.org/2000/svg"></svg>
     </div>
+    <div id="db-chart-legend" class="db-chart-legend" style="display:none"></div>
 
     <!-- Time range buttons -->
     <div class="db-time-btns">
@@ -3111,7 +3136,11 @@ function computeSpotFlows(orders) {
     if (!tms) return;
     const dq = o.side === 'Buy' ? qty : o.side === 'Sell' ? -qty : 0;
     if (!dq) return;
-    (flows[base] = flows[base] || []).push({ t: Math.floor(tms / 1000), dq });
+    // dv = fluxo em USD ao preço da ordem (+ compra, − venda). Serve para a curva
+    // de "inflows" (capital investido), líquida de variações de valor de mercado.
+    const price = parseFloat(o.avgPrice || 0);
+    const dv = dq * price;
+    (flows[base] = flows[base] || []).push({ t: Math.floor(tms / 1000), dq, dv });
   });
   Object.values(flows).forEach(a => a.sort((x, y) => x.t - y.t));
   return flows;
@@ -3221,6 +3250,7 @@ const STOCK_RANGE_CFG = {
   'TUDO':{ range: 'max', interval: '1wk' },
 };
 let pfSeries = [], pfCache = {}, pfRange = '24H', pfToken = 0;
+let pfFlowSeries = [], pfFlowCache = {}; // 2.ª série: inflows (capital investido)
 let pfIsolate = null; // ativo isolado no gráfico (moeda ou ticker T212; null = total)
 
 function isT212Ticker(sym) { return t212Holdings.some(h => h.ticker === sym); }
@@ -3252,6 +3282,40 @@ function anchorSeries(raw) {
   return raw.map(p => ({ t: p.t, v: p.v + offset }));
 }
 
+// Alvo de ancoragem da curva de inflows = capital investido (custo médio × qty).
+// Para T212 não há histórico de custo, por isso usa o valor atual (contribuição
+// plana): o "lucro" visível na comparação vem então só da cripto. Devolve null
+// quando não há base de custo (ativo T212 isolado) -> não se desenha a 2.ª série.
+function pfCostBasisTarget() {
+  if (pfIsolate) {
+    if (isT212Ticker(pfIsolate)) return null; // sem base de custo -> sem série
+    const c = (walletData && walletData.coin || []).find(x => x.coin === pfIsolate);
+    const qty = c ? parseFloat(c.walletBalance || 0) : 0;
+    const usd = c ? parseFloat(c.usdValue || 0) : 0;
+    const avg = avgPrices[pfIsolate];
+    return avg && qty > 0 ? avg * qty : usd;
+  }
+  let sum = 0;
+  (walletData && walletData.coin || []).forEach(c => {
+    const qty = parseFloat(c.walletBalance || 0);
+    const usd = parseFloat(c.usdValue || 0);
+    if (usd < 1) return;
+    const avg = avgPrices[c.coin];
+    sum += (avg && qty > 0) ? avg * qty : usd; // estáveis/sem custo -> valor atual
+  });
+  (t212Holdings || []).forEach(h => { sum += parseFloat(h.usd || 0); });
+  return sum;
+}
+
+// Ancora a curva de inflows ao capital investido atual (mantém a forma relativa).
+function anchorFlow(raw) {
+  if (!raw || !raw.length) return [];
+  const target = pfCostBasisTarget();
+  if (target == null) return []; // sem base de custo -> não desenha
+  const offset = target - raw[raw.length - 1].v;
+  return raw.map(p => ({ t: p.t, v: p.v + offset }));
+}
+
 // Chave de cache: inclui o time-frame e a moeda isolada (ou o total).
 function pfCacheKey(range) { return range + '|' + (pfIsolate || 'ALL'); }
 
@@ -3259,8 +3323,14 @@ async function loadPortfolioSeries(range) {
   range = range || dbCurrentRange();
   pfRange = range;
   const ckey = pfCacheKey(range);
-  if (pfCache[ckey]) { pfSeries = anchorSeries(pfCache[ckey]); drawPortfolioChart(); return; }
+  if (pfCache[ckey]) {
+    pfSeries = anchorSeries(pfCache[ckey]);
+    pfFlowSeries = pfFlowCache[ckey] ? anchorFlow(pfFlowCache[ckey]) : [];
+    drawPortfolioChart();
+    return;
+  }
   const token = ++pfToken;
+  pfFlowSeries = [];    // limpa até haver dados novos
   drawPortfolioChart(); // placeholder imediato
 
   // Ativo T212 (ação) isolado -> histórico de preço via proxy (Yahoo) × quantidade.
@@ -3277,8 +3347,9 @@ async function loadPortfolioSeries(range) {
       const raw = pts.map(p => ({ t: p.t, v: qty * p.c }));
       pfCache[ckey] = raw;
       pfSeries = anchorSeries(raw);
+      pfFlowSeries = []; // T212: sem base de custo -> sem 2.ª série
       drawPortfolioChart();
-    } catch (e) { if (token === pfToken) { pfSeries = []; drawPortfolioChart(); } }
+    } catch (e) { if (token === pfToken) { pfSeries = []; pfFlowSeries = []; drawPortfolioChart(); } }
     return;
   }
 
@@ -3299,8 +3370,8 @@ async function loadPortfolioSeries(range) {
       const r = await fetch(`${BYBIT}/v5/market/kline?category=spot&symbol=${c.coin}USDT&interval=${cfg.interval}&limit=${cfg.limit}`);
       const d = await r.json();
       const arr = (d?.result?.list || []).map(k => ({ t: Math.floor(parseInt(k[0]) / 1000), c: +k[4] })).sort((a, b) => a.t - b.t);
-      return { qty: c.qty, arr, flows };
-    } catch (e) { return { qty: c.qty, arr: [], flows }; }
+      return { qty: c.qty, usd: c.usd, arr, flows };
+    } catch (e) { return { qty: c.qty, usd: c.usd, arr: [], flows }; }
   });
   // Ações (Trading 212) — séries de qty × preço histórico (via proxy), somadas ao total.
   const stockCfg = STOCK_RANGE_CFG[range] || STOCK_RANGE_CFG['6M'];
@@ -3309,8 +3380,8 @@ async function loadPortfolioSeries(range) {
       const r = await fetch(`${STOCK_URL}?symbol=${encodeURIComponent(h.ticker)}&range=${stockCfg.range}&interval=${stockCfg.interval}`, { headers: { Authorization: `Bearer ${SUPABASE_KEY}` } });
       const d = await r.json();
       const arr = (Array.isArray(d?.points) ? d.points : []).map(p => ({ t: p.t, c: p.c })).sort((a, b) => a.t - b.t);
-      return { qty: parseFloat(h.qty || 0), arr };
-    } catch (e) { return { qty: parseFloat(h.qty || 0), arr: [] }; }
+      return { qty: parseFloat(h.qty || 0), usd: parseFloat(h.usd || 0), arr };
+    } catch (e) { return { qty: parseFloat(h.qty || 0), usd: parseFloat(h.usd || 0), arr: [] }; }
   });
   const seriesList = await Promise.all([...cryptoP, ...stockP]);
   if (token !== pfToken) return; // o time-frame mudou entretanto
@@ -3318,7 +3389,7 @@ async function loadPortfolioSeries(range) {
   const tsSet = new Set();
   seriesList.forEach(s => s.arr.forEach(p => tsSet.add(p.t)));
   const timeline = [...tsSet].sort((a, b) => a - b);
-  if (timeline.length < 2) { pfSeries = []; drawPortfolioChart(); return; }
+  if (timeline.length < 2) { pfSeries = []; pfFlowSeries = []; drawPortfolioChart(); return; }
   // Reconstrução por transações: a quantidade "antes" das ordens conhecidas é
   // (qty_atual − Σ fluxos); ao avançar no tempo, cada compra/venda ajusta a qty.
   // Assim um ativo comprado há pouco vale $0 no passado (e só aparece na data real).
@@ -3327,11 +3398,22 @@ async function loadPortfolioSeries(range) {
     if (s.flows && s.flows.length) {
       const total = s.flows.reduce((a, f) => a + f.dq, 0);
       s.fi = 0; s.qtyRun = s.qty - total;   // saldo antes do 1.º fluxo conhecido
+      s.dvi = 0; s.dvRun = 0;               // fluxo USD acumulado (curva de inflows)
     }
   });
-  const raw = timeline.map(t => {
-    let v = stableVal;
+  const raw = [];
+  const rawFlow = [];
+  timeline.forEach(t => {
+    let v = stableVal;      // valor de mercado do portefólio
+    let f = stableVal;      // capital investido (inflows), estáveis contam a par
     seriesList.forEach(s => {
+      // Curva de inflows: soma cumulativa dos fluxos USD (líquida de variações de preço).
+      if (s.flows && s.flows.length) {
+        while (s.dvi < s.flows.length && s.flows[s.dvi].t <= t) { s.dvRun += s.flows[s.dvi].dv; s.dvi++; }
+        f += s.dvRun;
+      } else {
+        f += s.usd || 0;    // sem fluxos (T212/sem histórico): contribuição plana
+      }
       if (!s.arr.length) return;
       while (s.i < s.arr.length && s.arr[s.i].t <= t) { s.last = s.arr[s.i].c; s.i++; }
       let q = s.qty;
@@ -3341,10 +3423,13 @@ async function loadPortfolioSeries(range) {
       }
       v += q * s.last;
     });
-    return { t, v };
+    raw.push({ t, v });
+    rawFlow.push({ t, v: f });
   });
   pfCache[ckey] = raw;
+  pfFlowCache[ckey] = rawFlow;
   pfSeries = anchorSeries(raw);
+  pfFlowSeries = anchorFlow(rawFlow);
   drawPortfolioChart();
 }
 
@@ -3394,29 +3479,51 @@ function drawPortfolioChart() {
   const pts = pfSeries;
   if (!pts || pts.length < 2) {
     svg.innerHTML = `<line x1="0" y1="${H/2}" x2="${W}" y2="${H/2}" stroke="var(--s3)" stroke-width="2" stroke-dasharray="6 6"/>`;
+    updatePfChartLegend(false);
     return;
   }
-  const minV = Math.min(...pts.map(p => p.v));
-  const maxV = Math.max(...pts.map(p => p.v));
+
+  // 2.ª série (inflows/capital investido): só se estiver alinhada com a série de valor.
+  const flow = (pfFlowSeries && pfFlowSeries.length === pts.length) ? pfFlowSeries : null;
+
+  const vals = pts.map(p => p.v);
+  if (flow) flow.forEach(p => vals.push(p.v));
+  const minV = Math.min(...vals);
+  const maxV = Math.max(...vals);
   const vRng = maxV - minV || 1;
   const tRng = pts[pts.length-1].t - pts[0].t || 1;
   const pad  = 10;
   const toX  = t => ((t - pts[0].t) / tRng) * W;
   const toY  = v => H - pad - ((v - minV) / vRng) * (H - pad * 2);
-  const coords = pts.map(p => [toX(p.t), toY(p.v)]);
 
-  let path = `M ${coords[0][0].toFixed(1)} ${coords[0][1].toFixed(1)}`;
-  for (let i = 1; i < coords.length; i++) {
-    const [x0, y0] = coords[i-1], [x1, y1] = coords[i];
-    const cx = ((x0 + x1) / 2).toFixed(1);
-    path += ` C ${cx} ${y0.toFixed(1)} ${cx} ${y1.toFixed(1)} ${x1.toFixed(1)} ${y1.toFixed(1)}`;
-  }
+  const buildPath = arr => {
+    const c = arr.map(p => [toX(p.t), toY(p.v)]);
+    let d = `M ${c[0][0].toFixed(1)} ${c[0][1].toFixed(1)}`;
+    for (let i = 1; i < c.length; i++) {
+      const [x0, y0] = c[i-1], [x1, y1] = c[i];
+      const cx = ((x0 + x1) / 2).toFixed(1);
+      d += ` C ${cx} ${y0.toFixed(1)} ${cx} ${y1.toFixed(1)} ${x1.toFixed(1)} ${y1.toFixed(1)}`;
+    }
+    return { d, c };
+  };
+
+  const { d: path, c: coords } = buildPath(pts);
   const lx = coords[coords.length-1][0].toFixed(1);
   const ly = coords[coords.length-1][1].toFixed(1);
   const fx = coords[0][0].toFixed(1);
   const isUp = pts[pts.length-1].v >= pts[0].v;
   const lc = isUp ? '#2dd4a0' : '#f7647a';
   const g1 = isUp ? 'rgba(45,212,160,0.22)' : 'rgba(247,100,122,0.22)';
+
+  let flowSvg = '';
+  if (flow) {
+    const { d: fpath, c: fc } = buildPath(flow);
+    const flx = fc[fc.length-1][0].toFixed(1);
+    const fly = fc[fc.length-1][1].toFixed(1);
+    flowSvg = `<path d="${fpath}" stroke="#f7931a" stroke-width="2" fill="none"
+      stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="5 4" opacity="0.95"/>
+      <circle cx="${flx}" cy="${fly}" r="3.5" fill="#f7931a" opacity="0.95"/>`;
+  }
 
   svg.innerHTML = `<defs>
     <linearGradient id="dbg" x1="0" y1="0" x2="0" y2="1">
@@ -3425,10 +3532,24 @@ function drawPortfolioChart() {
     </linearGradient>
   </defs>
   <path d="${path} L ${lx} ${H} L ${fx} ${H} Z" fill="url(#dbg)"/>
+  ${flowSvg}
   <path d="${path}" stroke="${lc}" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
   <circle cx="${lx}" cy="${ly}" r="4" fill="${lc}" opacity="0.9"/>`;
 
+  updatePfChartLegend(!!flow, isUp);
   updatePfPnl(pts);
+}
+
+// Legenda das duas séries do gráfico principal (valor vs inflows).
+function updatePfChartLegend(hasFlow, isUp) {
+  const el = document.getElementById('db-chart-legend');
+  if (!el) return;
+  if (!hasFlow) { el.innerHTML = ''; el.style.display = 'none'; return; }
+  el.style.display = 'flex';
+  const valColor = isUp ? 'var(--green)' : 'var(--red)';
+  el.innerHTML =
+    `<span class="db-cl-item"><span class="db-cl-line" style="background:${valColor}"></span>Valor</span>` +
+    `<span class="db-cl-item"><span class="db-cl-line db-cl-dash" style="background:#f7931a"></span>Inflows</span>`;
 }
 
 // ── HASHRATE BTC (mini gráfico no topo, com períodos deslizáveis) ─────────────
@@ -4058,6 +4179,20 @@ function renderDbExitStrategy() {
 // Paleta de recurso para ativos sem cor definida (determinística por índice).
 const DIST_FALLBACK = ['#f7931a','#7c8fff','#2dd4a0','#f7647a','#f3ba2f','#9945ff','#28a0f0','#e6007a','#8dc351','#ff007a','#6fbcf0','#c3a634'];
 
+// Ativo destacado no donut da distribuição (null = nenhum). Clicar num segmento
+// ou numa linha da legenda destaca-o e mostra o detalhe junto ao gráfico.
+let distSelected = null;
+
+function selectDistSeg(sym) {
+  distSelected = (distSelected === sym) ? null : sym;
+  renderDbDistribution();
+}
+
+function fmtDistQty(q) {
+  if (!(q > 0)) return '';
+  return q < 0.0001 ? q.toFixed(8) : q < 1 ? q.toFixed(6) : fmt(q, q < 1000 ? 4 : 2);
+}
+
 // Distribuição do portefólio: junta moedas Bybit + ações T212, calcula peso %.
 function renderDbDistribution() {
   const el = document.getElementById('db-dist');
@@ -4078,26 +4213,39 @@ function renderDbDistribution() {
     items.push({ sym: h.ticker, qty: parseFloat(h.qty || 0), usd, price: parseFloat(h.price || 0), color: '#c084fc', isT212: true });
   });
 
-  if (!items.length) { el.innerHTML = '<div class="db-empty">Sem ativos para distribuir.</div>'; return; }
+  if (!items.length) { el.innerHTML = '<div class="db-empty">Sem ativos para distribuir.</div>'; distSelected = null; return; }
 
   items.sort((a, b) => b.usd - a.usd);
   const total = items.reduce((s, it) => s + it.usd, 0);
   items.forEach((it, i) => { it.pct = total > 0 ? (it.usd / total) * 100 : 0; if (!it.color) it.color = DIST_FALLBACK[i % DIST_FALLBACK.length]; });
 
-  // Donut SVG (stroke-dasharray), a começar no topo.
+  // Se o ativo destacado deixou de existir, limpa a seleção.
+  if (distSelected && !items.some(it => it.sym === distSelected)) distSelected = null;
+  const sel = distSelected ? items.find(it => it.sym === distSelected) : null;
+
+  // Donut SVG (stroke-dasharray), a começar no topo. Cada segmento é clicável;
+  // o destacado engrossa e os restantes esbatem-se.
   const C = 2 * Math.PI * 70;
   let acc = 0;
   const segs = items.filter(it => it.pct > 0.15).map(it => {
     const dash = (it.pct / 100) * C;
-    const seg = `<circle cx="90" cy="90" r="70" fill="none" stroke="${it.color}" stroke-width="26" stroke-dasharray="${dash.toFixed(2)} ${(C - dash).toFixed(2)}" stroke-dashoffset="${(-acc).toFixed(2)}" transform="rotate(-90 90 90)"></circle>`;
+    const isSel = distSelected === it.sym;
+    const dim = distSelected && !isSel;
+    const sw = isSel ? 32 : 26;
+    const seg = `<circle class="dist-seg${isSel ? ' sel' : ''}" cx="90" cy="90" r="70" fill="none"
+      stroke="${it.color}" stroke-width="${sw}" stroke-linecap="butt"
+      stroke-dasharray="${dash.toFixed(2)} ${(C - dash).toFixed(2)}"
+      stroke-dashoffset="${(-acc).toFixed(2)}" transform="rotate(-90 90 90)"
+      opacity="${dim ? 0.28 : 1}" onclick="selectDistSeg('${it.sym}')"></circle>`;
     acc += dash;
     return seg;
   }).join('');
 
   const legend = items.map(it => {
-    const qStr = it.qty > 0 ? (it.qty < 0.0001 ? it.qty.toFixed(8) : it.qty < 1 ? it.qty.toFixed(6) : fmt(it.qty, it.qty < 1000 ? 4 : 2)) : '';
+    const qStr = fmtDistQty(it.qty);
     const badge = it.isT212 ? '<span class="db-src-badge db-src-t212">T212</span>' : '';
-    return `<div class="dist-row">
+    const isSel = distSelected === it.sym;
+    return `<div class="dist-row${isSel ? ' sel' : ''}" onclick="selectDistSeg('${it.sym}')">
       <span class="dist-dot" style="background:${it.color}"></span>
       <span class="dist-sym">${it.sym}${badge}${qStr ? ` <span class="dist-qty">${qStr}</span>` : ''}</span>
       <span class="dist-usd">${fmtUsd(it.usd, 2)}</span>
@@ -4105,18 +4253,57 @@ function renderDbDistribution() {
     </div>`;
   }).join('');
 
+  // Centro do donut: total, ou o ativo destacado.
+  const center = sel
+    ? `<div class="dist-center-lbl" style="color:${sel.color}">${sel.sym}</div>
+       <div class="dist-center-val">${sel.pct.toFixed(1)}%</div>`
+    : `<div class="dist-center-lbl">${items.length} ativos</div>
+       <div class="dist-center-val">${fmtUsd(total, 0)}</div>`;
+
+  // Painel de detalhe junto ao gráfico (só quando há ativo destacado).
+  let detail = '';
+  if (sel) {
+    const badge = sel.isT212 ? '<span class="db-src-badge db-src-t212">T212</span>' : '';
+    const rows = [];
+    const qStr = fmtDistQty(sel.qty);
+    if (qStr) rows.push(['Quantidade', qStr]);
+    if (sel.price > 0) rows.push(['Preço', fmtUsd(sel.price, sel.price < 1 ? 6 : 2)]);
+    // Custo médio / PnL não realizado para cripto (quando há base de custo).
+    if (!sel.isT212) {
+      const avg = avgPrices[sel.sym];
+      if (avg && sel.qty > 0) {
+        rows.push(['Custo médio', fmtUsd(avg, avg < 1 ? 6 : 2)]);
+        const pnl = (sel.price - avg) * sel.qty;
+        const pct = avg > 0 ? ((sel.price - avg) / avg) * 100 : 0;
+        const col = pnl >= 0 ? 'var(--green)' : 'var(--red)';
+        rows.push(['PnL n. real.', `<span style="color:${col}">${pnl >= 0 ? '+' : ''}${fmtUsd(pnl, 2)} · ${pnl >= 0 ? '+' : ''}${pct.toFixed(1)}%</span>`]);
+      }
+    }
+    const rowsHtml = rows.map(([k, v]) => `<div class="dist-d-row"><span class="dist-d-k">${k}</span><span class="dist-d-v">${v}</span></div>`).join('');
+    detail = `<div class="dist-detail" style="border-left-color:${sel.color}">
+      <div class="dist-d-head">
+        <span class="dist-dot" style="background:${sel.color}"></span>
+        <span class="dist-d-sym">${sel.sym}${badge}</span>
+        <button class="dist-d-close" onclick="selectDistSeg('${sel.sym}')" title="Fechar">✕</button>
+      </div>
+      <div class="dist-d-val">${fmtUsd(sel.usd, 2)}</div>
+      <div class="dist-d-sub">${sel.pct.toFixed(1)}% do portefólio</div>
+      <div class="dist-d-grid">${rowsHtml}</div>
+    </div>`;
+  }
+
   el.innerHTML = `
     <div class="dist-chart">
       <svg viewBox="0 0 180 180" width="180" height="180" xmlns="http://www.w3.org/2000/svg">
         <circle cx="90" cy="90" r="70" fill="none" stroke="var(--border)" stroke-width="26"></circle>
         ${segs}
       </svg>
-      <div class="dist-center">
-        <div class="dist-center-lbl">${items.length} ativos</div>
-        <div class="dist-center-val">${fmtUsd(total, 0)}</div>
-      </div>
+      <div class="dist-center">${center}</div>
     </div>
-    <div class="dist-legend">${legend}</div>`;
+    <div class="dist-side">
+      ${detail}
+      <div class="dist-legend">${legend}</div>
+    </div>`;
 }
 
 function toggleFilterSmall(checked) {
