@@ -623,6 +623,29 @@ html.light .mnav-btn.active { color: var(--orange); }
 .db-fg-gauge-wrap { margin: 1px auto 0; max-width: 58px; overflow: visible; }
 .db-metric-num { font-size: 17px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); line-height: 1.1; }
 .db-metric-sub { font-size: 9px; color: var(--dim); margin-top: 3px; }
+.db-fg-card { transition: border-color .15s, transform .1s; }
+.db-fg-card:active { transform: scale(.98); }
+/* ── Bottom sheet de detalhe (widgets) ─────────────────────────────── */
+.sheet-ov { position: fixed; inset: 0; z-index: 120; display: flex; align-items: flex-end; justify-content: center; background: rgba(0,0,0,.55); opacity: 0; pointer-events: none; transition: opacity .22s ease; }
+.sheet-ov.open { opacity: 1; pointer-events: auto; }
+.sheet { width: 100%; max-width: 520px; background: var(--bg); border: 1px solid var(--border); border-bottom: none; border-radius: 20px 20px 0 0; padding: 10px 18px 26px; max-height: 90vh; overflow-y: auto; transform: translateY(101%); transition: transform .26s cubic-bezier(.22,.61,.36,1); }
+.sheet-ov.open .sheet { transform: translateY(0); }
+.sheet-grab { width: 44px; height: 5px; border-radius: 3px; background: var(--border2); margin: 6px auto 14px; }
+.sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.sheet-title { font-size: 19px; font-weight: 700; color: var(--text); }
+.sheet-x { background: var(--s2); border: 1px solid var(--border); color: var(--dim); width: 30px; height: 30px; border-radius: 50%; font-size: 16px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.fgd-top { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.fgd-chip { font-size: 13px; font-weight: 700; padding: 6px 12px; border-radius: 8px; color: #0c0e1e; }
+.fgd-val { font-family: 'JetBrains Mono', monospace; font-size: 34px; font-weight: 700; color: var(--text); line-height: 1; }
+.fgd-val span { font-size: 20px; color: var(--faint); font-weight: 600; }
+.fgd-tfs { display: flex; gap: 4px; background: var(--s2); border: 1px solid var(--border); border-radius: 10px; padding: 4px; margin-bottom: 16px; }
+.fgd-tf { flex: 1; padding: 7px 4px; font-size: 12px; font-weight: 600; text-align: center; border-radius: 7px; color: var(--dim); cursor: pointer; border: none; background: none; transition: background .15s, color .15s; }
+.fgd-tf.active { background: var(--s3); color: var(--text); }
+.fgd-chart-wrap { position: relative; margin-bottom: 12px; }
+.fgd-legend { display: flex; flex-wrap: wrap; gap: 10px 14px; justify-content: center; margin-top: 6px; }
+.fgd-lg { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--dim); }
+.fgd-lg i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.fgd-empty { text-align: center; color: var(--faint); font-size: 12px; padding: 40px 0; }
 @media (max-width: 480px) { .db-metric-num { font-size: 14px; } }
 .db-pos-row {
   display: grid; grid-template-columns: auto 1fr auto;
@@ -831,7 +854,7 @@ html.light .mnav-btn.active { color: var(--orange); }
 
     <!-- Metrics bar: Fear & Greed · BTC.D · BTC price -->
     <div class="db-metrics-bar">
-      <div class="db-metric" style="padding:8px 10px 6px">
+      <div class="db-metric db-fg-card" id="db-fg-card" onclick="openFgDetail()" title="Ver detalhe do Fear &amp; Greed" style="padding:8px 10px 6px;cursor:pointer">
         <div class="db-metric-lbl">Fear &amp; Greed</div>
         <div class="db-fg-gauge-wrap">
           <svg id="db-fg-svg" viewBox="0 0 80 46" width="100%" xmlns="http://www.w3.org/2000/svg">
@@ -3963,7 +3986,9 @@ function assetAvatarHtml(sym, cc, isT212) {
     : isT212 ? `https://assets.parqet.com/logos/symbol/${encodeURIComponent(sym)}?format=png`
     : `https://assets.coincap.io/assets/icons/${(sym || '').toLowerCase()}@2x.png`;
   const fbAttr = ov && ov.fb ? ` data-fb="${ov.fb}"` : '';
-  const imgBg = isT212 ? ';background:#fff' : ''; // logos de ações são transparentes
+  // Fundo branco por trás de TODOS os logos: torna visíveis logos escuros/
+  // transparentes no modo noturno (para ícones cripto full-bleed fica oculto).
+  const imgBg = ';background:#fff';
   const onErr = "var f=this.dataset.fb;if(f){this.dataset.fb='';this.src=f;}else{this.style.display='none';this.nextElementSibling.style.display='block';}";
   return `<div class="db-coin-avatar" style="background:${cc}18;border-color:${cc}40">`
     + `<img src="${src}"${fbAttr} width="24" height="24" style="border-radius:50%;object-fit:cover${imgBg}" onerror="${onErr}">`
@@ -4450,6 +4475,121 @@ function setDbRange(btn) {
   document.querySelectorAll('.db-time-btn').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
   loadPortfolioSeries(btn ? btn.textContent.trim() : dbCurrentRange());
+}
+
+// ── FEAR & GREED · DETALHE (bottom sheet com histórico) ───────────────────────
+// Fonte: Alternative.me (mesmo índice do widget). Zonas para colorir a linha e
+// os rótulos do eixo, ao estilo do detalhe do CoinMarketCap.
+const FG_ZONES = [
+  { min: 0,  col: '#e53935' }, { min: 20, col: '#f57c00' }, { min: 40, col: '#f5c842' },
+  { min: 60, col: '#9ccc65' }, { min: 80, col: '#26a65b' },
+];
+function fgZoneColor(v) { let c = FG_ZONES[0].col; for (const z of FG_ZONES) if (v >= z.min) c = z.col; return c; }
+const FG_CLS = {
+  'Extreme Fear':  { bg: '#e53935', fg: '#fff' },
+  'Fear':          { bg: '#f57c00', fg: '#fff' },
+  'Neutral':       { bg: '#f5c842', fg: '#0c0e1e' },
+  'Greed':         { bg: '#9ccc65', fg: '#0c0e1e' },
+  'Extreme Greed': { bg: '#26a65b', fg: '#fff' },
+};
+const FG_TFS = [
+  { n: 7, lbl: '7d' }, { n: 30, lbl: '30d' }, { n: 90, lbl: '90d' },
+  { n: 365, lbl: '1 ano' }, { n: 0, lbl: 'Tudo' },
+];
+let fgTfIdx = 1;            // 30d por defeito (como a imagem)
+let fgHistCache = {};       // n -> [{ t(ms), v, c }] antigo->recente
+
+async function loadFgHist(n) {
+  if (fgHistCache[n]) return fgHistCache[n];
+  try {
+    const r = await fetch(`https://api.alternative.me/fng/?limit=${n}&format=json`);
+    const d = await r.json();
+    fgHistCache[n] = (d?.data || [])
+      .map(x => ({ t: parseInt(x.timestamp) * 1000, v: parseInt(x.value), c: x.value_classification }))
+      .filter(x => isFinite(x.v) && x.t)
+      .sort((a, b) => a.t - b.t);
+  } catch (e) { fgHistCache[n] = fgHistCache[n] || []; }
+  return fgHistCache[n];
+}
+
+function ensureFgSheet() {
+  let ov = document.getElementById('fg-sheet-ov');
+  if (ov) return ov;
+  ov = document.createElement('div');
+  ov.id = 'fg-sheet-ov';
+  ov.className = 'sheet-ov';
+  ov.addEventListener('click', e => { if (e.target === ov) closeFgDetail(); });
+  ov.innerHTML =
+    `<div class="sheet">
+       <div class="sheet-grab"></div>
+       <div class="sheet-head">
+         <div class="sheet-title">Fear &amp; Greed Index</div>
+         <button class="sheet-x" onclick="closeFgDetail()">&#10005;</button>
+       </div>
+       <div class="fgd-top">
+         <span id="fgd-chip" class="fgd-chip">—</span>
+         <div id="fgd-val" class="fgd-val">—</div>
+       </div>
+       <div id="fgd-tfs" class="fgd-tfs"></div>
+       <div class="fgd-chart-wrap"><svg id="fgd-svg" viewBox="0 0 360 220" style="width:100%;height:auto;display:block"></svg></div>
+       <div class="fgd-legend">${['Extreme Fear','Fear','Neutral','Greed','Extreme Greed'].map(l => `<span class="fgd-lg"><i style="background:${FG_CLS[l].bg}"></i>${l}</span>`).join('')}</div>
+     </div>`;
+  document.body.appendChild(ov);
+  return ov;
+}
+
+async function openFgDetail() {
+  const ov = ensureFgSheet();
+  renderFgTfs();
+  requestAnimationFrame(() => ov.classList.add('open'));
+  await refreshFgDetail();
+}
+function closeFgDetail() { const ov = document.getElementById('fg-sheet-ov'); if (ov) ov.classList.remove('open'); }
+function renderFgTfs() {
+  const el = document.getElementById('fgd-tfs'); if (!el) return;
+  el.innerHTML = FG_TFS.map((t, i) => `<button class="fgd-tf${i === fgTfIdx ? ' active' : ''}" onclick="setFgTf(${i})">${t.lbl}</button>`).join('');
+}
+async function setFgTf(i) { fgTfIdx = Math.max(0, Math.min(FG_TFS.length - 1, i)); renderFgTfs(); await refreshFgDetail(); }
+
+async function refreshFgDetail() {
+  const tf = FG_TFS[fgTfIdx], svg = document.getElementById('fgd-svg');
+  if (svg && !fgHistCache[tf.n]) svg.innerHTML = `<text x="180" y="110" text-anchor="middle" font-size="11" fill="var(--faint)">A carregar…</text>`;
+  const arr = await loadFgHist(tf.n);
+  if (fgTfIdx !== FG_TFS.indexOf(tf)) return; // mudou entretanto
+  const last = arr.length ? arr[arr.length - 1] : null;
+  const chip = document.getElementById('fgd-chip'), val = document.getElementById('fgd-val');
+  if (last && chip && val) {
+    const cls = FG_CLS[last.c] || { bg: 'var(--dim)', fg: '#fff' };
+    chip.textContent = last.c || '—'; chip.style.background = cls.bg; chip.style.color = cls.fg;
+    val.innerHTML = `${last.v} <span>/100</span>`;
+  }
+  drawFgChart(arr);
+}
+
+function drawFgChart(arr) {
+  const svg = document.getElementById('fgd-svg'); if (!svg) return;
+  if (!arr || arr.length < 2) { svg.innerHTML = `<text x="180" y="110" text-anchor="middle" font-size="11" fill="var(--faint)">Sem dados</text>`; return; }
+  // Reduz o nº de pontos para desenho em janelas longas ("Tudo" tem milhares).
+  let pts = arr, MAXP = 420;
+  if (pts.length > MAXP) { const step = pts.length / MAXP, s = []; for (let i = 0; i < pts.length; i += step) s.push(pts[Math.floor(i)]); s[s.length - 1] = pts[pts.length - 1]; pts = s; }
+  const W = 360, H = 220, x0 = 26, x1 = 284, y0 = 12, y1 = 196;
+  const toX = i => x0 + (i / (pts.length - 1)) * (x1 - x0);
+  const toY = v => y1 - (v / 100) * (y1 - y0);
+  let g = '';
+  [ { v: 80, l: 'Extreme Greed' }, { v: 60, l: 'Greed' }, { v: 40, l: 'Neutral' }, { v: 20, l: 'Fear' }, { v: 0, l: 'Extreme Fear' } ].forEach(lv => {
+    const y = toY(lv.v).toFixed(1);
+    g += `<line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" stroke="var(--border)" stroke-width="1"/>`;
+    g += `<text x="${x0 - 5}" y="${(+y + 3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--faint)" font-family="JetBrains Mono,monospace">${lv.v}</text>`;
+    g += `<text x="${x1 + 5}" y="${(+y + 3).toFixed(1)}" text-anchor="start" font-size="9" fill="var(--faint)">${lv.l}</text>`;
+  });
+  for (let i = 1; i < pts.length; i++) {
+    g += `<line x1="${toX(i - 1).toFixed(1)}" y1="${toY(pts[i - 1].v).toFixed(1)}" x2="${toX(i).toFixed(1)}" y2="${toY(pts[i].v).toFixed(1)}" stroke="${fgZoneColor(pts[i - 1].v)}" stroke-width="2" stroke-linecap="round"/>`;
+  }
+  const fmtD = t => new Date(t).toLocaleDateString('pt-PT', { day: 'numeric', month: 'short' });
+  [0, Math.floor((pts.length - 1) / 2), pts.length - 1].forEach(i => {
+    g += `<text x="${toX(i).toFixed(1)}" y="${H - 6}" text-anchor="middle" font-size="9" fill="var(--faint)">${fmtD(pts[i].t)}</text>`;
+  });
+  svg.innerHTML = g;
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
