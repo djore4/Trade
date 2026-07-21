@@ -3946,12 +3946,18 @@ function renderDbAssets() {
   el.innerHTML = items.map(it => it.kind === 'coin' ? coinRowHtml(it) : t212RowHtml(it)).join('');
 }
 
+// Alguns tickers internos da T212 (ETFs/UCITS) não resolvem no parqet pelo
+// símbolo tal como vêm. Mapeia-os para um símbolo com logo conhecido.
+const T212_LOGO_ALIAS = {
+  SPXd: 'SPY', // Invesco S&P 500 UCITS (Dist) -> logo S&P 500 (SPY)
+};
+
 // Avatar redondo com o logo do ativo e fallback para a inicial quando a imagem
 // falha (crypto -> coincap por símbolo; ação T212 -> parqet por ticker).
 function assetAvatarHtml(sym, cc, isT212) {
   const ini = (sym || '?')[0];
   const src = isT212
-    ? `https://assets.parqet.com/logos/symbol/${encodeURIComponent(sym)}?format=png`
+    ? `https://assets.parqet.com/logos/symbol/${encodeURIComponent(T212_LOGO_ALIAS[sym] || sym)}?format=png`
     : `https://assets.coincap.io/assets/icons/${(sym || '').toLowerCase()}@2x.png`;
   const imgBg = isT212 ? ';background:#fff' : ''; // logos de ações são transparentes
   return `<div class="db-coin-avatar" style="background:${cc}18;border-color:${cc}40">`
