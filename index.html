@@ -3946,22 +3946,27 @@ function renderDbAssets() {
   el.innerHTML = items.map(it => it.kind === 'coin' ? coinRowHtml(it) : t212RowHtml(it)).join('');
 }
 
-// Alguns tickers internos da T212 (ETFs/UCITS) não resolvem no parqet pelo
-// símbolo tal como vêm. Mapeia-os para um símbolo com logo conhecido.
-const T212_LOGO_ALIAS = {
-  SPXd: 'SPY', // Invesco S&P 500 UCITS (Dist) -> logo S&P 500 (SPY)
+// Overrides de logo para tickers internos da T212 que não resolvem no parqet
+// pelo símbolo (ex.: empresas privadas). { src: logo principal, fb: fallback }.
+const T212_LOGO_OVERRIDE = {
+  // SPXd = SpaceX (empresa privada) -> logo por domínio, com favicon de reserva.
+  SPXd: { src: 'https://logo.clearbit.com/spacex.com', fb: 'https://www.google.com/s2/favicons?domain=spacex.com&sz=128' },
 };
 
 // Avatar redondo com o logo do ativo e fallback para a inicial quando a imagem
-// falha (crypto -> coincap por símbolo; ação T212 -> parqet por ticker).
+// falha (crypto -> coincap por símbolo; ação T212 -> parqet por ticker; alguns
+// tickers T212 usam override por domínio). Cadeia de reserva: src -> fb -> inicial.
 function assetAvatarHtml(sym, cc, isT212) {
   const ini = (sym || '?')[0];
-  const src = isT212
-    ? `https://assets.parqet.com/logos/symbol/${encodeURIComponent(T212_LOGO_ALIAS[sym] || sym)}?format=png`
+  const ov  = isT212 ? T212_LOGO_OVERRIDE[sym] : null;
+  const src = ov ? ov.src
+    : isT212 ? `https://assets.parqet.com/logos/symbol/${encodeURIComponent(sym)}?format=png`
     : `https://assets.coincap.io/assets/icons/${(sym || '').toLowerCase()}@2x.png`;
+  const fbAttr = ov && ov.fb ? ` data-fb="${ov.fb}"` : '';
   const imgBg = isT212 ? ';background:#fff' : ''; // logos de ações são transparentes
+  const onErr = "var f=this.dataset.fb;if(f){this.dataset.fb='';this.src=f;}else{this.style.display='none';this.nextElementSibling.style.display='block';}";
   return `<div class="db-coin-avatar" style="background:${cc}18;border-color:${cc}40">`
-    + `<img src="${src}" width="24" height="24" style="border-radius:50%;object-fit:cover${imgBg}" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">`
+    + `<img src="${src}"${fbAttr} width="24" height="24" style="border-radius:50%;object-fit:cover${imgBg}" onerror="${onErr}">`
     + `<span style="display:none;color:${cc}">${ini}</span></div>`;
 }
 
