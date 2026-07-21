@@ -3946,6 +3946,19 @@ function renderDbAssets() {
   el.innerHTML = items.map(it => it.kind === 'coin' ? coinRowHtml(it) : t212RowHtml(it)).join('');
 }
 
+// Avatar redondo com o logo do ativo e fallback para a inicial quando a imagem
+// falha (crypto -> coincap por símbolo; ação T212 -> parqet por ticker).
+function assetAvatarHtml(sym, cc, isT212) {
+  const ini = (sym || '?')[0];
+  const src = isT212
+    ? `https://assets.parqet.com/logos/symbol/${encodeURIComponent(sym)}?format=png`
+    : `https://assets.coincap.io/assets/icons/${(sym || '').toLowerCase()}@2x.png`;
+  const imgBg = isT212 ? ';background:#fff' : ''; // logos de ações são transparentes
+  return `<div class="db-coin-avatar" style="background:${cc}18;border-color:${cc}40">`
+    + `<img src="${src}" width="24" height="24" style="border-radius:50%;object-fit:cover${imgBg}" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">`
+    + `<span style="display:none;color:${cc}">${ini}</span></div>`;
+}
+
 // Linha de uma moeda spot da Bybit.
 function coinRowHtml(it) {
   const c = it.raw, usdVal = it.usdVal, qty = it.qty, price = it.price;
@@ -3961,7 +3974,6 @@ function coinRowHtml(it) {
   }
   const isP = pAmt > 0.001, isN = pAmt < -0.001;
   const cc  = COIN_COLORS[c.coin] || '#7b7fa0';
-  const ini = (c.coin || '?')[0];
   const prStr = price > 0
     ? '$' + fmt(price, price < 0.001 ? 6 : price < 1 ? 4 : price < 100 ? 3 : price < 10000 ? 1 : 0)
     : '—';
@@ -3971,9 +3983,7 @@ function coinRowHtml(it) {
   const onc = canIsolate ? ` onclick="toggleAssetIsolate('${c.coin}')" title="Isolar ${c.coin} no gráfico"` : '';
   return `<div class="${cls}"${onc}>
     <div class="db-asset-left">
-      <div class="db-coin-avatar" style="background:${cc}18;border-color:${cc}40">
-        <img src="https://assets.coincap.io/assets/icons/${c.coin.toLowerCase()}@2x.png" width="24" height="24" style="border-radius:50%;object-fit:cover" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span style="display:none;color:${cc}">${ini}</span>
-      </div>
+      ${assetAvatarHtml(c.coin, cc, false)}
       <div>
         <div class="db-asset-sym">${c.coin} <span class="db-asset-qty">${qStr}</span></div>
         <div class="db-asset-usd">${fmtUsd(usdVal, 2)}</div>
@@ -3996,7 +4006,6 @@ function coinRowHtml(it) {
 // Linha de um ativo da Trading 212 (ação).
 function t212RowHtml(it) {
   const h = it.raw, usd = it.usdVal, pnl = it.realPnl;
-  const ini = (h.ticker || '?')[0];
   const cc = '#7c8fff';
   const qStr = h.qty > 0 ? (h.qty < 1 ? h.qty.toFixed(4) : fmt(h.qty, 2)) : '';
   let pAmt, pPct, hasP;
@@ -4018,7 +4027,7 @@ function t212RowHtml(it) {
   const onc = canIsolate ? ` onclick="toggleAssetIsolate('${h.ticker}')" title="Isolar ${h.ticker} no gráfico"` : ` title="Trading 212 — ${h.name || h.ticker}"`;
   return `<div class="${cls}"${onc}>
     <div class="db-asset-left">
-      <div class="db-coin-avatar" style="background:${cc}18;border-color:${cc}40"><span style="color:${cc}">${ini}</span></div>
+      ${assetAvatarHtml(h.ticker, cc, true)}
       <div>
         <div class="db-asset-sym">${h.ticker}<span class="db-src-badge db-src-t212">T212</span>${qStr ? ` <span class="db-asset-qty">${qStr}</span>` : ''}</div>
         <div class="db-asset-usd">${usd > 0 ? fmtUsd(usd, 2) : (h.name || 'Trading 212')}</div>
@@ -4084,15 +4093,10 @@ function saveExitTargets() {
 function exitRowHtml(it) {
   const sym  = it.sym;
   const cc   = it.color;
-  const ini  = (sym || '?')[0];
   const qty  = it.qty;
   const qStr = qty < 0.0001 ? qty.toFixed(8) : qty < 1 ? qty.toFixed(6) : fmt(qty, qty < 1000 ? 4 : 2);
   const saved = exitTargets[sym];
-  const avatar = it.isT212
-    ? `<div class="db-coin-avatar" style="background:${cc}18;border-color:${cc}40"><span style="color:${cc}">${ini}</span></div>`
-    : `<div class="db-coin-avatar" style="background:${cc}18;border-color:${cc}40">
-        <img src="https://assets.coincap.io/assets/icons/${sym.toLowerCase()}@2x.png" width="24" height="24" style="border-radius:50%;object-fit:cover" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span style="display:none;color:${cc}">${ini}</span>
-      </div>`;
+  const avatar = assetAvatarHtml(sym, cc, it.isT212);
   const badge = it.isT212 ? `<span class="db-src-badge db-src-t212">T212</span>` : '';
   return `<div class="exit-card" id="exit-row-${sym}">
     <div class="exit-card-top">
