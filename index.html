@@ -3186,7 +3186,8 @@ function renderDashboard() {
   if (!walletData) return;
   const equity  = parseFloat(walletData.totalEquity || 0);
   const perpUPL = parseFloat(walletData.totalPerpUPL || walletData.totalUnrealisedPnl || 0);
-  // Bybit returns unrealisedPnl=0 for spot coins; compute from avgPrices
+  // PnL de spot = sempre por custo médio (AVCO). NÃO usar c.unrealisedPnl: para
+  // moedas depositadas (inflow) a Bybit reporta custo ~0 e infla o PnL.
   let spotUPL = 0;
   (walletData.coin || []).forEach(c => {
     const qty  = parseFloat(c.walletBalance || 0);
@@ -3900,12 +3901,16 @@ function updateDbHero() {
 }
 
 // PnL não-realizado (real) de uma moeda spot da Bybit, em USD.
+// Base = custo médio (AVCO) do histórico de ordens spot — a MESMA fonte usada no
+// total do dashboard e no painel de distribuição. NÃO usar o campo unrealisedPnl
+// cru da Bybit: para moedas que entraram por depósito/transferência (inflow) esse
+// campo assume custo ~0 e infla o PnL (ex.: ADA a mostrar +105% em vez de ~+14%).
 function coinRealPnl(c) {
   const qty = parseFloat(c.walletBalance || 0), usdVal = parseFloat(c.usdValue || 0);
   const price = qty > 0 ? usdVal / qty : 0;
-  let unrPnl = parseFloat(c.unrealisedPnl || 0);
-  if (unrPnl === 0 && avgPrices[c.coin] && qty > 0 && price > 0) unrPnl = (price - avgPrices[c.coin]) * qty;
-  return unrPnl;
+  const avgP = avgPrices[c.coin];
+  if (avgP && qty > 0 && price > 0) return (price - avgP) * qty;
+  return 0; // sem base de custo (só entradas por depósito) -> não inventar lucro
 }
 
 // Descritores unificados (Bybit + Trading 212) para poder ordenar tudo em conjunto.
