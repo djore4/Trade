@@ -626,9 +626,9 @@ html.light .mnav-btn.active { color: var(--orange); }
 .db-fg-card { transition: border-color .15s, transform .1s; }
 .db-fg-card:active { transform: scale(.98); }
 /* ── Bottom sheet de detalhe (widgets) ─────────────────────────────── */
-.sheet-ov { position: fixed; inset: 0; z-index: 120; display: flex; align-items: flex-end; justify-content: center; background: rgba(0,0,0,.55); opacity: 0; pointer-events: none; transition: opacity .22s ease; }
+.sheet-ov { position: fixed; inset: 0; z-index: 250; display: flex; align-items: flex-end; justify-content: center; background: rgba(0,0,0,.55); opacity: 0; pointer-events: none; transition: opacity .22s ease; }
 .sheet-ov.open { opacity: 1; pointer-events: auto; }
-.sheet { width: 100%; max-width: 520px; background: var(--bg); border: 1px solid var(--border); border-bottom: none; border-radius: 20px 20px 0 0; padding: 10px 18px 26px; max-height: 90vh; overflow-y: auto; transform: translateY(101%); transition: transform .26s cubic-bezier(.22,.61,.36,1); }
+.sheet { width: 100%; max-width: 520px; background: var(--bg); border: 1px solid var(--border); border-bottom: none; border-radius: 20px 20px 0 0; padding: 10px 18px calc(24px + env(safe-area-inset-bottom, 0px)); max-height: 90vh; overflow-y: auto; transform: translateY(101%); transition: transform .26s cubic-bezier(.22,.61,.36,1); }
 .sheet-ov.open .sheet { transform: translateY(0); }
 .sheet-grab { width: 44px; height: 5px; border-radius: 3px; background: var(--border2); margin: 6px auto 14px; }
 .sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
@@ -3316,12 +3316,16 @@ function anchorSeries(raw) {
 }
 
 // Alvo de ancoragem da curva de inflows = capital investido (custo médio × qty).
-// Para T212 não há histórico de custo, por isso usa o valor atual (contribuição
-// plana): o "lucro" visível na comparação vem então só da cripto. Devolve null
-// quando não há base de custo (ativo T212 isolado) -> não se desenha a 2.ª série.
+// Cripto: avg do histórico de ordens. T212: avg (preço médio) que a própria
+// Trading 212 fornece -> capital investido real, tal como na Bybit. Só devolve
+// null quando não há mesmo base de custo (ex.: T212 sem avg).
 function pfCostBasisTarget() {
   if (pfIsolate) {
-    if (isT212Ticker(pfIsolate)) return null; // sem base de custo -> sem série
+    if (isT212Ticker(pfIsolate)) {
+      const h = t212Holdings.find(x => x.ticker === pfIsolate);
+      const avg = parseFloat(h?.avg || 0), qty = parseFloat(h?.qty || 0);
+      return (avg > 0 && qty > 0) ? avg * qty : null;
+    }
     const c = (walletData && walletData.coin || []).find(x => x.coin === pfIsolate);
     const qty = c ? parseFloat(c.walletBalance || 0) : 0;
     const usd = c ? parseFloat(c.usdValue || 0) : 0;
@@ -3336,7 +3340,10 @@ function pfCostBasisTarget() {
     const avg = avgPrices[c.coin];
     sum += (avg && qty > 0) ? avg * qty : usd; // estáveis/sem custo -> valor atual
   });
-  (t212Holdings || []).forEach(h => { sum += parseFloat(h.usd || 0); });
+  (t212Holdings || []).forEach(h => {
+    const avg = parseFloat(h.avg || 0), qty = parseFloat(h.qty || 0);
+    sum += (avg > 0 && qty > 0) ? avg * qty : parseFloat(h.usd || 0); // custo T212
+  });
   return sum;
 }
 
@@ -3380,7 +3387,12 @@ async function loadPortfolioSeries(range) {
       const raw = pts.map(p => ({ t: p.t, v: qty * p.c }));
       pfCache[ckey] = raw;
       pfSeries = anchorSeries(raw);
-      pfFlowSeries = []; // T212: sem base de custo -> sem 2.ª série
+      // Inflows: capital investido = custo médio × qty (a T212 dá-nos o avg).
+      // Linha plana ao nível do custo — análogo à curva de inflows da Bybit.
+      const cost = parseFloat(h?.avg || 0) * qty;
+      const rawFlow = cost > 0 ? raw.map(p => ({ t: p.t, v: cost })) : [];
+      pfFlowCache[ckey] = rawFlow;
+      pfFlowSeries = rawFlow.length ? anchorFlow(rawFlow) : [];
       drawPortfolioChart();
     } catch (e) { if (token === pfToken) { pfSeries = []; pfFlowSeries = []; drawPortfolioChart(); } }
     return;
@@ -3409,12 +3421,14 @@ async function loadPortfolioSeries(range) {
   // Ações (Trading 212) — séries de qty × preço histórico (via proxy), somadas ao total.
   const stockCfg = STOCK_RANGE_CFG[range] || STOCK_RANGE_CFG['6M'];
   const stockP = t212Holdings.filter(h => (parseFloat(h.usd) || 0) > 0).map(async h => {
+    const qty = parseFloat(h.qty || 0), usd = parseFloat(h.usd || 0), avg = parseFloat(h.avg || 0);
+    const cost = (avg > 0 && qty > 0) ? avg * qty : usd; // capital investido (custo médio × qty)
     try {
       const r = await fetch(`${STOCK_URL}?symbol=${encodeURIComponent(h.ticker)}&range=${stockCfg.range}&interval=${stockCfg.interval}`, { headers: { Authorization: `Bearer ${SUPABASE_KEY}` } });
       const d = await r.json();
       const arr = (Array.isArray(d?.points) ? d.points : []).map(p => ({ t: p.t, c: p.c })).sort((a, b) => a.t - b.t);
-      return { qty: parseFloat(h.qty || 0), usd: parseFloat(h.usd || 0), arr };
-    } catch (e) { return { qty: parseFloat(h.qty || 0), usd: parseFloat(h.usd || 0), arr: [] }; }
+      return { qty, usd, cost, arr };
+    } catch (e) { return { qty, usd, cost, arr: [] }; }
   });
   const seriesList = await Promise.all([...cryptoP, ...stockP]);
   if (token !== pfToken) return; // o time-frame mudou entretanto
@@ -3445,7 +3459,9 @@ async function loadPortfolioSeries(range) {
         while (s.dvi < s.flows.length && s.flows[s.dvi].t <= t) { s.dvRun += s.flows[s.dvi].dv; s.dvi++; }
         f += s.dvRun;
       } else {
-        f += s.usd || 0;    // sem fluxos (T212/sem histórico): contribuição plana
+        // Sem fluxos: T212 contribui com o capital investido (custo médio × qty);
+        // cripto sem histórico ou estáveis caem no valor atual.
+        f += (s.cost != null ? s.cost : (s.usd || 0));
       }
       if (!s.arr.length) return;
       while (s.i < s.arr.length && s.arr[s.i].t <= t) { s.last = s.arr[s.i].c; s.i++; }
