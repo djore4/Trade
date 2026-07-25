@@ -797,28 +797,27 @@ html.light .mnav-btn.active { color: var(--orange); }
 .ps-sub { font-family: 'JetBrains Mono', monospace; color: var(--faint); font-size: 10.5px; }
 .ps-sep { width: 1px; height: 14px; background: var(--border); }
 
-/* Resumo do portefólio: painel de indicadores (stat tiles) */
-.pos-summary { background: var(--s1); border: 1px solid var(--border); border-radius: 12px; padding: 13px 15px; }
-.pos-sum-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
-.pos-sum-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--dim); }
-.pos-sum-count { display: inline-flex; align-items: center; gap: 5px; }
-.pc-badge { display: inline-flex; align-items: baseline; gap: 3px; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 12px; padding: 2px 8px; border-radius: 20px; background: var(--bg); border: 1px solid var(--border); }
-.pc-badge u { font-size: 8.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; text-decoration: none; opacity: .8; }
-.pc-badge.pc-l { color: var(--green); }
-.pc-badge.pc-s { color: var(--red); }
-.pc-badge.pc-total { color: var(--dim); }
-.pos-sum-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
-.pst { background: var(--s1); padding: 11px 13px 12px; display: flex; flex-direction: column; gap: 5px; position: relative; min-width: 0; }
-.pst.pst-accent { padding-left: 15px; }
+/* Resumo do portefólio: painel de indicadores compacto (stat tiles em 2 linhas) */
+.pos-summary { border: 1px solid var(--border); border-radius: 11px; overflow: hidden; background: var(--border); }
+.pos-sum-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 1px; }
+.pst { background: var(--s1); padding: 8px 11px; display: flex; flex-direction: column; gap: 3px; position: relative; min-width: 0; }
+.pst.pst-accent { padding-left: 13px; }
 .pst.pst-accent::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent-c, var(--border2)); }
-.pst-lbl { font-size: 9.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--faint); display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pst-tag { font-size: 8px; font-weight: 700; letter-spacing: .05em; color: var(--orange); border: 1px solid var(--orange); border-radius: 4px; padding: 0 3px; line-height: 1.35; opacity: .85; }
-.pst-val { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 17px; line-height: 1.1; letter-spacing: -.01em; }
-.pst-sub { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--dim); line-height: 1.35; }
+.pst-lbl { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pst-sym { opacity: .7; }
+.pst-tag { font-size: 7.5px; font-weight: 700; letter-spacing: .04em; color: var(--orange); border: 1px solid var(--orange); border-radius: 3px; padding: 0 2px; opacity: .85; margin-left: 3px; }
+.pst-line { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; min-width: 0; }
+.pst-val { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 14.5px; line-height: 1.15; letter-spacing: -.01em; }
+.pst-sub { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--dim); }
 .pst-sub-em { font-weight: 700; }
-.pst-meter { height: 4px; border-radius: 3px; background: var(--border); overflow: hidden; margin: 1px 0; }
+.pst-meter { flex: 1; min-width: 24px; max-width: 60px; align-self: center; height: 4px; border-radius: 3px; background: var(--border); overflow: hidden; }
 .pst-meter-fill { height: 100%; border-radius: 3px; transition: width .3s, background .3s; }
-@media (max-width: 400px) { .pos-sum-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 460px) { .pos-sum-grid { grid-template-columns: repeat(3, 1fr); } }
+
+/* Cabeçalho da lista de trades + ordenação */
+.pos-list-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.pos-sort-bar { display: flex; align-items: center; gap: 3px; }
+.pos-sort-lbl { font-size: 9px; text-transform: uppercase; letter-spacing: .05em; color: var(--faint); margin-right: 3px; }
 
 /* Cenário de saída */
 .pos-exit { margin-top: 13px; padding-top: 13px; border-top: 1px solid var(--border); }
@@ -1339,7 +1338,15 @@ html.light .mnav-btn.active { color: var(--orange); }
     <!-- Resumo macro de todas as posições (topo — visão agregada) -->
     <div id="pos-summary" class="pos-summary" style="display:none"></div>
 
-    <div class="sec-label">Trades abertos</div>
+    <div class="pos-list-head">
+      <div class="sec-label" style="margin-bottom:0">Trades abertos</div>
+      <div id="pos-sort-bar" class="pos-sort-bar">
+        <span class="pos-sort-lbl">Ordenar</span>
+        <button class="iv-btn on" onclick="setPosSort('default',this)">Padrão</button>
+        <button class="iv-btn" onclick="setPosSort('pnl-desc',this)">PnL ↓</button>
+        <button class="iv-btn" onclick="setPosSort('pnl-asc',this)">PnL ↑</button>
+      </div>
+    </div>
     <div id="pos-list-tab" class="pos-list-tab"><div class="db-empty">A carregar posições...</div></div>
 
     <div id="pos-empty" class="db-empty" style="display:none">Sem posições abertas na Bybit.</div>
@@ -2275,44 +2282,34 @@ function renderPosSummary() {
   const distC = !hasDist ? 'var(--faint)' : minDist < 8 ? 'var(--red)' : minDist < 20 ? 'var(--orange)' : 'var(--green)';
   const meterW = hasDist ? Math.max(5, Math.min(100, minDist * 2.5)) : 0; // ≥40% de dist. → barra cheia
 
+  const symShort = minSym.replace(/USDT?$/, '');
   el.innerHTML = `
-    <div class="pos-sum-head">
-      <span class="pos-sum-title">Todas as posições</span>
-      <span class="pos-sum-count">
-        <span class="pc-badge pc-l">${nLong}<u>long</u></span>
-        <span class="pc-badge pc-s">${nShort}<u>short</u></span>
-        <span class="pc-badge pc-total">${positions.length}<u>trades</u></span>
-      </span>
-    </div>
     <div class="pos-sum-grid">
-      <div class="pst pst-accent" style="--accent-c:${pnlC}">
-        <div class="pst-lbl">PnL não realizado</div>
-        <div class="pst-val" style="color:${pnlC}">${sg(pnlUsd)}${fmtUsd(pnlUsd, 2)}</div>
-        <div class="pst-sub">ROE <span class="pst-sub-em" style="color:${pnlC}">${sg(roe)}${fmt(roe, 1)}%</span></div>
+      <div class="pst">
+        <div class="pst-lbl">Trades</div>
+        <div class="pst-line"><span class="pst-val">${positions.length}</span><span class="pst-sub"><span style="color:var(--green)">${nLong}L</span> · <span style="color:var(--red)">${nShort}S</span></span></div>
       </div>
-      <div class="pst pst-accent" style="--accent-c:${exC}">
-        <div class="pst-lbl">Cenário de saída <span class="pst-tag">TP</span></div>
+      <div class="pst pst-accent" style="--accent-c:${pnlC}" title="PnL não realizado (ROE)">
+        <div class="pst-lbl">PnL</div>
+        <div class="pst-line"><span class="pst-val" style="color:${pnlC}">${sg(pnlUsd)}${fmtUsd(pnlUsd, 2)}</span><span class="pst-sub"><span class="pst-sub-em" style="color:${pnlC}">${sg(roe)}${fmt(roe, 1)}%</span></span></div>
+      </div>
+      <div class="pst pst-accent" style="--accent-c:${exC}" title="Cenário de saída — lucro projetado se atingir os alvos definidos">
+        <div class="pst-lbl">Saída <span class="pst-tag">TP</span></div>
         ${ex.n > 0
-          ? `<div class="pst-val" style="color:${exC}">${sg(ex.usd)}${fmtUsd(ex.usd, 2)}</div>
-             <div class="pst-sub">ROE <span class="pst-sub-em" style="color:${exC}">${sg(ex.roe)}${fmt(ex.roe, 1)}%</span> · ${ex.n}/${positions.length} alvos</div>`
-          : `<div class="pst-val" style="color:var(--faint)">—</div>
-             <div class="pst-sub" style="color:var(--faint)">define alvos nos trades</div>`}
+          ? `<div class="pst-line"><span class="pst-val" style="color:${exC}">${sg(ex.usd)}${fmtUsd(ex.usd, 2)}</span><span class="pst-sub"><span class="pst-sub-em" style="color:${exC}">${sg(ex.roe)}${fmt(ex.roe, 1)}%</span> · ${ex.n}/${positions.length}</span></div>`
+          : `<div class="pst-line"><span class="pst-val" style="color:var(--faint)">—</span><span class="pst-sub" style="color:var(--faint)">sem alvos</span></div>`}
       </div>
-      <div class="pst">
+      <div class="pst" title="Nocional · alavancagem média">
         <div class="pst-lbl">Exposição</div>
-        <div class="pst-val">${fmtUsd(exp, 0)}</div>
-        <div class="pst-sub">alav. média <span class="pst-sub-em">${fmt(avgLev, 1)}×</span></div>
+        <div class="pst-line"><span class="pst-val">${fmtUsd(exp, 0)}</span><span class="pst-sub">${fmt(avgLev, 1)}×</span></div>
       </div>
-      <div class="pst">
+      <div class="pst" title="Margem — capital alocado">
         <div class="pst-lbl">Margem</div>
-        <div class="pst-val">${fmtUsd(marg, 0)}</div>
-        <div class="pst-sub">capital alocado</div>
+        <div class="pst-line"><span class="pst-val">${fmtUsd(marg, 0)}</span></div>
       </div>
-      <div class="pst">
-        <div class="pst-lbl">Dist. liquidação</div>
-        <div class="pst-val" style="color:${distC}">${hasDist ? fmt(minDist, 1) + '%' : '—'}</div>
-        <div class="pst-meter"><div class="pst-meter-fill" style="width:${meterW}%;background:${distC}"></div></div>
-        <div class="pst-sub">${hasDist ? 'mais próx. ' + minSym : 'sem liquidação'}</div>
+      <div class="pst" title="Distância à liquidação da posição mais próxima">
+        <div class="pst-lbl">Dist. liq.${hasDist ? ` <span class="pst-sym">${symShort}</span>` : ''}</div>
+        <div class="pst-line"><span class="pst-val" style="color:${distC}">${hasDist ? fmt(minDist, 1) + '%' : '—'}</span>${hasDist ? `<span class="pst-meter"><span class="pst-meter-fill" style="width:${meterW}%;background:${distC}"></span></span>` : ''}</div>
       </div>
     </div>`;
 }
@@ -2405,8 +2402,37 @@ function posRowHtml(p) {
   </div>`;
 }
 
+// Ordenação da lista de trades: 'default' (ordem da API) | 'pnl-desc' | 'pnl-asc'
+let posSortMode = 'default';
+
+// Devolve as posições na ordem de apresentação escolhida (cópia, não muta `positions`)
+function displayPositions() {
+  const arr = positions.slice();
+  if (posSortMode === 'pnl-desc') arr.sort((a, b) => posPnlUsd(b) - posPnlUsd(a));
+  else if (posSortMode === 'pnl-asc') arr.sort((a, b) => posPnlUsd(a) - posPnlUsd(b));
+  return arr;
+}
+
+// Reordena as linhas já existentes (move os nós, preservando o gráfico aberto)
+function reorderPosRows() {
+  const el = document.getElementById('pos-list-tab'); if (!el) return;
+  displayPositions().forEach(p => {
+    const row = document.getElementById(`pos-row-${posKeyOf(p)}`);
+    if (row) el.appendChild(row);
+  });
+}
+
+// Muda o critério de ordenação (botões) e reordena sem reconstruir
+function setPosSort(mode, btn) {
+  posSortMode = mode;
+  document.querySelectorAll('#pos-sort-bar .iv-btn').forEach(b => b.classList.remove('on'));
+  if (btn) btn.classList.add('on');
+  reorderPosRows();
+}
+
 // Constrói a lista. Se o conjunto de posições não mudou, só atualiza números
 // (preserva o gráfico aberto e o input de saída). Só reconstrói quando o conjunto muda.
+// A chave é independente da ordem (conjunto), para que reordenar por PnL não force rebuild.
 function renderPosList() {
   const el = document.getElementById('pos-list-tab');
   if (!el) return;
@@ -2417,15 +2443,16 @@ function renderPosList() {
     el.innerHTML = '<div class="db-empty">Sem posições abertas.</div>';
     return;
   }
-  const newKey = positions.map(posKeyOf).join(',');
+  const newKey = positions.map(posKeyOf).sort().join(',');
   if (el.dataset.posKey === newKey) {
     positions.forEach(p => updatePosRowDynamic(p));
+    if (posSortMode !== 'default') reorderPosRows(); // PnL mudou → pode alterar a ordem
     return;
   }
   // O conjunto mudou → guarda o gráfico no holder antes de reescrever a lista
   parkDetailCard();
   el.dataset.posKey = newKey;
-  el.innerHTML = positions.map(posRowHtml).join('');
+  el.innerHTML = displayPositions().map(posRowHtml).join('');
   // Reabre a linha que estava aberta, se ainda existir
   if (selectedPosKey && positions.some(x => posKeyOf(x) === selectedPosKey)) {
     const k = selectedPosKey; selectedPosKey = null; selectPos(k);
