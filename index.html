@@ -1369,7 +1369,7 @@ html.light .mnav-btn.active { color: var(--orange); }
         <button class="iv-btn" data-iv="D"   onclick="setPosIv('D',this)">1D</button>
         <button class="iv-btn" data-iv="W"   onclick="setPosIv('W',this)">1W</button>
         <span style="flex:1"></span>
-        <button class="iv-btn" id="pos-measure-btn" onclick="togglePosMeasure(this)" title="Régua — toca para posicionar o crosshair e toca de novo no mesmo sítio para fixar; repete para o ponto final. Mede variação de preço e nº de barras.">📏 Régua</button>
+        <button class="iv-btn" id="pos-measure-btn" onclick="togglePosMeasure(this)" title="Régua — toca e arrasta (a mira fica acima do dedo, visível) e larga para colocar o início; repete para o fim. Mede variação de preço e nº de barras.">📏 Régua</button>
       </div>
       <div id="pos-chart" class="chart-wrap" style="height:440px;position:relative"></div>
       <div class="pos-legend" id="pos-legend"></div>
@@ -2688,52 +2688,45 @@ function renderPosLegend(p) {
   el.innerHTML = html;
 }
 
-// ── RÉGUA / MEASURE (estilo TradingView) ──────────────────────────────────────
-// Cada ponto é POSICIONADO e depois FIXADO (não fixa logo no 1º toque):
-//   • toca/arrasta → o crosshair posiciona-se onde tocas (vês o preço antes de fixar);
-//   • toca de novo NO MESMO sítio → fixa esse ponto.
-// Assim: 1º toque posiciona o início · 2º fixa-o · 3º move até ao fim · 4º fixa o fim.
-// A decisão "fixar vs reposicionar" é por LOCALIZAÇÃO (tocar onde o crosshair já está),
-// nunca por movimento — por isso o jitter do dedo nunca interfere.
-// No rato, o crosshair segue o cursor (hover) e cada clique fixa um ponto.
+// ── RÉGUA / MEASURE (estilo TradingView / Bybit) ──────────────────────────────
+// A mira aparece DESLOCADA do dedo (acima), para ser sempre visível — o dedo
+// nunca tapa o ponto. Arrasta-se o dedo para posicionar a mira com precisão e
+// LARGA-SE para colocar o ponto. Repete-se para o ponto final.
+//   • toque: pressiona → arrasta (a mira segue acima do dedo) → larga (coloca);
+//   • rato: a mira segue o cursor (sem deslocamento) e cada clique coloca um ponto.
 let posMeasureOn = false;
 let posMeasurePhase = 'p1';                  // 'p1' início · 'p2' fim · 'done'
-let posMeasureStart = null;                  // ponto de início fixado
-let posMeasureCursor = null;                 // posição atual do crosshair
-let posMeasurePressing = false, posMeasureGestureStart = null;
-const POS_MEASURE_LOCK_R = 30;               // raio (px): tocar dentro deste raio = fixar
+let posMeasureStart = null;                  // ponto de início colocado
+let posMeasureCursor = null;                 // posição atual da mira (já com deslocamento)
+let posMeasurePressing = false;
+const POS_MEASURE_OFFSET = 78;               // deslocamento (px) da mira acima do dedo
 
-// Distância entre dois pontos
-function posMeasureDist(a, b) { return (a && b) ? Math.hypot(a.x - b.x, a.y - b.y) : Infinity; }
+// Desloca a mira para cima do dedo (só no toque); perto do topo, desloca p/ baixo.
+function posMeasureOffset(raw, ptype) {
+  if (ptype && ptype !== 'touch') return raw;   // rato/stylus: sem deslocamento
+  const { h } = layerSize();
+  let y = raw.y - POS_MEASURE_OFFSET;
+  if (y < 18) y = Math.min(h - 18, raw.y + POS_MEASURE_OFFSET); // perto do topo → p/ baixo
+  return { x: raw.x, y };
+}
 
 // Desenha o estado atual da régua conforme a fase
 function renderPosMeasure() {
   if (posMeasurePhase === 'p1') {
     if (posMeasureCursor) drawPosMeasureCursor(posMeasureCursor);
-    else showPosMeasureHint('toca no gráfico para marcar o início');
+    else showPosMeasureHint('toca e arrasta para marcar o início');
   } else if (posMeasurePhase === 'p2') {
-    drawPosMeasure(posMeasureStart, posMeasureCursor || posMeasureStart, true);
+    if (posMeasureCursor) drawPosMeasure(posMeasureStart, posMeasureCursor, true);
+    else drawPosMeasureWaitingEnd(posMeasureStart);
   } else {
     drawPosMeasure(posMeasureStart, posMeasureCursor, false);
   }
 }
 
-// Fixa o ponto atual e avança de fase
-function lockPosMeasurePoint() {
-  if (posMeasurePhase === 'p1') { posMeasureStart = { ...posMeasureCursor }; posMeasurePhase = 'p2'; }
-  else if (posMeasurePhase === 'p2') { posMeasurePhase = 'done'; }
-}
-
-// Trata o levantar do dedo/clique: fixa (se em cima do crosshair) ou reposiciona
-function handlePosMeasureRelease(pt) {
-  if (posMeasureGestureStart == null) { posMeasureCursor = pt; renderPosMeasure(); return; } // 1ª colocação: só posiciona
-  if (posMeasureDist(pt, posMeasureGestureStart) <= POS_MEASURE_LOCK_R) {
-    posMeasureCursor = { ...posMeasureGestureStart };   // confirma onde o crosshair já estava
-    lockPosMeasurePoint();
-  } else {
-    posMeasureCursor = pt;                               // reposiciona o crosshair
-  }
-  renderPosMeasure();
+// Coloca o ponto atual (ao largar) e avança de fase
+function placePosMeasurePoint() {
+  if (posMeasurePhase === 'p1' && posMeasureCursor) { posMeasureStart = { ...posMeasureCursor }; posMeasureCursor = null; posMeasurePhase = 'p2'; }
+  else if (posMeasurePhase === 'p2' && posMeasureCursor) { posMeasurePhase = 'done'; }
 }
 
 // Cria a camada de sobreposição (SVG + caixa) sobre o gráfico da posição.
@@ -2754,20 +2747,26 @@ function buildPosMeasureLayer(cont) {
     try { layer.setPointerCapture(e.pointerId); } catch (err) {}
     if (posMeasurePhase === 'done') { posMeasurePhase = 'p1'; posMeasureStart = null; posMeasureCursor = null; } // recomeça
     posMeasurePressing = true;
-    posMeasureGestureStart = posMeasureCursor ? { ...posMeasureCursor } : null; // onde estava antes deste gesto
-    posMeasureCursor = getXY(e);
+    posMeasureCursor = posMeasureOffset(getXY(e), e.pointerType);
     renderPosMeasure();
   });
 
   layer.addEventListener('pointermove', e => {
     if (!posMeasureOn) return;
-    posMeasureCursor = getXY(e);   // segue o dedo (arrasto) ou o rato (hover)
+    posMeasureCursor = posMeasureOffset(getXY(e), e.pointerType);  // mira segue (acima do dedo / no rato)
     renderPosMeasure();
   });
 
-  layer.addEventListener('pointerup', e => { if (!posMeasureOn || !posMeasurePressing) return; posMeasurePressing = false; handlePosMeasureRelease(getXY(e)); });
-  // Alguns dispositivos disparam pointercancel em vez de pointerup — confirma na mesma.
-  layer.addEventListener('pointercancel', () => { if (!posMeasureOn || !posMeasurePressing) return; posMeasurePressing = false; if (posMeasureCursor) handlePosMeasureRelease(posMeasureCursor); });
+  const release = e => {
+    if (!posMeasureOn || !posMeasurePressing) return;
+    posMeasurePressing = false;
+    if (e) posMeasureCursor = posMeasureOffset(getXY(e), e.pointerType);
+    placePosMeasurePoint();     // largar coloca o ponto
+    renderPosMeasure();
+  };
+  layer.addEventListener('pointerup', release);
+  // Alguns dispositivos disparam pointercancel em vez de pointerup — coloca na mesma.
+  layer.addEventListener('pointercancel', () => release(null));
 }
 
 function togglePosMeasure(btn) {
@@ -2777,7 +2776,7 @@ function togglePosMeasure(btn) {
   if (layer) layer.style.pointerEvents = posMeasureOn ? 'auto' : 'none';
   const chartEl = document.getElementById('pos-chart');
   if (chartEl) chartEl.style.cursor = posMeasureOn ? 'crosshair' : '';
-  posMeasurePhase = 'p1'; posMeasureStart = null; posMeasureCursor = null; posMeasurePressing = false; posMeasureGestureStart = null;
+  posMeasurePhase = 'p1'; posMeasureStart = null; posMeasureCursor = null; posMeasurePressing = false;
   if (posMeasureOn) renderPosMeasure();   // mostra a dica inicial
   else clearPosMeasure();
 }
@@ -2797,7 +2796,7 @@ function showPosMeasureHint(text) {
   }
 }
 
-// Crosshair de posicionamento do início (fase p1) — mostra o preço + dica de fixar
+// Mira de posicionamento do início (fase p1) — deslocada do dedo, mostra o preço
 function drawPosMeasureCursor(pt) {
   const svg = document.getElementById('pos-measure-svg');
   const box = document.getElementById('pos-measure-box');
@@ -2807,22 +2806,43 @@ function drawPosMeasureCursor(pt) {
   svg.innerHTML =
     `<line x1="${pt.x.toFixed(1)}" y1="0" x2="${pt.x.toFixed(1)}" y2="${lh}" stroke="${C}" stroke-width="1" stroke-dasharray="3 3" opacity=".65"/>` +
     `<line x1="0" y1="${pt.y.toFixed(1)}" x2="${lw}" y2="${pt.y.toFixed(1)}" stroke="${C}" stroke-width="1" stroke-dasharray="3 3" opacity=".65"/>` +
-    `<circle cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="7" fill="none" stroke="${C}" stroke-width="1.5"/>` +
+    `<circle cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="8" fill="none" stroke="${C}" stroke-width="1.5"/>` +
     `<circle cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="2" fill="${C}"/>`;
   if (box && posSeries && typeof posSeries.coordinateToPrice === 'function') {
     const pr = posSeries.coordinateToPrice(pt.y);
     box.style.display = '';
     box.style.borderColor = 'var(--border)';
     box.style.color = 'var(--dim)';
-    box.textContent = (pr != null ? 'início · ' + fmtPx(pr) : 'início') + ' · toca p/ fixar';
-    const bw = box.offsetWidth || 140, bh = box.offsetHeight || 22;
+    box.textContent = (pr != null ? 'início · ' + fmtPx(pr) : 'início') + ' · larga p/ colocar';
+    const bw = box.offsetWidth || 150, bh = box.offsetHeight || 22;
     box.style.left = Math.max(2, Math.min(pt.x + 14, lw - bw - 2)) + 'px';
-    box.style.top  = Math.max(2, Math.min(pt.y + 12, lh - bh - 2)) + 'px';
+    box.style.top  = Math.max(2, Math.min(pt.y - bh - 10, lh - bh - 2)) + 'px';
+  }
+}
+
+// Início já colocado, à espera de posicionar o fim (fase p2, antes de tocar)
+function drawPosMeasureWaitingEnd(a) {
+  const svg = document.getElementById('pos-measure-svg');
+  const box = document.getElementById('pos-measure-box');
+  if (!svg || !a) return;
+  const { w: lw, h: lh } = layerSize();
+  const C = '#7c8fff';
+  svg.innerHTML =
+    `<line x1="0" y1="${a.y.toFixed(1)}" x2="${lw}" y2="${a.y.toFixed(1)}" stroke="${C}" stroke-width="1" stroke-dasharray="3 3" opacity=".5"/>` +
+    `<circle cx="${a.x.toFixed(1)}" cy="${a.y.toFixed(1)}" r="4" fill="${C}"/>`;
+  if (box) {
+    box.style.display = '';
+    box.style.borderColor = 'var(--border)';
+    box.style.color = 'var(--dim)';
+    box.textContent = 'início colocado · arrasta p/ marcar o fim';
+    const bw = box.offsetWidth || 200;
+    box.style.left = Math.max(2, (lw - bw) / 2) + 'px';
+    box.style.top = '10px';
   }
 }
 
 function clearPosMeasure() {
-  posMeasurePhase = 'p1'; posMeasureStart = null; posMeasureCursor = null; posMeasureGestureStart = null; posMeasurePressing = false;
+  posMeasurePhase = 'p1'; posMeasureStart = null; posMeasureCursor = null; posMeasurePressing = false;
   const svg = document.getElementById('pos-measure-svg'); if (svg) svg.innerHTML = '';
   const box = document.getElementById('pos-measure-box'); if (box) box.style.display = 'none';
 }
@@ -2860,7 +2880,7 @@ function drawPosMeasure(a, b, pending) {
   box.style.borderColor = col;
   box.style.color = col;
   const delta = `${up ? '+' : ''}${fmtPx(dPrice)} · ${up ? '+' : ''}${fmt(pct, 2)}%${bars ? ` · ${bars}` : ''}`;
-  box.textContent = pending ? delta + ' · toca p/ fixar' : delta;
+  box.textContent = pending ? delta + ' · larga p/ colocar' : delta;
   const bw = box.offsetWidth || 120, bh = box.offsetHeight || 22;
   box.style.left = Math.max(2, Math.min(b.x + 10, lw - bw - 2)) + 'px';
   box.style.top  = Math.max(2, Math.min(b.y - bh - 6, lh - bh - 2)) + 'px';
