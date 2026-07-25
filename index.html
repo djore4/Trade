@@ -790,18 +790,35 @@ html.light .mnav-btn.active { color: var(--orange); }
 }
 @media (max-width: 600px) { .pos-metrics .ps-sep { display: none; } .pos-metrics { gap: 8px 16px; } }
 .pos-iv-bar { display: flex; gap: 4px; margin: 4px 0 12px; }
-/* Resumo macro condensado: faixa inline compacta */
-.pos-summary {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px;
-  background: var(--s1); border: 1px solid var(--border); border-radius: 9px;
-  padding: 9px 14px; font-size: 12px;
-}
+/* .ps-* : usados também pela faixa de métricas dentro do gráfico (.pos-metrics) */
 .ps-item { display: inline-flex; align-items: baseline; gap: 5px; white-space: nowrap; }
 .ps-lbl { color: var(--faint); font-size: 10px; text-transform: uppercase; letter-spacing: .05em; }
 .ps-val { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 12.5px; }
 .ps-sub { font-family: 'JetBrains Mono', monospace; color: var(--faint); font-size: 10.5px; }
 .ps-sep { width: 1px; height: 14px; background: var(--border); }
-@media (max-width: 600px) { .pos-summary .ps-sep { display: none; } .pos-summary { gap: 4px 14px; } }
+
+/* Resumo do portefólio: painel de indicadores (stat tiles) */
+.pos-summary { background: var(--s1); border: 1px solid var(--border); border-radius: 12px; padding: 13px 15px; }
+.pos-sum-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+.pos-sum-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--dim); }
+.pos-sum-count { display: inline-flex; align-items: center; gap: 5px; }
+.pc-badge { display: inline-flex; align-items: baseline; gap: 3px; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 12px; padding: 2px 8px; border-radius: 20px; background: var(--bg); border: 1px solid var(--border); }
+.pc-badge u { font-size: 8.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; text-decoration: none; opacity: .8; }
+.pc-badge.pc-l { color: var(--green); }
+.pc-badge.pc-s { color: var(--red); }
+.pc-badge.pc-total { color: var(--dim); }
+.pos-sum-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.pst { background: var(--s1); padding: 11px 13px 12px; display: flex; flex-direction: column; gap: 5px; position: relative; min-width: 0; }
+.pst.pst-accent { padding-left: 15px; }
+.pst.pst-accent::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent-c, var(--border2)); }
+.pst-lbl { font-size: 9.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--faint); display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pst-tag { font-size: 8px; font-weight: 700; letter-spacing: .05em; color: var(--orange); border: 1px solid var(--orange); border-radius: 4px; padding: 0 3px; line-height: 1.35; opacity: .85; }
+.pst-val { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 17px; line-height: 1.1; letter-spacing: -.01em; }
+.pst-sub { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--dim); line-height: 1.35; }
+.pst-sub-em { font-weight: 700; }
+.pst-meter { height: 4px; border-radius: 3px; background: var(--border); overflow: hidden; margin: 1px 0; }
+.pst-meter-fill { height: 100%; border-radius: 3px; transition: width .3s, background .3s; }
+@media (max-width: 400px) { .pos-sum-grid { grid-template-columns: repeat(2, 1fr); } }
 
 /* Cenário de saída */
 .pos-exit { margin-top: 13px; padding-top: 13px; border-top: 1px solid var(--border); }
@@ -2213,34 +2230,91 @@ function refreshPosTab() {
   addPosPriceLines(p);
 }
 
-// Resumo macro condensado: compila TODAS as posições numa faixa inline
+// Lucro projetado em USD ao preço-alvo de uma posição (mesma fórmula do cenário de saída)
+function posExitUsd(p, target) {
+  const dir = p.side === 'Buy' ? 1 : -1;
+  const entry = parseFloat(p.avgPrice), size = parseFloat(p.size);
+  if (posCat(p.symbol) === 'inverse') return dir * size * (1 / entry - 1 / target) * target;
+  return dir * size * (target - entry);
+}
+
+// Agrega o cenário de saída (TP) de todas as posições com alvo definido
+function posExitAggregate() {
+  let usd = 0, marg = 0, n = 0;
+  positions.forEach(p => {
+    const t = parseFloat(posExitTargets[posKeyOf(p)]);
+    if (!(t > 0)) return;
+    usd += posExitUsd(p, t);
+    marg += posMarginUsd(p);
+    n++;
+  });
+  return { usd, marg, n, roe: marg > 0 ? (usd / marg) * 100 : 0 };
+}
+
+// Resumo do portefólio: painel de indicadores (stat tiles) sobre TODAS as posições
 function renderPosSummary() {
   const el = document.getElementById('pos-summary'); if (!el) return;
   if (!positions.length) { el.style.display = 'none'; return; }
   el.style.display = '';
-  let pnlUsd = 0, exp = 0, marg = 0, minDist = Infinity;
+  let pnlUsd = 0, exp = 0, marg = 0, minDist = Infinity, minSym = '', nLong = 0, nShort = 0;
   positions.forEach(p => {
     const mark = parseFloat(p.markPrice), liq = parseFloat(p.liqPrice);
     pnlUsd += posPnlUsd(p);
     exp += posNotionalUsd(p);   // nocional em USD (inverso convertido)
     marg += posMarginUsd(p);    // margem em USD (inverso convertido)
-    if (liq > 0 && mark > 0) { const dd = Math.abs((liq - mark) / mark) * 100; if (dd < minDist) minDist = dd; }
+    if (p.side === 'Buy') nLong++; else nShort++;
+    if (liq > 0 && mark > 0) { const dd = Math.abs((liq - mark) / mark) * 100; if (dd < minDist) { minDist = dd; minSym = p.symbol; } }
   });
   const roe = marg > 0 ? (pnlUsd / marg) * 100 : 0;
   const avgLev = marg > 0 ? exp / marg : 0;
+  const ex = posExitAggregate();
+  const sg = v => (v >= 0 ? '+' : '');
   const pnlC = pnlUsd >= 0 ? 'var(--green)' : 'var(--red)';
-  const distC = minDist < 8 ? 'var(--red)' : minDist < 20 ? 'var(--orange)' : 'var(--green)';
-  const item = (lbl, val, col, sub) =>
-    `<span class="ps-item"><span class="ps-lbl">${lbl}</span><span class="ps-val"${col ? ` style="color:${col}"` : ''}>${val}</span>${sub ? `<span class="ps-sub">${sub}</span>` : ''}</span>`;
-  const sep = '<span class="ps-sep"></span>';
-  el.innerHTML = [
-    item('Trades', String(positions.length)),
-    item('PnL', `${pnlUsd >= 0 ? '+' : ''}${fmtUsd(pnlUsd, 0)}`, pnlC),
-    item('ROE', `${roe >= 0 ? '+' : ''}${fmt(roe, 1)}%`, pnlC),
-    item('Exp.', fmtUsd(exp, 0), null, `${fmt(avgLev, 1)}×`),
-    item('Margem', fmtUsd(marg, 0)),
-    item('Liq.', minDist < Infinity ? `${fmt(minDist, 1)}%` : '—', distC),
-  ].join(sep);
+  const exC = ex.n === 0 ? 'var(--faint)' : (ex.usd >= 0 ? 'var(--green)' : 'var(--red)');
+  const hasDist = minDist < Infinity;
+  const distC = !hasDist ? 'var(--faint)' : minDist < 8 ? 'var(--red)' : minDist < 20 ? 'var(--orange)' : 'var(--green)';
+  const meterW = hasDist ? Math.max(5, Math.min(100, minDist * 2.5)) : 0; // ≥40% de dist. → barra cheia
+
+  el.innerHTML = `
+    <div class="pos-sum-head">
+      <span class="pos-sum-title">Todas as posições</span>
+      <span class="pos-sum-count">
+        <span class="pc-badge pc-l">${nLong}<u>long</u></span>
+        <span class="pc-badge pc-s">${nShort}<u>short</u></span>
+        <span class="pc-badge pc-total">${positions.length}<u>trades</u></span>
+      </span>
+    </div>
+    <div class="pos-sum-grid">
+      <div class="pst pst-accent" style="--accent-c:${pnlC}">
+        <div class="pst-lbl">PnL não realizado</div>
+        <div class="pst-val" style="color:${pnlC}">${sg(pnlUsd)}${fmtUsd(pnlUsd, 2)}</div>
+        <div class="pst-sub">ROE <span class="pst-sub-em" style="color:${pnlC}">${sg(roe)}${fmt(roe, 1)}%</span></div>
+      </div>
+      <div class="pst pst-accent" style="--accent-c:${exC}">
+        <div class="pst-lbl">Cenário de saída <span class="pst-tag">TP</span></div>
+        ${ex.n > 0
+          ? `<div class="pst-val" style="color:${exC}">${sg(ex.usd)}${fmtUsd(ex.usd, 2)}</div>
+             <div class="pst-sub">ROE <span class="pst-sub-em" style="color:${exC}">${sg(ex.roe)}${fmt(ex.roe, 1)}%</span> · ${ex.n}/${positions.length} alvos</div>`
+          : `<div class="pst-val" style="color:var(--faint)">—</div>
+             <div class="pst-sub" style="color:var(--faint)">define alvos nos trades</div>`}
+      </div>
+      <div class="pst">
+        <div class="pst-lbl">Exposição</div>
+        <div class="pst-val">${fmtUsd(exp, 0)}</div>
+        <div class="pst-sub">alav. média <span class="pst-sub-em">${fmt(avgLev, 1)}×</span></div>
+      </div>
+      <div class="pst">
+        <div class="pst-lbl">Margem</div>
+        <div class="pst-val">${fmtUsd(marg, 0)}</div>
+        <div class="pst-sub">capital alocado</div>
+      </div>
+      <div class="pst">
+        <div class="pst-lbl">Dist. liquidação</div>
+        <div class="pst-val" style="color:${distC}">${hasDist ? fmt(minDist, 1) + '%' : '—'}</div>
+        <div class="pst-meter"><div class="pst-meter-fill" style="width:${meterW}%;background:${distC}"></div></div>
+        <div class="pst-sub">${hasDist ? 'mais próx. ' + minSym : 'sem liquidação'}</div>
+      </div>
+    </div>`;
 }
 
 // Cenário de saída: lucro (coin/USD) e ROE ao preço de saída (fórmula linear/inversa)
@@ -2283,6 +2357,7 @@ function onPosExitPrice(val) {
   renderPosExitResult(p);
   renderPosMetrics(p);      // atualiza a métrica de Take Profit
   addPosPriceLines(p);      // move a linha verde (alvo) no gráfico
+  renderPosSummary();       // espelha o TP agregado no resumo do topo
 }
 
 // Mudar timeframe -> recarrega o gráfico da posição selecionada
@@ -4564,7 +4639,7 @@ function toggleTheme() {
 const PV_SEL = '#db-total-value, #db-pnl-usd, #db-pnl-pct, #db-roi-usd, #db-roi-pct,' +
   ' #hdr-inv-pnl, .db-asset-usd, .db-asset-qty, .db-asset-pnl, .dist-val, .dist-d-val,' +
   ' .exit-summary-val, .exit-result-usd, .exit-result-pct, .ps-val,' +
-  ' .pos-row-pnl-usd, .pos-row-pnl-roe, .prg-val,' +
+  ' .pst-val, .pst-sub, .pos-row-pnl-usd, .pos-row-pnl-roe, .prg-val,' +
   ' .pos-exit-cell-val, .agent-chip.sens b';
 let pvOn = false, pvObserver = null, pvScheduled = false;
 
