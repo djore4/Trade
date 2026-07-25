@@ -2695,8 +2695,8 @@ function renderPosLegend(p) {
 let posMeasureOn = false;
 let posMeasureStart = null;                 // ponto de início fixado (ou null)
 let posMeasurePhase = 'idle';               // 'idle' | 'armed' (início fixado) | 'done'
-let posMeasureDownPt = null, posMeasurePressing = false;
-const POS_MEASURE_TH = 6;                    // limiar (px) para distinguir toque de arrasto
+let posMeasureDownPt = null, posMeasurePressing = false, posMeasureDragged = false;
+const POS_MEASURE_TH = 8;                    // limiar (px) de movimento p/ contar como arrasto
 
 // Cria a camada de sobreposição (SVG + caixa) sobre o gráfico da posição.
 function buildPosMeasureLayer(cont) {
@@ -2709,13 +2709,13 @@ function buildPosMeasureLayer(cont) {
   cont.appendChild(layer);
 
   const getXY = e => { const r = layer.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
-  const moved = (a, b) => a && b && Math.hypot(b.x - a.x, b.y - a.y) > POS_MEASURE_TH;
 
   layer.addEventListener('pointerdown', e => {
     if (!posMeasureOn) return;
     e.preventDefault();
     try { layer.setPointerCapture(e.pointerId); } catch (err) {}
     posMeasurePressing = true;
+    posMeasureDragged = false;              // só passa a true com movimento real durante a pressão
     posMeasureDownPt = getXY(e);
     // Se já há início fixado, pressionar começa logo a mostrar a medição até ao dedo.
     if (posMeasurePhase === 'armed') drawPosMeasure(posMeasureStart, posMeasureDownPt);
@@ -2725,8 +2725,10 @@ function buildPosMeasureLayer(cont) {
     if (!posMeasureOn) return;
     const pt = getXY(e);
     if (posMeasurePressing) {
-      if (posMeasurePhase === 'armed') drawPosMeasure(posMeasureStart, pt);      // arrasta o fim
-      else if (moved(posMeasureDownPt, pt)) drawPosMeasure(posMeasureDownPt, pt); // arrasto novo
+      // arrasto = movimento real desde o ponto onde se pressionou (ignora jitter do toque)
+      if (posMeasureDownPt && Math.hypot(pt.x - posMeasureDownPt.x, pt.y - posMeasureDownPt.y) > POS_MEASURE_TH) posMeasureDragged = true;
+      if (posMeasurePhase === 'armed') drawPosMeasure(posMeasureStart, pt);       // arrasta o fim
+      else if (posMeasureDragged) drawPosMeasure(posMeasureDownPt, pt);           // arrasto novo
       else drawPosMeasureCursor(pt);
     } else {
       if (posMeasurePhase === 'armed') drawPosMeasure(posMeasureStart, pt);       // preview início→cursor
@@ -2739,26 +2741,25 @@ function buildPosMeasureLayer(cont) {
     if (!posMeasureOn || !posMeasurePressing) return;
     posMeasurePressing = false;
     const pt = getXY(e);
-    if (moved(posMeasureDownPt, pt)) {
-      // Arrasto → medição completa (início = onde pressionou, ou o início já fixado)
-      const start = posMeasurePhase === 'armed' ? posMeasureStart : posMeasureDownPt;
-      posMeasureStart = start;
-      drawPosMeasure(start, pt);
+    if (posMeasurePhase === 'armed') {
+      // Já havia início → este levantar (2º toque OU fim de arrasto) marca o FIM.
+      drawPosMeasure(posMeasureStart, pt);
       posMeasurePhase = 'done';
-    } else if (posMeasurePhase === 'armed') {
-      // 2º toque → marca o fim
+    } else if (posMeasureDragged) {
+      // Arrasto contínuo a partir do nada → medição completa numa só gesto.
+      posMeasureStart = posMeasureDownPt;
       drawPosMeasure(posMeasureStart, pt);
       posMeasurePhase = 'done';
     } else {
-      // 1º toque (idle ou depois de done) → marca o início
+      // 1º TOQUE (sem arrasto): SÓ fixa o início — nunca termina aqui.
       posMeasureStart = pt;
       posMeasurePhase = 'armed';
       drawPosMeasureCursor(pt);
     }
-    posMeasureDownPt = null;
+    posMeasureDownPt = null; posMeasureDragged = false;
   };
   layer.addEventListener('pointerup', up);
-  layer.addEventListener('pointercancel', () => { posMeasurePressing = false; posMeasureDownPt = null; });
+  layer.addEventListener('pointercancel', () => { posMeasurePressing = false; posMeasureDownPt = null; posMeasureDragged = false; });
   layer.addEventListener('pointerleave', () => {
     if (!posMeasureOn || posMeasurePressing) return;
     if (posMeasurePhase === 'idle') clearPosMeasure(); // só limpa o apontador; mantém início/medição
@@ -2772,7 +2773,7 @@ function togglePosMeasure(btn) {
   if (layer) layer.style.pointerEvents = posMeasureOn ? 'auto' : 'none';
   const chartEl = document.getElementById('pos-chart');
   if (chartEl) chartEl.style.cursor = posMeasureOn ? 'crosshair' : '';
-  posMeasureStart = null; posMeasurePhase = 'idle'; posMeasurePressing = false; posMeasureDownPt = null;
+  posMeasureStart = null; posMeasurePhase = 'idle'; posMeasurePressing = false; posMeasureDownPt = null; posMeasureDragged = false;
   if (posMeasureOn) drawPosMeasureCursor({ x: layerSize().w / 2, y: layerSize().h / 2 }); // apontador inicial
   else clearPosMeasure();
 }
@@ -2806,7 +2807,7 @@ function drawPosMeasureCursor(pt) {
 }
 
 function clearPosMeasure() {
-  posMeasureStart = null; posMeasurePhase = 'idle'; posMeasureDownPt = null; posMeasurePressing = false;
+  posMeasureStart = null; posMeasurePhase = 'idle'; posMeasureDownPt = null; posMeasurePressing = false; posMeasureDragged = false;
   const svg = document.getElementById('pos-measure-svg'); if (svg) svg.innerHTML = '';
   const box = document.getElementById('pos-measure-box'); if (box) box.style.display = 'none';
 }
