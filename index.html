@@ -130,6 +130,8 @@ body {
 @media (max-width: 600px) { .hdr-right { gap: 7px; padding-left: 8px; } .hdr-right .hdr-label { font-size: 8px; } .hdr-right .hdr-val { font-size: 11px; } }
 
 .hdr-pill { display: flex; align-items: center; gap: 5px; }
+.hdr-pill-btn { border-radius: 7px; padding: 3px 6px; margin: -3px -2px; transition: background .12s; }
+.hdr-pill-btn:hover { background: var(--s2); }
 .hdr-label { font-size: 9px; color: var(--faint); text-transform: uppercase; letter-spacing: .08em; }
 .hdr-val { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text); }
 .hdr-sep { width: 1px; height: 14px; background: var(--border); }
@@ -868,9 +870,10 @@ html.light .mnav-btn.active { color: var(--orange); }
       <span id="hdr-fund" class="hdr-val mono">—</span>
     </div>
     <div class="hdr-sep"></div>
-    <div class="hdr-pill" title="PnL somado dos trades inversos (futuros)">
-      <span class="hdr-label">Inv</span>
+    <div class="hdr-pill hdr-pill-btn" onclick="openPerpDetail()" title="ROI dos perpétuos — clica para ver o histórico" style="cursor:pointer">
+      <span class="hdr-label">PERP</span>
       <span id="hdr-inv-pnl" class="hdr-val mono">—</span>
+      <svg width="9" height="9" viewBox="0 0 11 11" fill="none" style="opacity:.55;margin-left:1px"><polyline points="1,8.5 4,5 6.5,7 10,2.5" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </div>
     <div class="hdr-sep"></div>
     <button class="theme-btn privacy-btn" id="privacy-btn" onclick="togglePrivacy()" title="Ocultar / mostrar valores do portefólio">
@@ -4749,7 +4752,7 @@ function toggleTheme() {
 // cor e todo o layout (só se altera o texto dos nós, nunca a estrutura/estilos).
 // Um MutationObserver reaplica a máscara após cada re-render.
 const PV_SEL = '#db-total-value, #db-pnl-usd, #db-pnl-pct, #db-roi-usd, #db-roi-pct,' +
-  ' #hdr-inv-pnl, .db-asset-usd, .db-asset-qty, .db-asset-pnl, .dist-val, .dist-d-val,' +
+  ' #hdr-inv-pnl, #perpd-val, #perpd-chip, .db-asset-usd, .db-asset-qty, .db-asset-pnl, .dist-val, .dist-d-val,' +
   ' .exit-summary-val, .exit-result-usd, .exit-result-pct, .ps-val,' +
   ' .pst-val, .pst-sub, .pos-row-pnl-usd, .pos-row-pnl-roe, .prg-val,' +
   ' .pos-exit-cell-val, .agent-chip.sens b';
@@ -4937,6 +4940,142 @@ function drawFgChart(arr) {
   const fmtD = t => new Date(t).toLocaleDateString('pt-PT', { day: 'numeric', month: 'short' });
   [0, Math.floor((pts.length - 1) / 2), pts.length - 1].forEach(i => {
     g += `<text x="${toX(i).toFixed(1)}" y="${H - 6}" text-anchor="middle" font-size="9" fill="var(--faint)">${fmtD(pts[i].t)}</text>`;
+  });
+  svg.innerHTML = g;
+}
+
+// ── ROI PERPÉTUOS · DETALHE (bottom sheet com histórico) ──────────────────────
+// Reconstrói o histórico do ROI dos perpétuos (contratos inversos) a partir das
+// klines: ROI(t) = Σ PnL(t) / Σ margem, com o preço de cada candle. Mostra a
+// flutuação do ROI ao longo do tempo, ao estilo do detalhe do Fear & Greed.
+const PERP_TFS = [
+  { lbl: '1D', iv: '15', lim: 96 }, { lbl: '1S', iv: '60', lim: 168 },
+  { lbl: '1M', iv: '240', lim: 180 }, { lbl: '3M', iv: 'D', lim: 90 }, { lbl: 'Máx', iv: 'D', lim: 200 },
+];
+let perpTfIdx = 1;
+
+function perpPositions() { return positions.filter(p => posCat(p.symbol) === 'inverse'); }
+
+async function loadPerpRoiHist(tf) {
+  const perps = perpPositions();
+  if (!perps.length) return [];
+  // klines de cada posição (mesmo intervalo → tempos alinhados entre símbolos)
+  const series = await Promise.all(perps.map(async p => (await fetchKlines(p.symbol, tf.iv, null)).slice(-tf.lim)));
+  const maps = series.map(s => { const m = new Map(); s.forEach(k => m.set(k.time, k.close)); return m; });
+  // linha temporal = instantes presentes em TODAS as posições
+  const base = series.reduce((a, s) => (a && a.length <= s.length ? a : s), series[0]) || [];
+  const times = base.map(k => k.time).filter(t => maps.every(m => m.has(t)));
+  const out = [];
+  times.forEach(t => {
+    let pnl = 0, marg = 0;
+    perps.forEach((p, i) => {
+      const price = maps[i].get(t); if (!(price > 0)) return;
+      const dir = p.side === 'Buy' ? 1 : -1;
+      const entry = parseFloat(p.avgPrice), size = parseFloat(p.size), lev = parseFloat(p.leverage);
+      if (!(entry > 0) || !(lev > 0)) return;
+      pnl  += dir * size * (price / entry - 1);   // PnL(USD) do inverso ao preço do candle
+      marg += size * price / (entry * lev);       // margem(USD) equivalente (mesma def. do ROE)
+    });
+    if (marg > 0) out.push({ t: t * 1000, v: (pnl / marg) * 100 });
+  });
+  return out;
+}
+
+function ensurePerpSheet() {
+  let ov = document.getElementById('perp-sheet-ov');
+  if (ov) return ov;
+  ov = document.createElement('div');
+  ov.id = 'perp-sheet-ov';
+  ov.className = 'sheet-ov';
+  ov.addEventListener('click', e => { if (e.target === ov) closePerpDetail(); });
+  ov.innerHTML =
+    `<div class="sheet">
+       <div class="sheet-grab"></div>
+       <div class="sheet-head">
+         <div class="sheet-title">ROI · Perpétuos</div>
+         <button class="sheet-x" onclick="closePerpDetail()">&#10005;</button>
+       </div>
+       <div class="fgd-top">
+         <div id="perpd-val" class="fgd-val">—</div>
+         <span id="perpd-chip" class="fgd-chip">—</span>
+       </div>
+       <div id="perpd-tfs" class="fgd-tfs"></div>
+       <div class="fgd-chart-wrap"><svg id="perpd-svg" viewBox="0 0 360 220" style="width:100%;height:auto;display:block"></svg></div>
+       <div id="perpd-note" class="fgd-lg" style="justify-content:center;margin-top:8px;color:var(--faint)"></div>
+     </div>`;
+  document.body.appendChild(ov);
+  return ov;
+}
+
+async function openPerpDetail() {
+  const ov = ensurePerpSheet();
+  renderPerpTfs();
+  requestAnimationFrame(() => ov.classList.add('open'));
+  await refreshPerpDetail();
+}
+function closePerpDetail() { const ov = document.getElementById('perp-sheet-ov'); if (ov) ov.classList.remove('open'); }
+function renderPerpTfs() {
+  const el = document.getElementById('perpd-tfs'); if (!el) return;
+  el.innerHTML = PERP_TFS.map((t, i) => `<button class="fgd-tf${i === perpTfIdx ? ' active' : ''}" onclick="setPerpTf(${i})">${t.lbl}</button>`).join('');
+}
+async function setPerpTf(i) { perpTfIdx = Math.max(0, Math.min(PERP_TFS.length - 1, i)); renderPerpTfs(); await refreshPerpDetail(); }
+
+async function refreshPerpDetail() {
+  const tf = PERP_TFS[perpTfIdx];
+  const svg = document.getElementById('perpd-svg');
+  const valEl = document.getElementById('perpd-val'), chipEl = document.getElementById('perpd-chip'), noteEl = document.getElementById('perpd-note');
+  const perps = perpPositions();
+  if (!perps.length) {
+    if (svg) svg.innerHTML = `<text x="180" y="110" text-anchor="middle" font-size="11" fill="var(--faint)">Sem posições perpétuas abertas</text>`;
+    if (valEl) { valEl.textContent = '—'; valEl.style.color = 'var(--text)'; }
+    if (chipEl) { chipEl.textContent = '—'; chipEl.style.background = 'var(--s2)'; chipEl.style.color = 'var(--dim)'; }
+    if (noteEl) noteEl.textContent = '';
+    return;
+  }
+  if (svg) svg.innerHTML = `<text x="180" y="110" text-anchor="middle" font-size="11" fill="var(--faint)">A carregar…</text>`;
+  const arr = await loadPerpRoiHist(tf);
+  if (perpTfIdx !== PERP_TFS.indexOf(tf)) return; // mudou entretanto
+  // valor atual = ROI agregado atual (consistente com a app)
+  let pnl = 0, marg = 0;
+  perps.forEach(p => { pnl += posPnlUsd(p); marg += posMarginUsd(p); });
+  const curRoi = marg > 0 ? (pnl / marg) * 100 : (arr.length ? arr[arr.length - 1].v : 0);
+  if (valEl) { valEl.innerHTML = `${curRoi >= 0 ? '+' : ''}${fmt(curRoi, 2)}<span>%</span>`; valEl.style.color = curRoi >= 0 ? 'var(--green)' : 'var(--red)'; }
+  if (chipEl) { chipEl.textContent = `${pnl >= 0 ? '+' : ''}${fmtUsd(pnl, 2)}`; chipEl.style.background = curRoi >= 0 ? '#26a65b' : '#e53935'; chipEl.style.color = '#fff'; }
+  if (noteEl) noteEl.textContent = perps.map(p => p.symbol).join(' · ');
+  drawPerpChart(arr);
+}
+
+function drawPerpChart(arr) {
+  const svg = document.getElementById('perpd-svg'); if (!svg) return;
+  if (!arr || arr.length < 2) { svg.innerHTML = `<text x="180" y="110" text-anchor="middle" font-size="11" fill="var(--faint)">Sem dados suficientes</text>`; return; }
+  let pts = arr, MAXP = 420;
+  if (pts.length > MAXP) { const step = pts.length / MAXP, s = []; for (let i = 0; i < pts.length; i += step) s.push(pts[Math.floor(i)]); s[s.length - 1] = pts[pts.length - 1]; pts = s; }
+  const W = 360, H = 220, x0 = 36, x1 = 300, y0 = 12, y1 = 196;
+  let vmin = Math.min(0, ...pts.map(p => p.v)), vmax = Math.max(0, ...pts.map(p => p.v));
+  if (vmax - vmin < 1) { vmax += 1; vmin -= 1; }
+  const pad = (vmax - vmin) * 0.08; vmax += pad; vmin -= pad;
+  const toX = i => x0 + (i / (pts.length - 1)) * (x1 - x0);
+  const toY = v => y1 - ((v - vmin) / (vmax - vmin)) * (y1 - y0);
+  let g = '';
+  const ticks = 4;
+  for (let k = 0; k <= ticks; k++) {
+    const val = vmin + (vmax - vmin) * k / ticks, y = toY(val).toFixed(1);
+    g += `<line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" stroke="var(--border)" stroke-width="1" opacity=".5"/>`;
+    g += `<text x="${x0 - 5}" y="${(+y + 3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--faint)" font-family="JetBrains Mono,monospace">${val >= 0 ? '+' : ''}${fmt(val, 0)}%</text>`;
+  }
+  // linha do zero destacada
+  const zeroY = toY(0).toFixed(1);
+  g += `<line x1="${x0}" y1="${zeroY}" x2="${x1}" y2="${zeroY}" stroke="var(--dim)" stroke-width="1" stroke-dasharray="4 3"/>`;
+  // linha do ROI (verde acima de 0, vermelho abaixo)
+  for (let i = 1; i < pts.length; i++) {
+    const col = pts[i].v >= 0 ? '#2dd4a0' : '#f7647a';
+    g += `<line x1="${toX(i - 1).toFixed(1)}" y1="${toY(pts[i - 1].v).toFixed(1)}" x2="${toX(i).toFixed(1)}" y2="${toY(pts[i].v).toFixed(1)}" stroke="${col}" stroke-width="2" stroke-linecap="round"/>`;
+  }
+  const span = pts[pts.length - 1].t - pts[0].t, intraday = span < 2 * 864e5;
+  const fmtD = t => new Date(t).toLocaleDateString('pt-PT', { day: 'numeric', month: 'short' });
+  const fmtT = t => new Date(t).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+  [0, Math.floor((pts.length - 1) / 2), pts.length - 1].forEach(i => {
+    g += `<text x="${toX(i).toFixed(1)}" y="${H - 6}" text-anchor="middle" font-size="9" fill="var(--faint)">${intraday ? fmtT(pts[i].t) : fmtD(pts[i].t)}</text>`;
   });
   svg.innerHTML = g;
 }
