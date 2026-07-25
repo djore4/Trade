@@ -747,17 +747,40 @@ html.light .mnav-btn.active { color: var(--orange); }
 }
 
 /* ─── POSIÇÕES (tab) ─────────────────────────────── */
-.pos-selector { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
-.pos-selector::-webkit-scrollbar { height: 0; }
-.pos-chip {
-  flex-shrink: 0; display: flex; flex-direction: column; gap: 4px; align-items: flex-start;
-  background: var(--s1); border: 1px solid var(--border); border-radius: 10px; color: var(--text);
-  padding: 9px 12px; cursor: pointer; min-width: 132px; transition: border-color .12s, background .12s;
+/* Lista vertical de trades (estilo Bybit) — clicar expande o gráfico inline */
+.pos-list-tab { display: flex; flex-direction: column; gap: 10px; }
+.pos-row { background: var(--s1); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; transition: border-color .12s; }
+.pos-row:hover { border-color: var(--border2); }
+.pos-row.expanded { border-color: var(--orange); }
+.pos-row-head { position: relative; display: flex; align-items: stretch; gap: 12px; padding: 13px 14px 13px 16px; cursor: pointer; user-select: none; }
+.pos-row-accent { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+.pos-row-accent.pa-long { background: var(--green); }
+.pos-row-accent.pa-short { background: var(--red); }
+.pos-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 11px; }
+.pos-row-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.pos-row-idz { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
+.pos-row-sym { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 14px; color: var(--text); }
+.pos-row-side { font-size: 11px; font-weight: 700; }
+.pos-row-side.long { color: var(--green); }
+.pos-row-side.short { color: var(--red); }
+.pos-row-lev { font-size: 11px; color: var(--dim); }
+.pos-row-lev::before { content: '|'; color: var(--faint); margin-right: 8px; }
+.pos-row-pnl { text-align: right; line-height: 1.25; flex-shrink: 0; }
+.pos-row-pnl-usd { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 14px; }
+.pos-row-pnl-roe { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; font-weight: 600; opacity: .9; }
+.pos-row-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px 12px; }
+.prg-cell { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.prg-lbl { font-size: 9.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.prg-val { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 600; color: var(--text); }
+.prg-val.liq { color: var(--orange); }
+.pos-row-chevron { align-self: center; color: var(--faint); font-size: 13px; transition: transform .16s; flex-shrink: 0; }
+.pos-row.expanded .pos-row-chevron { transform: rotate(180deg); color: var(--orange); }
+.pos-row-slot:empty { display: none; }
+.pos-detail-card { border-top: 1px solid var(--border) !important; margin: 0 !important; }
+.pos-detail-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 4px 2px 2px; min-height: 16px; }
+@media (max-width: 600px) {
+  .pos-row-grid { grid-template-columns: repeat(2, 1fr); gap: 9px 12px; }
 }
-.pos-chip:hover { border-color: var(--border2); }
-.pos-chip.active { border-color: var(--orange); background: rgba(247,147,26,.06); }
-.pos-chip-sym { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 12.5px; color: var(--text); }
-.pos-chip-pnl { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; }
 .pos-legend { display: flex; flex-wrap: wrap; gap: 14px; padding: 10px 4px 2px; }
 .pos-legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--dim); }
 .pos-legend-swatch { width: 16px; height: 0; border-top-width: 2px; border-top-style: solid; }
@@ -1300,16 +1323,19 @@ html.light .mnav-btn.active { color: var(--orange); }
     <div id="pos-summary" class="pos-summary" style="display:none"></div>
 
     <div class="sec-label">Trades abertos</div>
-    <div id="pos-selector" class="pos-selector"><div class="db-empty">A carregar posições...</div></div>
+    <div id="pos-list-tab" class="pos-list-tab"><div class="db-empty">A carregar posições...</div></div>
 
-    <div class="card" id="pos-detail-card" style="display:none;border-radius:12px">
-      <div class="card-header">
-        <div class="card-title"><div class="ctdot" id="pd-dot"></div><span id="pd-title">—</span></div>
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
-          <span class="tag" id="pd-type">—</span>
-          <span class="mono" id="pd-funding" style="font-size:11px"></span>
-          <span class="mono" id="pd-mark" style="font-size:12px;color:var(--orange)">—</span>
-        </div>
+    <div id="pos-empty" class="db-empty" style="display:none">Sem posições abertas na Bybit.</div>
+  </div>
+
+  <!-- Bloco reutilizável do gráfico: fica escondido neste holder e é movido para
+       dentro da linha do trade clicado. Só há um gráfico visível de cada vez —
+       abrir outro trade fecha o anterior automaticamente. -->
+  <div id="pos-detail-holder" style="display:none">
+    <div class="card pos-detail-card" id="pos-detail-card">
+      <div class="pos-detail-head">
+        <span class="mono" id="pd-funding" style="font-size:11px"></span>
+        <span class="mono" id="pd-mark" style="font-size:12px;color:var(--orange)">—</span>
       </div>
       <div class="pos-iv-bar" id="pos-iv-bar">
         <button class="iv-btn" data-iv="5"   onclick="setPosIv('5',this)">5m</button>
@@ -1340,8 +1366,6 @@ html.light .mnav-btn.active { color: var(--orange); }
         </div>
       </div>
     </div>
-
-    <div id="pos-empty" class="db-empty" style="display:none">Sem posições abertas na Bybit.</div>
   </div>
 </div>
 
@@ -2161,27 +2185,26 @@ function posRoe(p) {
 
 function renderPosTab() {
   const empty = document.getElementById('pos-empty');
-  const card  = document.getElementById('pos-detail-card');
-  renderPosSelector();
+  renderPosList();
   if (!positions.length) {
-    if (card) card.style.display = 'none';
     if (empty) empty.style.display = '';
     return;
   }
   if (empty) empty.style.display = 'none';
   renderPosSummary();
-  const keys = positions.map(posKeyOf);
-  if (!selectedPosKey || !keys.includes(selectedPosKey)) selectedPosKey = keys[0];
-  selectPos(selectedPosKey);
+  // Sem auto-expansão: os trades aparecem em lista e o gráfico só abre ao clicar
+  // (um de cada vez). Se já havia um aberto e continua na lista, mantém-se.
 }
 
-// Atualização em ciclo: refresca seletor + resumo + métricas + linhas sem reconstruir o gráfico
+// Atualização em ciclo: refresca lista + resumo + (se houver gráfico aberto) as suas
+// métricas/linhas — sem reconstruir a lista nem o gráfico, para não perder o estado.
 function refreshPosTab() {
   if (!positions.length) { renderPosTab(); return; }
-  renderPosSelector();
+  renderPosList();
   renderPosSummary();
+  if (!selectedPosKey) return;
   const p = positions.find(x => posKeyOf(x) === selectedPosKey);
-  if (!p) { renderPosTab(); return; }
+  if (!p) { collapsePos(); return; }
   renderPosMetrics(p);
   fetchPosFunding(p);
   renderPosExitResult(p);
@@ -2271,37 +2294,125 @@ function setPosIv(iv, btn) {
   if (p) loadPosChart(p);
 }
 
-function renderPosSelector() {
-  const el = document.getElementById('pos-selector');
+// HTML de uma linha (trade) na lista estilo Bybit. Valores dinâmicos têm id p/ update.
+function posRowHtml(p) {
+  const k = posKeyOf(p), isLong = p.side === 'Buy', isInv = posCat(p.symbol) === 'inverse';
+  const pnl = posPnlUsd(p), roe = posRoe(p), lev = parseFloat(p.leverage);
+  const ent = parseFloat(p.avgPrice), mark = parseFloat(p.markPrice), liq = parseFloat(p.liqPrice);
+  const notUsd = posNotionalUsd(p);
+  const col = pnl >= 0 ? 'var(--green)' : 'var(--red)';
+  const expanded = k === selectedPosKey ? ' expanded' : '';
+  return `<div class="pos-row${expanded}" id="pos-row-${k}">
+    <div class="pos-row-head" onclick="selectPos('${k}')">
+      <div class="pos-row-accent ${isLong ? 'pa-long' : 'pa-short'}"></div>
+      <div class="pos-row-main">
+        <div class="pos-row-top">
+          <div class="pos-row-idz">
+            <span class="pos-row-sym">${p.symbol}</span>
+            <span class="pos-row-side ${isLong ? 'long' : 'short'}">${isLong ? 'Long' : 'Short'}</span>
+            <span class="pos-row-lev">${lev}× · ${isInv ? 'Inverse' : 'Linear'}</span>
+          </div>
+          <div class="pos-row-pnl">
+            <div class="pos-row-pnl-usd" id="prow-pnl-${k}" style="color:${col}">${pnl >= 0 ? '+' : ''}${fmtUsd(pnl, 2)}</div>
+            <div class="pos-row-pnl-roe" id="prow-roe-${k}" style="color:${col}">${roe >= 0 ? '+' : ''}${fmt(roe, 1)}%</div>
+          </div>
+        </div>
+        <div class="pos-row-grid">
+          <div class="prg-cell"><span class="prg-lbl">Quantidade (USD)</span><span class="prg-val">${fmtUsd(notUsd, 0)}</span></div>
+          <div class="prg-cell"><span class="prg-lbl">Preço entrada</span><span class="prg-val">${fmtPx(ent)}</span></div>
+          <div class="prg-cell"><span class="prg-lbl">Mark</span><span class="prg-val" id="prow-mark-${k}">${fmtPx(mark)}</span></div>
+          <div class="prg-cell"><span class="prg-lbl">Liq. estimada</span><span class="prg-val liq" id="prow-liq-${k}">${liq > 0 ? fmtPx(liq) : '—'}</span></div>
+        </div>
+      </div>
+      <div class="pos-row-chevron">▾</div>
+    </div>
+    <div class="pos-row-slot" id="pos-slot-${k}"></div>
+  </div>`;
+}
+
+// Constrói a lista. Se o conjunto de posições não mudou, só atualiza números
+// (preserva o gráfico aberto e o input de saída). Só reconstrói quando o conjunto muda.
+function renderPosList() {
+  const el = document.getElementById('pos-list-tab');
   if (!el) return;
-  if (!positions.length) { el.innerHTML = '<div class="db-empty">Sem posições abertas.</div>'; return; }
-  el.innerHTML = positions.map(p => {
-    const k = posKeyOf(p), isLong = p.side === 'Buy', pnl = posPnlUsd(p);
-    const lev = parseFloat(p.leverage), roe = posRoe(p);
-    const col = pnl >= 0 ? 'var(--green)' : 'var(--red)';
-    const active = k === selectedPosKey ? ' active' : '';
-    return `<button class="pos-chip${active}" onclick="selectPos('${k}')">
-      <span class="pos-chip-sym">${p.symbol}</span>
-      <span class="tag ${isLong ? 'tag-long' : 'tag-short'}">${isLong ? 'Long' : 'Short'} ${lev}×</span>
-      <span class="pos-chip-pnl" style="color:${col}">${pnl >= 0 ? '+' : ''}${fmtUsd(pnl, 0)} <span style="opacity:.85">${roe >= 0 ? '+' : ''}${fmt(roe, 1)}%</span></span>
-    </button>`;
-  }).join('');
+  if (!positions.length) {
+    parkDetailCard();
+    selectedPosKey = null;
+    el.dataset.posKey = '';
+    el.innerHTML = '<div class="db-empty">Sem posições abertas.</div>';
+    return;
+  }
+  const newKey = positions.map(posKeyOf).join(',');
+  if (el.dataset.posKey === newKey) {
+    positions.forEach(p => updatePosRowDynamic(p));
+    return;
+  }
+  // O conjunto mudou → guarda o gráfico no holder antes de reescrever a lista
+  parkDetailCard();
+  el.dataset.posKey = newKey;
+  el.innerHTML = positions.map(posRowHtml).join('');
+  // Reabre a linha que estava aberta, se ainda existir
+  if (selectedPosKey && positions.some(x => posKeyOf(x) === selectedPosKey)) {
+    const k = selectedPosKey; selectedPosKey = null; selectPos(k);
+  } else {
+    selectedPosKey = null;
+  }
+}
+
+// Atualiza só os valores dinâmicos de cada linha (sem reconstruir o DOM)
+function updatePosRowDynamic(p) {
+  const k = posKeyOf(p), pnl = posPnlUsd(p), roe = posRoe(p);
+  const mark = parseFloat(p.markPrice), liq = parseFloat(p.liqPrice);
+  const col = pnl >= 0 ? 'var(--green)' : 'var(--red)';
+  const pnlEl = document.getElementById(`prow-pnl-${k}`);
+  if (pnlEl) { pnlEl.textContent = `${pnl >= 0 ? '+' : ''}${fmtUsd(pnl, 2)}`; pnlEl.style.color = col; }
+  const roeEl = document.getElementById(`prow-roe-${k}`);
+  if (roeEl) { roeEl.textContent = `${roe >= 0 ? '+' : ''}${fmt(roe, 1)}%`; roeEl.style.color = col; }
+  const mkEl = document.getElementById(`prow-mark-${k}`);
+  if (mkEl) mkEl.textContent = fmtPx(mark);
+  const liqEl = document.getElementById(`prow-liq-${k}`);
+  if (liqEl) liqEl.textContent = liq > 0 ? fmtPx(liq) : '—';
+}
+
+// Move o bloco do gráfico de volta para o holder escondido (fecha o que estiver aberto)
+function parkDetailCard() {
+  const holder = document.getElementById('pos-detail-holder');
+  const card = document.getElementById('pos-detail-card');
+  if (holder && card && card.parentNode !== holder) holder.appendChild(card);
+}
+
+// Fecha o gráfico atualmente aberto: destrói o chart e recolhe a linha
+function collapsePos() {
+  if (posChart) { try { posChart.remove(); } catch (e) {} posChart = null; posSeries = null; }
+  parkDetailCard();
+  const row = selectedPosKey ? document.getElementById(`pos-row-${selectedPosKey}`) : null;
+  if (row) row.classList.remove('expanded');
+  selectedPosKey = null;
+}
+
+// Marca só a linha 'key' como expandida (sem reconstruir a lista)
+function markActiveRow(key) {
+  document.querySelectorAll('#pos-list-tab .pos-row.expanded').forEach(r => r.classList.remove('expanded'));
+  const row = document.getElementById(`pos-row-${key}`);
+  if (row) row.classList.add('expanded');
 }
 
 function selectPos(key) {
   const p = positions.find(x => posKeyOf(x) === key);
   if (!p) return;
-  const changed = key !== selectedPosKey;
-  selectedPosKey = key;
-  renderPosSelector();
-  const card = document.getElementById('pos-detail-card');
-  if (card) card.style.display = '';
-  const empty = document.getElementById('pos-empty'); if (empty) empty.style.display = 'none';
+  // Clicar na linha já aberta → fecha o gráfico
+  if (key === selectedPosKey) { collapsePos(); return; }
 
-  const isLong = p.side === 'Buy', isInv = posCat(p.symbol) === 'inverse';
-  const dot = document.getElementById('pd-dot'); if (dot) dot.style.background = isLong ? 'var(--green)' : 'var(--red)';
-  const title = document.getElementById('pd-title'); if (title) title.textContent = `${p.symbol} — ${isLong ? 'Long' : 'Short'} ${parseFloat(p.leverage)}×`;
-  const type = document.getElementById('pd-type'); if (type) { type.textContent = isInv ? 'Inverse' : 'Linear'; type.className = 'tag ' + (isInv ? 'tag-inv' : 'tag-lin'); }
+  // Fecha o gráfico anterior (só um de cada vez) e abre este
+  if (posChart) { try { posChart.remove(); } catch (e) {} posChart = null; posSeries = null; }
+  parkDetailCard();
+  selectedPosKey = key;
+  markActiveRow(key);
+
+  const slot = document.getElementById(`pos-slot-${key}`);
+  const card = document.getElementById('pos-detail-card');
+  if (slot && card) slot.appendChild(card);
+
   const mk = document.getElementById('pd-mark'); if (mk) mk.textContent = fmtPx(parseFloat(p.markPrice));
 
   renderPosMetrics(p);
@@ -2311,6 +2422,11 @@ function selectPos(key) {
   if (exitInput) exitInput.value = posExitTargets[key] != null ? posExitTargets[key] : '';
   renderPosExitResult(p);
   loadPosChart(p);
+  // garante que a linha recém-aberta fica visível
+  const row = document.getElementById(`pos-row-${key}`);
+  if (row && typeof row.scrollIntoView === 'function') {
+    setTimeout(() => { try { row.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {} }, 60);
+  }
 }
 
 function posTargets(p) {
@@ -4447,7 +4563,8 @@ function toggleTheme() {
 // Um MutationObserver reaplica a máscara após cada re-render.
 const PV_SEL = '#db-total-value, #db-pnl-usd, #db-pnl-pct, #db-roi-usd, #db-roi-pct,' +
   ' #hdr-inv-pnl, .db-asset-usd, .db-asset-qty, .db-asset-pnl, .dist-val, .dist-d-val,' +
-  ' .exit-summary-val, .exit-result-usd, .exit-result-pct, .ps-val, .pos-chip-pnl,' +
+  ' .exit-summary-val, .exit-result-usd, .exit-result-pct, .ps-val,' +
+  ' .pos-row-pnl-usd, .pos-row-pnl-roe, .prg-val,' +
   ' .pos-exit-cell-val, .agent-chip.sens b';
 let pvOn = false, pvObserver = null, pvScheduled = false;
 
