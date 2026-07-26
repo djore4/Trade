@@ -4047,7 +4047,14 @@ function buildAgentContext() {
       if (c.volSpike >= 1.8) bits.push(`vol ${fmt(c.volSpike, 1)}×`);
       const pos = posMap[c.coin];
       if (pos) bits.push(pos === side ? '✓ confluência com posição aberta' : '⚠ contra posição aberta');
-      return bits.join(' · ');
+      // Linha de níveis: preço, EMAs 1h, rompimento de 48 velas e amplitude 24h — base para entrada/stop/alvo.
+      const lv = [];
+      if (isFinite(c.price)) lv.push(`preço $${fmtPx(c.price)}`);
+      if (isFinite(c.ef) && isFinite(c.es)) lv.push(`EMA9/21(1h) $${fmtPx(c.ef)}/$${fmtPx(c.es)}`);
+      if (isFinite(c.hi) && isFinite(c.lo)) lv.push(`rompimento48h máx $${fmtPx(c.hi)} / mín $${fmtPx(c.lo)}`);
+      if (isFinite(c.range) && c.range > 0) lv.push(`amplitude24h ${fmt(c.range, 1)}%`);
+      const head = bits.join(' · ');
+      return lv.length ? `${head}\n    níveis: ${lv.join(' · ')}` : head;
     };
     const top = key => tradeData.list.slice()
       .sort((a, b) => b[key].final - a[key].final)
@@ -4056,7 +4063,8 @@ function buildAgentContext() {
     const longs = top('longScore'), shorts = top('shortScore');
     const head = `RASTREADOR DE TRADES — scan de há ${timeAgo(tradeData.ts)}`
       + (tradeData.total ? ` · ${tradeData.total} mercados` : '')
-      + (tradeData.upCount != null && tradeData.total ? ` (${Math.round(tradeData.upCount / tradeData.total * 100)}% em alta)` : '');
+      + (tradeData.upCount != null && tradeData.total ? ` (${Math.round(tradeData.upCount / tradeData.total * 100)}% em alta)` : '')
+      + '\n(níveis: rompimento48h = máx/mín das últimas 48 velas de 1h — referência para gatilho de entrada e invalidação; amplitude24h ajuda a dimensionar o stop; nada aqui é garantia)';
     const parts = [head];
     if (longs.length)  parts.push('Long mais fortes:\n- ' + longs.map(c => fmtSetup(c, 'long')).join('\n- '));
     if (shorts.length) parts.push('Short mais fortes:\n- ' + shorts.map(c => fmtSetup(c, 'short')).join('\n- '));
@@ -4209,7 +4217,7 @@ function sendAgentMessage() {
 
 function agentBriefing() {
   if (agentBusy) return;
-  agentMsgs.push({ role: 'user', content: 'Faz-me um briefing estratégico do momento: lê o mercado e as notícias, resume o que importa para o meu portefólio, comenta os melhores setups do rastreador (e se batem com as minhas posições), e aponta o principal risco ou ponto cego que eu possa estar a desconsiderar agora.' });
+  agentMsgs.push({ role: 'user', content: 'Faz-me um briefing estratégico do momento: lê o mercado e as notícias, resume o que importa para o meu portefólio, e aponta o principal risco ou ponto cego que eu possa estar a desconsiderar agora. Para os 2-3 melhores setups do rastreador (e se batem com as minhas posições), propõe um plano acionável usando os níveis dados — zona de entrada · stop/invalidação · alvo · risco face à liquidação — deixando claro que é análise e não garantia.' });
   renderAgentMsgs();
   callAgent();
 }
