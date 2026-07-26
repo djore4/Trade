@@ -703,7 +703,9 @@ html.light .mnav-btn.active { color: var(--orange); }
     display: flex;
     position: fixed;
     bottom: 0; left: 0; right: 0;
-    height: 58px;
+    /* A barra tem 58px de área tocável; a safe-area (barra do telemóvel) é
+       somada por baixo em vez de comer os 58px — senão os botões ficam cortados. */
+    height: calc(58px + env(safe-area-inset-bottom, 0px));
     background: rgba(8,8,16,0.97);
     border-top: 1px solid var(--border);
     backdrop-filter: blur(12px);
@@ -712,7 +714,8 @@ html.light .mnav-btn.active { color: var(--orange); }
     align-items: stretch;
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
-  .tab-pane { padding-bottom: 68px !important; }
+  /* O conteúdo tem de acabar acima da barra fixa (58px) + safe-area. */
+  .tab-pane { padding-bottom: calc(74px + env(safe-area-inset-bottom, 0px)) !important; }
 }
 .mnav-btn {
   flex: 1;
@@ -736,6 +739,98 @@ html.light .mnav-btn.active { color: var(--orange); }
 .mnav-btn.active { color: var(--orange); }
 .mnav-btn svg { width: 20px; height: 20px; flex-shrink: 0; }
 .mnav-lbl { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+
+/* ─── TRADE SCANNER (tab) ─────────────────────────── */
+.trd-intro { background: var(--s1); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; }
+.trd-intro h2 { font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: -.01em; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+.trd-intro p { font-size: 12px; color: var(--dim); line-height: 1.65; }
+.trd-intro .trd-disc { margin-top: 8px; font-size: 10.5px; color: var(--faint); line-height: 1.55; }
+
+/* Barra de topo: KPIs do scan */
+.trd-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 14px; }
+.trd-kpi { background: var(--s1); padding: 12px 14px; }
+.trd-kpi-lbl { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--faint); margin-bottom: 6px; }
+.trd-kpi-val { font-family: 'JetBrains Mono', monospace; font-size: 17px; font-weight: 600; color: var(--text); line-height: 1.05; }
+.trd-kpi-sub { font-size: 10px; color: var(--dim); margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
+
+/* Controlo: filtro Long / Short + refresh */
+.trd-controls { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+.trd-toggle { display: flex; gap: 4px; padding: 3px; background: var(--s1); border: 1px solid var(--border); border-radius: 10px; }
+.trd-toggle-btn { padding: 7px 16px; font-size: 12px; font-weight: 600; color: var(--dim); background: transparent; border: none; border-radius: 7px; cursor: pointer; transition: color .15s, background .15s; }
+.trd-toggle-btn:hover:not(.active) { color: var(--text); }
+.trd-toggle-btn.active { color: var(--text); background: var(--s3); }
+.trd-toggle-btn.tg-long.active  { color: var(--green); background: rgba(45,212,160,.12); }
+.trd-toggle-btn.tg-short.active { color: var(--red);   background: rgba(247,100,122,.12); }
+.trd-refresh { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--dim); background: var(--s1); border: 1px solid var(--border); border-radius: 8px; padding: 6px 11px; cursor: pointer; transition: border-color .15s, color .15s; }
+.trd-refresh:hover { color: var(--text); border-color: var(--border2); }
+.trd-refresh svg { width: 13px; height: 13px; }
+.trd-refresh.busy svg { animation: trdSpin 1s linear infinite; }
+@keyframes trdSpin { to { transform: rotate(360deg); } }
+.trd-updated { font-size: 10.5px; color: var(--faint); font-family: 'JetBrains Mono', monospace; }
+
+/* Lista de candidatos */
+.trd-list { display: flex; flex-direction: column; gap: 8px; }
+.trd-row { background: var(--s1); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; transition: border-color .12s; }
+.trd-row:hover { border-color: var(--border2); }
+.trd-row.expanded { border-color: var(--orange); }
+.trd-row-head { position: relative; display: grid; grid-template-columns: 26px 1.4fr 1fr 92px; align-items: center; gap: 12px; padding: 12px 14px 12px 16px; cursor: pointer; user-select: none; }
+.trd-accent { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+.trd-accent.long { background: var(--green); }
+.trd-accent.short { background: var(--red); }
+.trd-rank { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: var(--faint); text-align: center; }
+.trd-idz { min-width: 0; }
+.trd-sym-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.trd-sym { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 14px; color: var(--text); }
+.trd-bias { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: 2px 7px; border-radius: 4px; }
+.trd-bias.long  { background: rgba(45,212,160,.12); color: var(--green); }
+.trd-bias.short { background: rgba(247,100,122,.12); color: var(--red); }
+.trd-px { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--dim); margin-top: 3px; }
+.trd-px b { color: var(--text); font-weight: 500; }
+.trd-chips { display: flex; gap: 5px; flex-wrap: wrap; }
+.trd-chip { display: flex; flex-direction: column; gap: 1px; min-width: 52px; }
+.trd-chip-lbl { font-size: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--faint); }
+.trd-chip-val { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; font-weight: 600; color: var(--text); line-height: 1.1; }
+.trd-chip-val.g { color: var(--green); } .trd-chip-val.r { color: var(--red); } .trd-chip-val.o { color: var(--orange); } .trd-chip-val.d { color: var(--dim); }
+.trd-score { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.trd-score-num { font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700; line-height: 1; }
+.trd-score-bar { width: 80px; height: 4px; border-radius: 3px; background: var(--s3); overflow: hidden; }
+.trd-score-fill { height: 100%; border-radius: 3px; }
+.trd-caret { transition: transform .18s; color: var(--faint); }
+.trd-row.expanded .trd-caret { transform: rotate(180deg); }
+
+/* Detalhe expandido */
+.trd-detail { display: none; padding: 0 16px 16px; border-top: 1px solid var(--border); }
+.trd-row.expanded .trd-detail { display: block; animation: fadeIn .2s ease; }
+.trd-factors { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin: 14px 0 12px; }
+.trd-factor { background: var(--s2); padding: 10px 12px; }
+.trd-factor-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+.trd-factor-name { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--dim); }
+.trd-factor-score { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; }
+.trd-factor-bar { height: 3px; border-radius: 3px; background: var(--s3); overflow: hidden; margin-bottom: 6px; }
+.trd-factor-fill { height: 100%; border-radius: 3px; }
+.trd-factor-note { font-size: 10.5px; color: var(--faint); line-height: 1.5; }
+.trd-detail-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.trd-link { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--dim); background: var(--s2); border: 1px solid var(--border); border-radius: 8px; padding: 7px 12px; cursor: pointer; text-decoration: none; transition: color .15s, border-color .15s; }
+.trd-link:hover { color: var(--text); border-color: var(--orange); }
+.trd-summary { font-size: 11.5px; color: var(--dim); line-height: 1.6; margin: 2px 0 10px; }
+.trd-summary b { color: var(--text); font-weight: 600; }
+
+/* Painel "como ler" (glossário para iniciante) */
+.trd-guide { margin-top: 16px; background: var(--s1); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.trd-guide-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: pointer; user-select: none; }
+.trd-guide-head .card-title { color: var(--dim); }
+.trd-guide-body { display: none; padding: 0 16px 14px; }
+.trd-guide.open .trd-guide-body { display: block; animation: fadeIn .2s ease; }
+.trd-guide.open .trd-caret { transform: rotate(180deg); }
+.trd-gitem { padding: 11px 0; border-top: 1px solid var(--border); }
+.trd-gitem b { color: var(--text); font-weight: 600; font-size: 12px; }
+.trd-gitem p { font-size: 11.5px; color: var(--faint); line-height: 1.6; margin-top: 3px; }
+
+@media (max-width: 700px) {
+  .trd-kpis { grid-template-columns: repeat(2, 1fr); }
+  .trd-row-head { grid-template-columns: 22px 1fr 78px; gap: 8px; }
+  .trd-chips { display: none; }   /* no telemóvel os chips vão para o detalhe */
+}
 
 /* ─── RESPONSIVE ──────────────────────────────────── */
 @media (max-width: 900px) {
@@ -850,6 +945,10 @@ html.light .mnav-btn.active { color: var(--orange); }
     <button class="tab-btn" data-tab="posicoes" onclick="switchTab('posicoes',this)">
       <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1 8.5 3.5 5 6 6.5 10 2" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="1" y1="10.2" x2="10" y2="10.2" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
       Posições
+    </button>
+    <button class="tab-btn" data-tab="trade" onclick="switchTab('trade',this)">
+      <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.7" stroke="currentColor" stroke-width="1.2" fill="none"/><path d="M5.5 2.2v6.6M3 4.2 5.5 2.2 8 4.2" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Trade
     </button>
     <button class="tab-btn" data-tab="mercado" onclick="switchTab('mercado',this)">
       <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><polyline points="1,8.5 3.5,4.5 6.5,6.5 10,1.5" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -1396,6 +1495,60 @@ html.light .mnav-btn.active { color: var(--orange); }
   </div>
 </div>
 
+<!-- ─── TAB: TRADE (rastreador de setups) ──────────────── -->
+<div class="tab-pane" id="tab-trade">
+  <div style="max-width:1100px;margin:0 auto">
+
+    <div class="trd-intro">
+      <h2>🎯 Rastreador de Trades</h2>
+      <p>Analisa <b>todos os perpétuos USDT da Bybit</b> em tempo real e ordena as moedas
+      com melhor potencial de movimento — para <b style="color:var(--green)">long</b> (apostar na subida)
+      ou <b style="color:var(--red)">short</b> (apostar na descida). Cada moeda recebe uma
+      <b>pontuação 0–100</b> que combina 5 fatores técnicos. Clica numa linha para ver a
+      explicação de cada fator.</p>
+      <div class="trd-disc">⚠️ Isto é uma ferramenta de estudo, não conselho financeiro. Pontuação alta = setup
+      tecnicamente interessante, <b>não</b> garantia de lucro. Confirma sempre no gráfico e usa gestão de risco.</div>
+    </div>
+
+    <div class="trd-kpis" id="trd-kpis">
+      <div class="trd-kpi"><div class="trd-kpi-lbl">Mercados analisados</div><div class="trd-kpi-val" id="trd-k-count">—</div><div class="trd-kpi-sub" id="trd-k-count-sub">perpétuos USDT</div></div>
+      <div class="trd-kpi"><div class="trd-kpi-lbl">Melhor Long</div><div class="trd-kpi-val g" id="trd-k-long">—</div><div class="trd-kpi-sub" id="trd-k-long-sub">—</div></div>
+      <div class="trd-kpi"><div class="trd-kpi-lbl">Melhor Short</div><div class="trd-kpi-val r" id="trd-k-short">—</div><div class="trd-kpi-sub" id="trd-k-short-sub">—</div></div>
+      <div class="trd-kpi"><div class="trd-kpi-lbl">Amplitude do mercado</div><div class="trd-kpi-val" id="trd-k-breadth">—</div><div class="trd-kpi-sub" id="trd-k-breadth-sub">moedas em alta 24h</div></div>
+    </div>
+
+    <div class="trd-controls">
+      <div class="trd-toggle">
+        <button class="trd-toggle-btn tg-long active" data-side="long"  onclick="setTradeSide('long',this)">Longs ▲</button>
+        <button class="trd-toggle-btn tg-short"       data-side="short" onclick="setTradeSide('short',this)">Shorts ▼</button>
+      </div>
+      <span class="trd-updated" id="trd-updated"></span>
+      <div class="trd-refresh" id="trd-refresh" onclick="scanTrades(true)" title="Analisar de novo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
+        Atualizar
+      </div>
+    </div>
+
+    <div class="trd-list" id="trd-list"><div class="db-empty">A analisar o mercado…</div></div>
+
+    <div class="trd-guide" id="trd-guide">
+      <div class="trd-guide-head" onclick="document.getElementById('trd-guide').classList.toggle('open')">
+        <div class="card-title"><div class="ctdot"></div>Como ler os indicadores (guia para iniciante)</div>
+        <svg class="trd-caret" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 4.5 6 8l3.5-3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="trd-guide-body">
+        <div class="trd-gitem"><b>Momentum (variação 24h)</b><p>Quanto o preço já se moveu nas últimas 24h. Movimento forte na direção do trade é bom sinal — mas exagerado pode significar que já é tarde (risco de reversão).</p></div>
+        <div class="trd-gitem"><b>Tendência (EMAs)</b><p>Compara o preço com médias móveis (EMA 9 e 21) em velas de 1h. Preço acima das médias = tendência de alta (favorável a longs); abaixo = tendência de baixa (favorável a shorts). Segue-se a tendência, não se luta contra ela.</p></div>
+        <div class="trd-gitem"><b>RSI (força relativa)</b><p>Oscilador de 0 a 100. Abaixo de 30 = "sobrevendido" (pode saltar para cima); acima de 70 = "sobrecomprado" (pode corrigir). Para longs favorecemos RSI a subir sem estar esticado; para shorts o contrário.</p></div>
+        <div class="trd-gitem"><b>Funding (posicionamento)</b><p>Taxa que longs e shorts pagam entre si nos perpétuos. Funding muito positivo = excesso de longs (combustível para uma descida/"long squeeze"). Muito negativo = excesso de shorts (combustível para uma subida/"short squeeze"). Usamos isto de forma contrária à multidão.</p></div>
+        <div class="trd-gitem"><b>Volume / Liquidez (turnover 24h)</b><p>Quanto dinheiro foi negociado. Muito volume = movimento com convicção e fácil de entrar/sair. Moedas ilíquidas são perigosas (spreads largos, manipulação), por isso pontuam menos.</p></div>
+        <div class="trd-gitem"><b>Volatilidade (amplitude 24h)</b><p>Distância entre o máximo e o mínimo do dia. Mais volatilidade = mais potencial de ganho… e de perda. Aparece no detalhe de cada moeda para calibrares o teu risco.</p></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 <!-- ─── TAB: NOTÍCIAS ─────────────────────────────────── -->
 <div class="tab-pane" id="tab-noticias">
   <div style="max-width:1200px;margin:0 auto">
@@ -1485,6 +1638,10 @@ html.light .mnav-btn.active { color: var(--orange); }
   <button class="mnav-btn" data-tab="posicoes" onclick="switchTab('posicoes',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 16 9 10 13 13 21 5"/><line x1="3" y1="21" x2="21" y2="21"/><circle cx="13" cy="13" r="1.1" fill="currentColor" stroke="none"/></svg>
     <span class="mnav-lbl">Posições</span>
+  </button>
+  <button class="mnav-btn" data-tab="trade" onclick="switchTab('trade',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 5v14M8 8l4-3 4 3"/></svg>
+    <span class="mnav-lbl">Trade</span>
   </button>
   <button class="mnav-btn" data-tab="mercado" onclick="switchTab('mercado',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 8 12 13 15 21 7"/><line x1="3" y1="21" x2="21" y2="21"/></svg>
@@ -1584,6 +1741,7 @@ function switchTab(id, btn) {
   document.querySelectorAll(`[data-tab="${id}"]`).forEach(b => b.classList.add('active'));
   if (id === 'dashboard')  { setTimeout(() => loadPortfolioSeries(dbCurrentRange()), 60); renderDbAssets(); }
   if (id === 'posicoes')   renderPosTab();
+  if (id === 'trade')      renderTradeTab();
   if (id === 'mercado')    switchMktSection(mktSection);
   if (id === 'agente')     renderAgentTab();
 }
@@ -1598,6 +1756,316 @@ function switchMktSection(sec, btn) {
   if (sec === 'preco')          setTimeout(initMainChart, 40);
   else if (sec === 'estrutura') setTimeout(initStructureCharts, 40);
   else if (sec === 'heatmap')   renderLiqHeatmap();
+}
+
+// ── TRADE SCANNER ───────────────────────────────────────────────────────────────
+// Analisa todos os perpétuos USDT da Bybit e ordena por potencial de movimento
+// (long ou short) usando 5 fatores técnicos. Só usa dados públicos de mercado.
+let tradeSide = 'long';        // lista visível: 'long' | 'short'
+let tradeData = null;          // último scan: [{ symbol, coin, ...factors, longScore, shortScore }]
+let tradeScanning = false;
+let tradeLastScan = 0;
+let tradeExpanded = null;      // símbolo com detalhe aberto
+
+const trdClamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+// EMA sobre um array de closes (cronológico). Devolve o último valor.
+function trdEma(vals, period) {
+  if (!vals || vals.length < period) return null;
+  const k = 2 / (period + 1);
+  let e = vals.slice(0, period).reduce((a, b) => a + b, 0) / period;
+  for (let i = period; i < vals.length; i++) e = vals[i] * k + e * (1 - k);
+  return e;
+}
+
+// RSI de Wilder sobre closes (cronológico). Devolve 0..100.
+function trdRsi(vals, period = 14) {
+  if (!vals || vals.length < period + 1) return null;
+  let gain = 0, loss = 0;
+  for (let i = 1; i <= period; i++) {
+    const d = vals[i] - vals[i - 1];
+    if (d >= 0) gain += d; else loss -= d;
+  }
+  let ag = gain / period, al = loss / period;
+  for (let i = period + 1; i < vals.length; i++) {
+    const d = vals[i] - vals[i - 1];
+    ag = (ag * (period - 1) + Math.max(d, 0)) / period;
+    al = (al * (period - 1) + Math.max(-d, 0)) / period;
+  }
+  if (al === 0) return 100;
+  const rs = ag / al;
+  return 100 - 100 / (1 + rs);
+}
+
+// ── Fatores (cada um devolve 0..100 na perspetiva de LONG; short = espelho) ──
+function trdFMomLong(chg) {                       // chg = variação 24h em %
+  if (chg <= 0) return trdClamp(50 + chg * 3, 5, 50);   // a cair: fraco para long
+  if (chg <= 6) return trdClamp(50 + chg * 7, 50, 92);  // subida saudável
+  return trdClamp(92 - (chg - 6) * 2.5, 45, 92);        // esticado: penaliza
+}
+function trdFRsiLong(rsi) {
+  if (rsi == null) return 50;
+  if (rsi < 30) return 62;                         // sobrevendido → salto possível
+  if (rsi < 45) return 56;
+  if (rsi <= 65) return trdClamp(70 + (rsi - 45), 70, 90);  // zona ideal
+  if (rsi <= 75) return 58;
+  return trdClamp(45 - (rsi - 75) * 2, 15, 45);    // sobrecomprado → long arriscado
+}
+function trdFFundLong(fr) {                        // fr = funding em %
+  return trdClamp(50 - fr * 500, 8, 88);           // funding negativo favorece long
+}
+function trdFVol(turn) {                           // turnover 24h (USD) — liquidez
+  if (!turn || turn <= 0) return 0;
+  return trdClamp((Math.log10(turn) - 6) / 3 * 100, 0, 100);  // $1M→0, $1B→100
+}
+
+const TRD_W = { mom: 0.22, trend: 0.24, rsi: 0.18, fund: 0.18, vol: 0.18 };
+
+// Tendência (0..100) para o lado pedido, a partir das EMAs 9/21 (1h).
+function trdTrend(c, side) {
+  if (c.ef == null || c.es == null || !c.es) return 50;
+  const a = (c.price - c.ef) / c.es * 100, b = (c.ef - c.es) / c.es * 100;
+  const bull = trdClamp(50 + a * 8 + b * 12, 0, 100);
+  return side === 'short' ? 100 - bull : bull;
+}
+
+// Constrói os 5 fatores + pontuação final para um lado ('long' | 'short').
+function trdScore(c, side) {
+  const mom   = side === 'short' ? trdFMomLong(-c.chg) : trdFMomLong(c.chg);
+  const trend = trdTrend(c, side);
+  const rsi   = side === 'short' ? trdFRsiLong(c.rsi == null ? null : 100 - c.rsi) : trdFRsiLong(c.rsi);
+  const fund  = side === 'short' ? trdClamp(50 + c.fr * 500, 8, 88) : trdFFundLong(c.fr);
+  const vol   = trdFVol(c.turnover);
+  const final = Math.round(mom * TRD_W.mom + trend * TRD_W.trend + rsi * TRD_W.rsi + fund * TRD_W.fund + vol * TRD_W.vol);
+  return { final, mom, trend, rsi, fund, vol };
+}
+
+// Busca closes de 1h (cronológico) para calcular RSI e EMAs.
+async function trdFetchCloses(sym) {
+  try {
+    const r = await fetch(`${BYBIT}/v5/market/kline?category=linear&symbol=${sym}&interval=60&limit=120`);
+    const d = await r.json();
+    return (d?.result?.list || []).map(k => +k[4]).reverse();  // Bybit vem do mais recente → invertemos
+  } catch (e) { return []; }
+}
+
+// Executa `tasks` (funções async) com concorrência limitada.
+async function trdPool(items, worker, concurrency = 6) {
+  const q = items.slice(); const running = [];
+  async function next() {
+    const it = q.shift(); if (it === undefined) return;
+    await worker(it); return next();
+  }
+  for (let i = 0; i < Math.min(concurrency, q.length); i++) running.push(next());
+  await Promise.all(running);
+}
+
+async function scanTrades(force) {
+  if (tradeScanning) return;
+  if (!force && tradeData && Date.now() - tradeLastScan < 30000) return;  // fresco → não repete
+  tradeScanning = true;
+  const refBtn = document.getElementById('trd-refresh');
+  if (refBtn) refBtn.classList.add('busy');
+  const listEl = document.getElementById('trd-list');
+  if (listEl && !tradeData) listEl.innerHTML = '<div class="db-empty">A analisar o mercado…</div>';
+  try {
+    const r = await fetch(`${BYBIT}/v5/market/tickers?category=linear`);
+    const d = await r.json();
+    const raw = (d?.result?.list || [])
+      .filter(t => /USDT$/.test(t.symbol) && !/[0-9]/.test(coinOf(t.symbol)))  // perpétuos ...USDT, sem tokens alavancados
+      .map(t => {
+        const price = parseFloat(t.lastPrice), high = parseFloat(t.highPrice24h), low = parseFloat(t.lowPrice24h);
+        return {
+          symbol: t.symbol, coin: coinOf(t.symbol), price,
+          chg: parseFloat(t.price24hPcnt) * 100,
+          fr: parseFloat(t.fundingRate) * 100,
+          turnover: parseFloat(t.turnover24h) || 0,
+          oiUsd: parseFloat(t.openInterestValue) || 0,
+          range: (high > 0 && low > 0 && price > 0) ? (high - low) / price * 100 : 0,
+          ef: null, es: null, rsi: null,
+        };
+      })
+      .filter(c => c.turnover >= 3e6 && isFinite(c.price) && c.price > 0);  // só mercados líquidos
+
+    const total = raw.length;
+    const upCount = raw.filter(c => c.chg > 0).length;
+
+    // Pré-ranking (sem klines) para escolher quem vale a pena enriquecer.
+    const pre = c => trdFVol(c.turnover) * 0.3 + Math.abs(c.chg) * 4 + trdClamp(-c.fr * 300, 0, 30);
+    const byLong  = raw.slice().sort((a, b) => (b.chg + pre(b)) - (a.chg + pre(a))).slice(0, 22);
+    const byShort = raw.slice().sort((a, b) => (a.chg - pre(a)) - (b.chg - pre(b))).slice(0, 22);
+    const enrichSet = Array.from(new Set([...byLong, ...byShort]));
+
+    // Enriquecer com RSI + EMAs (1h) — concorrência limitada.
+    await trdPool(enrichSet, async c => {
+      const closes = await trdFetchCloses(c.symbol);
+      if (closes.length >= 22) {
+        c.ef = trdEma(closes, 9);
+        c.es = trdEma(closes, 21);
+        c.rsi = trdRsi(closes, 14);
+      }
+    }, 6);
+
+    // Pontuar cada candidato enriquecido dos dois lados.
+    enrichSet.forEach(c => {
+      c.longScore  = trdScore(c, 'long');
+      c.shortScore = trdScore(c, 'short');
+    });
+
+    tradeData = { list: enrichSet, total, upCount, ts: Date.now() };
+    tradeLastScan = Date.now();
+    renderTradeKpis();
+    renderTradeList();
+  } catch (e) {
+    console.error('scanTrades error', e);
+    if (listEl && !tradeData) listEl.innerHTML = '<div class="db-empty">Falha ao obter dados da Bybit. Tenta atualizar.</div>';
+  } finally {
+    tradeScanning = false;
+    if (refBtn) refBtn.classList.remove('busy');
+  }
+}
+
+function renderTradeKpis() {
+  if (!tradeData) return;
+  const L = tradeData.list.slice().sort((a, b) => b.longScore.final - a.longScore.final)[0];
+  const S = tradeData.list.slice().sort((a, b) => b.shortScore.final - a.shortScore.final)[0];
+  set('trd-k-count', tradeData.total);
+  set('trd-k-count-sub', 'perpétuos USDT líquidos');
+  if (L) { set('trd-k-long', L.coin); set('trd-k-long-sub', `score ${L.longScore.final} · ${L.chg >= 0 ? '+' : ''}${fmt(L.chg, 1)}%`); }
+  if (S) { set('trd-k-short', S.coin); set('trd-k-short-sub', `score ${S.shortScore.final} · ${S.chg >= 0 ? '+' : ''}${fmt(S.chg, 1)}%`); }
+  const pct = tradeData.total ? Math.round(tradeData.upCount / tradeData.total * 100) : 0;
+  set('trd-k-breadth', pct + '%');
+  set('trd-k-breadth-sub', `${tradeData.upCount}/${tradeData.total} em alta 24h`);
+  const upd = document.getElementById('trd-updated');
+  if (upd) upd.textContent = 'atualizado ' + new Date(tradeData.ts).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+}
+
+function setTradeSide(side, btn) {
+  tradeSide = side;
+  document.querySelectorAll('.trd-toggle-btn').forEach(b => b.classList.toggle('active', b.dataset.side === side));
+  renderTradeList();
+}
+
+const trdScoreColor = (v, side) => v >= 70 ? (side === 'short' ? 'var(--red)' : 'var(--green)') : v >= 55 ? 'var(--orange)' : 'var(--dim)';
+
+function renderTradeList() {
+  const el = document.getElementById('trd-list');
+  if (!el || !tradeData) return;
+  const side = tradeSide;
+  const key = side === 'short' ? 'shortScore' : 'longScore';
+  const rows = tradeData.list.slice()
+    .sort((a, b) => b[key].final - a[key].final)
+    .slice(0, 20);
+  if (!rows.length) { el.innerHTML = '<div class="db-empty">Sem candidatos.</div>'; return; }
+  el.innerHTML = rows.map((c, i) => trdRowHtml(c, side, i + 1)).join('');
+}
+
+function trdRowHtml(c, side, rank) {
+  const sc = (side === 'short' ? c.shortScore : c.longScore);
+  const col = trdScoreColor(sc.final, side);
+  const chgCol = c.chg >= 0 ? 'g' : 'r';
+  const frCol = c.fr > 0.03 ? 'r' : c.fr < -0.03 ? 'g' : 'd';
+  const rsiTxt = c.rsi == null ? '—' : fmt(c.rsi, 0);
+  const rsiCol = c.rsi == null ? 'd' : c.rsi >= 70 ? 'r' : c.rsi <= 30 ? 'g' : 'd';
+  const expanded = tradeExpanded === c.symbol;
+  return `
+  <div class="trd-row${expanded ? ' expanded' : ''}" id="trd-row-${c.symbol}">
+    <div class="trd-row-head" onclick="toggleTradeRow('${c.symbol}')">
+      <div class="trd-accent ${side}"></div>
+      <div class="trd-rank">${rank}</div>
+      <div class="trd-idz">
+        <div class="trd-sym-row">
+          <span class="trd-sym">${c.coin}</span>
+          <span class="trd-bias ${side}">${side === 'short' ? 'Short ▼' : 'Long ▲'}</span>
+        </div>
+        <div class="trd-px"><b>$${fmtPx(c.price)}</b> · <span style="color:var(--${chgCol === 'g' ? 'green' : 'red'})">${c.chg >= 0 ? '+' : ''}${fmt(c.chg, 1)}%</span> 24h</div>
+      </div>
+      <div class="trd-chips">
+        <div class="trd-chip"><span class="trd-chip-lbl">Tend.</span><span class="trd-chip-val ${sc.trend >= 60 ? (side === 'short' ? 'r' : 'g') : 'd'}">${fmt(sc.trend, 0)}</span></div>
+        <div class="trd-chip"><span class="trd-chip-lbl">RSI</span><span class="trd-chip-val ${rsiCol}">${rsiTxt}</span></div>
+        <div class="trd-chip"><span class="trd-chip-lbl">Funding</span><span class="trd-chip-val ${frCol}">${c.fr >= 0 ? '+' : ''}${fmt(c.fr, 3)}%</span></div>
+        <div class="trd-chip"><span class="trd-chip-lbl">Vol 24h</span><span class="trd-chip-val d">${fmtUsd(c.turnover)}</span></div>
+      </div>
+      <div class="trd-score">
+        <div class="trd-score-num" style="color:${col}">${sc.final}</div>
+        <div class="trd-score-bar"><div class="trd-score-fill" style="width:${sc.final}%;background:${col}"></div></div>
+      </div>
+    </div>
+    <div class="trd-detail">${expanded ? trdDetailHtml(c, side) : ''}</div>
+  </div>`;
+}
+
+function trdDetailHtml(c, side) {
+  const sc = side === 'short' ? c.shortScore : c.longScore;
+  const dir = side === 'short' ? 'descida' : 'subida';
+  const factors = [
+    ['Momentum', sc.mom,   `Variação de <b>${c.chg >= 0 ? '+' : ''}${fmt(c.chg, 1)}%</b> em 24h. ${trdMomNote(c.chg, side)}`],
+    ['Tendência', sc.trend, trdTrendNote(c, side)],
+    ['RSI (1h)', sc.rsi,    c.rsi == null ? 'Sem dados de velas suficientes.' : `RSI em <b>${fmt(c.rsi, 0)}</b>. ${trdRsiNote(c.rsi, side)}`],
+    ['Funding', sc.fund,    `Funding <b>${c.fr >= 0 ? '+' : ''}${fmt(c.fr, 4)}%</b>. ${trdFundNote(c.fr, side)}`],
+    ['Volume / Liquidez', sc.vol, `Turnover de <b>${fmtUsd(c.turnover)}</b> em 24h. ${c.turnover >= 1e8 ? 'Muito líquido — fácil entrar e sair.' : c.turnover >= 2e7 ? 'Liquidez razoável.' : 'Liquidez baixa — cuidado com o spread.'}`],
+  ];
+  const col = trdScoreColor(sc.final, side);
+  return `
+    <div class="trd-summary">Setup de <b>${side === 'short' ? 'short' : 'long'}</b> com pontuação <b style="color:${col}">${sc.final}/100</b>.
+      Amplitude do dia (volatilidade): <b>${fmt(c.range, 1)}%</b> — potencial de movimento numa ${dir}.
+      Open interest: <b>${fmtUsd(c.oiUsd)}</b>.</div>
+    <div class="trd-factors">
+      ${factors.map(([name, v, note]) => {
+        const fc = v >= 65 ? (side === 'short' ? 'var(--red)' : 'var(--green)') : v >= 45 ? 'var(--orange)' : 'var(--dim)';
+        return `<div class="trd-factor">
+          <div class="trd-factor-top"><span class="trd-factor-name">${name}</span><span class="trd-factor-score" style="color:${fc}">${fmt(v, 0)}</span></div>
+          <div class="trd-factor-bar"><div class="trd-factor-fill" style="width:${Math.round(v)}%;background:${fc}"></div></div>
+          <div class="trd-factor-note">${note}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="trd-detail-actions">
+      <a class="trd-link" href="https://www.bybit.com/trade/usdt/${c.symbol}" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        Abrir ${c.coin} na Bybit
+      </a>
+    </div>`;
+}
+
+function trdMomNote(chg, side) {
+  if (side === 'short') {
+    if (chg > 3) return 'Ainda a subir — um short aqui luta contra o momentum (arriscado).';
+    if (chg > -3) return 'Movimento lateral — sem impulso claro de descida.';
+    if (chg > -8) return 'Descida saudável a favor do short.';
+    return 'Queda forte — bom momentum, mas pode estar esticado (risco de ressalto).';
+  }
+  if (chg < -3) return 'Ainda a cair — um long aqui luta contra o momentum (arriscado).';
+  if (chg < 3) return 'Movimento lateral — sem impulso claro de subida.';
+  if (chg < 8) return 'Subida saudável a favor do long.';
+  return 'Subida forte — bom momentum, mas pode estar esticado (risco de correção).';
+}
+function trdTrendNote(c, side) {
+  if (c.ef == null) return 'Sem velas suficientes para calcular a tendência.';
+  const above = c.price > c.ef && c.ef > c.es;
+  const below = c.price < c.ef && c.ef < c.es;
+  if (side === 'short') return below ? 'Preço abaixo das EMAs 9 e 21 — tendência de baixa alinhada com o short.' : above ? 'Preço acima das EMAs — tendência de alta, contra o short.' : 'EMAs cruzadas / indefinidas — tendência pouco clara.';
+  return above ? 'Preço acima das EMAs 9 e 21 — tendência de alta alinhada com o long.' : below ? 'Preço abaixo das EMAs — tendência de baixa, contra o long.' : 'EMAs cruzadas / indefinidas — tendência pouco clara.';
+}
+function trdRsiNote(rsi, side) {
+  if (rsi >= 70) return side === 'short' ? 'Sobrecomprado — pode corrigir para baixo (favorável ao short).' : 'Sobrecomprado — cuidado, o long pode estar tarde.';
+  if (rsi <= 30) return side === 'short' ? 'Sobrevendido — o short pode estar tarde (risco de ressalto).' : 'Sobrevendido — possível salto para cima (favorável ao long).';
+  return 'Zona neutra — sem extremos.';
+}
+function trdFundNote(fr, side) {
+  if (fr > 0.03)  return side === 'short' ? 'Longs sobrelotados a pagar funding — combustível para uma descida (long squeeze).' : 'Longs sobrelotados — multidão do mesmo lado, cautela.';
+  if (fr < -0.03) return side === 'short' ? 'Shorts sobrelotados — cautela, multidão do mesmo lado.' : 'Shorts sobrelotados a pagar funding — combustível para uma subida (short squeeze).';
+  return 'Funding equilibrado — sem excesso de um dos lados.';
+}
+
+function toggleTradeRow(sym) {
+  tradeExpanded = (tradeExpanded === sym) ? null : sym;
+  renderTradeList();
+}
+
+function renderTradeTab() {
+  if (tradeData) { renderTradeKpis(); renderTradeList(); scanTrades(false); }
+  else scanTrades(true);
 }
 
 // ── MARKET DATA ───────────────────────────────────────────────────────────────
@@ -5113,6 +5581,8 @@ function drawPerpChart(arr) {
   setInterval(fetchTkrQuotes, 60000);   // atualiza cotações de ações/índices/commodities
   setInterval(async () => { await fetchSpotTickers24h(); if (dbCurrentSubTab === 'assets' && dbAssetView === 'daily') renderDbAssets(); }, 60000);
   setInterval(async () => { await fetchT212Holdings(); await fetchT212Daily(); refreshAfterT212(); }, 180000);
+  // Rastreador de trades: re-analisa só quando o separador está ativo (poupa chamadas).
+  setInterval(() => { const p = document.getElementById('tab-trade'); if (p && p.classList.contains('active')) scanTrades(false); }, 45000);
 })();
 </script>
 </body>
