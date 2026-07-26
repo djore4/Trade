@@ -4035,6 +4035,42 @@ function buildAgentContext() {
     if (rows.length) L.push('AÇÕES (Trading 212) — ' + rows.join(', '));
   }
 
+  // Rastreador de Trades (scanner de setups) — melhores oportunidades do último scan
+  if (tradeData && Array.isArray(tradeData.list) && tradeData.list.length) {
+    const posMap = tradeData.posMap || {};
+    const fmtSetup = (c, side) => {
+      const sc = (side === 'short' ? c.shortScore : c.longScore).final;
+      const bits = [`${c.coin} ${sc}/100`, `${c.chg >= 0 ? '+' : ''}${fmt(c.chg, 1)}% 24h`];
+      if (c.rsi != null) bits.push(`RSI ${fmt(c.rsi, 0)}`);
+      if (isFinite(c.fr)) bits.push(`funding ${c.fr >= 0 ? '+' : ''}${fmt(c.fr, 3)}%`);
+      if (c.oiChg != null) bits.push(`OI ${c.oiChg >= 0 ? '+' : ''}${fmt(c.oiChg, 1)}%`);
+      if (c.volSpike >= 1.8) bits.push(`vol ${fmt(c.volSpike, 1)}×`);
+      const pos = posMap[c.coin];
+      if (pos) bits.push(pos === side ? '✓ confluência com posição aberta' : '⚠ contra posição aberta');
+      return bits.join(' · ');
+    };
+    const top = key => tradeData.list.slice()
+      .sort((a, b) => b[key].final - a[key].final)
+      .filter(c => c[key].final >= 55)
+      .slice(0, 6);
+    const longs = top('longScore'), shorts = top('shortScore');
+    const head = `RASTREADOR DE TRADES — scan de há ${timeAgo(tradeData.ts)}`
+      + (tradeData.total ? ` · ${tradeData.total} mercados` : '')
+      + (tradeData.upCount != null && tradeData.total ? ` (${Math.round(tradeData.upCount / tradeData.total * 100)}% em alta)` : '');
+    const parts = [head];
+    if (longs.length)  parts.push('Long mais fortes:\n- ' + longs.map(c => fmtSetup(c, 'long')).join('\n- '));
+    if (shorts.length) parts.push('Short mais fortes:\n- ' + shorts.map(c => fmtSetup(c, 'short')).join('\n- '));
+    if (!longs.length && !shorts.length) parts.push('Sem setups relevantes (score ≥ 55) neste scan.');
+    L.push(parts.join('\n'));
+  }
+
+  // Alertas recentes do rastreador (setups que ultrapassaram o limiar)
+  if (tradeAlerts && tradeAlerts.length) {
+    const recent = tradeAlerts.slice(0, 8).map(a =>
+      `${a.coin} ${a.side === 'short' ? 'Short' : 'Long'} ${a.score} (há ${timeAgo(a.ts)})`);
+    if (recent.length) L.push(`ALERTAS DO RASTREADOR (limiar ${alertThreshold}) — ` + recent.join(', '));
+  }
+
   // Notícias recentes (títulos)
   if (lastNewsItems && lastNewsItems.length) {
     const heads = lastNewsItems.slice(0, 10).map(n => `- [${n.source}] ${n.title}`);
@@ -4054,6 +4090,14 @@ function renderAgentCtxStrip() {
   const tot = portfolioTotalUsd();
   if (tot > 0) chips.push(['Portefólio', fmtUsd(tot, 0), true]);
   if (positions && positions.length) chips.push(['Posições', String(positions.length)]);
+  if (tradeData && Array.isArray(tradeData.list) && tradeData.list.length) {
+    let best = 0, bestSide = 'long';
+    tradeData.list.forEach(c => {
+      if (c.longScore.final > best)  { best = c.longScore.final;  bestSide = 'long'; }
+      if (c.shortScore.final > best) { best = c.shortScore.final; bestSide = 'short'; }
+    });
+    if (best >= 55) chips.push(['Top setup', `${best} ${bestSide === 'short' ? '▼' : '▲'}`]);
+  }
   const fgN = agentTxt('db-fg-num'); if (fgN) chips.push(['F&G', fgN]);
   const dom = agentTxt('db-btcd-val'); if (dom) chips.push(['BTC.D', dom]);
   el.innerHTML = chips.map(([k, v, sens]) => `<span class="agent-chip${sens ? ' sens' : ''}">${k} <b>${v}</b></span>`).join('');
@@ -4084,7 +4128,7 @@ function renderAgentMsgs() {
       <div class="ae-ico">✦</div>
       Sou o teu analista estratégico. Carrega em <b>✦ Analisar agora</b> para um briefing do momento,
       ou escreve uma ideia para debatermos.<br><br>
-      Vejo as tuas posições, saldos, o estado do mercado e as últimas notícias.</div>`;
+      Vejo as tuas posições, saldos, o estado do mercado, os setups do rastreador e as últimas notícias.</div>`;
     return;
   }
   let html = agentMsgs.map(m => `
@@ -4103,6 +4147,10 @@ function renderAgentMsgs() {
 }
 
 function renderAgentTab() {
+  // Garante que o rastreador tem dados frescos para o agente, mesmo sem abrir essa tab.
+  if (typeof scanTrades === 'function') {
+    scanTrades(false).then(() => renderAgentCtxStrip()).catch(() => {});
+  }
   renderAgentCtxStrip();
   renderAgentMsgs();
 }
@@ -4161,7 +4209,7 @@ function sendAgentMessage() {
 
 function agentBriefing() {
   if (agentBusy) return;
-  agentMsgs.push({ role: 'user', content: 'Faz-me um briefing estratégico do momento: lê o mercado e as notícias, resume o que importa para o meu portefólio, e aponta o principal risco ou ponto cego que eu possa estar a desconsiderar agora.' });
+  agentMsgs.push({ role: 'user', content: 'Faz-me um briefing estratégico do momento: lê o mercado e as notícias, resume o que importa para o meu portefólio, comenta os melhores setups do rastreador (e se batem com as minhas posições), e aponta o principal risco ou ponto cego que eu possa estar a desconsiderar agora.' });
   renderAgentMsgs();
   callAgent();
 }
