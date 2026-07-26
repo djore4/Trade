@@ -479,6 +479,104 @@ html.light .mnav-btn.active { color: var(--orange); }
 .mkt-sub-btn.active { color: var(--text); background: var(--s3); box-shadow: 0 1px 3px rgba(0,0,0,.25); }
 .mkt-section { display: none; animation: mktFade .22s ease; }
 .mkt-section.active { display: block; }
+/* ── TAB DEV — Agente de Futuros ─────────────────────────────── */
+.dev-wrap { max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; padding-bottom: 96px; }
+.dev-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.dev-title { font-size: 17px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.dev-badge { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--orange); background: rgba(247,147,26,.12); padding: 3px 7px; border-radius: 5px; }
+.dev-sub { font-size: 12px; color: var(--dim); margin-top: 5px; max-width: 720px; line-height: 1.55; }
+.dev-sub b { color: var(--text); font-weight: 600; }
+.dev-refresh { flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 600; color: var(--text); background: var(--s2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; cursor: pointer; transition: background .15s; }
+.dev-refresh:hover { background: var(--s3); }
+.dev-refresh.busy svg { animation: mktSpin .8s linear infinite; }
+@keyframes mktSpin { to { transform: rotate(360deg); } }
+.dev-engines { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.dev-engine { background: var(--s1); border: 1px solid var(--border); border-radius: 12px; padding: 13px 15px; }
+.dev-eng-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.dev-eng-tag { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; padding: 3px 7px; border-radius: 5px; }
+.dev-eng-tag.a { background: rgba(45,212,160,.13); color: var(--green); }
+.dev-eng-tag.b { background: rgba(247,147,26,.13); color: var(--orange); }
+.dev-eng-name { font-size: 13px; font-weight: 700; color: var(--text); }
+.dev-eng-name em { color: var(--faint); font-weight: 500; font-style: normal; }
+.dev-eng-risk { margin-left: auto; font-size: 10px; font-weight: 600; color: var(--dim); font-family: 'JetBrains Mono', monospace; }
+.dev-eng-desc { font-size: 11.5px; color: var(--dim); margin-top: 8px; line-height: 1.5; }
+.dev-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.dev-sig { background: var(--s1); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.dev-sig-head { display: flex; align-items: center; gap: 10px; padding: 13px 15px; border-bottom: 1px solid var(--border); }
+.dev-sig-sym { font-size: 15px; font-weight: 700; color: var(--text); }
+.dev-sig-px { font-size: 12px; font-family: 'JetBrains Mono', monospace; color: var(--dim); }
+.dev-verdict { margin-left: auto; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 5px 11px; border-radius: 7px; text-align: center; line-height: 1.2; }
+.dev-verdict small { display: block; font-size: 8.5px; font-weight: 600; letter-spacing: .03em; opacity: .8; margin-top: 2px; }
+.dev-verdict.long  { background: rgba(45,212,160,.14); color: var(--green); }
+.dev-verdict.short { background: rgba(247,100,122,.14); color: var(--red); }
+.dev-verdict.none  { background: var(--s3); color: var(--dim); }
+.dev-verdict.wait  { background: rgba(247,147,26,.13); color: var(--orange); }
+.dev-layers { padding: 6px 15px 14px; display: flex; flex-direction: column; }
+.dev-layer { padding: 11px 0; border-bottom: 1px solid var(--border); }
+.dev-layer:last-child { border-bottom: none; }
+.dev-layer-h { display: flex; align-items: center; gap: 7px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); margin-bottom: 9px; }
+.dev-layer-h .ln { color: var(--orange); }
+.dev-layer-h .st { margin-left: auto; font-size: 10px; letter-spacing: 0; text-transform: none; font-weight: 700; }
+.dev-layer-h .st.pass { color: var(--green); }
+.dev-layer-h .st.fail { color: var(--dim); }
+.dev-layer-h .st.veto { color: var(--red); }
+.dev-check { display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--text); padding: 3px 0; }
+.dev-check .dev-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: var(--dim); }
+.dev-dot.ok   { background: var(--green); }
+.dev-dot.no   { background: var(--dim); }
+.dev-dot.veto { background: var(--red); }
+.dev-dot.warn { background: var(--orange); }
+.dev-dot.man  { background: var(--faint); box-shadow: inset 0 0 0 1.5px var(--s1); border: 1px solid var(--faint); }
+.dev-check .lbl { flex: 1; color: var(--dim); }
+.dev-check .val { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text); font-weight: 600; }
+.dev-check .thr { font-size: 9.5px; color: var(--faint); margin-left: 5px; }
+.dev-reason { font-size: 11px; color: var(--dim); line-height: 1.5; padding: 10px 15px; background: var(--s2); border-top: 1px solid var(--border); }
+.dev-reason b { color: var(--text); }
+.dev-motorb { padding: 10px 15px 14px; border-top: 1px solid var(--border); }
+.dev-motorb-h { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); margin-bottom: 8px; display: flex; align-items: center; gap: 7px; }
+.dev-card { background: var(--s1); }
+.dev-note { font-size: 10px; color: var(--faint); font-weight: 500; }
+.dev-calc { padding: 14px 15px; display: grid; grid-template-columns: 210px 1fr; gap: 16px; }
+.dev-calc-inputs { display: flex; flex-direction: column; gap: 10px; }
+.dev-field { display: flex; flex-direction: column; gap: 4px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--faint); }
+.dev-field input { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600; color: var(--text); background: var(--s2); border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; outline: none; }
+.dev-field input:focus { border-color: var(--orange); }
+.dev-calc-out { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; align-content: start; }
+.dev-out-item { background: var(--s2); border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; }
+.dev-out-lbl { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); }
+.dev-out-val { font-size: 15px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); margin-top: 3px; }
+.dev-out-val.g { color: var(--green); } .dev-out-val.r { color: var(--red); } .dev-out-val.o { color: var(--orange); }
+.dev-out-sub { font-size: 9.5px; color: var(--faint); margin-top: 2px; }
+.dev-caps { display: flex; flex-wrap: wrap; gap: 7px; padding: 0 15px 15px; }
+.dev-cap { font-size: 10.5px; color: var(--dim); background: var(--s2); border: 1px solid var(--border); border-radius: 6px; padding: 5px 9px; font-family: 'JetBrains Mono', monospace; }
+.dev-cap em { color: var(--faint); font-style: normal; }
+.dev-ref { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.dev-refbox { background: var(--s1); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.dev-refbox-h { font-size: 12px; font-weight: 700; color: var(--text); padding: 12px 15px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+.dev-flag { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--red); background: rgba(247,100,122,.12); padding: 2px 6px; border-radius: 4px; }
+.dev-refbox-b { padding: 13px 15px; }
+.dev-ev { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+.dev-ev-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-size: 11.5px; color: var(--dim); }
+.dev-ev-row b { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text); font-weight: 600; }
+.dev-ev-row em { color: var(--faint); font-style: normal; }
+.dev-ev-row.tot { border-top: 1px dashed var(--border); padding-top: 7px; margin-top: 2px; }
+.dev-ev-row .g, .dev-table .g { color: var(--green); } .dev-ev-row .r, .dev-table .r { color: var(--red); }
+.dev-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+.dev-table th { text-align: left; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); padding: 5px 6px; border-bottom: 1px solid var(--border); }
+.dev-table td { padding: 6px 6px; color: var(--dim); border-bottom: 1px solid var(--border); }
+.dev-table td:first-child { color: var(--text); font-weight: 600; }
+.dev-table tr:last-child td { border-bottom: none; }
+.dev-table .dim { color: var(--faint); }
+.dev-refbox-note { font-size: 11px; color: var(--dim); line-height: 1.55; margin-top: 12px; }
+.dev-refbox-note b { color: var(--text); }
+.dev-list { margin: 0; padding-left: 17px; display: flex; flex-direction: column; gap: 7px; }
+.dev-list li { font-size: 11.5px; color: var(--dim); line-height: 1.5; }
+.dev-list li b { color: var(--text); font-weight: 600; }
+.dev-disclaimer { font-size: 10.5px; color: var(--faint); line-height: 1.5; text-align: center; padding: 4px 20px; }
+@media (max-width: 860px) {
+  .dev-engines, .dev-grid, .dev-ref { grid-template-columns: 1fr; }
+  .dev-calc { grid-template-columns: 1fr; }
+}
 /* Heatmap de liquidações */
 .liqhm-stats { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
 .liqhm-stat { flex: 1; min-width: 120px; background: var(--s2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 11px; }
@@ -989,9 +1087,9 @@ html.light .mnav-btn.active { color: var(--orange); }
       <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.7" stroke="currentColor" stroke-width="1.2" fill="none"/><path d="M5.5 2.2v6.6M3 4.2 5.5 2.2 8 4.2" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
       Trade
     </button>
-    <button class="tab-btn" data-tab="mercado" onclick="switchTab('mercado',this)">
-      <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><polyline points="1,8.5 3.5,4.5 6.5,6.5 10,1.5" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Mercado
+    <button class="tab-btn" data-tab="dev" onclick="switchTab('dev',this)">
+      <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><polyline points="3.5,3 1,5.5 3.5,8" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><polyline points="7.5,3 10,5.5 7.5,8" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="6.3" y1="1.7" x2="4.7" y2="9.3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      DEV
     </button>
     <button class="tab-btn" data-tab="noticias" onclick="switchTab('noticias',this)">
       <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x=".5" y="1.5" width="10" height="8" rx="1.5" stroke="currentColor" stroke-width="1.4" fill="none"/><line x1="3" y1="4.5" x2="8" y2="4.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><line x1="3" y1="7" x2="6.5" y2="7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
@@ -1184,291 +1282,136 @@ html.light .mnav-btn.active { color: var(--orange); }
 </div>
 
 <!-- ─── TAB: CARTEIRA ─────────────────────────────────── -->
-<!-- ─── TAB: MERCADO (Preço · Estrutura · Sentimento) ─── -->
-<div class="tab-pane" id="tab-mercado">
-  <div style="max-width:1600px;margin:0 auto">
-    <div class="mkt-sub-nav">
-      <button class="mkt-sub-btn active" data-sec="preco" onclick="switchMktSection('preco',this)"><span class="mkt-sub-ic">📈</span> Preço</button>
-      <button class="mkt-sub-btn" data-sec="estrutura" onclick="switchMktSection('estrutura',this)"><span class="mkt-sub-ic">🧬</span> Estrutura</button>
-      <button class="mkt-sub-btn" data-sec="sentimento" onclick="switchMktSection('sentimento',this)"><span class="mkt-sub-ic">🌡️</span> Sentimento</button>
-      <button class="mkt-sub-btn" data-sec="heatmap" onclick="switchMktSection('heatmap',this)"><span class="mkt-sub-ic">🔥</span> Heatmap</button>
-    </div>
-    <div id="mkt-sec-preco" class="mkt-section active">
-  <div style="max-width:1600px;margin:0 auto;display:flex;flex-direction:column;gap:14px">
+<!-- ─── TAB: DEV — Agente de Futuros de Cripto (Modelo de Monetização v1) ─── -->
+<div class="tab-pane" id="tab-dev">
+  <div class="dev-wrap">
 
-    <!-- Top: chart + order book -->
-    <div style="display:grid;grid-template-columns:1fr 340px;gap:14px;min-height:0" class="mkt-main-grid">
-
-      <!-- Chart col -->
-      <div style="display:flex;flex-direction:column;gap:10px;min-height:0">
-        <div class="card" style="flex:1;min-height:0;display:flex;flex-direction:column">
-          <div class="card-header">
-            <div class="card-title"><div class="ctdot"></div>BTC/USD — Análise Técnica</div>
-            <div style="display:flex;gap:3px">
-              <button class="iv-btn on" onclick="setIv('15',this)">15m</button>
-              <button class="iv-btn" onclick="setIv('60',this)">1h</button>
-              <button class="iv-btn" onclick="setIv('240',this)">4h</button>
-              <button class="iv-btn" onclick="setIv('D',this)">1D</button>
-              <button class="iv-btn" onclick="setIv('W',this)">1W</button>
-            </div>
-          </div>
-          <div id="tv-chart" class="chart-wrap" style="height:420px"></div>
-        </div>
-        <div class="mkt-stat-grid" style="grid-template-columns:repeat(5,1fr)">
-          <div class="mkt-stat"><div class="mkt-stat-label">Mark Price</div><div id="m-mark" class="mkt-stat-val">—</div></div>
-          <div class="mkt-stat"><div class="mkt-stat-label">24h Alto</div><div id="m-high" class="mkt-stat-val g">—</div></div>
-          <div class="mkt-stat"><div class="mkt-stat-label">24h Baixo</div><div id="m-low" class="mkt-stat-val r">—</div></div>
-          <div class="mkt-stat"><div class="mkt-stat-label">Volume 24h</div><div id="m-vol" class="mkt-stat-val">—</div></div>
-          <div class="mkt-stat"><div class="mkt-stat-label">Open Interest</div><div id="m-oi" class="mkt-stat-val o">—</div></div>
-        </div>
+    <!-- Cabeçalho -->
+    <div class="dev-head">
+      <div>
+        <div class="dev-title">Agente de Futuros de Cripto <span class="dev-badge">Modelo v1</span></div>
+        <div class="dev-sub">Especificação operacional aplicada a <b>BTCUSDT</b> e <b>ETHUSDT</b> (perpétuos USDT lineares). O agente monetiza volatilidade direcional em regime de tendência — fora dos contextos válidos, <b>não opera</b>.</div>
       </div>
+      <button class="dev-refresh" id="dev-refresh" onclick="scanDev(true)" title="Reavaliar sinais">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M12 7a5 5 0 1 1-1.5-3.6M12 1.5V4H9.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Reavaliar</span>
+      </button>
+    </div>
 
-      <!-- Order book + Funding -->
-      <div style="display:flex;flex-direction:column;gap:10px;overflow-y:auto">
-
-        <!-- Funding -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title"><div class="ctdot"></div>Funding Rate</div>
-            <span id="fund-badge" class="fund-badge" style="background:var(--s3);color:var(--dim)">—</span>
-          </div>
-          <div style="padding:14px">
-            <div class="mono" id="fund-rate" style="font-size:32px;font-weight:600;color:var(--text);line-height:1">—</div>
-            <div style="margin-top:5px;font-size:10px;color:var(--faint)">Próximo: <span id="fund-cd" class="mono" style="color:var(--dim)">—</span></div>
-            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
-              <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);margin-bottom:4px">Impacto nas posições</div>
-              <div id="fund-impact" class="mono" style="font-size:12px;color:var(--dim)">—</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Order book side-by-side -->
-        <div class="card" style="flex:1">
-          <div class="card-header">
-            <div class="card-title"><div class="ctdot"></div>Order Book — BTC/USD</div>
-            <span style="font-size:9px;color:var(--faint)">Top 12</span>
-          </div>
-
-          <!-- Column headers -->
-          <div style="display:grid;grid-template-columns:1fr 1px 1fr;border-bottom:1px solid var(--border)">
-            <div style="display:grid;grid-template-columns:1fr 1fr;padding:5px 10px 4px">
-              <span style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--red)">Ask (Venda)</span>
-              <span style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);text-align:right">Qtd</span>
-            </div>
-            <div style="background:var(--border)"></div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;padding:5px 10px 4px">
-              <span style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--green)">Bid (Compra)</span>
-              <span style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);text-align:right">Qtd</span>
-            </div>
-          </div>
-
-          <div style="display:grid;grid-template-columns:1fr 1px 1fr">
-            <div id="ob-asks-col" style="font-family:'JetBrains Mono',monospace;font-size:11px"></div>
-            <div style="background:var(--border)"></div>
-            <div id="ob-bids-col" style="font-family:'JetBrains Mono',monospace;font-size:11px"></div>
-          </div>
-
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 12px;border-top:1px solid var(--border)">
-            <span style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--faint)">Spread</span>
-            <span id="ob-spread" class="mono" style="font-size:11px;color:var(--text);font-weight:600">—</span>
-          </div>
-        </div>
-
+    <!-- Tese: dois motores -->
+    <div class="dev-engines">
+      <div class="dev-engine">
+        <div class="dev-eng-top"><span class="dev-eng-tag a">Motor A</span><span class="dev-eng-name">Swing momentum <em>· core</em></span><span class="dev-eng-risk">80% do risco</span></div>
+        <div class="dev-eng-desc">Time-series momentum 1–3 dias, long e short, a favor do viés do timeframe superior. Holding 12h–72h.</div>
+      </div>
+      <div class="dev-engine">
+        <div class="dev-eng-top"><span class="dev-eng-tag b">Motor B</span><span class="dev-eng-name">Reversão pós-cascata <em>· oportunista</em></span><span class="dev-eng-risk">20% do risco</span></div>
+        <div class="dev-eng-desc">Mean-reversion após exaustão de liquidações forçadas. Holding 1h–8h. Máximo 1 tentativa por cascata.</div>
       </div>
     </div>
 
-  </div>
-    </div>
-    <div id="mkt-sec-estrutura" class="mkt-section">
-  <div style="max-width:1600px;margin:0 auto;display:flex;flex-direction:column;gap:16px">
-
-    <!-- Metrics row -->
-    <div>
-      <div class="sec-label">Capitalização de Mercado</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px">
-        <div class="mbadge"><div class="mbadge-label">BTC Dom.</div><div id="s-dom" class="mbadge-val o">—</div><div class="mbadge-sub">% mercado total</div></div>
-        <div class="mbadge"><div class="mbadge-label">Total Global</div><div id="s-total" class="mbadge-val">—</div><div class="mbadge-sub">Market cap USD</div></div>
-        <div class="mbadge"><div class="mbadge-label">Total 2</div><div id="s-total2" class="mbadge-val b">—</div><div class="mbadge-sub">Excl. BTC</div></div>
-        <div class="mbadge"><div class="mbadge-label">Total 3</div><div id="s-total3" class="mbadge-val y">—</div><div class="mbadge-sub">Excl. BTC + ETH</div></div>
-        <div class="mbadge"><div class="mbadge-label">ETH / BTC</div><div id="s-ethbtc" class="mbadge-val">—</div><div class="mbadge-sub">Rácio de força</div></div>
-        <div class="mbadge"><div class="mbadge-label">Alt Season</div><div id="s-altseason" class="mbadge-val b">—</div><div class="mbadge-sub">Inversão da dom.</div></div>
-      </div>
+    <!-- Sinais ao vivo (injetados por JS) -->
+    <div class="dev-grid" id="dev-signals">
+      <div class="db-empty">A avaliar o modelo…</div>
     </div>
 
-    <!-- TradingView charts – larger -->
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
-      <div class="card">
-        <div class="card-header"><div class="card-title"><div class="ctdot"></div>BTC Dominance</div></div>
-        <div id="tv-dom" class="chart-wrap" style="height:340px"></div>
+    <!-- Sizing & alavancagem -->
+    <div class="card dev-card">
+      <div class="card-header"><div class="card-title"><div class="ctdot"></div>Sizing e alavancagem</div><div class="dev-note">A alavancagem é variável de sobrevivência, não de lucro</div></div>
+      <div class="dev-calc">
+        <div class="dev-calc-inputs">
+          <label class="dev-field"><span>Capital (USD)</span><input type="number" id="dev-capital" min="100" step="100" oninput="devCfgChange()"></label>
+          <label class="dev-field"><span>Risco / trade (R%)</span><input type="number" id="dev-risk" min="0.5" max="1" step="0.05" oninput="devCfgChange()"></label>
+        </div>
+        <div class="dev-calc-out" id="dev-calc-out"><div class="db-empty">A calcular…</div></div>
       </div>
-      <div class="card">
-        <div class="card-header"><div class="card-title"><div class="ctdot" style="background:var(--blue)"></div>Total 2 — Excl. BTC</div></div>
-        <div id="tv-total2" class="chart-wrap" style="height:340px"></div>
-      </div>
-      <div class="card">
-        <div class="card-header"><div class="card-title"><div class="ctdot" style="background:var(--yellow)"></div>Total 3 — Excl. BTC+ETH</div></div>
-        <div id="tv-total3" class="chart-wrap" style="height:340px"></div>
+      <div class="dev-caps">
+        <span class="dev-cap">L ≤ 5× <em>(código)</em></span>
+        <span class="dev-cap">alav. efetiva ≤ 3× <em>(config)</em></span>
+        <span class="dev-cap">exposição agregada ≤ 2× capital</span>
+        <span class="dev-cap">posições simultâneas ≤ 2</span>
+        <span class="dev-cap">liquidação &gt; 3× a distância do stop</span>
       </div>
     </div>
 
-    <!-- Liquidations -->
-    <div>
-      <div class="sec-label">Liquidações</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <!-- Painéis de referência do modelo -->
+    <div class="dev-ref">
 
-        <!-- Heatmap link -->
-        <div class="card">
-          <div class="card-header"><div class="card-title"><div class="ctdot" style="background:var(--red)"></div>Liquidation Heatmap — BTC</div></div>
-          <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
-            <div class="heatmap-link" onclick="window.open('https://www.coinglass.com/pro/futures/LiquidationHeatMap','_blank')">
-              <div class="heatmap-link-icon">🌡️</div>
-              <div class="heatmap-link-title">Abrir Liquidation Heatmap</div>
-              <div class="heatmap-link-sub">Mapa de calor das liquidações em tempo real — CoinGlass</div>
-              <div class="heatmap-link-btn">Abrir no CoinGlass ↗</div>
-            </div>
-            <div class="heatmap-link" onclick="window.open('https://www.coinglass.com/LiquidationData','_blank')" style="padding:16px">
-              <div class="heatmap-link-icon">⚡</div>
-              <div class="heatmap-link-title">Dados de Liquidações ao Vivo</div>
-              <div class="heatmap-link-sub">Histórico e volume de liquidações por exchange</div>
-              <div class="heatmap-link-btn">Ver Dados ↗</div>
-            </div>
+      <div class="dev-refbox">
+        <div class="dev-refbox-h">Expectativa de lucro (modelo de EV)</div>
+        <div class="dev-refbox-b">
+          <div class="dev-ev">
+            <div class="dev-ev-row"><span>E[R] por trade</span><b>0,45 × 1,8 − 0,55 = <span class="g">+0,26R</span></b></div>
+            <div class="dev-ev-row"><span>Bruto / mês</span><b>40 × 0,75% × 0,26 ≈ <span class="g">+7,8%</span></b></div>
+            <div class="dev-ev-row"><span>Custos / mês</span><b>40 × 2 × 0,05% ≈ <span class="r">−4,0%</span></b></div>
+            <div class="dev-ev-row"><span>Funding líquido</span><b>≈ 0 a +0,5% <em>(shorts recebem)</em></b></div>
+            <div class="dev-ev-row tot"><span>Líquido / mês (edge intacto)</span><b class="g">≈ +4–5%</b></div>
           </div>
-        </div>
-
-        <!-- Recent liquidations from Bybit -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title"><div class="ctdot" style="background:var(--red)"></div>Liquidações Recentes — BTC</div>
-            <span style="font-size:9px;color:var(--faint)">via Bybit</span>
-          </div>
-          <div id="liq-list" style="max-height:360px;overflow-y:auto">
-            <div style="padding:20px;text-align:center;color:var(--faint);font-size:12px">A carregar...</div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-  </div>
-    </div>
-    <div id="mkt-sec-sentimento" class="mkt-section">
-  <div style="max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:16px" class="sent-grid">
-
-    <!-- Fear & Greed -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title"><div class="ctdot"></div>Fear & Greed Index</div>
-        <span id="fg-label" style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--dim)">—</span>
-      </div>
-      <div style="padding:24px">
-        <div style="text-align:center;margin-bottom:24px">
-          <div id="fg-num" class="fg-big" style="color:var(--text)">—</div>
-          <div id="fg-text" style="font-size:11px;font-weight:500;color:var(--dim);margin-top:8px;text-transform:uppercase;letter-spacing:.1em">Aguardar dados</div>
-        </div>
-        <div class="fg-bar" style="margin-bottom:8px">
-          <div id="fg-needle" class="fg-needle" style="left:50%"></div>
-        </div>
-        <div style="display:flex;justify-content:space-between;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.07em">
-          <span class="r">Medo</span><span style="color:var(--faint)">Neutro</span><span class="g">Ganância</span>
-        </div>
-        <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border)">
-          <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);margin-bottom:6px">Interpretação</div>
-          <div id="fg-interp" style="font-size:12px;color:var(--dim);line-height:1.7">—</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Right col: macro + signals + dominance -->
-    <div style="display:flex;flex-direction:column;gap:12px">
-
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title"><div class="ctdot"></div>Tendência Macro</div>
-          <span id="macro-badge" style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:2px 8px;border-radius:4px;background:var(--s3);color:var(--dim)">—</span>
-        </div>
-        <div style="padding:12px 14px">
-          <div id="macro-text" style="font-size:12px;color:var(--dim);line-height:1.7">A carregar...</div>
+          <table class="dev-table">
+            <thead><tr><th>Cenário</th><th>WR</th><th>Líquido/mês</th><th>Prob.</th></tr></thead>
+            <tbody>
+              <tr><td>Otimista</td><td>48%</td><td class="g">+8–12%</td><td>15%</td></tr>
+              <tr><td>Base</td><td>45%</td><td class="g">+3–5%</td><td>40%</td></tr>
+              <tr><td>Decay parcial</td><td>42%</td><td class="dim">−1 a +2%</td><td>30%</td></tr>
+              <tr><td>Sem edge</td><td>≤40%</td><td class="r">−3 a −6%</td><td>15%</td></tr>
+            </tbody>
+          </table>
+          <div class="dev-refbox-note">EV ponderado ≈ <b>+2–4%/mês</b>, com meses negativos e drawdowns de 10–20%. Qualquer calibração que prometa 20%+/mês consistente está sobreajustada — sinal de alarme, não de celebração.</div>
         </div>
       </div>
 
-      <div class="card" style="flex:1">
-        <div class="card-header"><div class="card-title"><div class="ctdot"></div>Sinais de Mercado</div></div>
-        <div id="signals-list"></div>
+      <div class="dev-refbox">
+        <div class="dev-refbox-h">Guardrails (não-negociáveis, no código)</div>
+        <div class="dev-refbox-b">
+          <ul class="dev-list">
+            <li><b>Circuit breaker diário:</b> −3% do capital → fecha tudo, pausa 24h.</li>
+            <li><b>Circuit breaker semanal:</b> −6% → pausa até revisão manual.</li>
+            <li><b>Kill switch manual</b> (Telegram) que fecha posições e revoga ordens.</li>
+            <li>Stops sempre como ordens <b>reduceOnly</b> no servidor da exchange — nunca só em memória local.</li>
+            <li>Reconciliação de posição via websocket a cada fill; estado local ≠ exchange → <b>flatten</b>.</li>
+            <li>recvWindow 5000ms, IP whitelist, chaves em env vars, API sem withdrawal.</li>
+          </ul>
+        </div>
       </div>
 
-      <div class="card">
-        <div class="card-header"><div class="card-title"><div class="ctdot" style="background:var(--orange)"></div>BTC Dominância</div></div>
-        <div style="padding:13px 14px">
-          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
-            <div class="mono" id="dom-pct" style="font-size:26px;font-weight:600;color:var(--orange)">—</div>
-            <div id="dom-signal" style="font-size:10px;color:var(--dim)">—</div>
-          </div>
-          <div class="prog-track"><div id="dom-bar" class="prog-fill" style="width:0%;background:var(--orange)"></div></div>
-          <div style="font-size:9px;color:var(--faint);display:flex;justify-content:space-between;margin-top:3px"><span>0%</span><span>100%</span></div>
-          <div style="margin-top:9px;font-size:11px;color:var(--dim)" id="dom-interp">—</div>
+      <div class="dev-refbox">
+        <div class="dev-refbox-h">Critérios de kill (live, automáticos)</div>
+        <div class="dev-refbox-b">
+          <ul class="dev-list">
+            <li>WR abaixo de <b>38%</b> após 100 trades → suspender motor.</li>
+            <li>Drawdown live &gt; <b>1,5×</b> o pior drawdown do walk-forward → suspender tudo.</li>
+            <li>Slippage médio &gt; <b>2×</b> o modelado → rever execução antes de continuar.</li>
+          </ul>
+          <div class="dev-refbox-note"><b>Go-live só se:</b> Sharpe &gt;1,0 e max DD &lt;20% no walk-forward, líquido de custos e slippage realistas. Pipeline: testnet ≥3 meses → walk-forward out-of-sample → live com capital mínimo.</div>
+        </div>
+      </div>
+
+      <div class="dev-refbox">
+        <div class="dev-refbox-h">Risco de plataforma <span class="dev-flag">bloqueador ativo</span></div>
+        <div class="dev-refbox-b">
+          <div class="dev-refbox-note">Grandfathering MiCA terminou a <b>1 jul 2026</b>; Bybit global vedada a residentes do EEE e Bybit EU não oferece perpétuos (licença MiFID II da Bybit X pendente). <b>Ação:</b> isolar toda a lógica de exchange atrás de uma interface (ou ccxt), para que migrar para uma corretora MiFID II com perps (Kraken/Cyprus, OKX/Malta) seja uma troca de adaptador, não uma reescrita.</div>
+        </div>
+      </div>
+
+      <div class="dev-refbox">
+        <div class="dev-refbox-h">Roadmap</div>
+        <div class="dev-refbox-b">
+          <table class="dev-table">
+            <thead><tr><th>Semana</th><th>Entregável</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>Abstração de exchange + feeds websocket + logging Supabase</td></tr>
+              <tr><td>2–3</td><td>Camadas 1–4 de indicadores + Motor A em paper (testnet)</td></tr>
+              <tr><td>4–6</td><td>Motor B + guardrails + circuit breakers</td></tr>
+              <tr><td>7–14</td><td>Paper contínuo + walk-forward; calibrar só R% e thresholds de regime</td></tr>
+              <tr><td>15+</td><td>Decisão go/no-go contra os critérios de validação</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
     </div>
-  </div>
-    </div>
 
-    <!-- ── Sub-secção: Heatmap de liquidações ── -->
-    <div id="mkt-sec-heatmap" class="mkt-section">
-      <div style="max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:14px">
-
-        <!-- Acesso ao Liquidation Heatmap REAL (Coinglass) -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title"><div class="ctdot" style="background:var(--red)"></div>Liquidation Heatmap — dados reais</div>
-            <span class="tag" style="background:rgba(247,100,122,.12);color:var(--red)">Coinglass</span>
-          </div>
-          <div style="padding:14px">
-            <div class="heatmap-link" onclick="openCoinglassHeatmap()">
-              <div class="heatmap-link-icon">🔥</div>
-              <div class="heatmap-link-title">Abrir Liquidation Heatmap real</div>
-              <div class="heatmap-link-sub">Mapa de calor real das liquidações (níveis de alavancagem, preço × tempo) no Coinglass. Os dados são proprietários e a página não permite ser embebida — por isso abre num separador novo.</div>
-              <div class="heatmap-link-btn" style="margin-top:2px">Abrir no Coinglass ↗</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Estimativa própria (modelo a partir do open interest) -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title"><div class="ctdot" style="background:var(--orange)"></div>Estimativa de zonas de liquidação · <span id="liqhm-coin-name">BTC</span></div>
-            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-              <div class="coin-select" id="liqhm-coin-select">
-                <button class="coin-select-btn" id="liqhm-coin-btn" onclick="toggleCoinDropdown(event)">
-                  <span id="liqhm-coin-label">BTC</span><span class="coin-select-caret">▾</span>
-                </button>
-                <div class="coin-dropdown" id="liqhm-coin-dropdown">
-                  <input type="text" class="coin-search" id="liqhm-coin-search" placeholder="Procurar moeda…" autocomplete="off"
-                         oninput="filterCoinDropdown(this.value)" onclick="event.stopPropagation()"
-                         onkeydown="onCoinSearchKey(event)">
-                  <div class="coin-options" id="liqhm-coin-options"><div class="coin-opt-empty">A carregar moedas…</div></div>
-                </div>
-              </div>
-              <div style="display:flex;gap:3px" id="liqhm-range-btns">
-                <button class="iv-btn on" onclick="setLiqHmRange(5,this)">±5%</button>
-                <button class="iv-btn" onclick="setLiqHmRange(10,this)">±10%</button>
-                <button class="iv-btn" onclick="setLiqHmRange(20,this)">±20%</button>
-              </div>
-            </div>
-          </div>
-          <div style="padding:14px">
-            <div id="liqhm-stats" class="liqhm-stats"></div>
-            <div id="liqhm-legend" class="liqhm-legend"></div>
-            <div id="liqhm-wrap" class="liqhm-wrap"><div class="db-empty">A calcular mapa de liquidações...</div></div>
-            <div class="liqhm-note">
-              Estimativa a partir do <b>open interest</b> e dos escalões de alavancagem habituais (10× · 25× · 50× · 100×),
-              enviesada pelo <b>funding</b>. Não são dados reais de liquidações da exchange — é um modelo para identificar
-              <b>zonas-íman</b> de preço (onde a liquidez de posições alavancadas tende a acumular).
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <div class="dev-disclaimer">Ferramenta de apoio à decisão. Indicadores calculados a partir de dados públicos da Bybit (kline 1h/4h, funding, open interest, fluxo de trades). Não é execução automática nem aconselhamento financeiro.</div>
 
   </div>
 </div>
@@ -1702,9 +1645,9 @@ html.light .mnav-btn.active { color: var(--orange); }
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 5v14M8 8l4-3 4 3"/></svg>
     <span class="mnav-lbl">Trade</span>
   </button>
-  <button class="mnav-btn" data-tab="mercado" onclick="switchTab('mercado',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 8 12 13 15 21 7"/><line x1="3" y1="21" x2="21" y2="21"/></svg>
-    <span class="mnav-lbl">Mercado</span>
+  <button class="mnav-btn" data-tab="dev" onclick="switchTab('dev',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 6 3 12 8 18"/><polyline points="16 6 21 12 16 18"/><line x1="13.5" y1="4" x2="10.5" y2="20"/></svg>
+    <span class="mnav-lbl">DEV</span>
   </button>
   <button class="mnav-btn" data-tab="noticias" onclick="switchTab('noticias',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="7" y1="9" x2="17" y2="9"/><line x1="7" y1="13" x2="13" y2="13"/></svg>
@@ -1801,7 +1744,7 @@ function switchTab(id, btn) {
   if (id === 'dashboard')  { setTimeout(() => loadPortfolioSeries(dbCurrentRange()), 60); renderDbAssets(); }
   if (id === 'posicoes')   renderPosTab();
   if (id === 'trade')      renderTradeTab();
-  if (id === 'mercado')    switchMktSection(mktSection);
+  if (id === 'dev')        renderDevTab();
   if (id === 'agente')     renderAgentTab();
 }
 
@@ -3697,6 +3640,386 @@ async function fetchLiquidations() {
       </div>`;
     }).join('');
   } catch(e) {}
+}
+
+// ── DEV — AGENTE DE FUTUROS (aplicação do Modelo de Monetização v1) ──────────
+// Avalia o stack de 4 camadas de indicadores em BTCUSDT e ETHUSDT a partir de
+// dados públicos da Bybit e devolve a decisão do Motor A (swing momentum) e o
+// estado do Motor B (reversão pós-cascata). Só dados de mercado — sem execução.
+const DEV_SYMS = ['BTCUSDT', 'ETHUSDT'];
+let devData = {};              // sym -> resultado computado
+let devScanning = false, devLastScan = 0;
+let devCfg = { capital: 10000, risk: 0.75 };
+try { Object.assign(devCfg, JSON.parse(localStorage.getItem('devCfg') || '{}')); } catch (e) {}
+
+const devAvg = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
+
+// ATR de Wilder (14). Devolve o último valor.
+function devATR(h, l, c, p = 14) {
+  const n = c.length; if (n < p + 1) return null;
+  const tr = [];
+  for (let i = 1; i < n; i++) tr.push(Math.max(h[i] - l[i], Math.abs(h[i] - c[i - 1]), Math.abs(l[i] - c[i - 1])));
+  let atr = devAvg(tr.slice(0, p));
+  for (let i = p; i < tr.length; i++) atr = (atr * (p - 1) + tr[i]) / p;
+  return atr;
+}
+
+// ADX de Wilder (14) + DI+/DI-. Mede força da tendência.
+function devADX(h, l, c, p = 14) {
+  const n = c.length; if (n < 2 * p + 2) return null;
+  const tr = [], pdm = [], mdm = [];
+  for (let i = 1; i < n; i++) {
+    const up = h[i] - h[i - 1], dn = l[i - 1] - l[i];
+    pdm.push(up > dn && up > 0 ? up : 0);
+    mdm.push(dn > up && dn > 0 ? dn : 0);
+    tr.push(Math.max(h[i] - l[i], Math.abs(h[i] - c[i - 1]), Math.abs(l[i] - c[i - 1])));
+  }
+  const wilder = arr => {
+    let s = arr.slice(0, p).reduce((a, b) => a + b, 0);
+    const out = [s];
+    for (let i = p; i < arr.length; i++) { s = s - s / p + arr[i]; out.push(s); }
+    return out;
+  };
+  const trS = wilder(tr), pS = wilder(pdm), mS = wilder(mdm);
+  const dx = [];
+  for (let i = 0; i < trS.length; i++) {
+    const t = trS[i] || 1e-9;
+    const pdi = 100 * pS[i] / t, mdi = 100 * mS[i] / t;
+    dx.push({ dxi: 100 * Math.abs(pdi - mdi) / ((pdi + mdi) || 1e-9), pdi, mdi });
+  }
+  if (dx.length < p) return null;
+  let adx = devAvg(dx.slice(0, p).map(d => d.dxi));
+  for (let i = p; i < dx.length; i++) adx = (adx * (p - 1) + dx[i].dxi) / p;
+  const last = dx[dx.length - 1];
+  return { adx, pdi: last.pdi, mdi: last.mdi };
+}
+
+// Expoente de Hurst por análise R/S sobre os log-retornos. >0,55 tendência,
+// <0,45 mean-reversion, ~0,5 passeio aleatório.
+function devHurst(closes) {
+  const n = closes.length; if (n < 64) return null;
+  const rets = [];
+  for (let i = 1; i < n; i++) rets.push(Math.log(closes[i] / closes[i - 1]));
+  const N = rets.length, xs = [], ys = [];
+  for (let s = 8; s <= Math.floor(N / 2); s = Math.floor(s * 1.6)) {
+    const chunks = Math.floor(N / s);
+    let rsAcc = 0, cnt = 0;
+    for (let ci = 0; ci < chunks; ci++) {
+      const seg = rets.slice(ci * s, (ci + 1) * s);
+      const mean = devAvg(seg);
+      let cum = 0, mn = Infinity, mx = -Infinity;
+      for (const v of seg) { cum += v - mean; if (cum < mn) mn = cum; if (cum > mx) mx = cum; }
+      const R = mx - mn;
+      const sd = Math.sqrt(devAvg(seg.map(v => (v - mean) ** 2)));
+      if (sd > 0) { rsAcc += R / sd; cnt++; }
+    }
+    if (cnt > 0) { xs.push(Math.log(s)); ys.push(Math.log(rsAcc / cnt)); }
+  }
+  if (xs.length < 2) return null;
+  const m = xs.length, sx = xs.reduce((a, b) => a + b, 0), sy = ys.reduce((a, b) => a + b, 0);
+  const sxx = xs.reduce((a, b) => a + b * b, 0), sxy = xs.reduce((a, b, i) => a + b * ys[i], 0);
+  const den = m * sxx - sx * sx; if (!den) return null;
+  return (m * sxy - sx * sy) / den;
+}
+
+// Canal de Donchian(20) no 1h, excluindo a vela em formação.
+function devDonchian(h, l, p = 20) {
+  if (h.length < p + 1) return null;
+  return { hi: Math.max(...h.slice(-p - 1, -1)), lo: Math.min(...l.slice(-p - 1, -1)) };
+}
+
+// Volatilidade realizada: vol diária (janela 24 velas 1h) e o seu percentil
+// sobre o histórico disponível (~30 dias).
+function devVolPercentile(closes) {
+  if (closes.length < 48) return null;
+  const rets = [];
+  for (let i = 1; i < closes.length; i++) rets.push(Math.log(closes[i] / closes[i - 1]));
+  const win = 24, vols = [];
+  for (let i = win; i <= rets.length; i++) {
+    const seg = rets.slice(i - win, i), mean = devAvg(seg);
+    vols.push(Math.sqrt(devAvg(seg.map(v => (v - mean) ** 2))) * Math.sqrt(24) * 100);
+  }
+  if (vols.length < 10) return null;
+  const cur = vols[vols.length - 1], sorted = vols.slice().sort((a, b) => a - b);
+  const pct = sorted.filter(x => x <= cur).length / sorted.length * 100;
+  return { cur, pct };
+}
+
+// Klines cronológicas (mais antigo → mais recente).
+async function devFetchKline(sym, interval, limit) {
+  const r = await fetch(`${BYBIT}/v5/market/kline?category=linear&symbol=${sym}&interval=${interval}&limit=${limit}`);
+  const d = await r.json();
+  const list = (d?.result?.list || []).slice().reverse();
+  return {
+    closes: list.map(k => +k[4]), highs: list.map(k => +k[2]),
+    lows: list.map(k => +k[3]), opens: list.map(k => +k[1]), vols: list.map(k => +k[5]),
+  };
+}
+// CVD proxy a partir do fluxo recente de trades (taker buy − sell, em base).
+async function devFetchCVD(sym) {
+  try {
+    const r = await fetch(`${BYBIT}/v5/market/recent-trade?category=linear&symbol=${sym}&limit=1000`);
+    const d = await r.json();
+    let cvd = 0;
+    for (const t of (d?.result?.list || [])) { const v = parseFloat(t.size) || 0; cvd += t.side === 'Buy' ? v : -v; }
+    return cvd;
+  } catch (e) { return null; }
+}
+// Série de OI horária (mais recente → mais antigo).
+async function devFetchOI(sym) {
+  try {
+    const r = await fetch(`${BYBIT}/v5/market/open-interest?category=linear&symbol=${sym}&intervalTime=1h&limit=6`);
+    const d = await r.json();
+    return (d?.result?.list || []).map(x => +x.openInterest).filter(v => v > 0);
+  } catch (e) { return []; }
+}
+async function devFetchTicker(sym) {
+  try {
+    const r = await fetch(`${BYBIT}/v5/market/tickers?category=linear&symbol=${sym}`);
+    const d = await r.json();
+    const t = d?.result?.list?.[0]; if (!t) return null;
+    return {
+      price: parseFloat(t.lastPrice), fr: parseFloat(t.fundingRate) * 100,
+      chg24: parseFloat(t.price24hPcnt) * 100, nextFunding: +t.nextFundingTime,
+    };
+  } catch (e) { return null; }
+}
+
+// Núcleo: avalia as 4 camadas para um símbolo.
+async function devCompute(sym) {
+  const [k4, k1, cvd, oi, tk] = await Promise.all([
+    devFetchKline(sym, '240', 320), devFetchKline(sym, '60', 720),
+    devFetchCVD(sym), devFetchOI(sym), devFetchTicker(sym),
+  ]);
+  if (!tk || k4.closes.length < 200 || k1.closes.length < 40) return { sym, error: true };
+  const price = tk.price;
+
+  // ── Camada 1 — Gate de regime (4h) ──
+  const adx = devADX(k4.highs, k4.lows, k4.closes, 14);
+  const hurst = devHurst(k4.closes.slice(-150));
+  const vol = devVolPercentile(k1.closes);
+  const adxV = adx ? adx.adx : null, hV = hurst;
+  const regimeTrend = adxV != null && adxV > 25 && hV != null && hV > 0.55 && vol && vol.pct >= 10;
+  const regimeRange = adxV != null && adxV < 20 && hV != null && hV < 0.45;
+  const volHigh = vol && vol.pct > 95;
+  const volLow = vol && vol.pct < 10;
+
+  // ── Camada 2 — Viés direcional (4h) ──
+  const ema50 = trdEma(k4.closes, 50), ema200 = trdEma(k4.closes, 200);
+  const bias = (ema50 != null && ema200 != null) ? (ema50 > ema200 ? 'long' : 'short') : null;
+
+  // ── Camada 3 — Gatilho de entrada (1h) ──
+  const atr = devATR(k1.highs, k1.lows, k1.closes, 14);
+  const don = devDonchian(k1.highs, k1.lows, 20);
+  const lastClose = k1.closes[k1.closes.length - 2];   // última vela 1h fechada
+  const lastVol = k1.vols[k1.vols.length - 2] || 0;
+  const avg20 = devAvg(k1.vols.slice(-21, -1));
+  const volMult = avg20 > 0 ? lastVol / avg20 : 0;
+  const cvdUp = cvd != null && cvd > 0, cvdDn = cvd != null && cvd < 0;
+  const brkUp = don && lastClose > don.hi;
+  const brkDn = don && lastClose < don.lo;
+  const trigLong  = brkUp && cvdUp && volMult > 1.5;
+  const trigShort = brkDn && cvdDn && volMult > 1.5;
+  const triggered = bias === 'long' ? trigLong : bias === 'short' ? trigShort : false;
+
+  // ── Camada 4 — Filtros de veto ──
+  // Variação de preço nas últimas 4h (para o veto de OI).
+  const c4 = k1.closes, chg4h = c4.length > 4 ? (price - c4[c4.length - 5]) / c4[c4.length - 5] * 100 : 0;
+  const oiChg4h = oi.length >= 5 ? (oi[0] - oi[4]) / oi[4] * 100 : null;
+  const oiChg1h = oi.length >= 2 ? (oi[0] - oi[1]) / oi[1] * 100 : null;
+  const vetoFunding = bias === 'long' ? tk.fr > 0.03 : bias === 'short' ? tk.fr < -0.03 : false;
+  const vetoOI = oiChg4h != null && oiChg4h > 8 && Math.abs(chg4h) < 1;
+
+  // ── Decisão do Motor A ──
+  let action, actState;
+  if (!bias) { action = 'none'; actState = 'Sem viés (EMAs indefinidas)'; }
+  else if (!regimeTrend) {
+    action = 'none';
+    actState = volLow ? 'Vol < p10 — movimento insuficiente'
+      : (adxV != null && adxV >= 20 && adxV <= 25) ? 'ADX em chop (20–25)'
+      : (hV != null && hV >= 0.45 && hV <= 0.55) ? 'Hurst indeciso (0,45–0,55)'
+      : 'Regime não é tendência';
+  } else if (vetoFunding || vetoOI) {
+    action = 'wait'; actState = vetoFunding ? 'Vetado — funding sobrelotado' : 'Vetado — OI a acumular (squeeze)';
+  } else if (!triggered) {
+    action = 'wait'; actState = 'Regime OK — a aguardar gatilho';
+  } else {
+    action = bias; actState = volHigh ? 'ENTRAR · risco a metade (vol > p95)' : 'ENTRAR';
+  }
+
+  // ── Motor B — reversão pós-cascata (condições computáveis) ──
+  const ema20_1h = trdEma(k1.closes, 20);
+  const extAtr = (atr && ema20_1h) ? Math.abs(price - ema20_1h) / atr : null;
+  const mbOiDrop = oiChg1h != null && oiChg1h < -5;
+  const mbExtended = extAtr != null && extAtr > 2.5;
+
+  return {
+    sym, price, error: false,
+    c1: { adx: adxV, pdi: adx?.pdi, mdi: adx?.mdi, hurst: hV, vol, regimeTrend, regimeRange, volHigh, volLow },
+    c2: { ema50, ema200, bias },
+    c3: { don, lastClose, volMult, cvd, cvdUp, cvdDn, brkUp, brkDn, atr, triggered, trigLong, trigShort },
+    c4: { fr: tk.fr, vetoFunding, oiChg4h, oiChg1h, chg4h, vetoOI },
+    mb: { oiChg1h, extAtr, mbOiDrop, mbExtended },
+    action, actState,
+  };
+}
+
+function devPct(v, d = 1) { return v == null ? '—' : (v >= 0 ? '+' : '') + v.toFixed(d) + '%'; }
+
+function devRenderSignal(r) {
+  if (r.error) return `<div class="dev-sig"><div class="dev-sig-head"><span class="dev-sig-sym">${r.sym}</span><span class="dev-verdict none">Sem dados</span></div></div>`;
+  const c1 = r.c1, c2 = r.c2, c3 = r.c3, c4 = r.c4, mb = r.mb;
+  const vClass = r.action === 'long' ? 'long' : r.action === 'short' ? 'short' : r.action === 'wait' ? 'wait' : 'none';
+  const vLabel = r.action === 'long' ? 'Long' : r.action === 'short' ? 'Short' : r.action === 'wait' ? 'Aguardar' : 'Não operar';
+  const dot = ok => ok ? 'ok' : 'no';
+
+  // Camada 1
+  const c1pass = c1.regimeTrend;
+  const c1st = c1pass ? '<span class="st pass">tendência</span>' : (c1.regimeRange ? '<span class="st fail">range</span>' : '<span class="st fail">não operar</span>');
+  const c1html = `
+    <div class="dev-check"><span class="dev-dot ${dot(c1.adx > 25)}"></span><span class="lbl">ADX (14, 4h)</span><span class="val">${c1.adx == null ? '—' : c1.adx.toFixed(1)}</span><span class="thr">&gt;25</span></div>
+    <div class="dev-check"><span class="dev-dot ${dot(c1.hurst > 0.55)}"></span><span class="lbl">Hurst (4h)</span><span class="val">${c1.hurst == null ? '—' : c1.hurst.toFixed(2)}</span><span class="thr">&gt;0,55</span></div>
+    <div class="dev-check"><span class="dev-dot ${c1.volLow ? 'veto' : c1.volHigh ? 'warn' : 'ok'}"></span><span class="lbl">Vol realizada</span><span class="val">p${c1.vol ? Math.round(c1.vol.pct) : '—'}</span><span class="thr">p10–p95</span></div>`;
+
+  // Camada 2
+  const c2st = c2.bias === 'long' ? '<span class="st pass">só longs</span>' : c2.bias === 'short' ? '<span class="st veto">só shorts</span>' : '<span class="st fail">—</span>';
+  const c2html = `
+    <div class="dev-check"><span class="dev-dot ${c2.bias ? (c2.bias === 'long' ? 'ok' : 'veto') : 'no'}"></span><span class="lbl">EMA50 vs EMA200 (4h)</span><span class="val">${c2.ema50 && c2.ema200 ? (c2.ema50 > c2.ema200 ? 'EMA50 &gt; EMA200' : 'EMA50 &lt; EMA200') : '—'}</span></div>`;
+
+  // Camada 3
+  const brkOk = c2.bias === 'long' ? c3.brkUp : c2.bias === 'short' ? c3.brkDn : false;
+  const cvdOk = c2.bias === 'long' ? c3.cvdUp : c2.bias === 'short' ? c3.cvdDn : false;
+  const c3st = c3.triggered ? '<span class="st pass">armado</span>' : '<span class="st fail">sem gatilho</span>';
+  const c3html = `
+    <div class="dev-check"><span class="dev-dot ${dot(brkOk)}"></span><span class="lbl">Rutura Donchian(20)</span><span class="val">${c3.don ? (c2.bias === 'short' ? fmtPx(c3.don.lo) : fmtPx(c3.don.hi)) : '—'}</span></div>
+    <div class="dev-check"><span class="dev-dot ${dot(cvdOk)}"></span><span class="lbl">CVD (fluxo recente)</span><span class="val">${c3.cvd == null ? '—' : (c3.cvd >= 0 ? '▲ compra' : '▼ venda')}</span></div>
+    <div class="dev-check"><span class="dev-dot ${dot(c3.volMult > 1.5)}"></span><span class="lbl">Volume da rutura</span><span class="val">${c3.volMult ? c3.volMult.toFixed(2) + '×' : '—'}</span><span class="thr">&gt;1,5×</span></div>`;
+
+  // Camada 4
+  const anyVeto = c4.vetoFunding || c4.vetoOI;
+  const c4st = anyVeto ? '<span class="st veto">veto ativo</span>' : '<span class="st pass">sem veto</span>';
+  const c4html = `
+    <div class="dev-check"><span class="dev-dot ${c4.vetoFunding ? 'veto' : 'ok'}"></span><span class="lbl">Funding rate</span><span class="val">${devPct(c4.fr, 4)}</span><span class="thr">±0,03%</span></div>
+    <div class="dev-check"><span class="dev-dot ${c4.vetoOI ? 'veto' : 'ok'}"></span><span class="lbl">OI 4h (preço lateral)</span><span class="val">${devPct(c4.oiChg4h)}</span><span class="thr">&lt;8%</span></div>
+    <div class="dev-check"><span class="dev-dot man"></span><span class="lbl">Heatmap liquidações</span><span class="val">manual</span></div>
+    <div class="dev-check"><span class="dev-dot man"></span><span class="lbl">Calendário macro (FOMC/CPI/NFP)</span><span class="val">manual</span></div>`;
+
+  // Sizing para a direção enviesada
+  let sizeHtml = '';
+  if (c2.bias && c3.atr && r.price) {
+    const stopPct = 1.5 * c3.atr / r.price;
+    const riskFrac = (c1.volHigh ? devCfg.risk / 2 : devCfg.risk) / 100;
+    const notional = riskFrac * devCfg.capital / stopPct;
+    let effLev = notional / devCfg.capital;
+    const capped = effLev > 3;
+    if (capped) effLev = 3;
+    const liqDist = (1 / effLev) * 100;
+    sizeHtml = `<div class="dev-motorb">
+      <div class="dev-motorb-h">Sizing ${c2.bias === 'long' ? 'long' : 'short'} @ mercado</div>
+      <div class="dev-check"><span class="lbl">Stop inicial (1,5×ATR)</span><span class="val">${(stopPct * 100).toFixed(2)}%</span></div>
+      <div class="dev-check"><span class="lbl">Notional</span><span class="val">${fmtUsd(notional)}</span></div>
+      <div class="dev-check"><span class="lbl">Alav. efetiva</span><span class="val">${effLev.toFixed(2)}×${capped ? ' (cap)' : ''}</span></div>
+      <div class="dev-check"><span class="lbl">Liquidação a ~</span><span class="val">${liqDist.toFixed(0)}% (&gt;3× o stop)</span></div>
+    </div>`;
+  }
+
+  // Motor B
+  const mbHtml = `<div class="dev-motorb">
+    <div class="dev-motorb-h"><span class="dev-eng-tag b">Motor B</span> Reversão pós-cascata</div>
+    <div class="dev-check"><span class="dev-dot ${dot(mb.mbOiDrop)}"></span><span class="lbl">Queda de OI 60min</span><span class="val">${devPct(mb.oiChg1h)}</span><span class="thr">&lt;−5%</span></div>
+    <div class="dev-check"><span class="dev-dot ${dot(mb.mbExtended)}"></span><span class="lbl">Preço esticado da EMA20 (1h)</span><span class="val">${mb.extAtr == null ? '—' : mb.extAtr.toFixed(1) + '×ATR'}</span><span class="thr">&gt;2,5×</span></div>
+    <div class="dev-check"><span class="dev-dot man"></span><span class="lbl">Funding a reverter · CVD estabiliza</span><span class="val">stream</span></div>
+  </div>`;
+
+  return `<div class="dev-sig">
+    <div class="dev-sig-head">
+      <span class="dev-sig-sym">${r.sym}</span>
+      <span class="dev-sig-px">${fmtPx(r.price)}</span>
+      <span class="dev-verdict ${vClass}">${vLabel}<small>${r.actState}</small></span>
+    </div>
+    <div class="dev-layers">
+      <div class="dev-layer"><div class="dev-layer-h"><span class="ln">Camada 1</span> Gate de regime — SE opera ${c1st}</div>${c1html}</div>
+      <div class="dev-layer"><div class="dev-layer-h"><span class="ln">Camada 2</span> Viés — a DIREÇÃO ${c2st}</div>${c2html}</div>
+      <div class="dev-layer"><div class="dev-layer-h"><span class="ln">Camada 3</span> Gatilho — o QUANDO ${c3st}</div>${c3html}</div>
+      <div class="dev-layer"><div class="dev-layer-h"><span class="ln">Camada 4</span> Filtros — poder de VETO ${c4st}</div>${c4html}</div>
+    </div>
+    ${sizeHtml}
+    ${mbHtml}
+    <div class="dev-reason"><b>Decisão Motor A:</b> ${devDecisionText(r)}</div>
+  </div>`;
+}
+
+function devDecisionText(r) {
+  if (r.action === 'long')  return `Todas as camadas alinhadas para <b>LONG</b>. Entrada PostOnly no retest do nível de rutura; se não preencher em 3 barras de 1h, cancelar. Stop 1,5×ATR reduceOnly, TP 50% a 2R, resto com trailing de 1×ATR, saída por tempo às 72h.`;
+  if (r.action === 'short') return `Todas as camadas alinhadas para <b>SHORT</b>. Entrada PostOnly no retest; espelho exato do long. Em regime de funding positivo o short recebe funding (vento de cauda estrutural).`;
+  if (r.action === 'wait')  return `${r.actState}. O regime permite operar mas ${r.c4.vetoFunding || r.c4.vetoOI ? 'um veto da Camada 4 está ativo' : 'falta a confluência do gatilho (rutura + CVD + volume >1,5×)'}. Sem confluência, não há entrada.`;
+  return `<b>Não operar.</b> ${r.actState}. A ausência de trade é uma decisão do modelo, não uma falha.`;
+}
+
+async function scanDev(force) {
+  if (devScanning) return;
+  if (!force && Date.now() - devLastScan < 30000 && Object.keys(devData).length) { devRender(); return; }
+  devScanning = true;
+  const btn = document.getElementById('dev-refresh'); if (btn) btn.classList.add('busy');
+  const host = document.getElementById('dev-signals');
+  if (host && !Object.keys(devData).length) host.innerHTML = '<div class="db-empty">A avaliar o modelo…</div>';
+  try {
+    const results = await Promise.all(DEV_SYMS.map(s => devCompute(s).catch(() => ({ sym: s, error: true }))));
+    results.forEach(r => devData[r.sym] = r);
+    devLastScan = Date.now();
+    devRender();
+  } catch (e) {
+    console.error('scanDev error', e);
+    if (host && !Object.keys(devData).length) host.innerHTML = '<div class="db-empty">Falha ao obter dados da Bybit. Tenta reavaliar.</div>';
+  } finally {
+    devScanning = false;
+    const b = document.getElementById('dev-refresh'); if (b) b.classList.remove('busy');
+  }
+}
+
+function devRender() {
+  const host = document.getElementById('dev-signals');
+  if (host) host.innerHTML = DEV_SYMS.map(s => devData[s] ? devRenderSignal(devData[s]) : '').join('');
+  devRenderCalc();
+}
+
+// Calculadora de sizing (usa o ATR 1h do BTC como referência de stop típico).
+function devRenderCalc() {
+  const out = document.getElementById('dev-calc-out'); if (!out) return;
+  const cap = document.getElementById('dev-capital'), rk = document.getElementById('dev-risk');
+  if (cap && document.activeElement !== cap) cap.value = devCfg.capital;
+  if (rk && document.activeElement !== rk) rk.value = devCfg.risk;
+  const ref = devData['BTCUSDT'];
+  const atr = ref && !ref.error ? ref.c3.atr : null, px = ref && !ref.error ? ref.price : null;
+  const stopPct = (atr && px) ? 1.5 * atr / px : null;
+  const riskFrac = devCfg.risk / 100;
+  const notional = stopPct ? riskFrac * devCfg.capital / stopPct : null;
+  let effLev = notional ? notional / devCfg.capital : null;
+  const capped = effLev && effLev > 3; if (capped) effLev = 3;
+  const riskUsd = devCfg.capital * riskFrac;
+  out.innerHTML = `
+    <div class="dev-out-item"><div class="dev-out-lbl">Risco por trade</div><div class="dev-out-val o">${fmtUsd(riskUsd)}</div><div class="dev-out-sub">${devCfg.risk}% do capital</div></div>
+    <div class="dev-out-item"><div class="dev-out-lbl">Stop % (1,5×ATR BTC)</div><div class="dev-out-val">${stopPct ? (stopPct * 100).toFixed(2) + '%' : '—'}</div><div class="dev-out-sub">ATR(14,1h) atual</div></div>
+    <div class="dev-out-item"><div class="dev-out-lbl">Notional</div><div class="dev-out-val">${notional ? fmtUsd(notional) : '—'}</div><div class="dev-out-sub">N = R%·Capital / stop%</div></div>
+    <div class="dev-out-item"><div class="dev-out-lbl">Alav. efetiva</div><div class="dev-out-val ${capped ? 'r' : 'g'}">${effLev ? effLev.toFixed(2) + '×' : '—'}</div><div class="dev-out-sub">${capped ? 'limitada a 3× (cap)' : 'dentro do cap (≤3×)'}</div></div>`;
+}
+
+function devCfgChange() {
+  const cap = parseFloat(document.getElementById('dev-capital').value);
+  const rk = parseFloat(document.getElementById('dev-risk').value);
+  if (isFinite(cap) && cap > 0) devCfg.capital = cap;
+  if (isFinite(rk)) devCfg.risk = Math.max(0.5, Math.min(1, rk));  // hard cap 0,5–1,0%
+  try { localStorage.setItem('devCfg', JSON.stringify(devCfg)); } catch (e) {}
+  devRenderCalc();
+  devRender();
+}
+
+function renderDevTab() {
+  const cap = document.getElementById('dev-capital'), rk = document.getElementById('dev-risk');
+  if (cap && !cap.value) cap.value = devCfg.capital;
+  if (rk && !rk.value) rk.value = devCfg.risk;
+  devRenderCalc();
+  scanDev(false);
 }
 
 // ── HEATMAP DE LIQUIDAÇÕES (estimativa a partir do OI + escalões) ─────────────
@@ -5900,6 +6223,8 @@ function drawPerpChart(arr) {
   setInterval(async () => { await fetchT212Holdings(); await fetchT212Daily(); refreshAfterT212(); }, 180000);
   // Rastreador de trades: re-analisa só quando o separador está ativo (poupa chamadas).
   setInterval(() => { const p = document.getElementById('tab-trade'); if (p && p.classList.contains('active')) scanTrades(false); }, 45000);
+  // Agente DEV: reavalia o modelo só quando o separador está ativo.
+  setInterval(() => { const p = document.getElementById('tab-dev'); if (p && p.classList.contains('active')) scanDev(false); }, 60000);
 })();
 </script>
 </body>
