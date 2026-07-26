@@ -2,7 +2,7 @@
 <html lang="pt">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover">
 <title>Trade Desk</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -64,11 +64,15 @@ body {
 
 /* ─── HEADER ──────────────────────────────────────── */
 #header {
-  height: 52px;
+  /* Com viewport-fit=cover, reservamos a safe-area de topo (notch/status bar) —
+     0 em Android, ~44px em iPhones com notch — para o logo não ficar tapado. */
+  height: calc(52px + env(safe-area-inset-top, 0px));
+  padding-top: env(safe-area-inset-top, 0px);
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  padding: 0 16px;
+  padding-left: 16px;
+  padding-right: 16px;
   gap: 0;
   border-bottom: 1px solid var(--border);
   background: rgb(8,8,16);
@@ -703,19 +707,22 @@ html.light .mnav-btn.active { color: var(--orange); }
     display: flex;
     position: fixed;
     bottom: 0; left: 0; right: 0;
-    /* A barra tem 58px de área tocável; a safe-area (barra do telemóvel) é
-       somada por baixo em vez de comer os 58px — senão os botões ficam cortados. */
-    height: calc(58px + env(safe-area-inset-bottom, 0px));
+    /* A barra tem 58px de área tocável. Por baixo reservamos a safe-area (barra
+       de gestos do telemóvel) — com um mínimo de 8px caso o browser reporte 0 —
+       para os botões e as etiquetas nunca ficarem cortados pela barra de gestos.
+       Requer viewport-fit=cover na meta viewport para o env() dar valor real. */
+    --mnav-safe: max(env(safe-area-inset-bottom, 0px), 8px);
+    height: calc(58px + var(--mnav-safe));
     background: rgba(8,8,16,0.97);
     border-top: 1px solid var(--border);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     z-index: 200;
     align-items: stretch;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-bottom: var(--mnav-safe);
   }
   /* O conteúdo tem de acabar acima da barra fixa (58px) + safe-area. */
-  .tab-pane { padding-bottom: calc(74px + env(safe-area-inset-bottom, 0px)) !important; }
+  .tab-pane { padding-bottom: calc(74px + max(env(safe-area-inset-bottom, 0px), 8px)) !important; }
 }
 .mnav-btn {
   flex: 1;
