@@ -826,10 +826,42 @@ html.light .mnav-btn.active { color: var(--orange); }
 .trd-gitem b { color: var(--text); font-weight: 600; font-size: 12px; }
 .trd-gitem p { font-size: 11.5px; color: var(--faint); line-height: 1.6; margin-top: 3px; }
 
+/* Etiquetas na linha: pico de volume + confluência com posição */
+.trd-flame { font-size: 12px; line-height: 1; }
+.trd-pos { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
+.trd-pos.agree    { background: rgba(45,212,160,.12); color: var(--green); }
+.trd-pos.conflict { background: rgba(247,147,26,.14); color: var(--orange); }
+
+/* Sino de alertas + contador */
+.trd-bell { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 32px; background: var(--s1); border: 1px solid var(--border); border-radius: 8px; color: var(--dim); cursor: pointer; transition: color .15s, border-color .15s; }
+.trd-bell:hover { color: var(--text); border-color: var(--border2); }
+.trd-bell svg { width: 15px; height: 15px; }
+.trd-bell-count { position: absolute; top: -6px; right: -6px; min-width: 16px; height: 16px; padding: 0 4px; display: inline-flex; align-items: center; justify-content: center; background: var(--orange); color: #08060f; font-size: 9px; font-weight: 800; border-radius: 9px; font-family: 'JetBrains Mono', monospace; }
+
+/* Painel de alertas (colapsável) */
+.trd-alerts-panel { display: none; background: var(--s1); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; }
+.trd-alerts-panel.open { display: block; animation: fadeIn .2s ease; }
+.trd-alerts-settings { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; padding-bottom: 10px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+.trd-al-switch { display: inline-flex; align-items: center; gap: 7px; font-size: 11.5px; color: var(--dim); cursor: pointer; user-select: none; }
+.trd-al-switch input { accent-color: var(--orange); width: 15px; height: 15px; cursor: pointer; }
+.trd-al-thr { display: inline-flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--dim); }
+.trd-al-thr b { font-family: 'JetBrains Mono', monospace; color: var(--orange); font-size: 13px; min-width: 22px; text-align: right; }
+.trd-al-thr input[type=range] { accent-color: var(--orange); width: 110px; cursor: pointer; }
+.trd-alerts-list { display: flex; flex-direction: column; gap: 2px; max-height: 240px; overflow-y: auto; }
+.trd-al-empty { font-size: 11px; color: var(--faint); line-height: 1.55; padding: 8px 2px; }
+.trd-al-item { display: flex; align-items: center; gap: 8px; padding: 8px 6px; border-radius: 7px; cursor: pointer; transition: background .12s; }
+.trd-al-item:hover { background: var(--s2); }
+.trd-al-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.trd-al-dot.long { background: var(--green); } .trd-al-dot.short { background: var(--red); }
+.trd-al-coin { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 12.5px; color: var(--text); }
+.trd-al-score { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 13px; margin-left: auto; }
+.trd-al-time { font-size: 10px; color: var(--faint); font-family: 'JetBrains Mono', monospace; min-width: 30px; text-align: right; }
+
 @media (max-width: 700px) {
   .trd-kpis { grid-template-columns: repeat(2, 1fr); }
   .trd-row-head { grid-template-columns: 22px 1fr 78px; gap: 8px; }
   .trd-chips { display: none; }   /* no telemóvel os chips vão para o detalhe */
+  .trd-alerts-settings { gap: 12px; }
 }
 
 /* ─── RESPONSIVE ──────────────────────────────────── */
@@ -1504,7 +1536,7 @@ html.light .mnav-btn.active { color: var(--orange); }
       <p>Analisa <b>todos os perpétuos USDT da Bybit</b> em tempo real e ordena as moedas
       com melhor potencial de movimento — para <b style="color:var(--green)">long</b> (apostar na subida)
       ou <b style="color:var(--red)">short</b> (apostar na descida). Cada moeda recebe uma
-      <b>pontuação 0–100</b> que combina 5 fatores técnicos. Clica numa linha para ver a
+      <b>pontuação 0–100</b> que combina 7 fatores técnicos. Clica numa linha para ver a
       explicação de cada fator.</p>
       <div class="trd-disc">⚠️ Isto é uma ferramenta de estudo, não conselho financeiro. Pontuação alta = setup
       tecnicamente interessante, <b>não</b> garantia de lucro. Confirma sempre no gráfico e usa gestão de risco.</div>
@@ -1522,11 +1554,26 @@ html.light .mnav-btn.active { color: var(--orange); }
         <button class="trd-toggle-btn tg-long active" data-side="long"  onclick="setTradeSide('long',this)">Longs ▲</button>
         <button class="trd-toggle-btn tg-short"       data-side="short" onclick="setTradeSide('short',this)">Shorts ▼</button>
       </div>
+      <button class="trd-bell" id="trd-bell" onclick="toggleAlertsPanel()" title="Alertas de setup">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        <span class="trd-bell-count" id="trd-bell-count" style="display:none">0</span>
+      </button>
       <span class="trd-updated" id="trd-updated"></span>
       <div class="trd-refresh" id="trd-refresh" onclick="scanTrades(true)" title="Analisar de novo">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
         Atualizar
       </div>
+    </div>
+
+    <div class="trd-alerts-panel" id="trd-alerts-panel">
+      <div class="trd-alerts-settings">
+        <label class="trd-al-switch"><input type="checkbox" id="trd-al-enabled" onchange="toggleAlertsEnabled(this.checked)"> Ativar alertas</label>
+        <div class="trd-al-thr">Limiar <b id="trd-al-thr-val">80</b>
+          <input type="range" min="60" max="95" step="1" id="trd-al-thr-input" oninput="setAlertThreshold(this.value)">
+        </div>
+        <label class="trd-al-switch"><input type="checkbox" id="trd-al-browser" onchange="toggleAlertsBrowser(this.checked)"> Notificações do browser</label>
+      </div>
+      <div class="trd-alerts-list" id="trd-alerts-list"></div>
     </div>
 
     <div class="trd-list" id="trd-list"><div class="db-empty">A analisar o mercado…</div></div>
@@ -1541,8 +1588,13 @@ html.light .mnav-btn.active { color: var(--orange); }
         <div class="trd-gitem"><b>Tendência (EMAs)</b><p>Compara o preço com médias móveis (EMA 9 e 21) em velas de 1h. Preço acima das médias = tendência de alta (favorável a longs); abaixo = tendência de baixa (favorável a shorts). Segue-se a tendência, não se luta contra ela.</p></div>
         <div class="trd-gitem"><b>RSI (força relativa)</b><p>Oscilador de 0 a 100. Abaixo de 30 = "sobrevendido" (pode saltar para cima); acima de 70 = "sobrecomprado" (pode corrigir). Para longs favorecemos RSI a subir sem estar esticado; para shorts o contrário.</p></div>
         <div class="trd-gitem"><b>Funding (posicionamento)</b><p>Taxa que longs e shorts pagam entre si nos perpétuos. Funding muito positivo = excesso de longs (combustível para uma descida/"long squeeze"). Muito negativo = excesso de shorts (combustível para uma subida/"short squeeze"). Usamos isto de forma contrária à multidão.</p></div>
+        <div class="trd-gitem"><b>Rompimento (breakout)</b><p>Vê se o preço está a fazer um novo máximo (para longs) ou mínimo (para shorts) das últimas ~48 horas. Um rompimento costuma iniciar movimentos fortes, porque quebra uma zona onde muitos tinham ordens. Perto do máximo/mínimo = está a testar essa zona.</p></div>
+        <div class="trd-gitem"><b>Open Interest (dinheiro no mercado)</b><p>Total de contratos em aberto. Preço a subir <b>com</b> OI a subir = dinheiro novo a entrar (movimento sólido). Preço a subir com OI a cair = apenas cobertura de shorts (mais frágil). Confirma se o movimento tem "combustível" real por trás.</p></div>
+        <div class="trd-gitem"><b>Pico de volume 🔥</b><p>Quando a última vela negoceia muito acima da média recente. Sinaliza que algo está a acontecer <em>agora</em> naquela moeda — reforça a convicção do setup (dá um pequeno bónus à pontuação).</p></div>
         <div class="trd-gitem"><b>Volume / Liquidez (turnover 24h)</b><p>Quanto dinheiro foi negociado. Muito volume = movimento com convicção e fácil de entrar/sair. Moedas ilíquidas são perigosas (spreads largos, manipulação), por isso pontuam menos.</p></div>
         <div class="trd-gitem"><b>Volatilidade (amplitude 24h)</b><p>Distância entre o máximo e o mínimo do dia. Mais volatilidade = mais potencial de ganho… e de perda. Aparece no detalhe de cada moeda para calibrares o teu risco.</p></div>
+        <div class="trd-gitem"><b>Confluência com o teu portefólio</b><p>Se já tens uma posição aberta na moeda, aparece uma etiqueta: <b style="color:var(--green)">✓</b> quando o setup concorda com a tua posição, ou <b style="color:var(--orange)">⚠</b> quando é contra — útil para saber se reforças ou se estás a ser avisado de um risco.</p></div>
+        <div class="trd-gitem"><b>Alertas 🔔</b><p>Ativa os alertas (no sino) e escolhe um limiar de pontuação. Sempre que uma moeda ultrapassa esse valor, entra na lista de alertas — e, se ligares as notificações do browser, recebes um aviso mesmo com o separador em segundo plano.</p></div>
       </div>
     </div>
 
@@ -1760,14 +1812,31 @@ function switchMktSection(sec, btn) {
 
 // ── TRADE SCANNER ───────────────────────────────────────────────────────────────
 // Analisa todos os perpétuos USDT da Bybit e ordena por potencial de movimento
-// (long ou short) usando 5 fatores técnicos. Só usa dados públicos de mercado.
+// (long ou short) usando 7 fatores técnicos + alertas. Só usa dados públicos de mercado.
 let tradeSide = 'long';        // lista visível: 'long' | 'short'
 let tradeData = null;          // último scan: [{ symbol, coin, ...factors, longScore, shortScore }]
 let tradeScanning = false;
 let tradeLastScan = 0;
 let tradeExpanded = null;      // símbolo com detalhe aberto
 
+// Alertas: dispara quando um setup passa o limiar de pontuação.
+let tradeAlerts = [];          // [{ coin, symbol, side, score, chg, ts, seen }]
+let trdActiveAlert = {};       // coin_side -> true enquanto o alerta está "ativo" (evita spam)
+let alertThreshold = 80; try { const v = +localStorage.getItem('trdAlertThreshold'); if (v >= 50 && v <= 100) alertThreshold = v; } catch (e) {}
+let alertsEnabled  = false; try { alertsEnabled = localStorage.getItem('trdAlertsEnabled') === '1'; } catch (e) {}
+let alertsBrowser  = false; try { alertsBrowser = localStorage.getItem('trdAlertsBrowser') === '1'; } catch (e) {}
+
 const trdClamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+// Mapa moeda -> lado da posição aberta ('long'|'short') para confluência com o portefólio.
+function trdPositionMap() {
+  const m = {};
+  (positions || []).forEach(p => {
+    const coin = p.symbol.endsWith('USDT') ? p.symbol.replace(/USDT$/, '') : p.symbol.replace(/USD$/, '');
+    m[coin] = p.side === 'Buy' ? 'long' : 'short';
+  });
+  return m;
+}
 
 // EMA sobre um array de closes (cronológico). Devolve o último valor.
 function trdEma(vals, period) {
@@ -1818,8 +1887,33 @@ function trdFVol(turn) {                           // turnover 24h (USD) — liq
   if (!turn || turn <= 0) return 0;
   return trdClamp((Math.log10(turn) - 6) / 3 * 100, 0, 100);  // $1M→0, $1B→100
 }
+// Rompimento: proximidade a um novo máximo (long) / mínimo (short) recente (~2 dias, 1h).
+function trdBreakout(c, side) {
+  if (c.hi == null || c.lo == null || !c.price) return 50;
+  if (side === 'short') {
+    const d = (c.price - c.lo) / c.price * 100;    // % acima do mínimo recente
+    return trdClamp(92 - d * 9, 10, 95);           // no/abaixo do mínimo → pontua alto
+  }
+  const d = (c.hi - c.price) / c.price * 100;       // % abaixo do máximo recente
+  return trdClamp(92 - d * 9, 10, 95);
+}
+// Open Interest: dinheiro novo a confirmar o movimento (preço + OI a subir = longs novos, etc.).
+function trdOiFactor(c, side) {
+  if (c.oiChg == null) return 50;
+  const up = c.chg > 0, oiUp = c.oiChg > 0;
+  if (side === 'short') {
+    if (!up && oiUp) return trdClamp(62 + c.oiChg * 2, 62, 95);   // preço a cair + OI a subir = shorts novos
+    if (!up && !oiUp) return trdClamp(52 + c.oiChg * 0.5, 42, 60); // liquidação de longs (mais fraco)
+    if (up && oiUp)  return trdClamp(40 - c.oiChg, 12, 42);        // longs novos, contra o short
+    return 46;
+  }
+  if (up && oiUp)  return trdClamp(62 + c.oiChg * 2, 62, 95);      // preço a subir + OI a subir = longs novos
+  if (up && !oiUp) return trdClamp(52 + c.oiChg * 0.5, 42, 60);    // subida por cobertura de shorts (mais fraco)
+  if (!up && oiUp) return trdClamp(40 - c.oiChg, 12, 42);          // shorts novos, contra o long
+  return 46;
+}
 
-const TRD_W = { mom: 0.22, trend: 0.24, rsi: 0.18, fund: 0.18, vol: 0.18 };
+const TRD_W = { mom: 0.15, trend: 0.17, rsi: 0.12, fund: 0.12, vol: 0.11, brk: 0.16, oi: 0.17 };
 
 // Tendência (0..100) para o lado pedido, a partir das EMAs 9/21 (1h).
 function trdTrend(c, side) {
@@ -1829,24 +1923,47 @@ function trdTrend(c, side) {
   return side === 'short' ? 100 - bull : bull;
 }
 
-// Constrói os 5 fatores + pontuação final para um lado ('long' | 'short').
+// Constrói os 7 fatores + pontuação final para um lado ('long' | 'short').
 function trdScore(c, side) {
   const mom   = side === 'short' ? trdFMomLong(-c.chg) : trdFMomLong(c.chg);
   const trend = trdTrend(c, side);
   const rsi   = side === 'short' ? trdFRsiLong(c.rsi == null ? null : 100 - c.rsi) : trdFRsiLong(c.rsi);
   const fund  = side === 'short' ? trdClamp(50 + c.fr * 500, 8, 88) : trdFFundLong(c.fr);
   const vol   = trdFVol(c.turnover);
-  const final = Math.round(mom * TRD_W.mom + trend * TRD_W.trend + rsi * TRD_W.rsi + fund * TRD_W.fund + vol * TRD_W.vol);
-  return { final, mom, trend, rsi, fund, vol };
+  const brk   = trdBreakout(c, side);
+  const oi    = trdOiFactor(c, side);
+  let final = mom * TRD_W.mom + trend * TRD_W.trend + rsi * TRD_W.rsi + fund * TRD_W.fund
+            + vol * TRD_W.vol + brk * TRD_W.brk + oi * TRD_W.oi;
+  // Pico de volume reforça a convicção do setup (pequeno bónus, limitado).
+  if (c.volSpike >= 1.8) final += trdClamp((c.volSpike - 1.8) * 4, 0, 8);
+  return { final: Math.round(trdClamp(final, 0, 100)), mom, trend, rsi, fund, vol, brk, oi };
 }
 
-// Busca closes de 1h (cronológico) para calcular RSI e EMAs.
-async function trdFetchCloses(sym) {
+// Busca velas de 1h (cronológico) — closes/highs/lows/volumes para RSI, EMAs, rompimento e pico de volume.
+async function trdFetchKline(sym) {
   try {
     const r = await fetch(`${BYBIT}/v5/market/kline?category=linear&symbol=${sym}&interval=60&limit=120`);
     const d = await r.json();
-    return (d?.result?.list || []).map(k => +k[4]).reverse();  // Bybit vem do mais recente → invertemos
-  } catch (e) { return []; }
+    const list = (d?.result?.list || []).slice().reverse();  // Bybit vem do mais recente → invertemos
+    return {
+      closes: list.map(k => +k[4]),
+      highs:  list.map(k => +k[2]),
+      lows:   list.map(k => +k[3]),
+      vols:   list.map(k => +k[5]),
+    };
+  } catch (e) { return { closes: [], highs: [], lows: [], vols: [] }; }
+}
+// Variação de open interest nas últimas ~24h (em %). Positivo = OI a crescer (dinheiro novo).
+async function trdFetchOiChange(sym) {
+  try {
+    const r = await fetch(`${BYBIT}/v5/market/open-interest?category=linear&symbol=${sym}&intervalTime=1h&limit=24`);
+    const d = await r.json();
+    const list = (d?.result?.list || []).map(x => +x.openInterest).filter(v => v > 0);
+    if (list.length < 2) return null;
+    const now = list[0], past = list[list.length - 1];   // Bybit devolve do mais recente → mais antigo
+    if (!past) return null;
+    return (now - past) / past * 100;
+  } catch (e) { return null; }
 }
 
 // Executa `tasks` (funções async) com concorrência limitada.
@@ -1896,14 +2013,25 @@ async function scanTrades(force) {
     const byShort = raw.slice().sort((a, b) => (a.chg - pre(a)) - (b.chg - pre(b))).slice(0, 22);
     const enrichSet = Array.from(new Set([...byLong, ...byShort]));
 
-    // Enriquecer com RSI + EMAs (1h) — concorrência limitada.
+    // Enriquecer (1h): RSI, EMAs, rompimento, pico de volume e variação de OI — concorrência limitada.
     await trdPool(enrichSet, async c => {
-      const closes = await trdFetchCloses(c.symbol);
-      if (closes.length >= 22) {
-        c.ef = trdEma(closes, 9);
-        c.es = trdEma(closes, 21);
-        c.rsi = trdRsi(closes, 14);
+      const [k, oiChg] = await Promise.all([trdFetchKline(c.symbol), trdFetchOiChange(c.symbol)]);
+      if (k.closes.length >= 22) {
+        c.ef = trdEma(k.closes, 9);
+        c.es = trdEma(k.closes, 21);
+        c.rsi = trdRsi(k.closes, 14);
+        // Rompimento: máximo/mínimo das últimas 48 velas (excluindo a vela em curso).
+        const win = 48;
+        const hs = k.highs.slice(-win - 1, -1), ls = k.lows.slice(-win - 1, -1);
+        if (hs.length) { c.hi = Math.max(...hs); c.lo = Math.min(...ls); }
+        // Pico de volume: última vela fechada vs média das ~24 anteriores.
+        const vs = k.vols.slice(-25, -1);
+        if (vs.length >= 6) {
+          const avg = vs.reduce((a, b) => a + b, 0) / vs.length;
+          c.volSpike = avg > 0 ? (k.vols[k.vols.length - 2] || 0) / avg : 1;
+        }
       }
+      c.oiChg = oiChg;
     }, 6);
 
     // Pontuar cada candidato enriquecido dos dois lados.
@@ -1912,8 +2040,9 @@ async function scanTrades(force) {
       c.shortScore = trdScore(c, 'short');
     });
 
-    tradeData = { list: enrichSet, total, upCount, ts: Date.now() };
+    tradeData = { list: enrichSet, total, upCount, ts: Date.now(), posMap: trdPositionMap() };
     tradeLastScan = Date.now();
+    evaluateTradeAlerts();
     renderTradeKpis();
     renderTradeList();
   } catch (e) {
@@ -1938,6 +2067,94 @@ function renderTradeKpis() {
   set('trd-k-breadth-sub', `${tradeData.upCount}/${tradeData.total} em alta 24h`);
   const upd = document.getElementById('trd-updated');
   if (upd) upd.textContent = 'atualizado ' + new Date(tradeData.ts).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+}
+
+// ── ALERTAS ─────────────────────────────────────────────────────────────────
+// Dispara quando o setup de uma moeda cruza o limiar de pontuação (opt-in).
+function evaluateTradeAlerts() {
+  if (!tradeData || !alertsEnabled) return;
+  const thr = alertThreshold;
+  tradeData.list.forEach(c => {
+    ['long', 'short'].forEach(side => {
+      const sc = (side === 'short' ? c.shortScore : c.longScore).final;
+      const key = c.coin + '_' + side;
+      if (sc >= thr && !trdActiveAlert[key]) {
+        trdActiveAlert[key] = true;
+        pushTradeAlert(c, side, sc);
+      } else if (sc < thr - 4) {
+        trdActiveAlert[key] = false;   // rearma quando volta a descer
+      }
+    });
+  });
+  renderAlertBadge();
+}
+function pushTradeAlert(c, side, score) {
+  tradeAlerts.unshift({ coin: c.coin, symbol: c.symbol, side, score, chg: c.chg, ts: Date.now(), seen: false });
+  if (tradeAlerts.length > 40) tradeAlerts.length = 40;
+  fireBrowserNotification(c, side, score);
+  const panel = document.getElementById('trd-alerts-panel');
+  if (panel && panel.classList.contains('open')) renderAlertsList();
+}
+function fireBrowserNotification(c, side, score) {
+  if (!alertsBrowser || typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+  try {
+    new Notification(`⚡ ${c.coin} — setup ${side === 'short' ? 'SHORT' : 'LONG'} (${score})`,
+      { body: `${c.coin} pontua ${score}/100 · ${c.chg >= 0 ? '+' : ''}${fmt(c.chg, 1)}% 24h. Toca para analisar.`, tag: c.coin + side });
+  } catch (e) {}
+}
+function renderAlertBadge() {
+  const b = document.getElementById('trd-bell-count');
+  const n = tradeAlerts.filter(a => !a.seen).length;
+  if (b) { b.textContent = n; b.style.display = n ? 'inline-flex' : 'none'; }
+}
+function toggleAlertsPanel() {
+  const p = document.getElementById('trd-alerts-panel');
+  if (!p) return;
+  const open = p.classList.toggle('open');
+  if (open) { tradeAlerts.forEach(a => a.seen = true); renderAlertBadge(); renderAlertsList(); }
+}
+function renderAlertsList() {
+  const el = document.getElementById('trd-alerts-list');
+  if (!el) return;
+  if (!alertsEnabled) { el.innerHTML = '<div class="trd-al-empty">Alertas desativados. Ativa acima para seres avisado quando um setup ultrapassar o limiar.</div>'; return; }
+  if (!tradeAlerts.length) { el.innerHTML = `<div class="trd-al-empty">Sem alertas ainda. Vais ser avisado quando uma moeda passar os <b>${alertThreshold}</b> pontos.</div>`; return; }
+  el.innerHTML = tradeAlerts.slice(0, 20).map(a => `
+    <div class="trd-al-item" onclick="openAlert('${a.symbol}','${a.side}')">
+      <span class="trd-al-dot ${a.side}"></span>
+      <span class="trd-al-coin">${a.coin}</span>
+      <span class="trd-bias ${a.side}" style="margin-left:2px">${a.side === 'short' ? 'Short ▼' : 'Long ▲'}</span>
+      <span class="trd-al-score" style="color:${trdScoreColor(a.score, a.side)}">${a.score}</span>
+      <span class="trd-al-time">${timeAgo(a.ts)}</span>
+    </div>`).join('');
+}
+function openAlert(sym, side) {
+  setTradeSide(side, document.querySelector('.trd-toggle-btn.tg-' + side));
+  tradeExpanded = sym;
+  renderTradeList();
+  const row = document.getElementById('trd-row-' + sym);
+  if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+function setAlertThreshold(v) {
+  alertThreshold = +v;
+  try { localStorage.setItem('trdAlertThreshold', String(alertThreshold)); } catch (e) {}
+  set('trd-al-thr-val', alertThreshold);
+  trdActiveAlert = {};             // recalibra
+  if (alertsEnabled) evaluateTradeAlerts();
+  renderAlertsList();
+}
+function toggleAlertsEnabled(on) {
+  alertsEnabled = !!on;
+  try { localStorage.setItem('trdAlertsEnabled', on ? '1' : '0'); } catch (e) {}
+  trdActiveAlert = {};             // ao ligar, os setups fortes atuais viram alertas já
+  if (alertsEnabled) evaluateTradeAlerts();
+  renderAlertsList();
+}
+function toggleAlertsBrowser(on) {
+  alertsBrowser = !!on;
+  try { localStorage.setItem('trdAlertsBrowser', on ? '1' : '0'); } catch (e) {}
+  if (on && typeof Notification !== 'undefined' && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
 }
 
 function setTradeSide(side, btn) {
@@ -1968,6 +2185,9 @@ function trdRowHtml(c, side, rank) {
   const rsiTxt = c.rsi == null ? '—' : fmt(c.rsi, 0);
   const rsiCol = c.rsi == null ? 'd' : c.rsi >= 70 ? 'r' : c.rsi <= 30 ? 'g' : 'd';
   const expanded = tradeExpanded === c.symbol;
+  const pos = tradeData && tradeData.posMap ? tradeData.posMap[c.coin] : null;
+  const posBadge = pos ? `<span class="trd-pos ${pos === side ? 'agree' : 'conflict'}" title="${pos === side ? 'Confluência com a tua posição' : 'Contra a tua posição aberta'}">${pos === side ? '✓' : '⚠'} tens ${pos}</span>` : '';
+  const flame = c.volSpike >= 2 ? `<span class="trd-flame" title="Volume anormal — ${fmt(c.volSpike, 1)}× a média">🔥</span>` : '';
   return `
   <div class="trd-row${expanded ? ' expanded' : ''}" id="trd-row-${c.symbol}">
     <div class="trd-row-head" onclick="toggleTradeRow('${c.symbol}')">
@@ -1977,6 +2197,7 @@ function trdRowHtml(c, side, rank) {
         <div class="trd-sym-row">
           <span class="trd-sym">${c.coin}</span>
           <span class="trd-bias ${side}">${side === 'short' ? 'Short ▼' : 'Long ▲'}</span>
+          ${flame}${posBadge}
         </div>
         <div class="trd-px"><b>$${fmtPx(c.price)}</b> · <span style="color:var(--${chgCol === 'g' ? 'green' : 'red'})">${c.chg >= 0 ? '+' : ''}${fmt(c.chg, 1)}%</span> 24h</div>
       </div>
@@ -1998,18 +2219,27 @@ function trdRowHtml(c, side, rank) {
 function trdDetailHtml(c, side) {
   const sc = side === 'short' ? c.shortScore : c.longScore;
   const dir = side === 'short' ? 'descida' : 'subida';
+  const pos = tradeData && tradeData.posMap ? tradeData.posMap[c.coin] : null;
   const factors = [
     ['Momentum', sc.mom,   `Variação de <b>${c.chg >= 0 ? '+' : ''}${fmt(c.chg, 1)}%</b> em 24h. ${trdMomNote(c.chg, side)}`],
     ['Tendência', sc.trend, trdTrendNote(c, side)],
     ['RSI (1h)', sc.rsi,    c.rsi == null ? 'Sem dados de velas suficientes.' : `RSI em <b>${fmt(c.rsi, 0)}</b>. ${trdRsiNote(c.rsi, side)}`],
+    ['Rompimento', sc.brk,  trdBrkNote(c, side)],
+    ['Open Interest', sc.oi, trdOiNote(c, side)],
     ['Funding', sc.fund,    `Funding <b>${c.fr >= 0 ? '+' : ''}${fmt(c.fr, 4)}%</b>. ${trdFundNote(c.fr, side)}`],
     ['Volume / Liquidez', sc.vol, `Turnover de <b>${fmtUsd(c.turnover)}</b> em 24h. ${c.turnover >= 1e8 ? 'Muito líquido — fácil entrar e sair.' : c.turnover >= 2e7 ? 'Liquidez razoável.' : 'Liquidez baixa — cuidado com o spread.'}`],
   ];
   const col = trdScoreColor(sc.final, side);
+  const spikeTxt = c.volSpike >= 1.8 ? ` Pico de volume: <b>${fmt(c.volSpike, 1)}×</b> a média (atividade anormal).` : '';
+  const confTxt = pos
+    ? (pos === side
+        ? ` <b style="color:var(--green)">Confluência: já tens ${pos} nesta moeda.</b>`
+        : ` <b style="color:var(--orange)">Atenção: tens ${pos} aberto — este setup é ${side}, contra a tua posição.</b>`)
+    : '';
   return `
     <div class="trd-summary">Setup de <b>${side === 'short' ? 'short' : 'long'}</b> com pontuação <b style="color:${col}">${sc.final}/100</b>.
       Amplitude do dia (volatilidade): <b>${fmt(c.range, 1)}%</b> — potencial de movimento numa ${dir}.
-      Open interest: <b>${fmtUsd(c.oiUsd)}</b>.</div>
+      Open interest: <b>${fmtUsd(c.oiUsd)}</b>.${spikeTxt}${confTxt}</div>
     <div class="trd-factors">
       ${factors.map(([name, v, note]) => {
         const fc = v >= 65 ? (side === 'short' ? 'var(--red)' : 'var(--green)') : v >= 45 ? 'var(--orange)' : 'var(--dim)';
@@ -2057,6 +2287,24 @@ function trdFundNote(fr, side) {
   if (fr < -0.03) return side === 'short' ? 'Shorts sobrelotados — cautela, multidão do mesmo lado.' : 'Shorts sobrelotados a pagar funding — combustível para uma subida (short squeeze).';
   return 'Funding equilibrado — sem excesso de um dos lados.';
 }
+function trdBrkNote(c, side) {
+  if (c.hi == null) return 'Sem velas suficientes para avaliar rompimento.';
+  if (side === 'short') {
+    const d = (c.price - c.lo) / c.price * 100;
+    return d < 0.5 ? 'No mínimo recente — rompimento de baixa em curso.' : d < 3 ? 'Perto do mínimo recente — a testar o suporte.' : 'Ainda longe do mínimo — sem rompimento de baixa.';
+  }
+  const d = (c.hi - c.price) / c.price * 100;
+  return d < 0.5 ? 'No máximo recente — rompimento de alta em curso.' : d < 3 ? 'Perto do máximo recente — a testar a resistência.' : 'Ainda longe do máximo — sem rompimento de alta.';
+}
+function trdOiNote(c, side) {
+  if (c.oiChg == null) return 'Sem dados de open interest.';
+  const s = (c.oiChg >= 0 ? '+' : '') + fmt(c.oiChg, 1) + '%';
+  const up = c.chg > 0, oiUp = c.oiChg > 0;
+  if (up && oiUp)  return `OI ${s} em 24h com preço a subir — dinheiro novo (longs) a confirmar a subida.`;
+  if (!up && oiUp) return `OI ${s} em 24h com preço a cair — shorts novos a pressionar (confirma a descida).`;
+  if (up && !oiUp) return `OI ${s} em 24h — subida por cobertura de shorts, movimento menos sólido.`;
+  return `OI ${s} em 24h — liquidação de posições, movimento a perder força.`;
+}
 
 function toggleTradeRow(sym) {
   tradeExpanded = (tradeExpanded === sym) ? null : sym;
@@ -2064,6 +2312,12 @@ function toggleTradeRow(sym) {
 }
 
 function renderTradeTab() {
+  // Reflete o estado guardado dos alertas nos controlos.
+  const en = document.getElementById('trd-al-enabled'); if (en) en.checked = alertsEnabled;
+  const br = document.getElementById('trd-al-browser'); if (br) br.checked = alertsBrowser;
+  const th = document.getElementById('trd-al-thr-input'); if (th) th.value = alertThreshold;
+  set('trd-al-thr-val', alertThreshold);
+  renderAlertBadge(); renderAlertsList();
   if (tradeData) { renderTradeKpis(); renderTradeList(); scanTrades(false); }
   else scanTrades(true);
 }
