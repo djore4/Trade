@@ -3208,11 +3208,13 @@ function selectPos(key) {
 }
 
 function posTargets(p) {
-  // Alvo de saída (linha verde) = valor do cenário de saída (posExitTargets,
-  // guardado no Supabase). É a ÚNICA fonte — igual ao input e à tabela. SL: da Bybit.
-  const tp = parseFloat(posExitTargets[posKeyOf(p)]) || 0;
-  const sl = parseFloat(p.stopLoss) || 0;
-  return { ent: parseFloat(p.avgPrice), liq: parseFloat(p.liqPrice), tp, sl };
+  // tp   = take profit REAL (ordem na Bybit, p.takeProfit) — linha verde sólida.
+  // exit = alvo de saída da calculadora da app (posExitTargets) — linha verde pontilhada.
+  // sl   = stop loss da Bybit.
+  const tp   = parseFloat(p.takeProfit) || 0;
+  const exit = parseFloat(posExitTargets[posKeyOf(p)]) || 0;
+  const sl   = parseFloat(p.stopLoss) || 0;
+  return { ent: parseFloat(p.avgPrice), liq: parseFloat(p.liqPrice), tp, sl, exit };
 }
 
 function renderPosMetrics(p) {
@@ -3362,32 +3364,35 @@ function addPosPriceLines(p) {
   if (!posSeries || typeof LightweightCharts === 'undefined') return;
   posPriceLines.forEach(l => { try { posSeries.removePriceLine(l); } catch (e) {} });
   posPriceLines = [];
-  const { ent, liq, tp, sl } = posTargets(p);
+  const { ent, liq, tp, sl, exit } = posTargets(p);
   const LS = LightweightCharts.LineStyle;
   // Sem título na linha (poluía a leitura) — o preço aparece na escala à direita.
-  const add = (price, color, dashed) => {
+  const add = (price, color, style, width) => {
     if (!(price > 0)) return;
     posPriceLines.push(posSeries.createPriceLine({
-      price, color, lineWidth: dashed ? 1 : 2,
-      lineStyle: dashed ? LS.Dashed : LS.Solid,
+      price, color, lineWidth: width || 2,
+      lineStyle: style ?? LS.Solid,
       axisLabelVisible: true, title: '',
     }));
   };
-  add(ent, '#7c8fff', false);
-  add(tp,  '#2dd4a0', false);
-  add(sl,  '#f7647a', false);
-  add(liq, '#f7647a', true);   // liquidação a tracejado
+  add(ent, '#7c8fff', LS.Solid, 2);
+  add(tp,  '#2dd4a0', LS.Solid, 2);                                   // take profit real (Bybit)
+  if (exit > 0 && Math.abs(exit - tp) > (tp || 1) * 1e-9)
+    add(exit, '#2dd4a0', LS.Dotted, 2);                              // alvo de saída (calculadora)
+  add(sl,  '#f7647a', LS.Solid, 2);
+  add(liq, '#f7647a', LS.Dashed, 1);   // liquidação a tracejado
   renderPosLegend(p);
 }
 
 function renderPosLegend(p) {
   const el = document.getElementById('pos-legend'); if (!el) return;
-  const { ent, liq, tp, sl } = posTargets(p);
-  const item = (color, lbl, dashed) => `<span class="pos-legend-item"><span class="pos-legend-swatch" style="border-top-color:${color};border-top-style:${dashed ? 'dashed' : 'solid'}"></span>${lbl}</span>`;
+  const { ent, liq, tp, sl, exit } = posTargets(p);
+  const item = (color, lbl, style) => `<span class="pos-legend-item"><span class="pos-legend-swatch" style="border-top-color:${color};border-top-style:${style || 'solid'}"></span>${lbl}</span>`;
   let html = item('#7c8fff', 'Entrada');
   if (tp > 0)  html += item('#2dd4a0', 'Take Profit');
+  if (exit > 0 && Math.abs(exit - tp) > (tp || 1) * 1e-9) html += item('#2dd4a0', 'Alvo de saída', 'dotted');
   if (sl > 0)  html += item('#f7647a', 'Stop Loss');
-  if (liq > 0) html += item('#f7647a', 'Liquidação teórica', true);
+  if (liq > 0) html += item('#f7647a', 'Liquidação teórica', 'dashed');
   el.innerHTML = html;
 }
 
