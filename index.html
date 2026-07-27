@@ -5035,7 +5035,7 @@ function updatePfRoi(pts, flow) {
 function setHdrSpot(r) {
   const el = document.getElementById('hdr-spot'); if (!el) return;
   if (!r) { el.textContent = '—'; el.style.color = ''; return; }
-  el.textContent = (r.diff !== 0 ? (r.isPos ? '▲' : '▼') + ' ' : '') + (r.isPos ? '+' : '') + r.pct.toFixed(2) + '%';
+  el.textContent = (r.diff !== 0 ? (r.isPos ? '▲' : '▼') + ' ' : '') + (r.isPos ? '+' : '') + fmtUsd(r.diff, 2);
   el.style.color = r.col;
 }
 
