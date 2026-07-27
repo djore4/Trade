@@ -479,6 +479,106 @@ html.light .mnav-btn.active { color: var(--orange); }
 .mkt-sub-btn.active { color: var(--text); background: var(--s3); box-shadow: 0 1px 3px rgba(0,0,0,.25); }
 .mkt-section { display: none; animation: mktFade .22s ease; }
 .mkt-section.active { display: block; }
+/* ── TAB CRYPTOSCAN — Screener ───────────────────────────────── */
+.cs-wrap { max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; padding-bottom: 96px; }
+.cs-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.cs-title { font-size: 17px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cs-badge { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--orange); background: rgba(247,147,26,.12); padding: 3px 7px; border-radius: 5px; }
+.cs-sub { font-size: 12px; color: var(--dim); margin-top: 5px; max-width: 760px; line-height: 1.55; }
+.cs-sub b { color: var(--text); font-weight: 600; }
+.cs-scan-btn { flex-shrink: 0; display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 600; color: #1a1206; background: linear-gradient(135deg, var(--orange), #e6862a); border: none; border-radius: 9px; padding: 9px 15px; cursor: pointer; transition: filter .15s; }
+.cs-scan-btn:hover { filter: brightness(1.06); }
+.cs-scan-btn.busy { opacity: .7; pointer-events: none; }
+.cs-scan-btn.busy svg { animation: mktSpin .8s linear infinite; }
+.cs-ctx { display: grid; grid-template-columns: repeat(4, 1fr) auto; gap: 10px; align-items: stretch; }
+.cs-ctx-item { background: var(--s1); border: 1px solid var(--border); border-radius: 10px; padding: 10px 13px; }
+.cs-ctx-lbl { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--faint); }
+.cs-ctx-val { font-size: 17px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); margin-top: 3px; }
+.cs-ctx-sub { font-size: 9.5px; color: var(--faint); margin-top: 2px; }
+.cs-field { display: flex; flex-direction: column; gap: 4px; justify-content: center; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--faint); }
+.cs-field input { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600; color: var(--text); background: var(--s2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; outline: none; width: 120px; }
+.cs-field input:focus { border-color: var(--orange); }
+.cs-weights { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
+.cs-wlbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); }
+.cs-wchip { font-size: 10.5px; color: var(--dim); background: var(--s2); border: 1px solid var(--border); border-radius: 6px; padding: 4px 9px; }
+.cs-wchip b { color: var(--text); font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+.cs-wsep { width: 1px; height: 16px; background: var(--border); margin: 0 3px; }
+.cs-list { display: flex; flex-direction: column; gap: 8px; }
+.cs-row { background: var(--s1); border: 1px solid var(--border); border-radius: 11px; overflow: hidden; }
+.cs-row-main { display: grid; grid-template-columns: 34px 1.4fr 96px 1fr 88px 96px; align-items: center; gap: 12px; padding: 12px 15px; cursor: pointer; }
+.cs-rank { font-size: 13px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--faint); text-align: center; }
+.cs-sym-wrap { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.cs-side { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; padding: 3px 8px; border-radius: 6px; flex-shrink: 0; }
+.cs-side.long  { background: rgba(45,212,160,.13); color: var(--green); }
+.cs-side.short { background: rgba(247,100,122,.13); color: var(--red); }
+.cs-side.flat  { background: var(--s3); color: var(--dim); }
+.cs-sym { font-size: 14px; font-weight: 700; color: var(--text); }
+.cs-sym small { font-size: 10px; color: var(--faint); font-weight: 500; margin-left: 5px; font-family: 'JetBrains Mono', monospace; }
+.cs-score-wrap { display: flex; flex-direction: column; gap: 4px; }
+.cs-score-top { display: flex; align-items: baseline; justify-content: space-between; }
+.cs-score-lbl { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); }
+.cs-score-num { font-size: 13px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); }
+.cs-score-bar { height: 5px; border-radius: 3px; background: var(--s3); overflow: hidden; }
+.cs-score-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--orange), #e6862a); }
+.cs-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.cs-tag { font-size: 9px; font-weight: 600; color: var(--dim); background: var(--s2); border: 1px solid var(--border); border-radius: 5px; padding: 2px 6px; white-space: nowrap; }
+.cs-tag.on { color: var(--orange); border-color: rgba(247,147,26,.3); background: rgba(247,147,26,.08); }
+.cs-plan-mini { text-align: right; }
+.cs-plan-lbl { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); }
+.cs-plan-val { font-size: 12px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); margin-top: 2px; }
+.cs-plan-val.rej { color: var(--red); font-size: 10.5px; }
+.cs-be { text-align: right; }
+.cs-be-val { font-size: 13px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--orange); }
+.cs-chev { transition: transform .18s; color: var(--faint); }
+.cs-row.open .cs-chev { transform: rotate(90deg); }
+.cs-detail { display: none; border-top: 1px solid var(--border); padding: 13px 15px; background: var(--s2); }
+.cs-row.open .cs-detail { display: block; }
+.cs-ev-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; margin-bottom: 12px; }
+.cs-ev-card { background: var(--s1); border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; }
+.cs-ev-h { display: flex; align-items: center; gap: 7px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--faint); margin-bottom: 6px; }
+.cs-ev-h .cs-ev-dir { margin-left: auto; font-size: 10px; font-family: 'JetBrains Mono', monospace; }
+.cs-ev-h .cs-ev-dir.long { color: var(--green); } .cs-ev-h .cs-ev-dir.short { color: var(--red); } .cs-ev-h .cs-ev-dir.flat { color: var(--dim); }
+.cs-ev-txt { font-size: 11px; color: var(--dim); line-height: 1.45; }
+.cs-plan-full { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+.cs-pf-item { background: var(--s1); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; }
+.cs-pf-lbl { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); }
+.cs-pf-val { font-size: 13px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); margin-top: 2px; }
+.cs-pf-val.g { color: var(--green); } .cs-pf-val.r { color: var(--red); } .cs-pf-val.o { color: var(--orange); }
+.cs-reject { font-size: 11.5px; color: var(--red); background: rgba(247,100,122,.08); border: 1px solid rgba(247,100,122,.2); border-radius: 8px; padding: 9px 12px; }
+.cs-ref { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.cs-refbox { background: var(--s1); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.cs-refbox-h { font-size: 12px; font-weight: 700; color: var(--text); padding: 12px 15px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+.cs-flag { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--dim); background: var(--s3); padding: 2px 6px; border-radius: 4px; }
+.cs-refbox-b { padding: 13px 15px; }
+.cs-hyp { display: flex; gap: 10px; padding: 7px 0; font-size: 11.5px; color: var(--dim); line-height: 1.5; }
+.cs-hyp + .cs-hyp { border-top: 1px solid var(--border); }
+.cs-hyp b { color: var(--text); font-weight: 600; } .cs-hyp em { color: var(--faint); font-style: italic; }
+.cs-hyp .lo { color: var(--green); font-weight: 600; } .cs-hyp .sh { color: var(--red); font-weight: 600; }
+.cs-hyp-tag { flex-shrink: 0; width: 26px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: var(--orange); background: rgba(247,147,26,.1); border-radius: 6px; }
+.cs-hyp-tag.alt { color: var(--dim); background: var(--s3); }
+.cs-ev { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+.cs-ev-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-size: 11.5px; color: var(--dim); }
+.cs-ev-row b { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text); font-weight: 600; }
+.cs-ev-row b.o { color: var(--orange); }
+.cs-ev-row.tot { border-top: 1px dashed var(--border); padding-top: 7px; margin-top: 2px; }
+.cs-refbox-note { font-size: 11px; color: var(--dim); line-height: 1.55; }
+.cs-refbox-note b { color: var(--text); }
+.cs-funnel { display: flex; flex-direction: column; gap: 9px; }
+.cs-funnel-step { display: flex; gap: 11px; align-items: flex-start; }
+.cs-fn-n { flex-shrink: 0; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--orange); background: rgba(247,147,26,.1); border-radius: 50%; }
+.cs-funnel-step b { font-size: 11.5px; color: var(--text); } .cs-funnel-step p { font-size: 10.5px; color: var(--dim); margin: 2px 0 0; line-height: 1.4; }
+.cs-list-ul { margin: 10px 0 0; padding-left: 17px; display: flex; flex-direction: column; gap: 6px; }
+.cs-list-ul li { font-size: 11px; color: var(--dim); line-height: 1.5; } .cs-list-ul li b { color: var(--text); font-weight: 600; }
+.cs-disclaimer { font-size: 10.5px; color: var(--faint); line-height: 1.5; text-align: center; padding: 4px 20px; }
+@media (max-width: 860px) {
+  .cs-ref { grid-template-columns: 1fr; }
+  .cs-ctx { grid-template-columns: 1fr 1fr; }
+  .cs-ctx .cs-field { grid-column: span 2; }
+  .cs-field input { width: 100%; }
+  .cs-row-main { grid-template-columns: 26px 1fr 70px; grid-template-areas: "rank sym score"; row-gap: 8px; }
+  .cs-rank { grid-area: rank; } .cs-sym-wrap { grid-area: sym; } .cs-score-wrap { grid-area: score; }
+  .cs-tags, .cs-plan-mini, .cs-be { display: none; }
+}
 /* Heatmap de liquidações */
 .liqhm-stats { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
 .liqhm-stat { flex: 1; min-width: 120px; background: var(--s2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 11px; }
@@ -989,6 +1089,10 @@ html.light .mnav-btn.active { color: var(--orange); }
       <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.7" stroke="currentColor" stroke-width="1.2" fill="none"/><path d="M5.5 2.2v6.6M3 4.2 5.5 2.2 8 4.2" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
       Trade
     </button>
+    <button class="tab-btn" data-tab="cryptoscan" onclick="switchTab('cryptoscan',this)">
+      <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="4.6" cy="4.6" r="3.4" stroke="currentColor" stroke-width="1.3" fill="none"/><line x1="7.2" y1="7.2" x2="10" y2="10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M3 4.6h3.2M4.6 3v3.2" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+      CryptoScan
+    </button>
     <button class="tab-btn" data-tab="noticias" onclick="switchTab('noticias',this)">
       <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x=".5" y="1.5" width="10" height="8" rx="1.5" stroke="currentColor" stroke-width="1.4" fill="none"/><line x1="3" y1="4.5" x2="8" y2="4.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><line x1="3" y1="7" x2="6.5" y2="7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
       Notícias
@@ -1179,7 +1283,107 @@ html.light .mnav-btn.active { color: var(--orange); }
   </div>
 </div>
 
-<!-- ─── TAB: CARTEIRA ─────────────────────────────────── -->
+<!-- ─── TAB: CRYPTOSCAN — Screener de oportunidades (funil determinístico) ─── -->
+<div class="tab-pane" id="tab-cryptoscan">
+  <div class="cs-wrap">
+
+    <!-- Cabeçalho -->
+    <div class="cs-head">
+      <div>
+        <div class="cs-title">CryptoScan <span class="cs-badge">Screener v1</span></div>
+        <div class="cs-sub">Screener de futuros perpétuos USDT da Bybit. O edge vem de <b>posicionamento</b> — funding, open interest, cascatas de liquidação — não de indicadores clássicos (que só filtram regime). Funil determinístico: universo → scoring → shortlist top-12.</div>
+      </div>
+      <button class="cs-scan-btn" id="cs-scan-btn" onclick="scanCs(true)">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.2" stroke="currentColor" stroke-width="1.4"/><line x1="9" y1="9" x2="12.5" y2="12.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        <span>Correr scan</span>
+      </button>
+    </div>
+
+    <!-- Contexto de mercado + config -->
+    <div class="cs-ctx">
+      <div class="cs-ctx-item"><div class="cs-ctx-lbl">Universo</div><div class="cs-ctx-val" id="cs-x-universe">—</div><div class="cs-ctx-sub">perps ≥ 30M turnover</div></div>
+      <div class="cs-ctx-item"><div class="cs-ctx-lbl">Shortlist</div><div class="cs-ctx-val" id="cs-x-short">—</div><div class="cs-ctx-sub">score ≥ 35, top-12</div></div>
+      <div class="cs-ctx-item"><div class="cs-ctx-lbl">BTC 24h</div><div class="cs-ctx-val" id="cs-x-btc">—</div><div class="cs-ctx-sub">contexto direcional</div></div>
+      <div class="cs-ctx-item"><div class="cs-ctx-lbl">Funding médio</div><div class="cs-ctx-val" id="cs-x-fund">—</div><div class="cs-ctx-sub">do universo /8h</div></div>
+      <label class="cs-field"><span>Capital (USD)</span><input type="number" id="cs-capital" min="100" step="100" oninput="csCfgChange()"></label>
+    </div>
+
+    <!-- Pesos do scoring (config, só leitura) -->
+    <div class="cs-weights">
+      <span class="cs-wlbl">Pesos:</span>
+      <span class="cs-wchip">Funding <b>30</b></span>
+      <span class="cs-wchip">OI div. <b>25</b></span>
+      <span class="cs-wchip">Cascata <b>20</b></span>
+      <span class="cs-wchip">Regime <b>15</b></span>
+      <span class="cs-wchip">Estrutura <b>10</b></span>
+      <span class="cs-wsep"></span>
+      <span class="cs-wchip">Risco/trade <b>0,75%</b></span>
+      <span class="cs-wchip">Alav. máx <b>1,8×</b></span>
+      <span class="cs-wchip">R:R <b>1,5</b></span>
+      <span class="cs-wchip">Custo RT <b>~0,17%</b></span>
+    </div>
+
+    <!-- Shortlist (injetada por JS) -->
+    <div id="cs-list" class="cs-list"><div class="db-empty">Corre um scan para avaliar o universo…</div></div>
+
+    <!-- Painéis de referência -->
+    <div class="cs-ref">
+
+      <div class="cs-refbox">
+        <div class="cs-refbox-h">Hipóteses de edge (posicionamento)</div>
+        <div class="cs-refbox-b">
+          <div class="cs-hyp"><span class="cs-hyp-tag">H1</span><div><b>Funding squeeze.</b> Funding com z-score ≥ |2| (≈100 períodos) = um lado sobrelotado a pagar. Se o preço não confirma, o unwind é violento na direção oposta. z ≥ +2 com preço 24h ≤ +0,5% → <span class="sh">SHORT</span>; z ≤ −2 com preço 24h ≥ −0,5% → <span class="lo">LONG</span>.</div></div>
+          <div class="cs-hyp"><span class="cs-hyp-tag">H2</span><div><b>OI divergence.</b> OI +5% em 6h com preço a variar &lt;0,4% = combustível bidirecional (direção neutra). OI −6% em 6h = flush/exaustão → fade do movimento recente.</div></div>
+          <div class="cs-hyp"><span class="cs-hyp-tag">H3</span><div><b>Cascade fade.</b> Vela (TF15) com range &gt;2,5×ATR(14), volume &gt;3× média(20) e OI −2% em 2h = proxy de cascata → mean-reversion contra a vela. <em>Proxy REST; adapter pronto para o websocket de liquidações.</em></div></div>
+          <div class="cs-hyp"><span class="cs-hyp-tag">H4</span><div><b>Filtro de regime (1h).</b> ADX(14) ≥ 25 → trending; largura de Bollinger no percentil &lt;15% → squeeze (penaliza tudo exceto breakout); resto → ranging. Mean-reversion só pontua bem em ranging.</div></div>
+          <div class="cs-hyp"><span class="cs-hyp-tag alt">+</span><div><b>Estrutura.</b> Posição do preço no range de 24h: ≤12% favorece LONG, ≥88% favorece SHORT. Peso baixo, melhora o R:R de entrada.</div></div>
+        </div>
+      </div>
+
+      <div class="cs-refbox">
+        <div class="cs-refbox-h">Custos, R:R e breakeven</div>
+        <div class="cs-refbox-b">
+          <div class="cs-ev">
+            <div class="cs-ev-row"><span>Taker fee (por lado)</span><b>0,055%</b></div>
+            <div class="cs-ev-row"><span>Slippage estimado (por lado)</span><b>0,030%</b></div>
+            <div class="cs-ev-row tot"><span>Custo round-trip</span><b class="o">≈ 0,17%</b></div>
+          </div>
+          <div class="cs-refbox-note">Qualquer setup cujo alvo não pague <b>≥2× os custos</b> é rejeitado automaticamente. Cada candidato mostra <b>p_win_breakeven</b> = (1 + custos_em_R) / (1 + R:R) — a taxa de acerto mínima para empatar. Win rate isolado não é métrica: o que importa é a expectância líquida de custos.</div>
+        </div>
+      </div>
+
+      <div class="cs-refbox">
+        <div class="cs-refbox-h">O funil</div>
+        <div class="cs-refbox-b">
+          <div class="cs-funnel">
+            <div class="cs-funnel-step"><span class="cs-fn-n">1</span><div><b>Universo (~60)</b><p>Todos os USDT-perps com turnover ≥ 30M.</p></div></div>
+            <div class="cs-funnel-step"><span class="cs-fn-n">2</span><div><b>Scoring determinístico</b><p>H1–H4 + estrutura → score composto. Mesmo input → mesmo score.</p></div></div>
+            <div class="cs-funnel-step"><span class="cs-fn-n">3</span><div><b>Shortlist (top-12)</b><p>Score ≥ 35, ordenado. Só a shortlist teria ido ao LLM.</p></div></div>
+            <div class="cs-funnel-step"><span class="cs-fn-n">4</span><div><b>Risk engine</b><p>Trade plan, rejeição por custos, cap 1,8×, breakeven.</p></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cs-refbox">
+        <div class="cs-refbox-h">Pipeline backend <span class="cs-flag">fora do browser</span></div>
+        <div class="cs-refbox-b">
+          <div class="cs-refbox-note">O núcleo determinístico acima corre ao vivo aqui. As camadas com estado ou chaves secretas pertencem ao serviço Python <b>CryptoScan</b> e não correm no browser:</div>
+          <ul class="cs-list-ul">
+            <li><b>LLM analyst</b> (claude-sonnet-4-6): veto qualitativo cético sobre a shortlist, coluna separada que não altera o score determinístico.</li>
+            <li><b>Paper trader</b>: loop de 15 min, fills com fees/slippage/funding, máx 3 posições, kill-switch diário a −3%.</li>
+            <li><b>Walk-forward</b>: janelas 60d treino / 14d teste, sem lookahead, teste de sensibilidade aos pesos (±20%).</li>
+            <li><b>Go-live</b> só após ≥60 dias de paper com expectância líquida positiva.</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="cs-disclaimer">Ferramenta de apoio à decisão. Scoring calculado a partir de dados públicos da Bybit v5 (tickers, kline TF15/TF60, funding history, open interest). Proxy de liquidações via REST. Não é execução automática nem aconselhamento financeiro.</div>
+
+  </div>
+</div>
+
 <!-- ─── TAB: POSIÇÕES ─────────────────────────────────── -->
 <div class="tab-pane" id="tab-posicoes">
   <div style="max-width:1400px;margin:0 auto;display:flex;flex-direction:column;gap:14px;padding-bottom:96px">
@@ -1409,6 +1613,10 @@ html.light .mnav-btn.active { color: var(--orange); }
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 5v14M8 8l4-3 4 3"/></svg>
     <span class="mnav-lbl">Trade</span>
   </button>
+  <button class="mnav-btn" data-tab="cryptoscan" onclick="switchTab('cryptoscan',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7"/><line x1="15" y1="15" x2="21" y2="21"/><path d="M6.5 10h7M10 6.5v7"/></svg>
+    <span class="mnav-lbl">Scan</span>
+  </button>
   <button class="mnav-btn" data-tab="noticias" onclick="switchTab('noticias',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="7" y1="9" x2="17" y2="9"/><line x1="7" y1="13" x2="13" y2="13"/></svg>
     <span class="mnav-lbl">Notícias</span>
@@ -1504,6 +1712,7 @@ function switchTab(id, btn) {
   if (id === 'dashboard')  { setTimeout(() => loadPortfolioSeries(dbCurrentRange()), 60); renderDbAssets(); }
   if (id === 'posicoes')   renderPosTab();
   if (id === 'trade')      renderTradeTab();
+  if (id === 'cryptoscan') renderCsTab();
   if (id === 'agente')     renderAgentTab();
 }
 
@@ -3399,6 +3608,349 @@ async function fetchLiquidations() {
       </div>`;
     }).join('');
   } catch(e) {}
+}
+
+// ── CRYPTOSCAN — Screener determinístico (funil de posicionamento) ───────────
+// Universo de perps USDT (Bybit v5 público) → scoring H1-H4 + estrutura →
+// shortlist top-12 com trade plan e p_win_breakeven. Núcleo determinístico do
+// sistema CryptoScan; LLM/paper/backtest são backend (fora do browser).
+const CS_CFG = {
+  minTurnover: 30e6,           // filtro de universo (USD)
+  universeTop: 45,             // símbolos enriquecidos por turnover (perf browser)
+  weights: { funding: 30, oi: 25, cascade: 20, regime: 15, structure: 10 },
+  scoreThreshold: 35,
+  shortlistMax: 12,
+  fundingZ: 2,                 // |z| para H1
+  adxTrend: 25,
+  bbSqueezePct: 15,            // percentil de largura BB → squeeze
+  costPerSide: 0.055 + 0.030,  // % (fee taker + slippage) por lado
+  minRR: 1.5,
+  riskPct: 0.75,               // % do capital por trade
+  maxLev: 1.8,
+  stopAtr: 1.2,
+  capital: 10000,
+  concurrency: 8,
+};
+try { const s = JSON.parse(localStorage.getItem('csCfg') || '{}'); if (s.capital > 0) CS_CFG.capital = s.capital; } catch (e) {}
+const CS_COST_RT = 2 * CS_CFG.costPerSide;   // round-trip ≈ 0,17%
+
+let csData = null, csScanning = false, csLastScan = 0, csExpanded = null;
+
+// ── Helpers de estatística e indicadores ──
+const csMean = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
+const csStd = a => { if (a.length < 2) return 0; const m = csMean(a); return Math.sqrt(a.reduce((s, v) => s + (v - m) ** 2, 0) / a.length); };
+const csSMA = (a, p) => a.length < p ? null : csMean(a.slice(-p));
+
+function csATR(h, l, c, p = 14) {
+  const n = c.length; if (n < p + 1) return null;
+  const tr = [];
+  for (let i = 1; i < n; i++) tr.push(Math.max(h[i] - l[i], Math.abs(h[i] - c[i - 1]), Math.abs(l[i] - c[i - 1])));
+  let atr = csMean(tr.slice(0, p));
+  for (let i = p; i < tr.length; i++) atr = (atr * (p - 1) + tr[i]) / p;
+  return atr;
+}
+function csADX(h, l, c, p = 14) {
+  const n = c.length; if (n < 2 * p + 2) return null;
+  const tr = [], pdm = [], mdm = [];
+  for (let i = 1; i < n; i++) {
+    const up = h[i] - h[i - 1], dn = l[i - 1] - l[i];
+    pdm.push(up > dn && up > 0 ? up : 0);
+    mdm.push(dn > up && dn > 0 ? dn : 0);
+    tr.push(Math.max(h[i] - l[i], Math.abs(h[i] - c[i - 1]), Math.abs(l[i] - c[i - 1])));
+  }
+  const wilder = arr => { let s = arr.slice(0, p).reduce((a, b) => a + b, 0); const o = [s]; for (let i = p; i < arr.length; i++) { s = s - s / p + arr[i]; o.push(s); } return o; };
+  const trS = wilder(tr), pS = wilder(pdm), mS = wilder(mdm), dx = [];
+  for (let i = 0; i < trS.length; i++) {
+    const t = trS[i] || 1e-9, pdi = 100 * pS[i] / t, mdi = 100 * mS[i] / t;
+    dx.push(100 * Math.abs(pdi - mdi) / ((pdi + mdi) || 1e-9));
+  }
+  if (dx.length < p) return null;
+  let adx = csMean(dx.slice(0, p));
+  for (let i = p; i < dx.length; i++) adx = (adx * (p - 1) + dx[i]) / p;
+  return adx;
+}
+// Largura de Bollinger (20,2) = (banda sup − inf)/média = 4σ/média; percentil do último valor.
+function csBBWidthPct(closes, p = 20) {
+  if (closes.length < p + 30) return null;
+  const widths = [];
+  for (let i = p; i <= closes.length; i++) {
+    const w = closes.slice(i - p, i), m = csMean(w);
+    widths.push(m ? 4 * csStd(w) / m : 0);
+  }
+  const cur = widths[widths.length - 1], sorted = widths.slice().sort((a, b) => a - b);
+  return { cur, pct: sorted.filter(x => x <= cur).length / sorted.length * 100 };
+}
+
+// ── Fetchers Bybit v5 (cronológico: mais antigo → mais recente) ──
+async function csFetchKline(sym, interval, limit) {
+  const r = await fetch(`${BYBIT}/v5/market/kline?category=linear&symbol=${sym}&interval=${interval}&limit=${limit}`);
+  const d = await r.json();
+  const list = (d?.result?.list || []).slice().reverse();
+  return { closes: list.map(k => +k[4]), highs: list.map(k => +k[2]), lows: list.map(k => +k[3]), opens: list.map(k => +k[1]), vols: list.map(k => +k[5]) };
+}
+async function csFetchFunding(sym) {
+  const r = await fetch(`${BYBIT}/v5/market/funding/history?category=linear&symbol=${sym}&limit=100`);
+  const d = await r.json();
+  return (d?.result?.list || []).map(x => parseFloat(x.fundingRate) * 100).reverse();
+}
+async function csFetchOI(sym) {
+  const r = await fetch(`${BYBIT}/v5/market/open-interest?category=linear&symbol=${sym}&intervalTime=15min&limit=96`);
+  const d = await r.json();
+  return (d?.result?.list || []).map(x => +x.openInterest).filter(v => v > 0).reverse();
+}
+
+// ── Sinais (cada um: { score 0-100, dir -1|0|+1, ev, on }) ──
+// H1 — Funding squeeze: funding extremo (|z|≥2) sem confirmação de preço → fade.
+function csH1(fund, chg24) {
+  if (!fund || fund.length < 20) return { score: 0, dir: 0, ev: 'Sem histórico de funding.', on: false };
+  const cur = fund[fund.length - 1], hist = fund.slice(0, -1), m = csMean(hist), sd = csStd(hist);
+  const z = sd > 0 ? (cur - m) / sd : 0;
+  let dir = 0, on = false;
+  if (z >= CS_CFG.fundingZ && chg24 <= 0.5) { dir = -1; on = true; }        // crowd long vulnerável → SHORT
+  else if (z <= -CS_CFG.fundingZ && chg24 >= -0.5) { dir = 1; on = true; }  // crowd short vulnerável → LONG
+  const score = on ? Math.max(45, Math.min(100, 45 + (Math.abs(z) - CS_CFG.fundingZ) * 20)) : 0;
+  const ev = `Funding ${cur.toFixed(4)}%/8h · z=${z.toFixed(2)} (${cur >= 0 ? 'longs' : 'shorts'} pagam) · preço 24h ${chg24 >= 0 ? '+' : ''}${chg24.toFixed(2)}%. ` +
+    (on ? (dir < 0 ? 'Crowd long sobrelotado sem confirmação → fade SHORT.' : 'Crowd short sobrelotado sem confirmação → fade LONG.') : 'Sem squeeze qualificado.');
+  return { score, dir, ev, on };
+}
+// H2 — OI divergence: acumulação sem progresso (bidirecional) ou flush (fade).
+function csH2(oi, closes15) {
+  if (!oi || oi.length < 25 || closes15.length < 25) return { score: 0, dir: 0, ev: 'Sem dados de OI.', on: false };
+  const oiNow = oi[oi.length - 1], oi6 = oi[oi.length - 25], oiChg = (oiNow - oi6) / oi6 * 100;
+  const pxNow = closes15[closes15.length - 1], px6 = closes15[closes15.length - 25], pxChg = (pxNow - px6) / px6 * 100;
+  let dir = 0, on = false, score = 0, ev;
+  if (oiChg > 5 && Math.abs(pxChg) < 0.4) {
+    on = true; dir = 0; score = Math.min(100, 55 + (oiChg - 5) * 3);
+    ev = `OI +${oiChg.toFixed(1)}% em 6h com preço ${pxChg >= 0 ? '+' : ''}${pxChg.toFixed(2)}% (plano) → combustível bidirecional; direção resolvida pelos outros sinais.`;
+  } else if (oiChg < -6) {
+    on = true; dir = pxChg > 0 ? -1 : 1; score = Math.min(100, 55 + (Math.abs(oiChg) - 6) * 3);
+    ev = `OI ${oiChg.toFixed(1)}% em 6h = flush/exaustão. Movimento recente ${pxChg >= 0 ? '+' : ''}${pxChg.toFixed(2)}% → fade ${dir < 0 ? 'SHORT' : 'LONG'}.`;
+  } else {
+    ev = `OI ${oiChg >= 0 ? '+' : ''}${oiChg.toFixed(1)}% em 6h · preço ${pxChg >= 0 ? '+' : ''}${pxChg.toFixed(2)}%. Sem divergência qualificada.`;
+  }
+  return { score, dir, ev, on };
+}
+// H3 — Cascade fade (proxy REST): vela extrema + volume + queda de OI → mean-reversion.
+function csH3(k, oi) {
+  const { highs, lows, closes, opens, vols } = k;
+  if (closes.length < 25) return { score: 0, dir: 0, ev: 'Sem dados TF15.', on: false };
+  const atr = csATR(highs, lows, closes, 14), i = closes.length - 1;
+  const range = highs[i] - lows[i], volAvg = csMean(vols.slice(-21, -1));
+  const volMult = volAvg > 0 ? vols[i] / volAvg : 0;
+  let oi2h = null;
+  if (oi && oi.length >= 9) { const a = oi[oi.length - 1], b = oi[oi.length - 9]; oi2h = (a - b) / b * 100; }
+  const on = atr > 0 && range > 2.5 * atr && volMult > 3 && oi2h != null && oi2h < -2;
+  let dir = 0, score = 0;
+  if (on) { dir = closes[i] < opens[i] ? 1 : -1; score = Math.min(100, 60 + (volMult - 3) * 6); }
+  const ev = `Range ${atr > 0 ? (range / atr).toFixed(1) : '—'}×ATR · vol ${volMult.toFixed(1)}× · OI 2h ${oi2h == null ? '—' : (oi2h >= 0 ? '+' : '') + oi2h.toFixed(1) + '%'}. ` +
+    (on ? `Proxy de cascata → mean-reversion ${dir > 0 ? 'LONG' : 'SHORT'}.` : 'Sem cascata qualificada.');
+  return { score, dir, ev, on };
+}
+// Estrutura — posição no range de 24h (96 velas TF15).
+function csStructure(closes15) {
+  if (closes15.length < 96) return { score: 0, dir: 0, ev: 'Sem range 24h.', on: false };
+  const w = closes15.slice(-96), hi = Math.max(...w), lo = Math.min(...w), px = closes15[closes15.length - 1];
+  const pos = hi > lo ? (px - lo) / (hi - lo) * 100 : 50;
+  let dir = 0, on = false, score = 0;
+  if (pos <= 12) { dir = 1; on = true; score = 100 - pos * 3; }
+  else if (pos >= 88) { dir = -1; on = true; score = 60 + (pos - 88) * 3; }
+  score = Math.max(0, Math.min(100, score));
+  const ev = `Preço a ${pos.toFixed(0)}% do range 24h. ` + (on ? (dir > 0 ? 'Perto do fundo → favorece LONG.' : 'Perto do topo → favorece SHORT.') : 'Meio do range.');
+  return { score, dir, ev, on };
+}
+// H4 — Regime (TF 1h): trending / ranging / squeeze.
+function csRegime(k60) {
+  const { highs, lows, closes } = k60;
+  if (closes.length < 50) return { type: 'ranging', ev: 'Dados 1h insuficientes.', adx: null, bbPct: null };
+  const adx = csADX(highs, lows, closes, 14), bb = csBBWidthPct(closes, 20);
+  const sma20 = csSMA(closes, 20), px = closes[closes.length - 1];
+  let type;
+  if (bb && bb.pct < CS_CFG.bbSqueezePct) type = 'squeeze';
+  else if (adx != null && adx >= CS_CFG.adxTrend) type = px >= sma20 ? 'trend_up' : 'trend_down';
+  else type = 'ranging';
+  return { type, ev: `ADX ${adx == null ? '—' : adx.toFixed(0)} · BB width p${bb ? Math.round(bb.pct) : '—'} →`, adx, bbPct: bb ? bb.pct : null };
+}
+// Fit de regime (0-100): mean-reversion favorece ranging; continuação favorece trend alinhado; squeeze penaliza.
+function csRegimeFit(regime, dir, mrOn) {
+  switch (regime.type) {
+    case 'squeeze':     return 25;
+    case 'ranging':     return mrOn ? 80 : 55;
+    case 'trend_up':    return dir > 0 ? 85 : dir < 0 ? 30 : 50;
+    case 'trend_down':  return dir < 0 ? 85 : dir > 0 ? 30 : 50;
+    default:            return 50;
+  }
+}
+
+// ── Scoring composto (determinístico) ──
+function csComposite(sigs, regime) {
+  const W = CS_CFG.weights;
+  const parts = [
+    { k: 'funding',   ...sigs.h1, w: W.funding },
+    { k: 'oi',        ...sigs.h2, w: W.oi },
+    { k: 'cascade',   ...sigs.h3, w: W.cascade },
+    { k: 'structure', ...sigs.st, w: W.structure },
+  ];
+  let vote = 0;
+  for (const p of parts) vote += p.dir * p.score * p.w;
+  const finalDir = vote > 0 ? 1 : vote < 0 ? -1 : 0;
+  let score = 0;
+  for (const p of parts) {
+    const contrib = p.score * p.w / 100;              // 0..w
+    if (p.dir === 0) score += contrib * 0.5;           // neutro conta a 50%
+    else if (p.dir === finalDir) score += contrib;     // alinhado
+    else score -= contrib * 0.7;                       // contraditório subtrai 70%
+  }
+  const mrOn = sigs.h3.dir !== 0 || sigs.st.dir !== 0;
+  const fit = csRegimeFit(regime, finalDir, mrOn);
+  score += fit * W.regime / 100;
+  return { finalDir, score: Math.max(0, score), fit };
+}
+
+// ── Trade plan + risk engine ──
+function csTradePlan(entry, atr, dir, capital) {
+  if (!dir || !atr || !entry) return null;
+  const stopDist = CS_CFG.stopAtr * atr;
+  const stop = dir > 0 ? entry - stopDist : entry + stopDist;
+  const target = dir > 0 ? entry + CS_CFG.minRR * stopDist : entry - CS_CFG.minRR * stopDist;
+  const stopPct = stopDist / entry * 100, targetPct = CS_CFG.minRR * stopDist / entry * 100;
+  const rejected = targetPct <= 2 * CS_COST_RT;         // alvo tem de pagar ≥2× custos
+  const riskUsd = capital * CS_CFG.riskPct / 100;
+  let qty = riskUsd / stopDist, notional = qty * entry, lev = notional / capital, capped = false;
+  if (lev > CS_CFG.maxLev) { capped = true; lev = CS_CFG.maxLev; notional = lev * capital; qty = notional / entry; }
+  const costsInR = CS_COST_RT / stopPct;                // custo round-trip em unidades de R
+  const pWinBE = (1 + costsInR) / (1 + CS_CFG.minRR);   // taxa de acerto mínima p/ empatar
+  return { entry, stop, target, stopPct, targetPct, rejected, riskUsd, qty, notional, lev, capped, pWinBE };
+}
+
+// ── Orquestração do scan ──
+async function scanCs(force) {
+  if (csScanning) return;
+  if (!force && csData && Date.now() - csLastScan < 60000) { csRender(); return; }
+  csScanning = true;
+  const btn = document.getElementById('cs-scan-btn'); if (btn) btn.classList.add('busy');
+  const listEl = document.getElementById('cs-list');
+  if (listEl && !csData) listEl.innerHTML = '<div class="db-empty">A avaliar o universo… (pode demorar ~1 min)</div>';
+  try {
+    const r = await fetch(`${BYBIT}/v5/market/tickers?category=linear`);
+    const d = await r.json();
+    let uni = (d?.result?.list || [])
+      .filter(t => /USDT$/.test(t.symbol) && !/[0-9]/.test(coinOf(t.symbol)))
+      .map(t => ({ symbol: t.symbol, coin: coinOf(t.symbol), price: parseFloat(t.lastPrice), chg24: parseFloat(t.price24hPcnt) * 100, fr: parseFloat(t.fundingRate) * 100, turnover: parseFloat(t.turnover24h) || 0 }))
+      .filter(c => c.turnover >= CS_CFG.minTurnover && isFinite(c.price) && c.price > 0);
+    uni.sort((a, b) => b.turnover - a.turnover);
+    const universeSize = uni.length;
+    const enrich = uni.slice(0, CS_CFG.universeTop);
+    const btc = uni.find(c => c.symbol === 'BTCUSDT');
+    const btc24 = btc ? btc.chg24 : null;
+    const avgFund = csMean(enrich.map(c => c.fr));
+    await trdPool(enrich, async c => {
+      try {
+        const [k15, k60, fund, oi] = await Promise.all([
+          csFetchKline(c.symbol, '15', 200), csFetchKline(c.symbol, '60', 120),
+          csFetchFunding(c.symbol), csFetchOI(c.symbol),
+        ]);
+        c.atr = csATR(k15.highs, k15.lows, k15.closes, 14);
+        const sigs = { h1: csH1(fund, c.chg24), h2: csH2(oi, k15.closes), h3: csH3(k15, oi), st: csStructure(k15.closes) };
+        const regime = csRegime(k60);
+        const comp = csComposite(sigs, regime);
+        c.sigs = { ...sigs, regime }; c.dir = comp.finalDir; c.score = comp.score; c.fit = comp.fit;
+        c.plan = csTradePlan(c.price, c.atr, c.dir, CS_CFG.capital);
+      } catch (e) { c.err = true; }
+    }, CS_CFG.concurrency);
+    const scored = enrich.filter(c => !c.err && c.score >= CS_CFG.scoreThreshold).sort((a, b) => b.score - a.score);
+    csData = { shortlist: scored.slice(0, CS_CFG.shortlistMax), universeSize, enriched: enrich.length, btc24, avgFund, ts: Date.now() };
+    csLastScan = Date.now();
+    csRender();
+  } catch (e) {
+    console.error('scanCs error', e);
+    if (listEl && !csData) listEl.innerHTML = '<div class="db-empty">Falha ao obter dados da Bybit. Tenta correr o scan de novo.</div>';
+  } finally {
+    csScanning = false;
+    const b = document.getElementById('cs-scan-btn'); if (b) b.classList.remove('busy');
+  }
+}
+
+// ── Render ──
+const CS_REG_LABEL = { trend_up: 'Trend ↑', trend_down: 'Trend ↓', ranging: 'Ranging', squeeze: 'Squeeze' };
+function csRender() {
+  if (!csData) return;
+  set('cs-x-universe', csData.universeSize);
+  set('cs-x-short', csData.shortlist.length);
+  const be = document.getElementById('cs-x-btc');
+  if (be) { be.textContent = csData.btc24 == null ? '—' : (csData.btc24 >= 0 ? '+' : '') + csData.btc24.toFixed(2) + '%'; be.style.color = csData.btc24 == null ? '' : csData.btc24 >= 0 ? 'var(--green)' : 'var(--red)'; }
+  set('cs-x-fund', (csData.avgFund >= 0 ? '+' : '') + csData.avgFund.toFixed(4) + '%');
+  const listEl = document.getElementById('cs-list'); if (!listEl) return;
+  if (!csData.shortlist.length) { listEl.innerHTML = `<div class="db-empty">Nenhum símbolo passou o threshold de ${CS_CFG.scoreThreshold}. Sem oportunidades qualificadas neste momento — a ausência de setup é um resultado válido.</div>`; return; }
+  listEl.innerHTML = csData.shortlist.map((c, i) => csRenderRow(c, i)).join('');
+}
+function csRenderRow(c, i) {
+  const dir = c.dir, sideCls = dir > 0 ? 'long' : dir < 0 ? 'short' : 'flat', sideLbl = dir > 0 ? 'Long' : dir < 0 ? 'Short' : 'Neutro';
+  const tags = [];
+  if (c.sigs.h1.on) tags.push('Funding');
+  if (c.sigs.h2.on) tags.push('OI');
+  if (c.sigs.h3.on) tags.push('Cascata');
+  if (c.sigs.st.on) tags.push('Estrutura');
+  tags.push(CS_REG_LABEL[c.sigs.regime.type] || c.sigs.regime.type);
+  const tagsHtml = tags.map(t => `<span class="cs-tag on">${t}</span>`).join('');
+  const p = c.plan;
+  let planMini, beVal = '—';
+  if (!p) planMini = '<div class="cs-plan-lbl">Plano</div><div class="cs-plan-val rej">sem direção</div>';
+  else if (p.rejected) { planMini = '<div class="cs-plan-lbl">Entrada</div><div class="cs-plan-val rej">rejeitado · custos</div>'; beVal = (p.pWinBE * 100).toFixed(0) + '%'; }
+  else { planMini = `<div class="cs-plan-lbl">Entrada → Alvo</div><div class="cs-plan-val">${fmtPx(p.entry)} → ${fmtPx(p.target)}</div>`; beVal = (p.pWinBE * 100).toFixed(0) + '%'; }
+  const open = csExpanded === c.symbol ? 'open' : '';
+  return `<div class="cs-row ${open}">
+    <div class="cs-row-main" onclick="csToggle('${c.symbol}')">
+      <div class="cs-rank">${i + 1}</div>
+      <div class="cs-sym-wrap"><span class="cs-side ${sideCls}">${sideLbl}</span><span class="cs-sym">${c.coin}<small>${fmtPx(c.price)}</small></span></div>
+      <div class="cs-score-wrap"><div class="cs-score-top"><span class="cs-score-lbl">Score</span><span class="cs-score-num">${c.score.toFixed(0)}</span></div><div class="cs-score-bar"><div class="cs-score-fill" style="width:${Math.min(100, c.score)}%"></div></div></div>
+      <div class="cs-tags">${tagsHtml}</div>
+      <div class="cs-plan-mini">${planMini}</div>
+      <div class="cs-be"><div class="cs-plan-lbl">p breakeven</div><div class="cs-be-val">${beVal}</div><svg class="cs-chev" width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3 1.5 6.5 5 3 8.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    </div>
+    ${open ? csRenderDetail(c) : ''}
+  </div>`;
+}
+function csRenderDetail(c) {
+  const s = c.sigs;
+  const card = (tag, title, sig) => {
+    const dc = sig.dir > 0 ? 'long' : sig.dir < 0 ? 'short' : 'flat';
+    const dl = sig.dir > 0 ? 'long' : sig.dir < 0 ? 'short' : 'neutro';
+    return `<div class="cs-ev-card"><div class="cs-ev-h">${tag} · ${title}<span class="cs-ev-dir ${dc}">${sig.on ? dl : 'off'} · ${(sig.score || 0).toFixed(0)}</span></div><div class="cs-ev-txt">${sig.ev}</div></div>`;
+  };
+  const regCard = `<div class="cs-ev-card"><div class="cs-ev-h">H4 · Regime<span class="cs-ev-dir flat">${CS_REG_LABEL[s.regime.type] || s.regime.type} · fit ${c.fit.toFixed(0)}</span></div><div class="cs-ev-txt">${s.regime.ev} ${CS_REG_LABEL[s.regime.type] || s.regime.type}.</div></div>`;
+  const p = c.plan;
+  let planHtml;
+  if (!p) planHtml = '<div class="cs-reject">Sem direção resolvida — nenhum trade plan.</div>';
+  else if (p.rejected) planHtml = `<div class="cs-reject">Trade rejeitado: alvo ${p.targetPct.toFixed(2)}% não paga 2× os custos (${(2 * CS_COST_RT).toFixed(2)}%). p_win_breakeven ${(p.pWinBE * 100).toFixed(0)}%.</div>`;
+  else planHtml = `<div class="cs-plan-full">
+    <div class="cs-pf-item"><div class="cs-pf-lbl">Entrada</div><div class="cs-pf-val">${fmtPx(p.entry)}</div></div>
+    <div class="cs-pf-item"><div class="cs-pf-lbl">Stop (1,2×ATR)</div><div class="cs-pf-val r">${fmtPx(p.stop)} · ${p.stopPct.toFixed(2)}%</div></div>
+    <div class="cs-pf-item"><div class="cs-pf-lbl">Alvo (R:R 1,5)</div><div class="cs-pf-val g">${fmtPx(p.target)} · ${p.targetPct.toFixed(2)}%</div></div>
+    <div class="cs-pf-item"><div class="cs-pf-lbl">Notional</div><div class="cs-pf-val">${fmtUsd(p.notional)}</div></div>
+    <div class="cs-pf-item"><div class="cs-pf-lbl">Alavancagem</div><div class="cs-pf-val ${p.capped ? 'o' : ''}">${p.lev.toFixed(2)}×${p.capped ? ' · cap' : ''}</div></div>
+    <div class="cs-pf-item"><div class="cs-pf-lbl">Risco</div><div class="cs-pf-val">${fmtUsd(p.riskUsd)} · ${CS_CFG.riskPct}%</div></div>
+    <div class="cs-pf-item"><div class="cs-pf-lbl">p breakeven</div><div class="cs-pf-val o">${(p.pWinBE * 100).toFixed(0)}%</div></div>
+  </div>`;
+  return `<div class="cs-detail">
+    <div class="cs-ev-grid">
+      ${card('H1', 'Funding', s.h1)}
+      ${card('H2', 'OI divergence', s.h2)}
+      ${card('H3', 'Cascade fade', s.h3)}
+      ${card('+', 'Estrutura', s.st)}
+      ${regCard}
+    </div>
+    ${planHtml}
+  </div>`;
+}
+function csToggle(sym) { csExpanded = csExpanded === sym ? null : sym; csRender(); }
+function csCfgChange() {
+  const v = parseFloat(document.getElementById('cs-capital').value);
+  if (isFinite(v) && v > 0) { CS_CFG.capital = v; try { localStorage.setItem('csCfg', JSON.stringify({ capital: v })); } catch (e) {} }
+  if (csData) { csData.shortlist.forEach(c => { c.plan = csTradePlan(c.price, c.atr, c.dir, CS_CFG.capital); }); csRender(); }
+}
+function renderCsTab() {
+  const cap = document.getElementById('cs-capital'); if (cap && !cap.value) cap.value = CS_CFG.capital;
+  scanCs(false);
 }
 
 // ── HEATMAP DE LIQUIDAÇÕES (estimativa a partir do OI + escalões) ─────────────
