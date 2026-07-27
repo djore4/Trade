@@ -1027,6 +1027,9 @@ html.light .mnav-btn.active { color: var(--orange); }
 .pos-row-side.short { color: var(--red); }
 .pos-row-lev { font-size: 11px; color: var(--dim); }
 .pos-row-lev::before { content: '|'; color: var(--faint); margin-right: 8px; }
+/* Variação 24h do preço da moeda (badge no cabeçalho da posição) */
+.pos-row-chg { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 5px; background: var(--s2); border: 1px solid var(--border); white-space: nowrap; }
+.pos-row-chg:empty { display: none; }
 .pos-row-pnl { text-align: right; line-height: 1.25; flex-shrink: 0; }
 .pos-row-pnl-usd { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 14px; }
 .pos-row-pnl-roe { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; font-weight: 600; opacity: .9; }
@@ -2886,6 +2889,7 @@ function renderPosTab() {
   }
   if (empty) empty.style.display = 'none';
   renderPosSummary();
+  fetchPosChanges();   // variação 24h da moeda em cada cabeçalho
   // Sem auto-expansão: os trades aparecem em lista e o gráfico só abre ao clicar
   // (um de cada vez). Se já havia um aberto e continua na lista, mantém-se.
 }
@@ -2896,6 +2900,7 @@ function refreshPosTab() {
   if (!positions.length) { renderPosTab(); return; }
   renderPosList();
   renderPosSummary();
+  fetchPosChanges();   // mantém a variação 24h atualizada (cache 30s)
   if (!selectedPosKey) return;
   const p = positions.find(x => posKeyOf(x) === selectedPosKey);
   if (!p) { collapsePos(); return; }
@@ -3053,6 +3058,7 @@ function posRowHtml(p) {
             <span class="pos-row-sym">${p.symbol}</span>
             <span class="pos-row-side ${isLong ? 'long' : 'short'}">${isLong ? 'Long' : 'Short'}</span>
             <span class="pos-row-lev">${lev}× · ${isInv ? 'Inverse' : 'Linear'}</span>
+            <span class="pos-row-chg" id="prow-chg-${k}" title="Variação do preço da moeda nas últimas 24h"></span>
           </div>
           <div class="pos-row-pnl">
             <div class="pos-row-pnl-usd" id="prow-pnl-${k}" style="color:${col}">${pnl >= 0 ? '+' : ''}${fmtUsd(pnl, 2)}</div>
@@ -3249,6 +3255,33 @@ async function fetchPosFunding(p) {
     }
     el.innerHTML = `<span style="color:var(--faint)">funding</span> <span style="color:${col}">${fr >= 0 ? '+' : ''}${fmt(fr, 4)}%</span>${next}`;
   } catch (e) { el.innerHTML = ''; }
+}
+
+// Variação 24h do preço de cada moeda com posição aberta — mostrada no cabeçalho
+// da linha. Duas chamadas no máximo (tickers linear + inverse), com cache de 30s.
+let posChgMap = {}, posChgLast = 0;
+function applyPosChanges() {
+  (positions || []).forEach(p => {
+    const el = document.getElementById(`prow-chg-${posKeyOf(p)}`); if (!el) return;
+    const chg = posChgMap[p.symbol];
+    if (chg == null || !isFinite(chg)) { el.textContent = ''; return; }
+    el.textContent = `${chg >= 0 ? '▲' : '▼'} ${chg >= 0 ? '+' : ''}${fmt(chg, 2)}% 24h`;
+    el.style.color = chg >= 0 ? 'var(--green)' : 'var(--red)';
+  });
+}
+async function fetchPosChanges(force) {
+  if (!positions.length) return;
+  if (!force && Date.now() - posChgLast < 30000) { applyPosChanges(); return; }
+  const cats = [...new Set(positions.map(p => posCat(p.symbol)))];
+  await Promise.all(cats.map(async cat => {
+    try {
+      const r = await fetch(`${BYBIT}/v5/market/tickers?category=${cat}`);
+      const d = await r.json();
+      (d?.result?.list || []).forEach(t => { const v = parseFloat(t.price24hPcnt); if (isFinite(v)) posChgMap[t.symbol] = v * 100; });
+    } catch (e) {}
+  }));
+  posChgLast = Date.now();
+  applyPosChanges();
 }
 
 function posChartOpts() {
