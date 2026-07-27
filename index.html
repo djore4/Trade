@@ -147,9 +147,16 @@ body {
   .hdr-sep { display: none; }
 }
 @media (max-width: 430px) {
-  .logo-desk { display: none; }
   .hdr-right { gap: 6px; }
   .hdr-right .hdr-pill-btn svg { display: none; }   /* esconde o ícone de gráfico da pílula PERP */
+}
+/* Ecrãs estreitos: condensa o header para "Trade Desk" caber sem scroll lateral. */
+@media (max-width: 400px) {
+  #header { padding-left: 10px; padding-right: 10px; }
+  .logo { margin-right: 6px; gap: 4px; }
+  .hdr-right { gap: 5px; }
+  .hdr-right .hdr-pill { gap: 4px; }
+  .hdr-right .hdr-val { font-size: 10px; }
 }
 
 .hdr-pill { display: flex; align-items: center; gap: 5px; }
@@ -1044,9 +1051,9 @@ html.light .mnav-btn.active { color: var(--orange); }
   padding: 13px 0 2px; margin-top: 13px; border-top: 1px solid var(--border); font-size: 12px;
 }
 @media (max-width: 600px) { .pos-metrics .ps-sep { display: none; } .pos-metrics { gap: 8px 16px; } }
-.pos-iv-bar { display: flex; gap: 4px; margin: 4px 0 12px; overflow-x: auto; scrollbar-width: none; }
+.pos-iv-bar { display: flex; gap: 3px; margin: 4px 0 12px; overflow-x: auto; scrollbar-width: none; }
 .pos-iv-bar::-webkit-scrollbar { display: none; }
-.pos-iv-bar .iv-btn { flex-shrink: 0; white-space: nowrap; }
+.pos-iv-bar .iv-btn { flex-shrink: 0; white-space: nowrap; padding: 4px 8px; }
 /* .ps-* : usados também pela faixa de métricas dentro do gráfico (.pos-metrics) */
 .ps-item { display: inline-flex; align-items: baseline; gap: 5px; white-space: nowrap; }
 .ps-lbl { color: var(--faint); font-size: 10px; text-transform: uppercase; letter-spacing: .05em; }
