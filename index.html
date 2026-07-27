@@ -5234,9 +5234,9 @@ function initTkrSwipe() {
 // ── PnL somado dos trades INVERSOS (futuros) -> pill no header ─────────────────
 function updateHeaderInvPnl() {
   const el = document.getElementById('hdr-inv-pnl'); if (!el) return;
-  const inv = positions.filter(p => posCat(p.symbol) === 'inverse');
-  if (!inv.length) { el.textContent = '—'; el.style.color = 'var(--text)'; return; }
-  const sum = inv.reduce((a, p) => a + posPnlUsd(p), 0);
+  // Todos os perpétuos (lineares USDT + inversos); posPnlUsd trata as duas categorias.
+  if (!positions.length) { el.textContent = '—'; el.style.color = 'var(--text)'; return; }
+  const sum = positions.reduce((a, p) => a + posPnlUsd(p), 0);
   const arrow = sum > 0.001 ? '▲ ' : sum < -0.001 ? '▼ ' : '';   // seta de tendência (como no SPOT)
   el.textContent = arrow + (sum >= 0 ? '+' : '') + fmtUsd(sum, 2);
   el.style.color = sum > 0.001 ? 'var(--green)' : sum < -0.001 ? 'var(--red)' : 'var(--text)';
