@@ -479,103 +479,105 @@ html.light .mnav-btn.active { color: var(--orange); }
 .mkt-sub-btn.active { color: var(--text); background: var(--s3); box-shadow: 0 1px 3px rgba(0,0,0,.25); }
 .mkt-section { display: none; animation: mktFade .22s ease; }
 .mkt-section.active { display: block; }
-/* ── TAB DEV — Agente de Futuros ─────────────────────────────── */
-.dev-wrap { max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; padding-bottom: 96px; }
-.dev-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
-.dev-title { font-size: 17px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.dev-badge { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--orange); background: rgba(247,147,26,.12); padding: 3px 7px; border-radius: 5px; }
-.dev-sub { font-size: 12px; color: var(--dim); margin-top: 5px; max-width: 720px; line-height: 1.55; }
-.dev-sub b { color: var(--text); font-weight: 600; }
-.dev-refresh { flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 600; color: var(--text); background: var(--s2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; cursor: pointer; transition: background .15s; }
-.dev-refresh:hover { background: var(--s3); }
-.dev-refresh.busy svg { animation: mktSpin .8s linear infinite; }
-@keyframes mktSpin { to { transform: rotate(360deg); } }
-.dev-engines { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.dev-engine { background: var(--s1); border: 1px solid var(--border); border-radius: 12px; padding: 13px 15px; }
-.dev-eng-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.dev-eng-tag { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; padding: 3px 7px; border-radius: 5px; }
-.dev-eng-tag.a { background: rgba(45,212,160,.13); color: var(--green); }
-.dev-eng-tag.b { background: rgba(247,147,26,.13); color: var(--orange); }
-.dev-eng-name { font-size: 13px; font-weight: 700; color: var(--text); }
-.dev-eng-name em { color: var(--faint); font-weight: 500; font-style: normal; }
-.dev-eng-risk { margin-left: auto; font-size: 10px; font-weight: 600; color: var(--dim); font-family: 'JetBrains Mono', monospace; }
-.dev-eng-desc { font-size: 11.5px; color: var(--dim); margin-top: 8px; line-height: 1.5; }
-.dev-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.dev-sig { background: var(--s1); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
-.dev-sig-head { display: flex; align-items: center; gap: 10px; padding: 13px 15px; border-bottom: 1px solid var(--border); }
-.dev-sig-sym { font-size: 15px; font-weight: 700; color: var(--text); }
-.dev-sig-px { font-size: 12px; font-family: 'JetBrains Mono', monospace; color: var(--dim); }
-.dev-verdict { margin-left: auto; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 5px 11px; border-radius: 7px; text-align: center; line-height: 1.2; }
-.dev-verdict small { display: block; font-size: 8.5px; font-weight: 600; letter-spacing: .03em; opacity: .8; margin-top: 2px; }
-.dev-verdict.long  { background: rgba(45,212,160,.14); color: var(--green); }
-.dev-verdict.short { background: rgba(247,100,122,.14); color: var(--red); }
-.dev-verdict.none  { background: var(--s3); color: var(--dim); }
-.dev-verdict.wait  { background: rgba(247,147,26,.13); color: var(--orange); }
-.dev-layers { padding: 6px 15px 14px; display: flex; flex-direction: column; }
-.dev-layer { padding: 11px 0; border-bottom: 1px solid var(--border); }
-.dev-layer:last-child { border-bottom: none; }
-.dev-layer-h { display: flex; align-items: center; gap: 7px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); margin-bottom: 9px; }
-.dev-layer-h .ln { color: var(--orange); }
-.dev-layer-h .st { margin-left: auto; font-size: 10px; letter-spacing: 0; text-transform: none; font-weight: 700; }
-.dev-layer-h .st.pass { color: var(--green); }
-.dev-layer-h .st.fail { color: var(--dim); }
-.dev-layer-h .st.veto { color: var(--red); }
-.dev-check { display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--text); padding: 3px 0; }
-.dev-check .dev-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: var(--dim); }
-.dev-dot.ok   { background: var(--green); }
-.dev-dot.no   { background: var(--dim); }
-.dev-dot.veto { background: var(--red); }
-.dev-dot.warn { background: var(--orange); }
-.dev-dot.man  { background: var(--faint); box-shadow: inset 0 0 0 1.5px var(--s1); border: 1px solid var(--faint); }
-.dev-check .lbl { flex: 1; color: var(--dim); }
-.dev-check .val { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text); font-weight: 600; }
-.dev-check .thr { font-size: 9.5px; color: var(--faint); margin-left: 5px; }
-.dev-reason { font-size: 11px; color: var(--dim); line-height: 1.5; padding: 10px 15px; background: var(--s2); border-top: 1px solid var(--border); }
-.dev-reason b { color: var(--text); }
-.dev-motorb { padding: 10px 15px 14px; border-top: 1px solid var(--border); }
-.dev-motorb-h { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); margin-bottom: 8px; display: flex; align-items: center; gap: 7px; }
-.dev-card { background: var(--s1); }
-.dev-note { font-size: 10px; color: var(--faint); font-weight: 500; }
-.dev-calc { padding: 14px 15px; display: grid; grid-template-columns: 210px 1fr; gap: 16px; }
-.dev-calc-inputs { display: flex; flex-direction: column; gap: 10px; }
-.dev-field { display: flex; flex-direction: column; gap: 4px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--faint); }
-.dev-field input { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600; color: var(--text); background: var(--s2); border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; outline: none; }
-.dev-field input:focus { border-color: var(--orange); }
-.dev-calc-out { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; align-content: start; }
-.dev-out-item { background: var(--s2); border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; }
-.dev-out-lbl { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); }
-.dev-out-val { font-size: 15px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); margin-top: 3px; }
-.dev-out-val.g { color: var(--green); } .dev-out-val.r { color: var(--red); } .dev-out-val.o { color: var(--orange); }
-.dev-out-sub { font-size: 9.5px; color: var(--faint); margin-top: 2px; }
-.dev-caps { display: flex; flex-wrap: wrap; gap: 7px; padding: 0 15px 15px; }
-.dev-cap { font-size: 10.5px; color: var(--dim); background: var(--s2); border: 1px solid var(--border); border-radius: 6px; padding: 5px 9px; font-family: 'JetBrains Mono', monospace; }
-.dev-cap em { color: var(--faint); font-style: normal; }
-.dev-ref { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.dev-refbox { background: var(--s1); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
-.dev-refbox-h { font-size: 12px; font-weight: 700; color: var(--text); padding: 12px 15px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
-.dev-flag { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--red); background: rgba(247,100,122,.12); padding: 2px 6px; border-radius: 4px; }
-.dev-refbox-b { padding: 13px 15px; }
-.dev-ev { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
-.dev-ev-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-size: 11.5px; color: var(--dim); }
-.dev-ev-row b { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text); font-weight: 600; }
-.dev-ev-row em { color: var(--faint); font-style: normal; }
-.dev-ev-row.tot { border-top: 1px dashed var(--border); padding-top: 7px; margin-top: 2px; }
-.dev-ev-row .g, .dev-table .g { color: var(--green); } .dev-ev-row .r, .dev-table .r { color: var(--red); }
-.dev-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
-.dev-table th { text-align: left; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); padding: 5px 6px; border-bottom: 1px solid var(--border); }
-.dev-table td { padding: 6px 6px; color: var(--dim); border-bottom: 1px solid var(--border); }
-.dev-table td:first-child { color: var(--text); font-weight: 600; }
-.dev-table tr:last-child td { border-bottom: none; }
-.dev-table .dim { color: var(--faint); }
-.dev-refbox-note { font-size: 11px; color: var(--dim); line-height: 1.55; margin-top: 12px; }
-.dev-refbox-note b { color: var(--text); }
-.dev-list { margin: 0; padding-left: 17px; display: flex; flex-direction: column; gap: 7px; }
-.dev-list li { font-size: 11.5px; color: var(--dim); line-height: 1.5; }
-.dev-list li b { color: var(--text); font-weight: 600; }
-.dev-disclaimer { font-size: 10.5px; color: var(--faint); line-height: 1.5; text-align: center; padding: 4px 20px; }
+/* ── TAB CRYPTOSCAN — Screener ───────────────────────────────── */
+.cs-wrap { max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; padding-bottom: 96px; }
+.cs-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.cs-title { font-size: 17px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cs-badge { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--orange); background: rgba(247,147,26,.12); padding: 3px 7px; border-radius: 5px; }
+.cs-sub { font-size: 12px; color: var(--dim); margin-top: 5px; max-width: 760px; line-height: 1.55; }
+.cs-sub b { color: var(--text); font-weight: 600; }
+.cs-scan-btn { flex-shrink: 0; display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 600; color: #1a1206; background: linear-gradient(135deg, var(--orange), #e6862a); border: none; border-radius: 9px; padding: 9px 15px; cursor: pointer; transition: filter .15s; }
+.cs-scan-btn:hover { filter: brightness(1.06); }
+.cs-scan-btn.busy { opacity: .7; pointer-events: none; }
+.cs-scan-btn.busy svg { animation: mktSpin .8s linear infinite; }
+.cs-ctx { display: grid; grid-template-columns: repeat(4, 1fr) auto; gap: 10px; align-items: stretch; }
+.cs-ctx-item { background: var(--s1); border: 1px solid var(--border); border-radius: 10px; padding: 10px 13px; }
+.cs-ctx-lbl { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--faint); }
+.cs-ctx-val { font-size: 17px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); margin-top: 3px; }
+.cs-ctx-sub { font-size: 9.5px; color: var(--faint); margin-top: 2px; }
+.cs-field { display: flex; flex-direction: column; gap: 4px; justify-content: center; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--faint); }
+.cs-field input { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600; color: var(--text); background: var(--s2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; outline: none; width: 120px; }
+.cs-field input:focus { border-color: var(--orange); }
+.cs-weights { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
+.cs-wlbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); }
+.cs-wchip { font-size: 10.5px; color: var(--dim); background: var(--s2); border: 1px solid var(--border); border-radius: 6px; padding: 4px 9px; }
+.cs-wchip b { color: var(--text); font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+.cs-wsep { width: 1px; height: 16px; background: var(--border); margin: 0 3px; }
+.cs-list { display: flex; flex-direction: column; gap: 8px; }
+.cs-row { background: var(--s1); border: 1px solid var(--border); border-radius: 11px; overflow: hidden; }
+.cs-row-main { display: grid; grid-template-columns: 34px 1.4fr 96px 1fr 88px 96px; align-items: center; gap: 12px; padding: 12px 15px; cursor: pointer; }
+.cs-rank { font-size: 13px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--faint); text-align: center; }
+.cs-sym-wrap { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.cs-side { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; padding: 3px 8px; border-radius: 6px; flex-shrink: 0; }
+.cs-side.long  { background: rgba(45,212,160,.13); color: var(--green); }
+.cs-side.short { background: rgba(247,100,122,.13); color: var(--red); }
+.cs-side.flat  { background: var(--s3); color: var(--dim); }
+.cs-sym { font-size: 14px; font-weight: 700; color: var(--text); }
+.cs-sym small { font-size: 10px; color: var(--faint); font-weight: 500; margin-left: 5px; font-family: 'JetBrains Mono', monospace; }
+.cs-score-wrap { display: flex; flex-direction: column; gap: 4px; }
+.cs-score-top { display: flex; align-items: baseline; justify-content: space-between; }
+.cs-score-lbl { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); }
+.cs-score-num { font-size: 13px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); }
+.cs-score-bar { height: 5px; border-radius: 3px; background: var(--s3); overflow: hidden; }
+.cs-score-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--orange), #e6862a); }
+.cs-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.cs-tag { font-size: 9px; font-weight: 600; color: var(--dim); background: var(--s2); border: 1px solid var(--border); border-radius: 5px; padding: 2px 6px; white-space: nowrap; }
+.cs-tag.on { color: var(--orange); border-color: rgba(247,147,26,.3); background: rgba(247,147,26,.08); }
+.cs-plan-mini { text-align: right; }
+.cs-plan-lbl { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); }
+.cs-plan-val { font-size: 12px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); margin-top: 2px; }
+.cs-plan-val.rej { color: var(--red); font-size: 10.5px; }
+.cs-be { text-align: right; }
+.cs-be-val { font-size: 13px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--orange); }
+.cs-chev { transition: transform .18s; color: var(--faint); }
+.cs-row.open .cs-chev { transform: rotate(90deg); }
+.cs-detail { display: none; border-top: 1px solid var(--border); padding: 13px 15px; background: var(--s2); }
+.cs-row.open .cs-detail { display: block; }
+.cs-ev-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; margin-bottom: 12px; }
+.cs-ev-card { background: var(--s1); border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; }
+.cs-ev-h { display: flex; align-items: center; gap: 7px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--faint); margin-bottom: 6px; }
+.cs-ev-h .cs-ev-dir { margin-left: auto; font-size: 10px; font-family: 'JetBrains Mono', monospace; }
+.cs-ev-h .cs-ev-dir.long { color: var(--green); } .cs-ev-h .cs-ev-dir.short { color: var(--red); } .cs-ev-h .cs-ev-dir.flat { color: var(--dim); }
+.cs-ev-txt { font-size: 11px; color: var(--dim); line-height: 1.45; }
+.cs-plan-full { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+.cs-pf-item { background: var(--s1); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; }
+.cs-pf-lbl { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); }
+.cs-pf-val { font-size: 13px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); margin-top: 2px; }
+.cs-pf-val.g { color: var(--green); } .cs-pf-val.r { color: var(--red); } .cs-pf-val.o { color: var(--orange); }
+.cs-reject { font-size: 11.5px; color: var(--red); background: rgba(247,100,122,.08); border: 1px solid rgba(247,100,122,.2); border-radius: 8px; padding: 9px 12px; }
+.cs-ref { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.cs-refbox { background: var(--s1); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.cs-refbox-h { font-size: 12px; font-weight: 700; color: var(--text); padding: 12px 15px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+.cs-flag { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--dim); background: var(--s3); padding: 2px 6px; border-radius: 4px; }
+.cs-refbox-b { padding: 13px 15px; }
+.cs-hyp { display: flex; gap: 10px; padding: 7px 0; font-size: 11.5px; color: var(--dim); line-height: 1.5; }
+.cs-hyp + .cs-hyp { border-top: 1px solid var(--border); }
+.cs-hyp b { color: var(--text); font-weight: 600; } .cs-hyp em { color: var(--faint); font-style: italic; }
+.cs-hyp .lo { color: var(--green); font-weight: 600; } .cs-hyp .sh { color: var(--red); font-weight: 600; }
+.cs-hyp-tag { flex-shrink: 0; width: 26px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: var(--orange); background: rgba(247,147,26,.1); border-radius: 6px; }
+.cs-hyp-tag.alt { color: var(--dim); background: var(--s3); }
+.cs-ev { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+.cs-ev-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-size: 11.5px; color: var(--dim); }
+.cs-ev-row b { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text); font-weight: 600; }
+.cs-ev-row b.o { color: var(--orange); }
+.cs-ev-row.tot { border-top: 1px dashed var(--border); padding-top: 7px; margin-top: 2px; }
+.cs-refbox-note { font-size: 11px; color: var(--dim); line-height: 1.55; }
+.cs-refbox-note b { color: var(--text); }
+.cs-funnel { display: flex; flex-direction: column; gap: 9px; }
+.cs-funnel-step { display: flex; gap: 11px; align-items: flex-start; }
+.cs-fn-n { flex-shrink: 0; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--orange); background: rgba(247,147,26,.1); border-radius: 50%; }
+.cs-funnel-step b { font-size: 11.5px; color: var(--text); } .cs-funnel-step p { font-size: 10.5px; color: var(--dim); margin: 2px 0 0; line-height: 1.4; }
+.cs-list-ul { margin: 10px 0 0; padding-left: 17px; display: flex; flex-direction: column; gap: 6px; }
+.cs-list-ul li { font-size: 11px; color: var(--dim); line-height: 1.5; } .cs-list-ul li b { color: var(--text); font-weight: 600; }
+.cs-disclaimer { font-size: 10.5px; color: var(--faint); line-height: 1.5; text-align: center; padding: 4px 20px; }
 @media (max-width: 860px) {
-  .dev-engines, .dev-grid, .dev-ref { grid-template-columns: 1fr; }
-  .dev-calc { grid-template-columns: 1fr; }
+  .cs-ref { grid-template-columns: 1fr; }
+  .cs-ctx { grid-template-columns: 1fr 1fr; }
+  .cs-ctx .cs-field { grid-column: span 2; }
+  .cs-field input { width: 100%; }
+  .cs-row-main { grid-template-columns: 26px 1fr 70px; grid-template-areas: "rank sym score"; row-gap: 8px; }
+  .cs-rank { grid-area: rank; } .cs-sym-wrap { grid-area: sym; } .cs-score-wrap { grid-area: score; }
+  .cs-tags, .cs-plan-mini, .cs-be { display: none; }
 }
 /* Heatmap de liquidações */
 .liqhm-stats { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
@@ -1087,9 +1089,9 @@ html.light .mnav-btn.active { color: var(--orange); }
       <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.7" stroke="currentColor" stroke-width="1.2" fill="none"/><path d="M5.5 2.2v6.6M3 4.2 5.5 2.2 8 4.2" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
       Trade
     </button>
-    <button class="tab-btn" data-tab="dev" onclick="switchTab('dev',this)">
-      <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><polyline points="3.5,3 1,5.5 3.5,8" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><polyline points="7.5,3 10,5.5 7.5,8" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="6.3" y1="1.7" x2="4.7" y2="9.3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-      DEV
+    <button class="tab-btn" data-tab="cryptoscan" onclick="switchTab('cryptoscan',this)">
+      <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="4.6" cy="4.6" r="3.4" stroke="currentColor" stroke-width="1.3" fill="none"/><line x1="7.2" y1="7.2" x2="10" y2="10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M3 4.6h3.2M4.6 3v3.2" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+      CryptoScan
     </button>
     <button class="tab-btn" data-tab="noticias" onclick="switchTab('noticias',this)">
       <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x=".5" y="1.5" width="10" height="8" rx="1.5" stroke="currentColor" stroke-width="1.4" fill="none"/><line x1="3" y1="4.5" x2="8" y2="4.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><line x1="3" y1="7" x2="6.5" y2="7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
@@ -1281,137 +1283,103 @@ html.light .mnav-btn.active { color: var(--orange); }
   </div>
 </div>
 
-<!-- ─── TAB: CARTEIRA ─────────────────────────────────── -->
-<!-- ─── TAB: DEV — Agente de Futuros de Cripto (Modelo de Monetização v1) ─── -->
-<div class="tab-pane" id="tab-dev">
-  <div class="dev-wrap">
+<!-- ─── TAB: CRYPTOSCAN — Screener de oportunidades (funil determinístico) ─── -->
+<div class="tab-pane" id="tab-cryptoscan">
+  <div class="cs-wrap">
 
     <!-- Cabeçalho -->
-    <div class="dev-head">
+    <div class="cs-head">
       <div>
-        <div class="dev-title">Agente de Futuros de Cripto <span class="dev-badge">Modelo v1</span></div>
-        <div class="dev-sub">Especificação operacional aplicada a <b>BTCUSDT</b> e <b>ETHUSDT</b> (perpétuos USDT lineares). O agente monetiza volatilidade direcional em regime de tendência — fora dos contextos válidos, <b>não opera</b>.</div>
+        <div class="cs-title">CryptoScan <span class="cs-badge">Screener v1</span></div>
+        <div class="cs-sub">Screener de futuros perpétuos USDT da Bybit. O edge vem de <b>posicionamento</b> — funding, open interest, cascatas de liquidação — não de indicadores clássicos (que só filtram regime). Funil determinístico: universo → scoring → shortlist top-12.</div>
       </div>
-      <button class="dev-refresh" id="dev-refresh" onclick="scanDev(true)" title="Reavaliar sinais">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M12 7a5 5 0 1 1-1.5-3.6M12 1.5V4H9.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <span>Reavaliar</span>
+      <button class="cs-scan-btn" id="cs-scan-btn" onclick="scanCs(true)">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.2" stroke="currentColor" stroke-width="1.4"/><line x1="9" y1="9" x2="12.5" y2="12.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        <span>Correr scan</span>
       </button>
     </div>
 
-    <!-- Tese: dois motores -->
-    <div class="dev-engines">
-      <div class="dev-engine">
-        <div class="dev-eng-top"><span class="dev-eng-tag a">Motor A</span><span class="dev-eng-name">Swing momentum <em>· core</em></span><span class="dev-eng-risk">80% do risco</span></div>
-        <div class="dev-eng-desc">Time-series momentum 1–3 dias, long e short, a favor do viés do timeframe superior. Holding 12h–72h.</div>
-      </div>
-      <div class="dev-engine">
-        <div class="dev-eng-top"><span class="dev-eng-tag b">Motor B</span><span class="dev-eng-name">Reversão pós-cascata <em>· oportunista</em></span><span class="dev-eng-risk">20% do risco</span></div>
-        <div class="dev-eng-desc">Mean-reversion após exaustão de liquidações forçadas. Holding 1h–8h. Máximo 1 tentativa por cascata.</div>
-      </div>
+    <!-- Contexto de mercado + config -->
+    <div class="cs-ctx">
+      <div class="cs-ctx-item"><div class="cs-ctx-lbl">Universo</div><div class="cs-ctx-val" id="cs-x-universe">—</div><div class="cs-ctx-sub">perps ≥ 30M turnover</div></div>
+      <div class="cs-ctx-item"><div class="cs-ctx-lbl">Shortlist</div><div class="cs-ctx-val" id="cs-x-short">—</div><div class="cs-ctx-sub">score ≥ 35, top-12</div></div>
+      <div class="cs-ctx-item"><div class="cs-ctx-lbl">BTC 24h</div><div class="cs-ctx-val" id="cs-x-btc">—</div><div class="cs-ctx-sub">contexto direcional</div></div>
+      <div class="cs-ctx-item"><div class="cs-ctx-lbl">Funding médio</div><div class="cs-ctx-val" id="cs-x-fund">—</div><div class="cs-ctx-sub">do universo /8h</div></div>
+      <label class="cs-field"><span>Capital (USD)</span><input type="number" id="cs-capital" min="100" step="100" oninput="csCfgChange()"></label>
     </div>
 
-    <!-- Sinais ao vivo (injetados por JS) -->
-    <div class="dev-grid" id="dev-signals">
-      <div class="db-empty">A avaliar o modelo…</div>
+    <!-- Pesos do scoring (config, só leitura) -->
+    <div class="cs-weights">
+      <span class="cs-wlbl">Pesos:</span>
+      <span class="cs-wchip">Funding <b>30</b></span>
+      <span class="cs-wchip">OI div. <b>25</b></span>
+      <span class="cs-wchip">Cascata <b>20</b></span>
+      <span class="cs-wchip">Regime <b>15</b></span>
+      <span class="cs-wchip">Estrutura <b>10</b></span>
+      <span class="cs-wsep"></span>
+      <span class="cs-wchip">Risco/trade <b>0,75%</b></span>
+      <span class="cs-wchip">Alav. máx <b>1,8×</b></span>
+      <span class="cs-wchip">R:R <b>1,5</b></span>
+      <span class="cs-wchip">Custo RT <b>~0,17%</b></span>
     </div>
 
-    <!-- Sizing & alavancagem -->
-    <div class="card dev-card">
-      <div class="card-header"><div class="card-title"><div class="ctdot"></div>Sizing e alavancagem</div><div class="dev-note">A alavancagem é variável de sobrevivência, não de lucro</div></div>
-      <div class="dev-calc">
-        <div class="dev-calc-inputs">
-          <label class="dev-field"><span>Capital (USD)</span><input type="number" id="dev-capital" min="100" step="100" oninput="devCfgChange()"></label>
-          <label class="dev-field"><span>Risco / trade (R%)</span><input type="number" id="dev-risk" min="0.5" max="1" step="0.05" oninput="devCfgChange()"></label>
+    <!-- Shortlist (injetada por JS) -->
+    <div id="cs-list" class="cs-list"><div class="db-empty">Corre um scan para avaliar o universo…</div></div>
+
+    <!-- Painéis de referência -->
+    <div class="cs-ref">
+
+      <div class="cs-refbox">
+        <div class="cs-refbox-h">Hipóteses de edge (posicionamento)</div>
+        <div class="cs-refbox-b">
+          <div class="cs-hyp"><span class="cs-hyp-tag">H1</span><div><b>Funding squeeze.</b> Funding com z-score ≥ |2| (≈100 períodos) = um lado sobrelotado a pagar. Se o preço não confirma, o unwind é violento na direção oposta. z ≥ +2 com preço 24h ≤ +0,5% → <span class="sh">SHORT</span>; z ≤ −2 com preço 24h ≥ −0,5% → <span class="lo">LONG</span>.</div></div>
+          <div class="cs-hyp"><span class="cs-hyp-tag">H2</span><div><b>OI divergence.</b> OI +5% em 6h com preço a variar &lt;0,4% = combustível bidirecional (direção neutra). OI −6% em 6h = flush/exaustão → fade do movimento recente.</div></div>
+          <div class="cs-hyp"><span class="cs-hyp-tag">H3</span><div><b>Cascade fade.</b> Vela (TF15) com range &gt;2,5×ATR(14), volume &gt;3× média(20) e OI −2% em 2h = proxy de cascata → mean-reversion contra a vela. <em>Proxy REST; adapter pronto para o websocket de liquidações.</em></div></div>
+          <div class="cs-hyp"><span class="cs-hyp-tag">H4</span><div><b>Filtro de regime (1h).</b> ADX(14) ≥ 25 → trending; largura de Bollinger no percentil &lt;15% → squeeze (penaliza tudo exceto breakout); resto → ranging. Mean-reversion só pontua bem em ranging.</div></div>
+          <div class="cs-hyp"><span class="cs-hyp-tag alt">+</span><div><b>Estrutura.</b> Posição do preço no range de 24h: ≤12% favorece LONG, ≥88% favorece SHORT. Peso baixo, melhora o R:R de entrada.</div></div>
         </div>
-        <div class="dev-calc-out" id="dev-calc-out"><div class="db-empty">A calcular…</div></div>
       </div>
-      <div class="dev-caps">
-        <span class="dev-cap">L ≤ 5× <em>(código)</em></span>
-        <span class="dev-cap">alav. efetiva ≤ 3× <em>(config)</em></span>
-        <span class="dev-cap">exposição agregada ≤ 2× capital</span>
-        <span class="dev-cap">posições simultâneas ≤ 2</span>
-        <span class="dev-cap">liquidação &gt; 3× a distância do stop</span>
-      </div>
-    </div>
 
-    <!-- Painéis de referência do modelo -->
-    <div class="dev-ref">
-
-      <div class="dev-refbox">
-        <div class="dev-refbox-h">Expectativa de lucro (modelo de EV)</div>
-        <div class="dev-refbox-b">
-          <div class="dev-ev">
-            <div class="dev-ev-row"><span>E[R] por trade</span><b>0,45 × 1,8 − 0,55 = <span class="g">+0,26R</span></b></div>
-            <div class="dev-ev-row"><span>Bruto / mês</span><b>40 × 0,75% × 0,26 ≈ <span class="g">+7,8%</span></b></div>
-            <div class="dev-ev-row"><span>Custos / mês</span><b>40 × 2 × 0,05% ≈ <span class="r">−4,0%</span></b></div>
-            <div class="dev-ev-row"><span>Funding líquido</span><b>≈ 0 a +0,5% <em>(shorts recebem)</em></b></div>
-            <div class="dev-ev-row tot"><span>Líquido / mês (edge intacto)</span><b class="g">≈ +4–5%</b></div>
+      <div class="cs-refbox">
+        <div class="cs-refbox-h">Custos, R:R e breakeven</div>
+        <div class="cs-refbox-b">
+          <div class="cs-ev">
+            <div class="cs-ev-row"><span>Taker fee (por lado)</span><b>0,055%</b></div>
+            <div class="cs-ev-row"><span>Slippage estimado (por lado)</span><b>0,030%</b></div>
+            <div class="cs-ev-row tot"><span>Custo round-trip</span><b class="o">≈ 0,17%</b></div>
           </div>
-          <table class="dev-table">
-            <thead><tr><th>Cenário</th><th>WR</th><th>Líquido/mês</th><th>Prob.</th></tr></thead>
-            <tbody>
-              <tr><td>Otimista</td><td>48%</td><td class="g">+8–12%</td><td>15%</td></tr>
-              <tr><td>Base</td><td>45%</td><td class="g">+3–5%</td><td>40%</td></tr>
-              <tr><td>Decay parcial</td><td>42%</td><td class="dim">−1 a +2%</td><td>30%</td></tr>
-              <tr><td>Sem edge</td><td>≤40%</td><td class="r">−3 a −6%</td><td>15%</td></tr>
-            </tbody>
-          </table>
-          <div class="dev-refbox-note">EV ponderado ≈ <b>+2–4%/mês</b>, com meses negativos e drawdowns de 10–20%. Qualquer calibração que prometa 20%+/mês consistente está sobreajustada — sinal de alarme, não de celebração.</div>
+          <div class="cs-refbox-note">Qualquer setup cujo alvo não pague <b>≥2× os custos</b> é rejeitado automaticamente. Cada candidato mostra <b>p_win_breakeven</b> = (1 + custos_em_R) / (1 + R:R) — a taxa de acerto mínima para empatar. Win rate isolado não é métrica: o que importa é a expectância líquida de custos.</div>
         </div>
       </div>
 
-      <div class="dev-refbox">
-        <div class="dev-refbox-h">Guardrails (não-negociáveis, no código)</div>
-        <div class="dev-refbox-b">
-          <ul class="dev-list">
-            <li><b>Circuit breaker diário:</b> −3% do capital → fecha tudo, pausa 24h.</li>
-            <li><b>Circuit breaker semanal:</b> −6% → pausa até revisão manual.</li>
-            <li><b>Kill switch manual</b> (Telegram) que fecha posições e revoga ordens.</li>
-            <li>Stops sempre como ordens <b>reduceOnly</b> no servidor da exchange — nunca só em memória local.</li>
-            <li>Reconciliação de posição via websocket a cada fill; estado local ≠ exchange → <b>flatten</b>.</li>
-            <li>recvWindow 5000ms, IP whitelist, chaves em env vars, API sem withdrawal.</li>
+      <div class="cs-refbox">
+        <div class="cs-refbox-h">O funil</div>
+        <div class="cs-refbox-b">
+          <div class="cs-funnel">
+            <div class="cs-funnel-step"><span class="cs-fn-n">1</span><div><b>Universo (~60)</b><p>Todos os USDT-perps com turnover ≥ 30M.</p></div></div>
+            <div class="cs-funnel-step"><span class="cs-fn-n">2</span><div><b>Scoring determinístico</b><p>H1–H4 + estrutura → score composto. Mesmo input → mesmo score.</p></div></div>
+            <div class="cs-funnel-step"><span class="cs-fn-n">3</span><div><b>Shortlist (top-12)</b><p>Score ≥ 35, ordenado. Só a shortlist teria ido ao LLM.</p></div></div>
+            <div class="cs-funnel-step"><span class="cs-fn-n">4</span><div><b>Risk engine</b><p>Trade plan, rejeição por custos, cap 1,8×, breakeven.</p></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cs-refbox">
+        <div class="cs-refbox-h">Pipeline backend <span class="cs-flag">fora do browser</span></div>
+        <div class="cs-refbox-b">
+          <div class="cs-refbox-note">O núcleo determinístico acima corre ao vivo aqui. As camadas com estado ou chaves secretas pertencem ao serviço Python <b>CryptoScan</b> e não correm no browser:</div>
+          <ul class="cs-list-ul">
+            <li><b>LLM analyst</b> (claude-sonnet-4-6): veto qualitativo cético sobre a shortlist, coluna separada que não altera o score determinístico.</li>
+            <li><b>Paper trader</b>: loop de 15 min, fills com fees/slippage/funding, máx 3 posições, kill-switch diário a −3%.</li>
+            <li><b>Walk-forward</b>: janelas 60d treino / 14d teste, sem lookahead, teste de sensibilidade aos pesos (±20%).</li>
+            <li><b>Go-live</b> só após ≥60 dias de paper com expectância líquida positiva.</li>
           </ul>
-        </div>
-      </div>
-
-      <div class="dev-refbox">
-        <div class="dev-refbox-h">Critérios de kill (live, automáticos)</div>
-        <div class="dev-refbox-b">
-          <ul class="dev-list">
-            <li>WR abaixo de <b>38%</b> após 100 trades → suspender motor.</li>
-            <li>Drawdown live &gt; <b>1,5×</b> o pior drawdown do walk-forward → suspender tudo.</li>
-            <li>Slippage médio &gt; <b>2×</b> o modelado → rever execução antes de continuar.</li>
-          </ul>
-          <div class="dev-refbox-note"><b>Go-live só se:</b> Sharpe &gt;1,0 e max DD &lt;20% no walk-forward, líquido de custos e slippage realistas. Pipeline: testnet ≥3 meses → walk-forward out-of-sample → live com capital mínimo.</div>
-        </div>
-      </div>
-
-      <div class="dev-refbox">
-        <div class="dev-refbox-h">Risco de plataforma <span class="dev-flag">bloqueador ativo</span></div>
-        <div class="dev-refbox-b">
-          <div class="dev-refbox-note">Grandfathering MiCA terminou a <b>1 jul 2026</b>; Bybit global vedada a residentes do EEE e Bybit EU não oferece perpétuos (licença MiFID II da Bybit X pendente). <b>Ação:</b> isolar toda a lógica de exchange atrás de uma interface (ou ccxt), para que migrar para uma corretora MiFID II com perps (Kraken/Cyprus, OKX/Malta) seja uma troca de adaptador, não uma reescrita.</div>
-        </div>
-      </div>
-
-      <div class="dev-refbox">
-        <div class="dev-refbox-h">Roadmap</div>
-        <div class="dev-refbox-b">
-          <table class="dev-table">
-            <thead><tr><th>Semana</th><th>Entregável</th></tr></thead>
-            <tbody>
-              <tr><td>1</td><td>Abstração de exchange + feeds websocket + logging Supabase</td></tr>
-              <tr><td>2–3</td><td>Camadas 1–4 de indicadores + Motor A em paper (testnet)</td></tr>
-              <tr><td>4–6</td><td>Motor B + guardrails + circuit breakers</td></tr>
-              <tr><td>7–14</td><td>Paper contínuo + walk-forward; calibrar só R% e thresholds de regime</td></tr>
-              <tr><td>15+</td><td>Decisão go/no-go contra os critérios de validação</td></tr>
-            </tbody>
-          </table>
         </div>
       </div>
 
     </div>
 
-    <div class="dev-disclaimer">Ferramenta de apoio à decisão. Indicadores calculados a partir de dados públicos da Bybit (kline 1h/4h, funding, open interest, fluxo de trades). Não é execução automática nem aconselhamento financeiro.</div>
+    <div class="cs-disclaimer">Ferramenta de apoio à decisão. Scoring calculado a partir de dados públicos da Bybit v5 (tickers, kline TF15/TF60, funding history, open interest). Proxy de liquidações via REST. Não é execução automática nem aconselhamento financeiro.</div>
 
   </div>
 </div>
@@ -1645,9 +1613,9 @@ html.light .mnav-btn.active { color: var(--orange); }
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 5v14M8 8l4-3 4 3"/></svg>
     <span class="mnav-lbl">Trade</span>
   </button>
-  <button class="mnav-btn" data-tab="dev" onclick="switchTab('dev',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 6 3 12 8 18"/><polyline points="16 6 21 12 16 18"/><line x1="13.5" y1="4" x2="10.5" y2="20"/></svg>
-    <span class="mnav-lbl">DEV</span>
+  <button class="mnav-btn" data-tab="cryptoscan" onclick="switchTab('cryptoscan',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7"/><line x1="15" y1="15" x2="21" y2="21"/><path d="M6.5 10h7M10 6.5v7"/></svg>
+    <span class="mnav-lbl">Scan</span>
   </button>
   <button class="mnav-btn" data-tab="noticias" onclick="switchTab('noticias',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="7" y1="9" x2="17" y2="9"/><line x1="7" y1="13" x2="13" y2="13"/></svg>
@@ -1744,7 +1712,7 @@ function switchTab(id, btn) {
   if (id === 'dashboard')  { setTimeout(() => loadPortfolioSeries(dbCurrentRange()), 60); renderDbAssets(); }
   if (id === 'posicoes')   renderPosTab();
   if (id === 'trade')      renderTradeTab();
-  if (id === 'dev')        renderDevTab();
+  if (id === 'cryptoscan') renderCsTab();
   if (id === 'agente')     renderAgentTab();
 }
 
@@ -3642,30 +3610,46 @@ async function fetchLiquidations() {
   } catch(e) {}
 }
 
-// ── DEV — AGENTE DE FUTUROS (aplicação do Modelo de Monetização v1) ──────────
-// Avalia o stack de 4 camadas de indicadores em BTCUSDT e ETHUSDT a partir de
-// dados públicos da Bybit e devolve a decisão do Motor A (swing momentum) e o
-// estado do Motor B (reversão pós-cascata). Só dados de mercado — sem execução.
-const DEV_SYMS = ['BTCUSDT', 'ETHUSDT'];
-let devData = {};              // sym -> resultado computado
-let devScanning = false, devLastScan = 0;
-let devCfg = { capital: 10000, risk: 0.75 };
-try { Object.assign(devCfg, JSON.parse(localStorage.getItem('devCfg') || '{}')); } catch (e) {}
+// ── CRYPTOSCAN — Screener determinístico (funil de posicionamento) ───────────
+// Universo de perps USDT (Bybit v5 público) → scoring H1-H4 + estrutura →
+// shortlist top-12 com trade plan e p_win_breakeven. Núcleo determinístico do
+// sistema CryptoScan; LLM/paper/backtest são backend (fora do browser).
+const CS_CFG = {
+  minTurnover: 30e6,           // filtro de universo (USD)
+  universeTop: 45,             // símbolos enriquecidos por turnover (perf browser)
+  weights: { funding: 30, oi: 25, cascade: 20, regime: 15, structure: 10 },
+  scoreThreshold: 35,
+  shortlistMax: 12,
+  fundingZ: 2,                 // |z| para H1
+  adxTrend: 25,
+  bbSqueezePct: 15,            // percentil de largura BB → squeeze
+  costPerSide: 0.055 + 0.030,  // % (fee taker + slippage) por lado
+  minRR: 1.5,
+  riskPct: 0.75,               // % do capital por trade
+  maxLev: 1.8,
+  stopAtr: 1.2,
+  capital: 10000,
+  concurrency: 8,
+};
+try { const s = JSON.parse(localStorage.getItem('csCfg') || '{}'); if (s.capital > 0) CS_CFG.capital = s.capital; } catch (e) {}
+const CS_COST_RT = 2 * CS_CFG.costPerSide;   // round-trip ≈ 0,17%
 
-const devAvg = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
+let csData = null, csScanning = false, csLastScan = 0, csExpanded = null;
 
-// ATR de Wilder (14). Devolve o último valor.
-function devATR(h, l, c, p = 14) {
+// ── Helpers de estatística e indicadores ──
+const csMean = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
+const csStd = a => { if (a.length < 2) return 0; const m = csMean(a); return Math.sqrt(a.reduce((s, v) => s + (v - m) ** 2, 0) / a.length); };
+const csSMA = (a, p) => a.length < p ? null : csMean(a.slice(-p));
+
+function csATR(h, l, c, p = 14) {
   const n = c.length; if (n < p + 1) return null;
   const tr = [];
   for (let i = 1; i < n; i++) tr.push(Math.max(h[i] - l[i], Math.abs(h[i] - c[i - 1]), Math.abs(l[i] - c[i - 1])));
-  let atr = devAvg(tr.slice(0, p));
+  let atr = csMean(tr.slice(0, p));
   for (let i = p; i < tr.length; i++) atr = (atr * (p - 1) + tr[i]) / p;
   return atr;
 }
-
-// ADX de Wilder (14) + DI+/DI-. Mede força da tendência.
-function devADX(h, l, c, p = 14) {
+function csADX(h, l, c, p = 14) {
   const n = c.length; if (n < 2 * p + 2) return null;
   const tr = [], pdm = [], mdm = [];
   for (let i = 1; i < n; i++) {
@@ -3674,352 +3658,299 @@ function devADX(h, l, c, p = 14) {
     mdm.push(dn > up && dn > 0 ? dn : 0);
     tr.push(Math.max(h[i] - l[i], Math.abs(h[i] - c[i - 1]), Math.abs(l[i] - c[i - 1])));
   }
-  const wilder = arr => {
-    let s = arr.slice(0, p).reduce((a, b) => a + b, 0);
-    const out = [s];
-    for (let i = p; i < arr.length; i++) { s = s - s / p + arr[i]; out.push(s); }
-    return out;
-  };
-  const trS = wilder(tr), pS = wilder(pdm), mS = wilder(mdm);
-  const dx = [];
+  const wilder = arr => { let s = arr.slice(0, p).reduce((a, b) => a + b, 0); const o = [s]; for (let i = p; i < arr.length; i++) { s = s - s / p + arr[i]; o.push(s); } return o; };
+  const trS = wilder(tr), pS = wilder(pdm), mS = wilder(mdm), dx = [];
   for (let i = 0; i < trS.length; i++) {
-    const t = trS[i] || 1e-9;
-    const pdi = 100 * pS[i] / t, mdi = 100 * mS[i] / t;
-    dx.push({ dxi: 100 * Math.abs(pdi - mdi) / ((pdi + mdi) || 1e-9), pdi, mdi });
+    const t = trS[i] || 1e-9, pdi = 100 * pS[i] / t, mdi = 100 * mS[i] / t;
+    dx.push(100 * Math.abs(pdi - mdi) / ((pdi + mdi) || 1e-9));
   }
   if (dx.length < p) return null;
-  let adx = devAvg(dx.slice(0, p).map(d => d.dxi));
-  for (let i = p; i < dx.length; i++) adx = (adx * (p - 1) + dx[i].dxi) / p;
-  const last = dx[dx.length - 1];
-  return { adx, pdi: last.pdi, mdi: last.mdi };
+  let adx = csMean(dx.slice(0, p));
+  for (let i = p; i < dx.length; i++) adx = (adx * (p - 1) + dx[i]) / p;
+  return adx;
 }
-
-// Expoente de Hurst por análise R/S sobre os log-retornos. >0,55 tendência,
-// <0,45 mean-reversion, ~0,5 passeio aleatório.
-function devHurst(closes) {
-  const n = closes.length; if (n < 64) return null;
-  const rets = [];
-  for (let i = 1; i < n; i++) rets.push(Math.log(closes[i] / closes[i - 1]));
-  const N = rets.length, xs = [], ys = [];
-  for (let s = 8; s <= Math.floor(N / 2); s = Math.floor(s * 1.6)) {
-    const chunks = Math.floor(N / s);
-    let rsAcc = 0, cnt = 0;
-    for (let ci = 0; ci < chunks; ci++) {
-      const seg = rets.slice(ci * s, (ci + 1) * s);
-      const mean = devAvg(seg);
-      let cum = 0, mn = Infinity, mx = -Infinity;
-      for (const v of seg) { cum += v - mean; if (cum < mn) mn = cum; if (cum > mx) mx = cum; }
-      const R = mx - mn;
-      const sd = Math.sqrt(devAvg(seg.map(v => (v - mean) ** 2)));
-      if (sd > 0) { rsAcc += R / sd; cnt++; }
-    }
-    if (cnt > 0) { xs.push(Math.log(s)); ys.push(Math.log(rsAcc / cnt)); }
+// Largura de Bollinger (20,2) = (banda sup − inf)/média = 4σ/média; percentil do último valor.
+function csBBWidthPct(closes, p = 20) {
+  if (closes.length < p + 30) return null;
+  const widths = [];
+  for (let i = p; i <= closes.length; i++) {
+    const w = closes.slice(i - p, i), m = csMean(w);
+    widths.push(m ? 4 * csStd(w) / m : 0);
   }
-  if (xs.length < 2) return null;
-  const m = xs.length, sx = xs.reduce((a, b) => a + b, 0), sy = ys.reduce((a, b) => a + b, 0);
-  const sxx = xs.reduce((a, b) => a + b * b, 0), sxy = xs.reduce((a, b, i) => a + b * ys[i], 0);
-  const den = m * sxx - sx * sx; if (!den) return null;
-  return (m * sxy - sx * sy) / den;
+  const cur = widths[widths.length - 1], sorted = widths.slice().sort((a, b) => a - b);
+  return { cur, pct: sorted.filter(x => x <= cur).length / sorted.length * 100 };
 }
 
-// Canal de Donchian(20) no 1h, excluindo a vela em formação.
-function devDonchian(h, l, p = 20) {
-  if (h.length < p + 1) return null;
-  return { hi: Math.max(...h.slice(-p - 1, -1)), lo: Math.min(...l.slice(-p - 1, -1)) };
-}
-
-// Volatilidade realizada: vol diária (janela 24 velas 1h) e o seu percentil
-// sobre o histórico disponível (~30 dias).
-function devVolPercentile(closes) {
-  if (closes.length < 48) return null;
-  const rets = [];
-  for (let i = 1; i < closes.length; i++) rets.push(Math.log(closes[i] / closes[i - 1]));
-  const win = 24, vols = [];
-  for (let i = win; i <= rets.length; i++) {
-    const seg = rets.slice(i - win, i), mean = devAvg(seg);
-    vols.push(Math.sqrt(devAvg(seg.map(v => (v - mean) ** 2))) * Math.sqrt(24) * 100);
-  }
-  if (vols.length < 10) return null;
-  const cur = vols[vols.length - 1], sorted = vols.slice().sort((a, b) => a - b);
-  const pct = sorted.filter(x => x <= cur).length / sorted.length * 100;
-  return { cur, pct };
-}
-
-// Klines cronológicas (mais antigo → mais recente).
-async function devFetchKline(sym, interval, limit) {
+// ── Fetchers Bybit v5 (cronológico: mais antigo → mais recente) ──
+async function csFetchKline(sym, interval, limit) {
   const r = await fetch(`${BYBIT}/v5/market/kline?category=linear&symbol=${sym}&interval=${interval}&limit=${limit}`);
   const d = await r.json();
   const list = (d?.result?.list || []).slice().reverse();
-  return {
-    closes: list.map(k => +k[4]), highs: list.map(k => +k[2]),
-    lows: list.map(k => +k[3]), opens: list.map(k => +k[1]), vols: list.map(k => +k[5]),
-  };
+  return { closes: list.map(k => +k[4]), highs: list.map(k => +k[2]), lows: list.map(k => +k[3]), opens: list.map(k => +k[1]), vols: list.map(k => +k[5]) };
 }
-// CVD proxy a partir do fluxo recente de trades (taker buy − sell, em base).
-async function devFetchCVD(sym) {
-  try {
-    const r = await fetch(`${BYBIT}/v5/market/recent-trade?category=linear&symbol=${sym}&limit=1000`);
-    const d = await r.json();
-    let cvd = 0;
-    for (const t of (d?.result?.list || [])) { const v = parseFloat(t.size) || 0; cvd += t.side === 'Buy' ? v : -v; }
-    return cvd;
-  } catch (e) { return null; }
+async function csFetchFunding(sym) {
+  const r = await fetch(`${BYBIT}/v5/market/funding/history?category=linear&symbol=${sym}&limit=100`);
+  const d = await r.json();
+  return (d?.result?.list || []).map(x => parseFloat(x.fundingRate) * 100).reverse();
 }
-// Série de OI horária (mais recente → mais antigo).
-async function devFetchOI(sym) {
-  try {
-    const r = await fetch(`${BYBIT}/v5/market/open-interest?category=linear&symbol=${sym}&intervalTime=1h&limit=6`);
-    const d = await r.json();
-    return (d?.result?.list || []).map(x => +x.openInterest).filter(v => v > 0);
-  } catch (e) { return []; }
-}
-async function devFetchTicker(sym) {
-  try {
-    const r = await fetch(`${BYBIT}/v5/market/tickers?category=linear&symbol=${sym}`);
-    const d = await r.json();
-    const t = d?.result?.list?.[0]; if (!t) return null;
-    return {
-      price: parseFloat(t.lastPrice), fr: parseFloat(t.fundingRate) * 100,
-      chg24: parseFloat(t.price24hPcnt) * 100, nextFunding: +t.nextFundingTime,
-    };
-  } catch (e) { return null; }
+async function csFetchOI(sym) {
+  const r = await fetch(`${BYBIT}/v5/market/open-interest?category=linear&symbol=${sym}&intervalTime=15min&limit=96`);
+  const d = await r.json();
+  return (d?.result?.list || []).map(x => +x.openInterest).filter(v => v > 0).reverse();
 }
 
-// Núcleo: avalia as 4 camadas para um símbolo.
-async function devCompute(sym) {
-  const [k4, k1, cvd, oi, tk] = await Promise.all([
-    devFetchKline(sym, '240', 320), devFetchKline(sym, '60', 720),
-    devFetchCVD(sym), devFetchOI(sym), devFetchTicker(sym),
-  ]);
-  if (!tk || k4.closes.length < 200 || k1.closes.length < 40) return { sym, error: true };
-  const price = tk.price;
-
-  // ── Camada 1 — Gate de regime (4h) ──
-  const adx = devADX(k4.highs, k4.lows, k4.closes, 14);
-  const hurst = devHurst(k4.closes.slice(-150));
-  const vol = devVolPercentile(k1.closes);
-  const adxV = adx ? adx.adx : null, hV = hurst;
-  const regimeTrend = adxV != null && adxV > 25 && hV != null && hV > 0.55 && vol && vol.pct >= 10;
-  const regimeRange = adxV != null && adxV < 20 && hV != null && hV < 0.45;
-  const volHigh = vol && vol.pct > 95;
-  const volLow = vol && vol.pct < 10;
-
-  // ── Camada 2 — Viés direcional (4h) ──
-  const ema50 = trdEma(k4.closes, 50), ema200 = trdEma(k4.closes, 200);
-  const bias = (ema50 != null && ema200 != null) ? (ema50 > ema200 ? 'long' : 'short') : null;
-
-  // ── Camada 3 — Gatilho de entrada (1h) ──
-  const atr = devATR(k1.highs, k1.lows, k1.closes, 14);
-  const don = devDonchian(k1.highs, k1.lows, 20);
-  const lastClose = k1.closes[k1.closes.length - 2];   // última vela 1h fechada
-  const lastVol = k1.vols[k1.vols.length - 2] || 0;
-  const avg20 = devAvg(k1.vols.slice(-21, -1));
-  const volMult = avg20 > 0 ? lastVol / avg20 : 0;
-  const cvdUp = cvd != null && cvd > 0, cvdDn = cvd != null && cvd < 0;
-  const brkUp = don && lastClose > don.hi;
-  const brkDn = don && lastClose < don.lo;
-  const trigLong  = brkUp && cvdUp && volMult > 1.5;
-  const trigShort = brkDn && cvdDn && volMult > 1.5;
-  const triggered = bias === 'long' ? trigLong : bias === 'short' ? trigShort : false;
-
-  // ── Camada 4 — Filtros de veto ──
-  // Variação de preço nas últimas 4h (para o veto de OI).
-  const c4 = k1.closes, chg4h = c4.length > 4 ? (price - c4[c4.length - 5]) / c4[c4.length - 5] * 100 : 0;
-  const oiChg4h = oi.length >= 5 ? (oi[0] - oi[4]) / oi[4] * 100 : null;
-  const oiChg1h = oi.length >= 2 ? (oi[0] - oi[1]) / oi[1] * 100 : null;
-  const vetoFunding = bias === 'long' ? tk.fr > 0.03 : bias === 'short' ? tk.fr < -0.03 : false;
-  const vetoOI = oiChg4h != null && oiChg4h > 8 && Math.abs(chg4h) < 1;
-
-  // ── Decisão do Motor A ──
-  let action, actState;
-  if (!bias) { action = 'none'; actState = 'Sem viés (EMAs indefinidas)'; }
-  else if (!regimeTrend) {
-    action = 'none';
-    actState = volLow ? 'Vol < p10 — movimento insuficiente'
-      : (adxV != null && adxV >= 20 && adxV <= 25) ? 'ADX em chop (20–25)'
-      : (hV != null && hV >= 0.45 && hV <= 0.55) ? 'Hurst indeciso (0,45–0,55)'
-      : 'Regime não é tendência';
-  } else if (vetoFunding || vetoOI) {
-    action = 'wait'; actState = vetoFunding ? 'Vetado — funding sobrelotado' : 'Vetado — OI a acumular (squeeze)';
-  } else if (!triggered) {
-    action = 'wait'; actState = 'Regime OK — a aguardar gatilho';
+// ── Sinais (cada um: { score 0-100, dir -1|0|+1, ev, on }) ──
+// H1 — Funding squeeze: funding extremo (|z|≥2) sem confirmação de preço → fade.
+function csH1(fund, chg24) {
+  if (!fund || fund.length < 20) return { score: 0, dir: 0, ev: 'Sem histórico de funding.', on: false };
+  const cur = fund[fund.length - 1], hist = fund.slice(0, -1), m = csMean(hist), sd = csStd(hist);
+  const z = sd > 0 ? (cur - m) / sd : 0;
+  let dir = 0, on = false;
+  if (z >= CS_CFG.fundingZ && chg24 <= 0.5) { dir = -1; on = true; }        // crowd long vulnerável → SHORT
+  else if (z <= -CS_CFG.fundingZ && chg24 >= -0.5) { dir = 1; on = true; }  // crowd short vulnerável → LONG
+  const score = on ? Math.max(45, Math.min(100, 45 + (Math.abs(z) - CS_CFG.fundingZ) * 20)) : 0;
+  const ev = `Funding ${cur.toFixed(4)}%/8h · z=${z.toFixed(2)} (${cur >= 0 ? 'longs' : 'shorts'} pagam) · preço 24h ${chg24 >= 0 ? '+' : ''}${chg24.toFixed(2)}%. ` +
+    (on ? (dir < 0 ? 'Crowd long sobrelotado sem confirmação → fade SHORT.' : 'Crowd short sobrelotado sem confirmação → fade LONG.') : 'Sem squeeze qualificado.');
+  return { score, dir, ev, on };
+}
+// H2 — OI divergence: acumulação sem progresso (bidirecional) ou flush (fade).
+function csH2(oi, closes15) {
+  if (!oi || oi.length < 25 || closes15.length < 25) return { score: 0, dir: 0, ev: 'Sem dados de OI.', on: false };
+  const oiNow = oi[oi.length - 1], oi6 = oi[oi.length - 25], oiChg = (oiNow - oi6) / oi6 * 100;
+  const pxNow = closes15[closes15.length - 1], px6 = closes15[closes15.length - 25], pxChg = (pxNow - px6) / px6 * 100;
+  let dir = 0, on = false, score = 0, ev;
+  if (oiChg > 5 && Math.abs(pxChg) < 0.4) {
+    on = true; dir = 0; score = Math.min(100, 55 + (oiChg - 5) * 3);
+    ev = `OI +${oiChg.toFixed(1)}% em 6h com preço ${pxChg >= 0 ? '+' : ''}${pxChg.toFixed(2)}% (plano) → combustível bidirecional; direção resolvida pelos outros sinais.`;
+  } else if (oiChg < -6) {
+    on = true; dir = pxChg > 0 ? -1 : 1; score = Math.min(100, 55 + (Math.abs(oiChg) - 6) * 3);
+    ev = `OI ${oiChg.toFixed(1)}% em 6h = flush/exaustão. Movimento recente ${pxChg >= 0 ? '+' : ''}${pxChg.toFixed(2)}% → fade ${dir < 0 ? 'SHORT' : 'LONG'}.`;
   } else {
-    action = bias; actState = volHigh ? 'ENTRAR · risco a metade (vol > p95)' : 'ENTRAR';
+    ev = `OI ${oiChg >= 0 ? '+' : ''}${oiChg.toFixed(1)}% em 6h · preço ${pxChg >= 0 ? '+' : ''}${pxChg.toFixed(2)}%. Sem divergência qualificada.`;
   }
-
-  // ── Motor B — reversão pós-cascata (condições computáveis) ──
-  const ema20_1h = trdEma(k1.closes, 20);
-  const extAtr = (atr && ema20_1h) ? Math.abs(price - ema20_1h) / atr : null;
-  const mbOiDrop = oiChg1h != null && oiChg1h < -5;
-  const mbExtended = extAtr != null && extAtr > 2.5;
-
-  return {
-    sym, price, error: false,
-    c1: { adx: adxV, pdi: adx?.pdi, mdi: adx?.mdi, hurst: hV, vol, regimeTrend, regimeRange, volHigh, volLow },
-    c2: { ema50, ema200, bias },
-    c3: { don, lastClose, volMult, cvd, cvdUp, cvdDn, brkUp, brkDn, atr, triggered, trigLong, trigShort },
-    c4: { fr: tk.fr, vetoFunding, oiChg4h, oiChg1h, chg4h, vetoOI },
-    mb: { oiChg1h, extAtr, mbOiDrop, mbExtended },
-    action, actState,
-  };
+  return { score, dir, ev, on };
 }
-
-function devPct(v, d = 1) { return v == null ? '—' : (v >= 0 ? '+' : '') + v.toFixed(d) + '%'; }
-
-function devRenderSignal(r) {
-  if (r.error) return `<div class="dev-sig"><div class="dev-sig-head"><span class="dev-sig-sym">${r.sym}</span><span class="dev-verdict none">Sem dados</span></div></div>`;
-  const c1 = r.c1, c2 = r.c2, c3 = r.c3, c4 = r.c4, mb = r.mb;
-  const vClass = r.action === 'long' ? 'long' : r.action === 'short' ? 'short' : r.action === 'wait' ? 'wait' : 'none';
-  const vLabel = r.action === 'long' ? 'Long' : r.action === 'short' ? 'Short' : r.action === 'wait' ? 'Aguardar' : 'Não operar';
-  const dot = ok => ok ? 'ok' : 'no';
-
-  // Camada 1
-  const c1pass = c1.regimeTrend;
-  const c1st = c1pass ? '<span class="st pass">tendência</span>' : (c1.regimeRange ? '<span class="st fail">range</span>' : '<span class="st fail">não operar</span>');
-  const c1html = `
-    <div class="dev-check"><span class="dev-dot ${dot(c1.adx > 25)}"></span><span class="lbl">ADX (14, 4h)</span><span class="val">${c1.adx == null ? '—' : c1.adx.toFixed(1)}</span><span class="thr">&gt;25</span></div>
-    <div class="dev-check"><span class="dev-dot ${dot(c1.hurst > 0.55)}"></span><span class="lbl">Hurst (4h)</span><span class="val">${c1.hurst == null ? '—' : c1.hurst.toFixed(2)}</span><span class="thr">&gt;0,55</span></div>
-    <div class="dev-check"><span class="dev-dot ${c1.volLow ? 'veto' : c1.volHigh ? 'warn' : 'ok'}"></span><span class="lbl">Vol realizada</span><span class="val">p${c1.vol ? Math.round(c1.vol.pct) : '—'}</span><span class="thr">p10–p95</span></div>`;
-
-  // Camada 2
-  const c2st = c2.bias === 'long' ? '<span class="st pass">só longs</span>' : c2.bias === 'short' ? '<span class="st veto">só shorts</span>' : '<span class="st fail">—</span>';
-  const c2html = `
-    <div class="dev-check"><span class="dev-dot ${c2.bias ? (c2.bias === 'long' ? 'ok' : 'veto') : 'no'}"></span><span class="lbl">EMA50 vs EMA200 (4h)</span><span class="val">${c2.ema50 && c2.ema200 ? (c2.ema50 > c2.ema200 ? 'EMA50 &gt; EMA200' : 'EMA50 &lt; EMA200') : '—'}</span></div>`;
-
-  // Camada 3
-  const brkOk = c2.bias === 'long' ? c3.brkUp : c2.bias === 'short' ? c3.brkDn : false;
-  const cvdOk = c2.bias === 'long' ? c3.cvdUp : c2.bias === 'short' ? c3.cvdDn : false;
-  const c3st = c3.triggered ? '<span class="st pass">armado</span>' : '<span class="st fail">sem gatilho</span>';
-  const c3html = `
-    <div class="dev-check"><span class="dev-dot ${dot(brkOk)}"></span><span class="lbl">Rutura Donchian(20)</span><span class="val">${c3.don ? (c2.bias === 'short' ? fmtPx(c3.don.lo) : fmtPx(c3.don.hi)) : '—'}</span></div>
-    <div class="dev-check"><span class="dev-dot ${dot(cvdOk)}"></span><span class="lbl">CVD (fluxo recente)</span><span class="val">${c3.cvd == null ? '—' : (c3.cvd >= 0 ? '▲ compra' : '▼ venda')}</span></div>
-    <div class="dev-check"><span class="dev-dot ${dot(c3.volMult > 1.5)}"></span><span class="lbl">Volume da rutura</span><span class="val">${c3.volMult ? c3.volMult.toFixed(2) + '×' : '—'}</span><span class="thr">&gt;1,5×</span></div>`;
-
-  // Camada 4
-  const anyVeto = c4.vetoFunding || c4.vetoOI;
-  const c4st = anyVeto ? '<span class="st veto">veto ativo</span>' : '<span class="st pass">sem veto</span>';
-  const c4html = `
-    <div class="dev-check"><span class="dev-dot ${c4.vetoFunding ? 'veto' : 'ok'}"></span><span class="lbl">Funding rate</span><span class="val">${devPct(c4.fr, 4)}</span><span class="thr">±0,03%</span></div>
-    <div class="dev-check"><span class="dev-dot ${c4.vetoOI ? 'veto' : 'ok'}"></span><span class="lbl">OI 4h (preço lateral)</span><span class="val">${devPct(c4.oiChg4h)}</span><span class="thr">&lt;8%</span></div>
-    <div class="dev-check"><span class="dev-dot man"></span><span class="lbl">Heatmap liquidações</span><span class="val">manual</span></div>
-    <div class="dev-check"><span class="dev-dot man"></span><span class="lbl">Calendário macro (FOMC/CPI/NFP)</span><span class="val">manual</span></div>`;
-
-  // Sizing para a direção enviesada
-  let sizeHtml = '';
-  if (c2.bias && c3.atr && r.price) {
-    const stopPct = 1.5 * c3.atr / r.price;
-    const riskFrac = (c1.volHigh ? devCfg.risk / 2 : devCfg.risk) / 100;
-    const notional = riskFrac * devCfg.capital / stopPct;
-    let effLev = notional / devCfg.capital;
-    const capped = effLev > 3;
-    if (capped) effLev = 3;
-    const liqDist = (1 / effLev) * 100;
-    sizeHtml = `<div class="dev-motorb">
-      <div class="dev-motorb-h">Sizing ${c2.bias === 'long' ? 'long' : 'short'} @ mercado</div>
-      <div class="dev-check"><span class="lbl">Stop inicial (1,5×ATR)</span><span class="val">${(stopPct * 100).toFixed(2)}%</span></div>
-      <div class="dev-check"><span class="lbl">Notional</span><span class="val">${fmtUsd(notional)}</span></div>
-      <div class="dev-check"><span class="lbl">Alav. efetiva</span><span class="val">${effLev.toFixed(2)}×${capped ? ' (cap)' : ''}</span></div>
-      <div class="dev-check"><span class="lbl">Liquidação a ~</span><span class="val">${liqDist.toFixed(0)}% (&gt;3× o stop)</span></div>
-    </div>`;
+// H3 — Cascade fade (proxy REST): vela extrema + volume + queda de OI → mean-reversion.
+function csH3(k, oi) {
+  const { highs, lows, closes, opens, vols } = k;
+  if (closes.length < 25) return { score: 0, dir: 0, ev: 'Sem dados TF15.', on: false };
+  const atr = csATR(highs, lows, closes, 14), i = closes.length - 1;
+  const range = highs[i] - lows[i], volAvg = csMean(vols.slice(-21, -1));
+  const volMult = volAvg > 0 ? vols[i] / volAvg : 0;
+  let oi2h = null;
+  if (oi && oi.length >= 9) { const a = oi[oi.length - 1], b = oi[oi.length - 9]; oi2h = (a - b) / b * 100; }
+  const on = atr > 0 && range > 2.5 * atr && volMult > 3 && oi2h != null && oi2h < -2;
+  let dir = 0, score = 0;
+  if (on) { dir = closes[i] < opens[i] ? 1 : -1; score = Math.min(100, 60 + (volMult - 3) * 6); }
+  const ev = `Range ${atr > 0 ? (range / atr).toFixed(1) : '—'}×ATR · vol ${volMult.toFixed(1)}× · OI 2h ${oi2h == null ? '—' : (oi2h >= 0 ? '+' : '') + oi2h.toFixed(1) + '%'}. ` +
+    (on ? `Proxy de cascata → mean-reversion ${dir > 0 ? 'LONG' : 'SHORT'}.` : 'Sem cascata qualificada.');
+  return { score, dir, ev, on };
+}
+// Estrutura — posição no range de 24h (96 velas TF15).
+function csStructure(closes15) {
+  if (closes15.length < 96) return { score: 0, dir: 0, ev: 'Sem range 24h.', on: false };
+  const w = closes15.slice(-96), hi = Math.max(...w), lo = Math.min(...w), px = closes15[closes15.length - 1];
+  const pos = hi > lo ? (px - lo) / (hi - lo) * 100 : 50;
+  let dir = 0, on = false, score = 0;
+  if (pos <= 12) { dir = 1; on = true; score = 100 - pos * 3; }
+  else if (pos >= 88) { dir = -1; on = true; score = 60 + (pos - 88) * 3; }
+  score = Math.max(0, Math.min(100, score));
+  const ev = `Preço a ${pos.toFixed(0)}% do range 24h. ` + (on ? (dir > 0 ? 'Perto do fundo → favorece LONG.' : 'Perto do topo → favorece SHORT.') : 'Meio do range.');
+  return { score, dir, ev, on };
+}
+// H4 — Regime (TF 1h): trending / ranging / squeeze.
+function csRegime(k60) {
+  const { highs, lows, closes } = k60;
+  if (closes.length < 50) return { type: 'ranging', ev: 'Dados 1h insuficientes.', adx: null, bbPct: null };
+  const adx = csADX(highs, lows, closes, 14), bb = csBBWidthPct(closes, 20);
+  const sma20 = csSMA(closes, 20), px = closes[closes.length - 1];
+  let type;
+  if (bb && bb.pct < CS_CFG.bbSqueezePct) type = 'squeeze';
+  else if (adx != null && adx >= CS_CFG.adxTrend) type = px >= sma20 ? 'trend_up' : 'trend_down';
+  else type = 'ranging';
+  return { type, ev: `ADX ${adx == null ? '—' : adx.toFixed(0)} · BB width p${bb ? Math.round(bb.pct) : '—'} →`, adx, bbPct: bb ? bb.pct : null };
+}
+// Fit de regime (0-100): mean-reversion favorece ranging; continuação favorece trend alinhado; squeeze penaliza.
+function csRegimeFit(regime, dir, mrOn) {
+  switch (regime.type) {
+    case 'squeeze':     return 25;
+    case 'ranging':     return mrOn ? 80 : 55;
+    case 'trend_up':    return dir > 0 ? 85 : dir < 0 ? 30 : 50;
+    case 'trend_down':  return dir < 0 ? 85 : dir > 0 ? 30 : 50;
+    default:            return 50;
   }
-
-  // Motor B
-  const mbHtml = `<div class="dev-motorb">
-    <div class="dev-motorb-h"><span class="dev-eng-tag b">Motor B</span> Reversão pós-cascata</div>
-    <div class="dev-check"><span class="dev-dot ${dot(mb.mbOiDrop)}"></span><span class="lbl">Queda de OI 60min</span><span class="val">${devPct(mb.oiChg1h)}</span><span class="thr">&lt;−5%</span></div>
-    <div class="dev-check"><span class="dev-dot ${dot(mb.mbExtended)}"></span><span class="lbl">Preço esticado da EMA20 (1h)</span><span class="val">${mb.extAtr == null ? '—' : mb.extAtr.toFixed(1) + '×ATR'}</span><span class="thr">&gt;2,5×</span></div>
-    <div class="dev-check"><span class="dev-dot man"></span><span class="lbl">Funding a reverter · CVD estabiliza</span><span class="val">stream</span></div>
-  </div>`;
-
-  return `<div class="dev-sig">
-    <div class="dev-sig-head">
-      <span class="dev-sig-sym">${r.sym}</span>
-      <span class="dev-sig-px">${fmtPx(r.price)}</span>
-      <span class="dev-verdict ${vClass}">${vLabel}<small>${r.actState}</small></span>
-    </div>
-    <div class="dev-layers">
-      <div class="dev-layer"><div class="dev-layer-h"><span class="ln">Camada 1</span> Gate de regime — SE opera ${c1st}</div>${c1html}</div>
-      <div class="dev-layer"><div class="dev-layer-h"><span class="ln">Camada 2</span> Viés — a DIREÇÃO ${c2st}</div>${c2html}</div>
-      <div class="dev-layer"><div class="dev-layer-h"><span class="ln">Camada 3</span> Gatilho — o QUANDO ${c3st}</div>${c3html}</div>
-      <div class="dev-layer"><div class="dev-layer-h"><span class="ln">Camada 4</span> Filtros — poder de VETO ${c4st}</div>${c4html}</div>
-    </div>
-    ${sizeHtml}
-    ${mbHtml}
-    <div class="dev-reason"><b>Decisão Motor A:</b> ${devDecisionText(r)}</div>
-  </div>`;
 }
 
-function devDecisionText(r) {
-  if (r.action === 'long')  return `Todas as camadas alinhadas para <b>LONG</b>. Entrada PostOnly no retest do nível de rutura; se não preencher em 3 barras de 1h, cancelar. Stop 1,5×ATR reduceOnly, TP 50% a 2R, resto com trailing de 1×ATR, saída por tempo às 72h.`;
-  if (r.action === 'short') return `Todas as camadas alinhadas para <b>SHORT</b>. Entrada PostOnly no retest; espelho exato do long. Em regime de funding positivo o short recebe funding (vento de cauda estrutural).`;
-  if (r.action === 'wait')  return `${r.actState}. O regime permite operar mas ${r.c4.vetoFunding || r.c4.vetoOI ? 'um veto da Camada 4 está ativo' : 'falta a confluência do gatilho (rutura + CVD + volume >1,5×)'}. Sem confluência, não há entrada.`;
-  return `<b>Não operar.</b> ${r.actState}. A ausência de trade é uma decisão do modelo, não uma falha.`;
+// ── Scoring composto (determinístico) ──
+function csComposite(sigs, regime) {
+  const W = CS_CFG.weights;
+  const parts = [
+    { k: 'funding',   ...sigs.h1, w: W.funding },
+    { k: 'oi',        ...sigs.h2, w: W.oi },
+    { k: 'cascade',   ...sigs.h3, w: W.cascade },
+    { k: 'structure', ...sigs.st, w: W.structure },
+  ];
+  let vote = 0;
+  for (const p of parts) vote += p.dir * p.score * p.w;
+  const finalDir = vote > 0 ? 1 : vote < 0 ? -1 : 0;
+  let score = 0;
+  for (const p of parts) {
+    const contrib = p.score * p.w / 100;              // 0..w
+    if (p.dir === 0) score += contrib * 0.5;           // neutro conta a 50%
+    else if (p.dir === finalDir) score += contrib;     // alinhado
+    else score -= contrib * 0.7;                       // contraditório subtrai 70%
+  }
+  const mrOn = sigs.h3.dir !== 0 || sigs.st.dir !== 0;
+  const fit = csRegimeFit(regime, finalDir, mrOn);
+  score += fit * W.regime / 100;
+  return { finalDir, score: Math.max(0, score), fit };
 }
 
-async function scanDev(force) {
-  if (devScanning) return;
-  if (!force && Date.now() - devLastScan < 30000 && Object.keys(devData).length) { devRender(); return; }
-  devScanning = true;
-  const btn = document.getElementById('dev-refresh'); if (btn) btn.classList.add('busy');
-  const host = document.getElementById('dev-signals');
-  if (host && !Object.keys(devData).length) host.innerHTML = '<div class="db-empty">A avaliar o modelo…</div>';
+// ── Trade plan + risk engine ──
+function csTradePlan(entry, atr, dir, capital) {
+  if (!dir || !atr || !entry) return null;
+  const stopDist = CS_CFG.stopAtr * atr;
+  const stop = dir > 0 ? entry - stopDist : entry + stopDist;
+  const target = dir > 0 ? entry + CS_CFG.minRR * stopDist : entry - CS_CFG.minRR * stopDist;
+  const stopPct = stopDist / entry * 100, targetPct = CS_CFG.minRR * stopDist / entry * 100;
+  const rejected = targetPct <= 2 * CS_COST_RT;         // alvo tem de pagar ≥2× custos
+  const riskUsd = capital * CS_CFG.riskPct / 100;
+  let qty = riskUsd / stopDist, notional = qty * entry, lev = notional / capital, capped = false;
+  if (lev > CS_CFG.maxLev) { capped = true; lev = CS_CFG.maxLev; notional = lev * capital; qty = notional / entry; }
+  const costsInR = CS_COST_RT / stopPct;                // custo round-trip em unidades de R
+  const pWinBE = (1 + costsInR) / (1 + CS_CFG.minRR);   // taxa de acerto mínima p/ empatar
+  return { entry, stop, target, stopPct, targetPct, rejected, riskUsd, qty, notional, lev, capped, pWinBE };
+}
+
+// ── Orquestração do scan ──
+async function scanCs(force) {
+  if (csScanning) return;
+  if (!force && csData && Date.now() - csLastScan < 60000) { csRender(); return; }
+  csScanning = true;
+  const btn = document.getElementById('cs-scan-btn'); if (btn) btn.classList.add('busy');
+  const listEl = document.getElementById('cs-list');
+  if (listEl && !csData) listEl.innerHTML = '<div class="db-empty">A avaliar o universo… (pode demorar ~1 min)</div>';
   try {
-    const results = await Promise.all(DEV_SYMS.map(s => devCompute(s).catch(() => ({ sym: s, error: true }))));
-    results.forEach(r => devData[r.sym] = r);
-    devLastScan = Date.now();
-    devRender();
+    const r = await fetch(`${BYBIT}/v5/market/tickers?category=linear`);
+    const d = await r.json();
+    let uni = (d?.result?.list || [])
+      .filter(t => /USDT$/.test(t.symbol) && !/[0-9]/.test(coinOf(t.symbol)))
+      .map(t => ({ symbol: t.symbol, coin: coinOf(t.symbol), price: parseFloat(t.lastPrice), chg24: parseFloat(t.price24hPcnt) * 100, fr: parseFloat(t.fundingRate) * 100, turnover: parseFloat(t.turnover24h) || 0 }))
+      .filter(c => c.turnover >= CS_CFG.minTurnover && isFinite(c.price) && c.price > 0);
+    uni.sort((a, b) => b.turnover - a.turnover);
+    const universeSize = uni.length;
+    const enrich = uni.slice(0, CS_CFG.universeTop);
+    const btc = uni.find(c => c.symbol === 'BTCUSDT');
+    const btc24 = btc ? btc.chg24 : null;
+    const avgFund = csMean(enrich.map(c => c.fr));
+    await trdPool(enrich, async c => {
+      try {
+        const [k15, k60, fund, oi] = await Promise.all([
+          csFetchKline(c.symbol, '15', 200), csFetchKline(c.symbol, '60', 120),
+          csFetchFunding(c.symbol), csFetchOI(c.symbol),
+        ]);
+        c.atr = csATR(k15.highs, k15.lows, k15.closes, 14);
+        const sigs = { h1: csH1(fund, c.chg24), h2: csH2(oi, k15.closes), h3: csH3(k15, oi), st: csStructure(k15.closes) };
+        const regime = csRegime(k60);
+        const comp = csComposite(sigs, regime);
+        c.sigs = { ...sigs, regime }; c.dir = comp.finalDir; c.score = comp.score; c.fit = comp.fit;
+        c.plan = csTradePlan(c.price, c.atr, c.dir, CS_CFG.capital);
+      } catch (e) { c.err = true; }
+    }, CS_CFG.concurrency);
+    const scored = enrich.filter(c => !c.err && c.score >= CS_CFG.scoreThreshold).sort((a, b) => b.score - a.score);
+    csData = { shortlist: scored.slice(0, CS_CFG.shortlistMax), universeSize, enriched: enrich.length, btc24, avgFund, ts: Date.now() };
+    csLastScan = Date.now();
+    csRender();
   } catch (e) {
-    console.error('scanDev error', e);
-    if (host && !Object.keys(devData).length) host.innerHTML = '<div class="db-empty">Falha ao obter dados da Bybit. Tenta reavaliar.</div>';
+    console.error('scanCs error', e);
+    if (listEl && !csData) listEl.innerHTML = '<div class="db-empty">Falha ao obter dados da Bybit. Tenta correr o scan de novo.</div>';
   } finally {
-    devScanning = false;
-    const b = document.getElementById('dev-refresh'); if (b) b.classList.remove('busy');
+    csScanning = false;
+    const b = document.getElementById('cs-scan-btn'); if (b) b.classList.remove('busy');
   }
 }
 
-function devRender() {
-  const host = document.getElementById('dev-signals');
-  if (host) host.innerHTML = DEV_SYMS.map(s => devData[s] ? devRenderSignal(devData[s]) : '').join('');
-  devRenderCalc();
+// ── Render ──
+const CS_REG_LABEL = { trend_up: 'Trend ↑', trend_down: 'Trend ↓', ranging: 'Ranging', squeeze: 'Squeeze' };
+function csRender() {
+  if (!csData) return;
+  set('cs-x-universe', csData.universeSize);
+  set('cs-x-short', csData.shortlist.length);
+  const be = document.getElementById('cs-x-btc');
+  if (be) { be.textContent = csData.btc24 == null ? '—' : (csData.btc24 >= 0 ? '+' : '') + csData.btc24.toFixed(2) + '%'; be.style.color = csData.btc24 == null ? '' : csData.btc24 >= 0 ? 'var(--green)' : 'var(--red)'; }
+  set('cs-x-fund', (csData.avgFund >= 0 ? '+' : '') + csData.avgFund.toFixed(4) + '%');
+  const listEl = document.getElementById('cs-list'); if (!listEl) return;
+  if (!csData.shortlist.length) { listEl.innerHTML = `<div class="db-empty">Nenhum símbolo passou o threshold de ${CS_CFG.scoreThreshold}. Sem oportunidades qualificadas neste momento — a ausência de setup é um resultado válido.</div>`; return; }
+  listEl.innerHTML = csData.shortlist.map((c, i) => csRenderRow(c, i)).join('');
 }
-
-// Calculadora de sizing (usa o ATR 1h do BTC como referência de stop típico).
-function devRenderCalc() {
-  const out = document.getElementById('dev-calc-out'); if (!out) return;
-  const cap = document.getElementById('dev-capital'), rk = document.getElementById('dev-risk');
-  if (cap && document.activeElement !== cap) cap.value = devCfg.capital;
-  if (rk && document.activeElement !== rk) rk.value = devCfg.risk;
-  const ref = devData['BTCUSDT'];
-  const atr = ref && !ref.error ? ref.c3.atr : null, px = ref && !ref.error ? ref.price : null;
-  const stopPct = (atr && px) ? 1.5 * atr / px : null;
-  const riskFrac = devCfg.risk / 100;
-  const notional = stopPct ? riskFrac * devCfg.capital / stopPct : null;
-  let effLev = notional ? notional / devCfg.capital : null;
-  const capped = effLev && effLev > 3; if (capped) effLev = 3;
-  const riskUsd = devCfg.capital * riskFrac;
-  out.innerHTML = `
-    <div class="dev-out-item"><div class="dev-out-lbl">Risco por trade</div><div class="dev-out-val o">${fmtUsd(riskUsd)}</div><div class="dev-out-sub">${devCfg.risk}% do capital</div></div>
-    <div class="dev-out-item"><div class="dev-out-lbl">Stop % (1,5×ATR BTC)</div><div class="dev-out-val">${stopPct ? (stopPct * 100).toFixed(2) + '%' : '—'}</div><div class="dev-out-sub">ATR(14,1h) atual</div></div>
-    <div class="dev-out-item"><div class="dev-out-lbl">Notional</div><div class="dev-out-val">${notional ? fmtUsd(notional) : '—'}</div><div class="dev-out-sub">N = R%·Capital / stop%</div></div>
-    <div class="dev-out-item"><div class="dev-out-lbl">Alav. efetiva</div><div class="dev-out-val ${capped ? 'r' : 'g'}">${effLev ? effLev.toFixed(2) + '×' : '—'}</div><div class="dev-out-sub">${capped ? 'limitada a 3× (cap)' : 'dentro do cap (≤3×)'}</div></div>`;
+function csRenderRow(c, i) {
+  const dir = c.dir, sideCls = dir > 0 ? 'long' : dir < 0 ? 'short' : 'flat', sideLbl = dir > 0 ? 'Long' : dir < 0 ? 'Short' : 'Neutro';
+  const tags = [];
+  if (c.sigs.h1.on) tags.push('Funding');
+  if (c.sigs.h2.on) tags.push('OI');
+  if (c.sigs.h3.on) tags.push('Cascata');
+  if (c.sigs.st.on) tags.push('Estrutura');
+  tags.push(CS_REG_LABEL[c.sigs.regime.type] || c.sigs.regime.type);
+  const tagsHtml = tags.map(t => `<span class="cs-tag on">${t}</span>`).join('');
+  const p = c.plan;
+  let planMini, beVal = '—';
+  if (!p) planMini = '<div class="cs-plan-lbl">Plano</div><div class="cs-plan-val rej">sem direção</div>';
+  else if (p.rejected) { planMini = '<div class="cs-plan-lbl">Entrada</div><div class="cs-plan-val rej">rejeitado · custos</div>'; beVal = (p.pWinBE * 100).toFixed(0) + '%'; }
+  else { planMini = `<div class="cs-plan-lbl">Entrada → Alvo</div><div class="cs-plan-val">${fmtPx(p.entry)} → ${fmtPx(p.target)}</div>`; beVal = (p.pWinBE * 100).toFixed(0) + '%'; }
+  const open = csExpanded === c.symbol ? 'open' : '';
+  return `<div class="cs-row ${open}">
+    <div class="cs-row-main" onclick="csToggle('${c.symbol}')">
+      <div class="cs-rank">${i + 1}</div>
+      <div class="cs-sym-wrap"><span class="cs-side ${sideCls}">${sideLbl}</span><span class="cs-sym">${c.coin}<small>${fmtPx(c.price)}</small></span></div>
+      <div class="cs-score-wrap"><div class="cs-score-top"><span class="cs-score-lbl">Score</span><span class="cs-score-num">${c.score.toFixed(0)}</span></div><div class="cs-score-bar"><div class="cs-score-fill" style="width:${Math.min(100, c.score)}%"></div></div></div>
+      <div class="cs-tags">${tagsHtml}</div>
+      <div class="cs-plan-mini">${planMini}</div>
+      <div class="cs-be"><div class="cs-plan-lbl">p breakeven</div><div class="cs-be-val">${beVal}</div><svg class="cs-chev" width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3 1.5 6.5 5 3 8.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    </div>
+    ${open ? csRenderDetail(c) : ''}
+  </div>`;
 }
-
-function devCfgChange() {
-  const cap = parseFloat(document.getElementById('dev-capital').value);
-  const rk = parseFloat(document.getElementById('dev-risk').value);
-  if (isFinite(cap) && cap > 0) devCfg.capital = cap;
-  if (isFinite(rk)) devCfg.risk = Math.max(0.5, Math.min(1, rk));  // hard cap 0,5–1,0%
-  try { localStorage.setItem('devCfg', JSON.stringify(devCfg)); } catch (e) {}
-  devRenderCalc();
-  devRender();
+function csRenderDetail(c) {
+  const s = c.sigs;
+  const card = (tag, title, sig) => {
+    const dc = sig.dir > 0 ? 'long' : sig.dir < 0 ? 'short' : 'flat';
+    const dl = sig.dir > 0 ? 'long' : sig.dir < 0 ? 'short' : 'neutro';
+    return `<div class="cs-ev-card"><div class="cs-ev-h">${tag} · ${title}<span class="cs-ev-dir ${dc}">${sig.on ? dl : 'off'} · ${(sig.score || 0).toFixed(0)}</span></div><div class="cs-ev-txt">${sig.ev}</div></div>`;
+  };
+  const regCard = `<div class="cs-ev-card"><div class="cs-ev-h">H4 · Regime<span class="cs-ev-dir flat">${CS_REG_LABEL[s.regime.type] || s.regime.type} · fit ${c.fit.toFixed(0)}</span></div><div class="cs-ev-txt">${s.regime.ev} ${CS_REG_LABEL[s.regime.type] || s.regime.type}.</div></div>`;
+  const p = c.plan;
+  let planHtml;
+  if (!p) planHtml = '<div class="cs-reject">Sem direção resolvida — nenhum trade plan.</div>';
+  else if (p.rejected) planHtml = `<div class="cs-reject">Trade rejeitado: alvo ${p.targetPct.toFixed(2)}% não paga 2× os custos (${(2 * CS_COST_RT).toFixed(2)}%). p_win_breakeven ${(p.pWinBE * 100).toFixed(0)}%.</div>`;
+  else planHtml = `<div class="cs-plan-full">
+    <div class="cs-pf-item"><div class="cs-pf-lbl">Entrada</div><div class="cs-pf-val">${fmtPx(p.entry)}</div></div>
+    <div class="cs-pf-item"><div class="cs-pf-lbl">Stop (1,2×ATR)</div><div class="cs-pf-val r">${fmtPx(p.stop)} · ${p.stopPct.toFixed(2)}%</div></div>
+    <div class="cs-pf-item"><div class="cs-pf-lbl">Alvo (R:R 1,5)</div><div class="cs-pf-val g">${fmtPx(p.target)} · ${p.targetPct.toFixed(2)}%</div></div>
+    <div class="cs-pf-item"><div class="cs-pf-lbl">Notional</div><div class="cs-pf-val">${fmtUsd(p.notional)}</div></div>
+    <div class="cs-pf-item"><div class="cs-pf-lbl">Alavancagem</div><div class="cs-pf-val ${p.capped ? 'o' : ''}">${p.lev.toFixed(2)}×${p.capped ? ' · cap' : ''}</div></div>
+    <div class="cs-pf-item"><div class="cs-pf-lbl">Risco</div><div class="cs-pf-val">${fmtUsd(p.riskUsd)} · ${CS_CFG.riskPct}%</div></div>
+    <div class="cs-pf-item"><div class="cs-pf-lbl">p breakeven</div><div class="cs-pf-val o">${(p.pWinBE * 100).toFixed(0)}%</div></div>
+  </div>`;
+  return `<div class="cs-detail">
+    <div class="cs-ev-grid">
+      ${card('H1', 'Funding', s.h1)}
+      ${card('H2', 'OI divergence', s.h2)}
+      ${card('H3', 'Cascade fade', s.h3)}
+      ${card('+', 'Estrutura', s.st)}
+      ${regCard}
+    </div>
+    ${planHtml}
+  </div>`;
 }
-
-function renderDevTab() {
-  const cap = document.getElementById('dev-capital'), rk = document.getElementById('dev-risk');
-  if (cap && !cap.value) cap.value = devCfg.capital;
-  if (rk && !rk.value) rk.value = devCfg.risk;
-  devRenderCalc();
-  scanDev(false);
+function csToggle(sym) { csExpanded = csExpanded === sym ? null : sym; csRender(); }
+function csCfgChange() {
+  const v = parseFloat(document.getElementById('cs-capital').value);
+  if (isFinite(v) && v > 0) { CS_CFG.capital = v; try { localStorage.setItem('csCfg', JSON.stringify({ capital: v })); } catch (e) {} }
+  if (csData) { csData.shortlist.forEach(c => { c.plan = csTradePlan(c.price, c.atr, c.dir, CS_CFG.capital); }); csRender(); }
+}
+function renderCsTab() {
+  const cap = document.getElementById('cs-capital'); if (cap && !cap.value) cap.value = CS_CFG.capital;
+  scanCs(false);
 }
 
 // ── HEATMAP DE LIQUIDAÇÕES (estimativa a partir do OI + escalões) ─────────────
@@ -6223,8 +6154,6 @@ function drawPerpChart(arr) {
   setInterval(async () => { await fetchT212Holdings(); await fetchT212Daily(); refreshAfterT212(); }, 180000);
   // Rastreador de trades: re-analisa só quando o separador está ativo (poupa chamadas).
   setInterval(() => { const p = document.getElementById('tab-trade'); if (p && p.classList.contains('active')) scanTrades(false); }, 45000);
-  // Agente DEV: reavalia o modelo só quando o separador está ativo.
-  setInterval(() => { const p = document.getElementById('tab-dev'); if (p && p.classList.contains('active')) scanDev(false); }, 60000);
 })();
 </script>
 </body>
