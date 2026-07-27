@@ -1040,7 +1040,9 @@ html.light .mnav-btn.active { color: var(--orange); }
   padding: 13px 0 2px; margin-top: 13px; border-top: 1px solid var(--border); font-size: 12px;
 }
 @media (max-width: 600px) { .pos-metrics .ps-sep { display: none; } .pos-metrics { gap: 8px 16px; } }
-.pos-iv-bar { display: flex; gap: 4px; margin: 4px 0 12px; }
+.pos-iv-bar { display: flex; gap: 4px; margin: 4px 0 12px; overflow-x: auto; scrollbar-width: none; }
+.pos-iv-bar::-webkit-scrollbar { display: none; }
+.pos-iv-bar .iv-btn { flex-shrink: 0; white-space: nowrap; }
 /* .ps-* : usados também pela faixa de métricas dentro do gráfico (.pos-metrics) */
 .ps-item { display: inline-flex; align-items: baseline; gap: 5px; white-space: nowrap; }
 .ps-lbl { color: var(--faint); font-size: 10px; text-transform: uppercase; letter-spacing: .05em; }
@@ -1429,6 +1431,8 @@ html.light .mnav-btn.active { color: var(--orange); }
         <span class="mono" id="pd-mark" style="font-size:12px;color:var(--orange)">—</span>
       </div>
       <div class="pos-iv-bar" id="pos-iv-bar">
+        <button class="iv-btn" data-iv="1"   onclick="setPosIv('1',this)">1m</button>
+        <button class="iv-btn" data-iv="3"   onclick="setPosIv('3',this)">3m</button>
         <button class="iv-btn" data-iv="5"   onclick="setPosIv('5',this)">5m</button>
         <button class="iv-btn on" data-iv="15" onclick="setPosIv('15',this)">15m</button>
         <button class="iv-btn" data-iv="60"  onclick="setPosIv('60',this)">1h</button>
