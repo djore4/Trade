@@ -516,7 +516,7 @@ html.light .mnav-btn.active { color: var(--orange); }
 .cs-scan-btn:hover { filter: brightness(1.06); }
 .cs-scan-btn.busy { opacity: .7; pointer-events: none; }
 .cs-scan-btn.busy svg { animation: mktSpin .8s linear infinite; }
-.cs-ctx { display: grid; grid-template-columns: repeat(4, 1fr) auto; gap: 10px; align-items: stretch; }
+.cs-ctx { display: grid; grid-template-columns: repeat(4, 1fr) auto auto; gap: 10px; align-items: stretch; }
 .cs-ctx-item { background: var(--s1); border: 1px solid var(--border); border-radius: 10px; padding: 10px 13px; }
 .cs-ctx-lbl { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--faint); }
 .cs-ctx-val { font-size: 17px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); margin-top: 3px; }
@@ -604,6 +604,99 @@ html.light .mnav-btn.active { color: var(--orange); }
   .cs-row-main { grid-template-columns: 26px 1fr 70px; grid-template-areas: "rank sym score"; row-gap: 8px; }
   .cs-rank { grid-area: rank; } .cs-sym-wrap { grid-area: sym; } .cs-score-wrap { grid-area: score; }
   .cs-tags, .cs-plan-mini, .cs-be { display: none; }
+}
+#cs-risk { width: 92px; }
+/* ── Sugestões de Trade (cards completos) ──────────────────────────── */
+.cs-nosetup { background: var(--s1); border: 1px solid var(--border); border-radius: 12px; padding: 22px 20px; text-align: center; }
+.cs-nosetup-h { font-size: 14px; font-weight: 700; color: var(--text); }
+.cs-nosetup-b { font-size: 11.5px; color: var(--dim); line-height: 1.6; margin-top: 6px; max-width: 620px; margin-left: auto; margin-right: auto; }
+.cs-sug { background: var(--s1); border: 1px solid var(--border); border-radius: 13px; padding: 0; overflow: hidden; border-left: 3px solid var(--border2); }
+.cs-sug.long  { border-left-color: var(--green); }
+.cs-sug.short { border-left-color: var(--red); }
+.cs-sug-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; padding: 14px 16px 12px; border-bottom: 1px solid var(--border); }
+.cs-sug-idwrap { min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.cs-sug-id { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--faint); }
+.cs-sug-pair { display: flex; align-items: center; gap: 10px; }
+.cs-sug-coin { font-size: 18px; font-weight: 700; color: var(--text); }
+.cs-sug-coin small { font-size: 11px; color: var(--faint); font-weight: 500; margin-left: 6px; font-family: 'JetBrains Mono', monospace; }
+.cs-sug-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.cs-sug-setup { font-size: 10px; font-weight: 700; color: var(--orange); background: rgba(247,147,26,.1); border: 1px solid rgba(247,147,26,.25); border-radius: 6px; padding: 3px 8px; }
+.cs-sug-tf { font-size: 10px; font-weight: 600; color: var(--dim); background: var(--s2); border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; font-family: 'JetBrains Mono', monospace; }
+.cs-urg { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; border-radius: 6px; padding: 3px 8px; }
+.cs-urg.hi { color: var(--red); background: rgba(247,100,122,.12); }
+.cs-urg.md { color: var(--orange); background: rgba(247,147,26,.12); }
+.cs-urg.lo { color: var(--dim); background: var(--s2); }
+.cs-sug-conf { flex-shrink: 0; width: 118px; text-align: center; }
+.cs-conf-num { font-size: 26px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); line-height: 1; }
+.cs-conf-num small { font-size: 12px; color: var(--faint); font-weight: 600; }
+.cs-conf-bar { height: 5px; border-radius: 3px; background: var(--s3); overflow: hidden; margin: 6px 0 4px; }
+.cs-conf-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--orange), #e6862a); }
+.cs-conf-lbl { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--faint); }
+.cs-sug-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); }
+.cs-kv { background: var(--s1); padding: 10px 13px; }
+.cs-kv-l { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); }
+.cs-kv-v { font-size: 13px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); margin-top: 3px; }
+.cs-kv-v.o { color: var(--orange); } .cs-kv-v.sm { font-size: 11px; font-weight: 600; }
+.cs-lvls { display: flex; flex-direction: column; gap: 1px; background: var(--border); border-top: 1px solid var(--border); }
+.cs-lvl { display: grid; grid-template-columns: 90px 1fr 76px 46px 130px; align-items: center; gap: 10px; background: var(--s2); padding: 9px 16px; font-family: 'JetBrains Mono', monospace; }
+.cs-lvl-k { font-size: 11px; font-weight: 700; color: var(--text); font-family: inherit; }
+.cs-lvl-k em { color: var(--faint); font-style: normal; font-size: 9px; }
+.cs-lvl-px { font-size: 13px; font-weight: 700; }
+.cs-lvl-px.g { color: var(--green); } .cs-lvl-px.r { color: var(--red); }
+.cs-lvl-pct { font-size: 11px; color: var(--dim); text-align: right; }
+.cs-lvl-r { font-size: 11px; color: var(--faint); text-align: right; }
+.cs-lvl-close { font-size: 10px; color: var(--faint); text-align: right; }
+.cs-lvl.stop { background: rgba(247,100,122,.05); }
+.cs-sug-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); }
+.cs-sug-col { background: var(--s1); padding: 11px 15px; }
+.cs-col-h { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 7px; }
+.cs-col-h.up { color: var(--green); } .cs-col-h.dn { color: var(--red); }
+.cs-col-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+.cs-col-list li { font-size: 11px; line-height: 1.45; color: var(--dim); padding-left: 15px; position: relative; }
+.cs-col-list li.pro::before { content: '+'; position: absolute; left: 0; color: var(--green); font-weight: 700; }
+.cs-col-list li.con::before { content: '−'; position: absolute; left: 0; color: var(--red); font-weight: 700; }
+.cs-col-list li.muted { color: var(--faint); padding-left: 0; }
+.cs-sug-sent { padding: 11px 16px; border-top: 1px solid var(--border); background: var(--s2); display: flex; flex-direction: column; gap: 7px; }
+.cs-sent-line { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; font-size: 11px; color: var(--dim); line-height: 1.45; }
+.cs-sent-tag { flex-shrink: 0; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--faint); background: var(--s3); border-radius: 5px; padding: 3px 7px; }
+.cs-sent-line.na { opacity: .72; }
+.cs-sent-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--dim); flex-shrink: 0; align-self: center; }
+.cs-sent-dot.g { background: var(--green); } .cs-sent-dot.r { background: var(--red); }
+.cs-sent-txt { min-width: 0; }
+.cs-sug-just { padding: 12px 16px; font-size: 11.5px; color: var(--dim); line-height: 1.6; border-top: 1px solid var(--border); }
+.cs-sug-just b { color: var(--text); font-weight: 600; }
+.cs-sug-foot { padding: 10px 16px; border-top: 1px solid var(--border); }
+.cs-ev-btn { display: inline-flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 600; color: var(--dim); background: var(--s2); border: 1px solid var(--border); border-radius: 7px; padding: 6px 11px; cursor: pointer; transition: color .15s, border-color .15s; }
+.cs-ev-btn:hover { color: var(--text); border-color: var(--border2); }
+.cs-ev-btn .cs-chev { transition: transform .18s; }
+.cs-ev-btn .cs-chev.up { transform: rotate(90deg); }
+.cs-sug .cs-detail { display: block; border-top: 1px solid var(--border); padding: 13px 16px; background: var(--s2); }
+.cs-desc { background: var(--s1); border: 1px solid var(--border); border-radius: 11px; overflow: hidden; }
+.cs-desc-h { font-size: 11px; font-weight: 700; color: var(--dim); padding: 11px 15px; cursor: pointer; list-style: none; }
+.cs-desc-h::-webkit-details-marker { display: none; }
+.cs-desc-h::before { content: '▸ '; color: var(--faint); }
+.cs-desc[open] .cs-desc-h::before { content: '▾ '; }
+.cs-desc-body { padding: 4px 8px 10px; }
+.cs-desc-row { display: grid; grid-template-columns: 1fr 60px 90px 1.4fr; align-items: center; gap: 10px; padding: 6px 8px; border-top: 1px solid var(--border); font-size: 11px; }
+.cs-desc-sym { font-weight: 700; color: var(--text); font-family: 'JetBrains Mono', monospace; }
+.cs-desc-side { font-size: 10px; font-weight: 600; color: var(--dim); }
+.cs-desc-side.long { color: var(--green); } .cs-desc-side.short { color: var(--red); }
+.cs-desc-score { font-size: 10px; color: var(--faint); font-family: 'JetBrains Mono', monospace; }
+.cs-desc-reason { font-size: 10.5px; color: var(--faint); text-align: right; }
+@media (max-width: 860px) {
+  .cs-sug-grid { grid-template-columns: repeat(2, 1fr); }
+  .cs-sug-top { flex-wrap: wrap; }
+  .cs-sug-conf { width: auto; display: flex; align-items: center; gap: 9px; }
+  .cs-sug-conf .cs-conf-bar { display: none; }
+  .cs-lvl { grid-template-columns: 66px 1fr 62px; grid-template-areas: "k px pct" "k r close"; row-gap: 2px; padding: 9px 14px; }
+  .cs-lvl-k { grid-area: k; align-self: center; } .cs-lvl-px { grid-area: px; } .cs-lvl-pct { grid-area: pct; }
+  .cs-lvl-r { grid-area: r; text-align: left; } .cs-lvl-close { grid-area: close; }
+  .cs-desc-row { grid-template-columns: 1fr auto auto; }
+  .cs-desc-score { display: none; }
+}
+@media (max-width: 560px) {
+  .cs-sug-grid { grid-template-columns: 1fr 1fr; }
+  .cs-sug-cols { grid-template-columns: 1fr; }
 }
 /* Heatmap de liquidações */
 .liqhm-stats { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
@@ -1319,8 +1412,8 @@ html.light .mnav-btn.active { color: var(--orange); }
     <!-- Cabeçalho -->
     <div class="cs-head">
       <div>
-        <div class="cs-title">CryptoScan <span class="cs-badge">Screener v1</span></div>
-        <div class="cs-sub">Screener de futuros perpétuos USDT da Bybit. O edge vem de <b>posicionamento</b> — funding, open interest, cascatas de liquidação — não de indicadores clássicos (que só filtram regime). Funil determinístico: universo → scoring → shortlist top-12.</div>
+        <div class="cs-title">CryptoScan <span class="cs-badge">Sugestões v2</span></div>
+        <div class="cs-sub">Sugestões de trade em perpétuos USDT da Bybit — <b>long ou short</b>, o que tiver maior potencial líquido. O edge vem de <b>posicionamento</b> (funding, open interest, cascatas de liquidação, long/short ratio), filtrado por regime e passado por um <b>risk engine</b> rigoroso: cada ideia sai como uma Sugestão de Trade completa, com stop, TP1/2/3, sizing e score de confiança. Nunca é execução automática.</div>
       </div>
       <button class="cs-scan-btn" id="cs-scan-btn" onclick="scanCs(true)">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.2" stroke="currentColor" stroke-width="1.4"/><line x1="9" y1="9" x2="12.5" y2="12.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
@@ -1331,29 +1424,33 @@ html.light .mnav-btn.active { color: var(--orange); }
     <!-- Contexto de mercado + config -->
     <div class="cs-ctx">
       <div class="cs-ctx-item"><div class="cs-ctx-lbl">Universo</div><div class="cs-ctx-val" id="cs-x-universe">—</div><div class="cs-ctx-sub">perps ≥ 30M turnover</div></div>
-      <div class="cs-ctx-item"><div class="cs-ctx-lbl">Shortlist</div><div class="cs-ctx-val" id="cs-x-short">—</div><div class="cs-ctx-sub">score ≥ 35, top-12</div></div>
+      <div class="cs-ctx-item"><div class="cs-ctx-lbl">Sugestões</div><div class="cs-ctx-val" id="cs-x-short">—</div><div class="cs-ctx-sub">passam custos, R:R e confiança</div></div>
       <div class="cs-ctx-item"><div class="cs-ctx-lbl">BTC 24h</div><div class="cs-ctx-val" id="cs-x-btc">—</div><div class="cs-ctx-sub">contexto direcional</div></div>
       <div class="cs-ctx-item"><div class="cs-ctx-lbl">Funding médio</div><div class="cs-ctx-val" id="cs-x-fund">—</div><div class="cs-ctx-sub">do universo /8h</div></div>
       <label class="cs-field"><span>Capital (USD)</span><input type="number" id="cs-capital" min="100" step="100" oninput="csCfgChange()"></label>
+      <label class="cs-field"><span>Risco/trade %</span><input type="number" id="cs-risk" min="0.5" max="1" step="0.05" oninput="csCfgChange()"></label>
     </div>
 
-    <!-- Pesos do scoring (config, só leitura) -->
+    <!-- Limites de gestão de risco (não negociáveis) + pesos -->
     <div class="cs-weights">
+      <span class="cs-wlbl">Risco:</span>
+      <span class="cs-wchip">/trade <b>0,5–1%</b></span>
+      <span class="cs-wchip">/dia <b>2%</b></span>
+      <span class="cs-wchip">/semana <b>5%</b></span>
+      <span class="cs-wchip">Drawdown máx <b>12%</b></span>
+      <span class="cs-wchip">Alav. máx <b>1,8×</b></span>
+      <span class="cs-wchip">R:R mín <b>1,8</b></span>
+      <span class="cs-wsep"></span>
       <span class="cs-wlbl">Pesos:</span>
       <span class="cs-wchip">Funding <b>30</b></span>
-      <span class="cs-wchip">OI div. <b>25</b></span>
+      <span class="cs-wchip">OI <b>25</b></span>
       <span class="cs-wchip">Cascata <b>20</b></span>
       <span class="cs-wchip">Regime <b>15</b></span>
       <span class="cs-wchip">Estrutura <b>10</b></span>
-      <span class="cs-wsep"></span>
-      <span class="cs-wchip">Risco/trade <b>0,75%</b></span>
-      <span class="cs-wchip">Alav. máx <b>1,8×</b></span>
-      <span class="cs-wchip">R:R <b>1,5</b></span>
-      <span class="cs-wchip">Custo RT <b>~0,17%</b></span>
     </div>
 
-    <!-- Shortlist (injetada por JS) -->
-    <div id="cs-list" class="cs-list"><div class="db-empty">Corre um scan para avaliar o universo…</div></div>
+    <!-- Sugestões (injetadas por JS) -->
+    <div id="cs-list" class="cs-list"><div class="db-empty">Corre um scan para gerar sugestões de trade…</div></div>
 
     <!-- Painéis de referência -->
     <div class="cs-ref">
@@ -1377,38 +1474,39 @@ html.light .mnav-btn.active { color: var(--orange); }
             <div class="cs-ev-row"><span>Slippage estimado (por lado)</span><b>0,030%</b></div>
             <div class="cs-ev-row tot"><span>Custo round-trip</span><b class="o">≈ 0,17%</b></div>
           </div>
-          <div class="cs-refbox-note">Qualquer setup cujo alvo não pague <b>≥2× os custos</b> é rejeitado automaticamente. Cada candidato mostra <b>p_win_breakeven</b> = (1 + custos_em_R) / (1 + R:R) — a taxa de acerto mínima para empatar. Win rate isolado não é métrica: o que importa é a expectância líquida de custos.</div>
+          <div class="cs-refbox-note">Nenhuma sugestão sai com <b>TP1 a pagar &lt;2× os custos</b> ou <b>R:R combinado &lt; 1,8</b>. O R:R combinado pondera TP1/TP2/TP3 pelos <b>partial closes</b> (40%/35%/25%) e clampa os alvos ao extremo do range de 24h — setups a meio do range são rejeitados por não terem espaço. Cada sugestão mostra <b>p_win_breakeven</b> = (1 + custos_em_R)/(1 + R:R): a taxa de acerto mínima para empatar. Win rate isolado não é métrica; o que importa é a expectância líquida.</div>
         </div>
       </div>
 
       <div class="cs-refbox">
-        <div class="cs-refbox-h">O funil</div>
+        <div class="cs-refbox-h">O funil → Sugestão de Trade</div>
         <div class="cs-refbox-b">
           <div class="cs-funnel">
-            <div class="cs-funnel-step"><span class="cs-fn-n">1</span><div><b>Universo (~60)</b><p>Todos os USDT-perps com turnover ≥ 30M.</p></div></div>
+            <div class="cs-funnel-step"><span class="cs-fn-n">1</span><div><b>Universo (~60)</b><p>USDT-perps com turnover ≥ 30M; enriquecem os top-45.</p></div></div>
             <div class="cs-funnel-step"><span class="cs-fn-n">2</span><div><b>Scoring determinístico</b><p>H1–H4 + estrutura → score composto. Mesmo input → mesmo score.</p></div></div>
-            <div class="cs-funnel-step"><span class="cs-fn-n">3</span><div><b>Shortlist (top-12)</b><p>Score ≥ 35, ordenado. Só a shortlist teria ido ao LLM.</p></div></div>
-            <div class="cs-funnel-step"><span class="cs-fn-n">4</span><div><b>Risk engine</b><p>Trade plan, rejeição por custos, cap 1,8×, breakeven.</p></div></div>
+            <div class="cs-funnel-step"><span class="cs-fn-n">3</span><div><b>Risk engine</b><p>Stop técnico+risco, TP1/2/3, sizing USDT+unidades, cap 1,8×, rejeição por custos/R:R.</p></div></div>
+            <div class="cs-funnel-step"><span class="cs-fn-n">4</span><div><b>Sugestão + confiança</b><p>Sentimento de posicionamento, confluências a favor/contra, score X/10, urgência e validade.</p></div></div>
           </div>
         </div>
       </div>
 
       <div class="cs-refbox">
-        <div class="cs-refbox-h">Pipeline backend <span class="cs-flag">fora do browser</span></div>
+        <div class="cs-refbox-h">Sentimento &amp; camadas backend <span class="cs-flag">fora do browser</span></div>
         <div class="cs-refbox-b">
-          <div class="cs-refbox-note">O núcleo determinístico acima corre ao vivo aqui. As camadas com estado ou chaves secretas pertencem ao serviço Python <b>CryptoScan</b> e não correm no browser:</div>
+          <div class="cs-refbox-note"><b>Ativo aqui, ao vivo:</b> sentimento de <b>posicionamento</b> derivado da Bybit v5 — long/short account ratio, funding e OI. Para perps é frequentemente mais acionável que o sentimento social.</div>
+          <div class="cs-refbox-note" style="margin-top:9px">As camadas com estado ou chaves secretas pertencem a um serviço Python e <b>não correm no browser</b>:</div>
           <ul class="cs-list-ul">
-            <li><b>LLM analyst</b> (claude-sonnet-4-6): veto qualitativo cético sobre a shortlist, coluna separada que não altera o score determinístico.</li>
-            <li><b>Paper trader</b>: loop de 15 min, fills com fees/slippage/funding, máx 3 posições, kill-switch diário a −3%.</li>
-            <li><b>Walk-forward</b>: janelas 60d treino / 14d teste, sem lookahead, teste de sensibilidade aos pesos (±20%).</li>
-            <li><b>Go-live</b> só após ≥60 dias de paper com expectância líquida positiva.</li>
+            <li><b>Sentimento social</b>: Grok/X, LunarCrush, Santiment e notícias (CoinDesk, The Block) — precisam de chaves de API.</li>
+            <li><b>On-chain</b>: Glassnode / Nansen / CryptoQuant — fluxos de exchange, cohorts, stablecoins.</li>
+            <li><b>LLM analyst</b>: veto qualitativo cético sobre a shortlist, coluna separada que não altera o score determinístico.</li>
+            <li><b>Paper trader &amp; walk-forward</b>: loop de 15 min com fees/slippage/funding, kill-switch diário −3%; go-live só após ≥60 dias de paper com expectância positiva.</li>
           </ul>
         </div>
       </div>
 
     </div>
 
-    <div class="cs-disclaimer">Ferramenta de apoio à decisão. Scoring calculado a partir de dados públicos da Bybit v5 (tickers, kline TF15/TF60, funding history, open interest). Proxy de liquidações via REST. Não é execução automática nem aconselhamento financeiro.</div>
+    <div class="cs-disclaimer">Ferramenta de apoio à decisão — <b>nunca execução automática nem aconselhamento financeiro</b>. Sugestões calculadas a partir de dados públicos da Bybit v5 (tickers, kline TF15/TF60, funding history, open interest, long/short ratio). Proxy de liquidações via REST. Aprovação humana obrigatória antes de qualquer ordem.</div>
 
   </div>
 </div>
@@ -3689,15 +3787,28 @@ const CS_CFG = {
   adxTrend: 25,
   bbSqueezePct: 15,            // percentil de largura BB → squeeze
   costPerSide: 0.055 + 0.030,  // % (fee taker + slippage) por lado
-  minRR: 1.5,
-  riskPct: 0.75,               // % do capital por trade
+  // ── Escala de saída (partial closes) — TP em múltiplos de R e % da posição a fechar
+  tp: [ { r: 1.0, close: 0.40 }, { r: 2.0, close: 0.35 }, { r: 3.5, close: 0.25 } ],
+  minRR: 1.8,                  // rejeita a sugestão se o R:R combinado for < 1,8
+  // ── Gestão de risco (limites do sistema, não negociáveis)
+  riskPct: 0.75,              // % do capital por trade (variável: 0,5–1%)
+  riskMin: 0.5, riskMax: 1.0,
+  dailyRiskPct: 2,            // risco máximo diário
+  weeklyRiskPct: 5,          // risco máximo semanal
+  maxDrawdownPct: 12,        // drawdown máximo do sistema
   maxLev: 1.8,
-  stopAtr: 1.2,
+  stopAtr: 1.2,              // stop de risco = 1,2×ATR(14)
+  stopAtrMax: 2.5,           // teto do stop (evita sizing minúsculo em stops técnicos largos)
   capital: 10000,
   concurrency: 8,
 };
-try { const s = JSON.parse(localStorage.getItem('csCfg') || '{}'); if (s.capital > 0) CS_CFG.capital = s.capital; } catch (e) {}
+try {
+  const s = JSON.parse(localStorage.getItem('csCfg') || '{}');
+  if (s.capital > 0) CS_CFG.capital = s.capital;
+  if (s.riskPct >= CS_CFG.riskMin && s.riskPct <= CS_CFG.riskMax) CS_CFG.riskPct = s.riskPct;
+} catch (e) {}
 const CS_COST_RT = 2 * CS_CFG.costPerSide;   // round-trip ≈ 0,17%
+const csSaveCfg = () => { try { localStorage.setItem('csCfg', JSON.stringify({ capital: CS_CFG.capital, riskPct: CS_CFG.riskPct })); } catch (e) {} };
 
 let csData = null, csScanning = false, csLastScan = 0, csExpanded = null;
 
@@ -3762,6 +3873,14 @@ async function csFetchOI(sym) {
   const r = await fetch(`${BYBIT}/v5/market/open-interest?category=linear&symbol=${sym}&intervalTime=15min&limit=96`);
   const d = await r.json();
   return (d?.result?.list || []).map(x => +x.openInterest).filter(v => v > 0).reverse();
+}
+// Long/Short account ratio (posicionamento do crowd) — sentimento REAL de derivados.
+async function csFetchLSR(sym) {
+  try {
+    const r = await fetch(`${BYBIT}/v5/market/account-ratio?category=linear&symbol=${sym}&period=1h&limit=24`);
+    const d = await r.json();
+    return (d?.result?.list || []).map(x => ({ buy: parseFloat(x.buyRatio), sell: parseFloat(x.sellRatio) })).reverse();
+  } catch (e) { return []; }
 }
 
 // ── Sinais (cada um: { score 0-100, dir -1|0|+1, ev, on }) ──
@@ -3872,19 +3991,152 @@ function csComposite(sigs, regime) {
 }
 
 // ── Trade plan + risk engine ──
-function csTradePlan(entry, atr, dir, capital) {
+// Stop de risco (1,2×ATR) + stop técnico (swing recente 20 barras TF15). O stop
+// final é o mais afastado dos dois (protege do ruído), com teto em 2,5×ATR. Os
+// alvos TP1/2/3 são múltiplos de R, mas clampados ao extremo do range 24h — o
+// que dá tento real ao R:R combinado (setups a meio do range são rejeitados).
+function csTradePlan(entry, atr, dir, capital, k15, riskPct) {
   if (!dir || !atr || !entry) return null;
-  const stopDist = CS_CFG.stopAtr * atr;
+  const rp = (riskPct != null ? riskPct : CS_CFG.riskPct);
+  const closes = (k15 && k15.closes) || [], highs = (k15 && k15.highs) || [], lows = (k15 && k15.lows) || [];
+  const riskStopDist = CS_CFG.stopAtr * atr;
+  const riskStop = dir > 0 ? entry - riskStopDist : entry + riskStopDist;
+  // Stop técnico: além do swing recente (20 barras) + buffer de 0,15×ATR.
+  const buf = 0.15 * atr;
+  let techStop;
+  if (dir > 0) techStop = (lows.length ? Math.min(...lows.slice(-20)) : riskStop) - buf;
+  else techStop = (highs.length ? Math.max(...highs.slice(-20)) : riskStop) + buf;
+  const maxDist = CS_CFG.stopAtrMax * atr;
+  let stopDist = Math.min(maxDist, Math.max(riskStopDist, Math.abs(entry - techStop)));
   const stop = dir > 0 ? entry - stopDist : entry + stopDist;
-  const target = dir > 0 ? entry + CS_CFG.minRR * stopDist : entry - CS_CFG.minRR * stopDist;
-  const stopPct = stopDist / entry * 100, targetPct = CS_CFG.minRR * stopDist / entry * 100;
-  const rejected = targetPct <= 2 * CS_COST_RT;         // alvo tem de pagar ≥2× custos
-  const riskUsd = capital * CS_CFG.riskPct / 100;
+  const stopPct = stopDist / entry * 100;
+  // Teto/piso estrutural (range 24h ≈ 96 velas TF15) para clampar os alvos.
+  const w = closes.slice(-96), hi = w.length ? Math.max(...w) : entry * 2, lo = w.length ? Math.min(...w) : entry / 2;
+  const tps = CS_CFG.tp.map(t => {
+    let px = dir > 0 ? entry + t.r * stopDist : entry - t.r * stopDist, clamped = false;
+    if (dir > 0 && hi > entry && px > hi) { px = hi; clamped = true; }
+    if (dir < 0 && lo < entry && px < lo) { px = lo; clamped = true; }
+    const r = Math.abs(px - entry) / stopDist;
+    return { price: px, rTarget: t.r, r, close: t.close, pct: Math.abs(px - entry) / entry * 100, clamped };
+  });
+  const wSum = tps.reduce((s, t) => s + t.close, 0) || 1;
+  const blendedRR = tps.reduce((s, t) => s + t.r * t.close, 0) / wSum;
+  const rejectedCost = tps[0].pct <= 2 * CS_COST_RT;    // TP1 tem de pagar ≥2× custos
+  const rejectedRR = blendedRR < CS_CFG.minRR;          // R:R combinado tem de ser ≥1,8
+  const rejected = rejectedCost || rejectedRR;
+  const riskUsd = capital * rp / 100;
   let qty = riskUsd / stopDist, notional = qty * entry, lev = notional / capital, capped = false;
   if (lev > CS_CFG.maxLev) { capped = true; lev = CS_CFG.maxLev; notional = lev * capital; qty = notional / entry; }
   const costsInR = CS_COST_RT / stopPct;                // custo round-trip em unidades de R
-  const pWinBE = (1 + costsInR) / (1 + CS_CFG.minRR);   // taxa de acerto mínima p/ empatar
-  return { entry, stop, target, stopPct, targetPct, rejected, riskUsd, qty, notional, lev, capped, pWinBE };
+  const pWinBE = (1 + costsInR) / (1 + blendedRR);      // taxa de acerto mínima p/ empatar
+  // Zona de entrada: ±0,15×ATR à volta do preço atual.
+  return {
+    entry, zLo: entry - buf, zHi: entry + buf, stop, riskStop, techStop, stopDist, stopPct,
+    tps, blendedRR, rejected, rejectedCost, rejectedRR, riskUsd, qty, notional, lev, capped, pWinBE, riskPct: rp,
+  };
+}
+
+// ── Sentimento de posicionamento (Bybit: L/S ratio + funding + OI) ──
+// Não é sentimento social (X/notícias precisam de backend com chaves). É o
+// posicionamento real do crowd nos derivados — para perps é o sinal mais acionável.
+// align: +1 = crowd do lado OPOSTO ao trade (a favor do fade), −1 = crowd do mesmo lado.
+function csSentiment(lsr, funding, oiChg, dir) {
+  if (!lsr || !lsr.length) return { longPct: null, tone: 'na', align: 0, text: 'Posicionamento (L/S ratio) indisponível para este par.' };
+  const last = lsr[lsr.length - 1], longPct = last.buy * 100, shortPct = last.sell * 100;
+  const prev = lsr.length >= 7 ? lsr[lsr.length - 7] : lsr[0];   // ≈6h atrás
+  const dLong = (last.buy - prev.buy) * 100;
+  let tone = 'neutral';
+  if (longPct >= 60) tone = 'crowded-long';
+  else if (longPct <= 40) tone = 'crowded-short';
+  let align = 0;
+  if (tone === 'crowded-long') align = dir < 0 ? 1 : dir > 0 ? -1 : 0;
+  else if (tone === 'crowded-short') align = dir > 0 ? 1 : dir < 0 ? -1 : 0;
+  const fundTxt = funding >= 0 ? `longs pagam +${funding.toFixed(4)}%/8h` : `shorts pagam ${funding.toFixed(4)}%/8h`;
+  const oiTxt = oiChg == null ? '' : ` · OI 6h ${oiChg >= 0 ? '+' : ''}${oiChg.toFixed(1)}%`;
+  const text = `Contas Bybit ${longPct.toFixed(0)}% long / ${shortPct.toFixed(0)}% short (${dLong >= 0 ? '+' : ''}${dLong.toFixed(1)}pp em 6h) · ${fundTxt}${oiTxt}.`;
+  return { longPct, shortPct, dLong, tone, align, text };
+}
+
+// Score de confiança 0–10 a partir do score composto, ajustado por R:R, nº de
+// confluências e alinhamento do sentimento de posicionamento.
+function csConfidence(score, plan, sentiment, nConfl) {
+  let c = score / 10;                              // score ~0–100 → 0–10
+  if (plan) {
+    if (plan.rejected) c -= 3;
+    else if (plan.blendedRR >= 2.4) c += 0.6;
+    else if (plan.blendedRR >= 2.0) c += 0.3;
+    if (plan.capped) c -= 0.3;
+  } else c -= 3;
+  if (nConfl >= 3) c += 0.6; else if (nConfl <= 1) c -= 0.5;
+  if (sentiment) { if (sentiment.align > 0) c += 0.5; else if (sentiment.align < 0) c -= 0.7; }
+  return Math.max(1, Math.min(10, c));
+}
+
+// Tipo de setup (etiqueta legível) a partir do sinal dominante e do regime.
+function csSetupType(c) {
+  const s = c.sigs;
+  if (s.h3.on) return 'Cascade Fade · Reversal';
+  if (s.h1.on) return 'Funding Squeeze · Reversal';
+  if (s.h2.on && s.h2.dir !== 0) return 'OI Flush · Fade';
+  const reg = s.regime.type;
+  if (reg === 'squeeze') return 'Squeeze · pré-breakout';
+  if ((reg === 'trend_up' && c.dir > 0) || (reg === 'trend_down' && c.dir < 0)) return 'Trend Continuation';
+  if (s.st.on) return 'Range Reversal';
+  return c.dir > 0 ? 'Long tático' : 'Short tático';
+}
+
+// Confluências a favor / contra (listas para o card).
+function csConfluences(c, sentiment) {
+  const pro = [], con = [], s = c.sigs, dir = c.dir;
+  const add = (sig, label) => {
+    if (!sig.on) return;
+    if (sig.dir === 0) pro.push(label + ' (combustível, direção neutra)');
+    else if (sig.dir === dir) pro.push(label);
+    else con.push(label + ' aponta o lado oposto');
+  };
+  add(s.h1, 'H1 Funding squeeze');
+  add(s.h2, 'H2 OI divergence');
+  add(s.h3, 'H3 Cascata → mean-reversion');
+  add(s.st, 'Estrutura — extremo do range 24h');
+  const reg = CS_REG_LABEL[s.regime.type] || s.regime.type;
+  if (c.fit >= 70) pro.push(`Regime ${reg} favorece (fit ${c.fit.toFixed(0)})`);
+  else if (c.fit <= 40) con.push(`Regime ${reg} desfavorável (fit ${c.fit.toFixed(0)})`);
+  if (sentiment) {
+    if (sentiment.align > 0) pro.push('Posicionamento Bybit — crowd do lado oposto (a favor do fade)');
+    else if (sentiment.align < 0) con.push('Posicionamento Bybit — crowd do mesmo lado do trade');
+  }
+  const p = c.plan;
+  if (p && !p.rejected) pro.push(`R:R combinado ${p.blendedRR.toFixed(2)} (TP1/2/3)`);
+  if (p && p.rejectedCost) con.push('TP1 não paga 2× os custos');
+  if (p && p.rejectedRR) con.push(`R:R combinado ${p.blendedRR.toFixed(2)} < ${CS_CFG.minRR} (alvos clampados no range)`);
+  if (p && p.capped) con.push('Alavancagem no cap 1,8× — sizing limitado');
+  return { pro, con };
+}
+
+// Nível de urgência e janela de validade da sugestão.
+function csUrgency(c) {
+  const s = c.sigs;
+  if (s.h3.on) return 'Alta';
+  if (c.score >= 65 && (s.h1.on || s.h2.on)) return 'Alta';
+  if (c.score >= 50) return 'Média';
+  return 'Baixa';
+}
+function csValidity(c) {
+  if (c.sigs.h3.on) return 'próximas 2–6h';
+  const reg = c.sigs.regime.type;
+  if (reg === 'trend_up' || reg === 'trend_down') return 'próximas 12–24h';
+  return 'próximas 4–12h';
+}
+// Justificação detalhada (concatena a evidência dos sinais ativos + regime + sentimento).
+function csJustify(c, sentiment) {
+  const s = c.sigs, bits = [];
+  if (s.h1.on) bits.push(s.h1.ev);
+  if (s.h3.on) bits.push(s.h3.ev);
+  if (s.h2.on) bits.push(s.h2.ev);
+  if (s.st.on) bits.push(s.st.ev);
+  bits.push(`Regime 1h: ${s.regime.ev} ${CS_REG_LABEL[s.regime.type] || s.regime.type} (fit ${c.fit.toFixed(0)}).`);
+  if (sentiment && sentiment.tone !== 'na') bits.push(sentiment.text);
+  return bits.join(' ');
 }
 
 // ── Orquestração do scan ──
@@ -3910,16 +4162,19 @@ async function scanCs(force) {
     const avgFund = csMean(enrich.map(c => c.fr));
     await trdPool(enrich, async c => {
       try {
-        const [k15, k60, fund, oi] = await Promise.all([
+        const [k15, k60, fund, oi, lsr] = await Promise.all([
           csFetchKline(c.symbol, '15', 200), csFetchKline(c.symbol, '60', 120),
-          csFetchFunding(c.symbol), csFetchOI(c.symbol),
+          csFetchFunding(c.symbol), csFetchOI(c.symbol), csFetchLSR(c.symbol),
         ]);
         c.atr = csATR(k15.highs, k15.lows, k15.closes, 14);
+        c.k15 = { closes: k15.closes, highs: k15.highs, lows: k15.lows };   // guardado p/ recomputar o plano ao mudar config
         const sigs = { h1: csH1(fund, c.chg24), h2: csH2(oi, k15.closes), h3: csH3(k15, oi), st: csStructure(k15.closes) };
         const regime = csRegime(k60);
         const comp = csComposite(sigs, regime);
         c.sigs = { ...sigs, regime }; c.dir = comp.finalDir; c.score = comp.score; c.fit = comp.fit;
-        c.plan = csTradePlan(c.price, c.atr, c.dir, CS_CFG.capital);
+        c.oiChg6h = (oi && oi.length >= 25) ? (oi[oi.length - 1] - oi[oi.length - 25]) / oi[oi.length - 25] * 100 : null;
+        c.plan = csTradePlan(c.price, c.atr, c.dir, CS_CFG.capital, c.k15, CS_CFG.riskPct);
+        c.sentiment = csSentiment(lsr, c.fr, c.oiChg6h, c.dir);
       } catch (e) { c.err = true; }
     }, CS_CFG.concurrency);
     const scored = enrich.filter(c => !c.err && c.score >= CS_CFG.scoreThreshold).sort((a, b) => b.score - a.score);
@@ -3935,47 +4190,107 @@ async function scanCs(force) {
   }
 }
 
-// ── Render ──
+// ── Render — Sugestões de Trade ──
 const CS_REG_LABEL = { trend_up: 'Trend ↑', trend_down: 'Trend ↓', ranging: 'Ranging', squeeze: 'Squeeze' };
 function csRender() {
   if (!csData) return;
   set('cs-x-universe', csData.universeSize);
-  set('cs-x-short', csData.shortlist.length);
   const be = document.getElementById('cs-x-btc');
   if (be) { be.textContent = csData.btc24 == null ? '—' : (csData.btc24 >= 0 ? '+' : '') + csData.btc24.toFixed(2) + '%'; be.style.color = csData.btc24 == null ? '' : csData.btc24 >= 0 ? 'var(--green)' : 'var(--red)'; }
   set('cs-x-fund', (csData.avgFund >= 0 ? '+' : '') + csData.avgFund.toFixed(4) + '%');
   const listEl = document.getElementById('cs-list'); if (!listEl) return;
-  if (!csData.shortlist.length) { listEl.innerHTML = `<div class="db-empty">Nenhum símbolo passou o threshold de ${CS_CFG.scoreThreshold}. Sem oportunidades qualificadas neste momento — a ausência de setup é um resultado válido.</div>`; return; }
-  listEl.innerHTML = csData.shortlist.map((c, i) => csRenderRow(c, i)).join('');
+  const all = csData.shortlist;
+  all.forEach(c => {
+    c.nConfl = [c.sigs.h1, c.sigs.h2, c.sigs.h3, c.sigs.st].filter(x => x.on).length;
+    c.confidence = csConfidence(c.score, c.plan, c.sentiment, c.nConfl);
+  });
+  const isSug = c => c.dir !== 0 && c.plan && !c.plan.rejected && c.confidence >= 4;
+  const sug = all.filter(isSug).sort((a, b) => b.confidence - a.confidence);
+  const desc = all.filter(c => !isSug(c));
+  set('cs-x-short', sug.length);
+  if (!sug.length) {
+    listEl.innerHTML = `<div class="cs-nosetup"><div class="cs-nosetup-h">Sem setup de alta probabilidade neste momento</div>` +
+      `<div class="cs-nosetup-b">O universo foi avaliado mas nenhum candidato passou os filtros de direção, custos e R:R ≥ ${CS_CFG.minRR}. A ausência de setup é um resultado válido — preferimos qualidade a quantidade.</div></div>` +
+      csDescHtml(desc);
+    return;
+  }
+  listEl.innerHTML = sug.map((c, i) => csRenderCard(c, i + 1)).join('') + csDescHtml(desc);
 }
-function csRenderRow(c, i) {
-  const dir = c.dir, sideCls = dir > 0 ? 'long' : dir < 0 ? 'short' : 'flat', sideLbl = dir > 0 ? 'Long' : dir < 0 ? 'Short' : 'Neutro';
-  const tags = [];
-  if (c.sigs.h1.on) tags.push('Funding');
-  if (c.sigs.h2.on) tags.push('OI');
-  if (c.sigs.h3.on) tags.push('Cascata');
-  if (c.sigs.st.on) tags.push('Estrutura');
-  tags.push(CS_REG_LABEL[c.sigs.regime.type] || c.sigs.regime.type);
-  const tagsHtml = tags.map(t => `<span class="cs-tag on">${t}</span>`).join('');
-  const p = c.plan;
-  let planMini, beVal = '—';
-  if (!p) planMini = '<div class="cs-plan-lbl">Plano</div><div class="cs-plan-val rej">sem direção</div>';
-  else if (p.rejected) { planMini = '<div class="cs-plan-lbl">Entrada</div><div class="cs-plan-val rej">rejeitado · custos</div>'; beVal = (p.pWinBE * 100).toFixed(0) + '%'; }
-  else { planMini = `<div class="cs-plan-lbl">Entrada → Alvo</div><div class="cs-plan-val">${fmtPx(p.entry)} → ${fmtPx(p.target)}</div>`; beVal = (p.pWinBE * 100).toFixed(0) + '%'; }
-  const open = csExpanded === c.symbol ? 'open' : '';
-  return `<div class="cs-row ${open}">
-    <div class="cs-row-main" onclick="csToggle('${c.symbol}')">
-      <div class="cs-rank">${i + 1}</div>
-      <div class="cs-sym-wrap"><span class="cs-side ${sideCls}">${sideLbl}</span><span class="cs-sym">${c.coin}<small>${fmtPx(c.price)}</small></span></div>
-      <div class="cs-score-wrap"><div class="cs-score-top"><span class="cs-score-lbl">Score</span><span class="cs-score-num">${c.score.toFixed(0)}</span></div><div class="cs-score-bar"><div class="cs-score-fill" style="width:${Math.min(100, c.score)}%"></div></div></div>
-      <div class="cs-tags">${tagsHtml}</div>
-      <div class="cs-plan-mini">${planMini}</div>
-      <div class="cs-be"><div class="cs-plan-lbl">p breakeven</div><div class="cs-be-val">${beVal}</div><svg class="cs-chev" width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3 1.5 6.5 5 3 8.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+
+function csRenderCard(c, id) {
+  const p = c.plan, s = c.sigs;
+  const sideCls = c.dir > 0 ? 'long' : 'short', sideLbl = c.dir > 0 ? 'LONG' : 'SHORT';
+  const conf = c.confidence, urg = csUrgency(c), setup = csSetupType(c);
+  const urgCls = urg === 'Alta' ? 'hi' : urg === 'Média' ? 'md' : 'lo';
+  const { pro, con } = csConfluences(c, c.sentiment);
+  const tfLbl = '15m · filtro 1h';
+  // Escada de saída (TP1/2/3 + stop)
+  const tpRows = p.tps.map((t, i) => `<div class="cs-lvl tp">
+      <span class="cs-lvl-k">TP${i + 1}${t.clamped ? ' <em>(range)</em>' : ''}</span>
+      <span class="cs-lvl-px g">${fmtPx(t.price)}</span>
+      <span class="cs-lvl-pct">+${t.pct.toFixed(2)}%</span>
+      <span class="cs-lvl-r">${t.r.toFixed(1)}R</span>
+      <span class="cs-lvl-close">fecha ${(t.close * 100).toFixed(0)}%</span>
+    </div>`).join('');
+  const stopRow = `<div class="cs-lvl stop">
+      <span class="cs-lvl-k">Stop</span>
+      <span class="cs-lvl-px r">${fmtPx(p.stop)}</span>
+      <span class="cs-lvl-pct">−${p.stopPct.toFixed(2)}%</span>
+      <span class="cs-lvl-r">1R</span>
+      <span class="cs-lvl-close">técnico + 1,2×ATR</span>
+    </div>`;
+  const proHtml = pro.length ? pro.map(x => `<li class="pro">${x}</li>`).join('') : '<li class="muted">—</li>';
+  const conHtml = con.length ? con.map(x => `<li class="con">${x}</li>`).join('') : '<li class="muted">Sem riscos relevantes assinalados.</li>';
+  const sentDot = c.sentiment.tone === 'crowded-long' ? 'r' : c.sentiment.tone === 'crowded-short' ? 'g' : '';
+  const open = csExpanded === c.symbol;
+  return `<div class="cs-sug ${sideCls}">
+    <div class="cs-sug-top">
+      <div class="cs-sug-idwrap">
+        <div class="cs-sug-id">SUGESTÃO #${id}</div>
+        <div class="cs-sug-pair"><span class="cs-side ${sideCls}">${sideLbl}</span><span class="cs-sug-coin">${c.coin}<small>${fmtPx(c.price)}</small></span></div>
+        <div class="cs-sug-meta"><span class="cs-sug-setup">${setup}</span><span class="cs-sug-tf">${tfLbl}</span><span class="cs-urg ${urgCls}">Urgência ${urg}</span></div>
+      </div>
+      <div class="cs-sug-conf">
+        <div class="cs-conf-num">${conf.toFixed(1)}<small>/10</small></div>
+        <div class="cs-conf-bar"><div class="cs-conf-fill" style="width:${conf * 10}%"></div></div>
+        <div class="cs-conf-lbl">Confiança</div>
+      </div>
     </div>
-    ${open ? csRenderDetail(c) : ''}
+
+    <div class="cs-sug-grid">
+      <div class="cs-kv"><div class="cs-kv-l">Entrada ideal</div><div class="cs-kv-v">${fmtPx(p.entry)}</div></div>
+      <div class="cs-kv"><div class="cs-kv-l">Zona de entrada</div><div class="cs-kv-v">${fmtPx(p.zLo)} – ${fmtPx(p.zHi)}</div></div>
+      <div class="cs-kv"><div class="cs-kv-l">R:R combinado</div><div class="cs-kv-v o">${p.blendedRR.toFixed(2)} : 1</div></div>
+      <div class="cs-kv"><div class="cs-kv-l">Risco / trade</div><div class="cs-kv-v">${fmtUsd(p.riskUsd)} · ${p.riskPct}%</div></div>
+      <div class="cs-kv"><div class="cs-kv-l">Position size</div><div class="cs-kv-v">${fmtUsd(p.notional)} · ${csFmtQty(p.qty)} ${c.coin}</div></div>
+      <div class="cs-kv"><div class="cs-kv-l">Alavancagem</div><div class="cs-kv-v ${p.capped ? 'o' : ''}">${p.lev.toFixed(2)}×${p.capped ? ' · cap' : ''}</div></div>
+      <div class="cs-kv"><div class="cs-kv-l">p_win breakeven</div><div class="cs-kv-v">${(p.pWinBE * 100).toFixed(0)}%</div></div>
+      <div class="cs-kv"><div class="cs-kv-l">Validade</div><div class="cs-kv-v sm">${csValidity(c)}</div></div>
+    </div>
+
+    <div class="cs-lvls">${tpRows}${stopRow}</div>
+
+    <div class="cs-sug-cols">
+      <div class="cs-sug-col"><div class="cs-col-h up">Confluências a favor</div><ul class="cs-col-list">${proHtml}</ul></div>
+      <div class="cs-sug-col"><div class="cs-col-h dn">Confluências contra / riscos</div><ul class="cs-col-list">${conHtml}</ul></div>
+    </div>
+
+    <div class="cs-sug-sent">
+      <div class="cs-sent-line"><span class="cs-sent-tag">Sentimento · posicionamento (Bybit)</span><span class="cs-sent-dot ${sentDot}"></span><span class="cs-sent-txt">${c.sentiment.text}</span></div>
+      <div class="cs-sent-line na"><span class="cs-sent-tag">Sentimento · X + notícias</span><span class="cs-sent-txt">N/D — requer serviço backend com chaves (Grok/X, LunarCrush, notícias). Ver painel “Pipeline backend”.</span></div>
+    </div>
+
+    <div class="cs-sug-just"><b>Justificação:</b> ${csJustify(c, c.sentiment)}</div>
+
+    <div class="cs-sug-foot">
+      <button class="cs-ev-btn" onclick="csToggle('${c.symbol}')">${open ? 'Ocultar' : 'Ver'} evidência dos sinais<svg class="cs-chev ${open ? 'up' : ''}" width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3 1.5 6.5 5 3 8.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    </div>
+    ${open ? csRenderEvidence(c) : ''}
   </div>`;
 }
-function csRenderDetail(c) {
+
+// Grelha de evidência por sinal (expandível dentro do card).
+function csRenderEvidence(c) {
   const s = c.sigs;
   const card = (tag, title, sig) => {
     const dc = sig.dir > 0 ? 'long' : sig.dir < 0 ? 'short' : 'flat';
@@ -3983,38 +4298,53 @@ function csRenderDetail(c) {
     return `<div class="cs-ev-card"><div class="cs-ev-h">${tag} · ${title}<span class="cs-ev-dir ${dc}">${sig.on ? dl : 'off'} · ${(sig.score || 0).toFixed(0)}</span></div><div class="cs-ev-txt">${sig.ev}</div></div>`;
   };
   const regCard = `<div class="cs-ev-card"><div class="cs-ev-h">H4 · Regime<span class="cs-ev-dir flat">${CS_REG_LABEL[s.regime.type] || s.regime.type} · fit ${c.fit.toFixed(0)}</span></div><div class="cs-ev-txt">${s.regime.ev} ${CS_REG_LABEL[s.regime.type] || s.regime.type}.</div></div>`;
-  const p = c.plan;
-  let planHtml;
-  if (!p) planHtml = '<div class="cs-reject">Sem direção resolvida — nenhum trade plan.</div>';
-  else if (p.rejected) planHtml = `<div class="cs-reject">Trade rejeitado: alvo ${p.targetPct.toFixed(2)}% não paga 2× os custos (${(2 * CS_COST_RT).toFixed(2)}%). p_win_breakeven ${(p.pWinBE * 100).toFixed(0)}%.</div>`;
-  else planHtml = `<div class="cs-plan-full">
-    <div class="cs-pf-item"><div class="cs-pf-lbl">Entrada</div><div class="cs-pf-val">${fmtPx(p.entry)}</div></div>
-    <div class="cs-pf-item"><div class="cs-pf-lbl">Stop (1,2×ATR)</div><div class="cs-pf-val r">${fmtPx(p.stop)} · ${p.stopPct.toFixed(2)}%</div></div>
-    <div class="cs-pf-item"><div class="cs-pf-lbl">Alvo (R:R 1,5)</div><div class="cs-pf-val g">${fmtPx(p.target)} · ${p.targetPct.toFixed(2)}%</div></div>
-    <div class="cs-pf-item"><div class="cs-pf-lbl">Notional</div><div class="cs-pf-val">${fmtUsd(p.notional)}</div></div>
-    <div class="cs-pf-item"><div class="cs-pf-lbl">Alavancagem</div><div class="cs-pf-val ${p.capped ? 'o' : ''}">${p.lev.toFixed(2)}×${p.capped ? ' · cap' : ''}</div></div>
-    <div class="cs-pf-item"><div class="cs-pf-lbl">Risco</div><div class="cs-pf-val">${fmtUsd(p.riskUsd)} · ${CS_CFG.riskPct}%</div></div>
-    <div class="cs-pf-item"><div class="cs-pf-lbl">p breakeven</div><div class="cs-pf-val o">${(p.pWinBE * 100).toFixed(0)}%</div></div>
-  </div>`;
   return `<div class="cs-detail">
     <div class="cs-ev-grid">
-      ${card('H1', 'Funding', s.h1)}
+      ${card('H1', 'Funding squeeze', s.h1)}
       ${card('H2', 'OI divergence', s.h2)}
       ${card('H3', 'Cascade fade', s.h3)}
       ${card('+', 'Estrutura', s.st)}
       ${regCard}
     </div>
-    ${planHtml}
   </div>`;
 }
+
+// Secção compacta de candidatos descartados (não sugeridos).
+function csDescHtml(desc) {
+  if (!desc.length) return '';
+  const rows = desc.slice(0, 12).map(c => {
+    const side = c.dir > 0 ? 'Long' : c.dir < 0 ? 'Short' : '—';
+    let reason = 'baixa confiança';
+    if (!c.dir) reason = 'sem direção resolvida';
+    else if (c.plan && c.plan.rejectedRR) reason = `R:R ${c.plan.blendedRR.toFixed(2)} < ${CS_CFG.minRR}`;
+    else if (c.plan && c.plan.rejectedCost) reason = 'alvo não paga custos';
+    return `<div class="cs-desc-row"><span class="cs-desc-sym">${c.coin}</span><span class="cs-desc-side ${c.dir > 0 ? 'long' : c.dir < 0 ? 'short' : ''}">${side}</span><span class="cs-desc-score">score ${c.score.toFixed(0)}</span><span class="cs-desc-reason">${reason}</span></div>`;
+  }).join('');
+  return `<details class="cs-desc"><summary class="cs-desc-h">Candidatos descartados (${desc.length}) — filtrados por direção, custos ou R:R</summary><div class="cs-desc-body">${rows}</div></details>`;
+}
+
+// Quantidade do ativo com resolução adaptada à magnitude.
+function csFmtQty(q) {
+  const a = Math.abs(q);
+  if (!isFinite(a) || a === 0) return '0';
+  if (a >= 1000) return fmt(a, 0);
+  if (a >= 1) return fmt(a, 3);
+  return fmt(a, Math.min(8, 6));
+}
+
 function csToggle(sym) { csExpanded = csExpanded === sym ? null : sym; csRender(); }
 function csCfgChange() {
-  const v = parseFloat(document.getElementById('cs-capital').value);
-  if (isFinite(v) && v > 0) { CS_CFG.capital = v; try { localStorage.setItem('csCfg', JSON.stringify({ capital: v })); } catch (e) {} }
-  if (csData) { csData.shortlist.forEach(c => { c.plan = csTradePlan(c.price, c.atr, c.dir, CS_CFG.capital); }); csRender(); }
+  const capEl = document.getElementById('cs-capital'), riskEl = document.getElementById('cs-risk');
+  const cv = parseFloat(capEl && capEl.value);
+  if (isFinite(cv) && cv > 0) CS_CFG.capital = cv;
+  const rv = parseFloat(riskEl && riskEl.value);
+  if (isFinite(rv) && rv > 0) CS_CFG.riskPct = Math.max(CS_CFG.riskMin, Math.min(CS_CFG.riskMax, rv));
+  csSaveCfg();
+  if (csData) { csData.shortlist.forEach(c => { c.plan = csTradePlan(c.price, c.atr, c.dir, CS_CFG.capital, c.k15, CS_CFG.riskPct); }); csRender(); }
 }
 function renderCsTab() {
   const cap = document.getElementById('cs-capital'); if (cap && !cap.value) cap.value = CS_CFG.capital;
+  const rk = document.getElementById('cs-risk'); if (rk && !rk.value) rk.value = CS_CFG.riskPct;
   scanCs(false);
 }
 
