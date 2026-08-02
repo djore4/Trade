@@ -3781,8 +3781,9 @@ const CS_CFG = {
   minTurnover: 30e6,           // filtro de universo (USD)
   universeTop: 45,             // símbolos enriquecidos por turnover (perf browser)
   weights: { funding: 30, oi: 25, cascade: 20, regime: 15, structure: 10 },
-  scoreThreshold: 35,
+  scoreThreshold: 30,
   shortlistMax: 12,
+  radarMax: 10,              // candidatos mostrados no radar quando ficam abaixo da fasquia
   fundingZ: 2,                 // |z| para H1
   adxTrend: 25,
   bbSqueezePct: 15,            // percentil de largura BB → squeeze
@@ -3995,7 +3996,7 @@ function csComposite(sigs, regime) {
 // final é o mais afastado dos dois (protege do ruído), com teto em 2,5×ATR. Os
 // alvos TP1/2/3 são múltiplos de R, mas clampados ao extremo do range 24h — o
 // que dá tento real ao R:R combinado (setups a meio do range são rejeitados).
-function csTradePlan(entry, atr, dir, capital, k15, riskPct) {
+function csTradePlan(entry, atr, dir, capital, k15, riskPct, regimeType) {
   if (!dir || !atr || !entry) return null;
   const rp = (riskPct != null ? riskPct : CS_CFG.riskPct);
   const closes = (k15 && k15.closes) || [], highs = (k15 && k15.highs) || [], lows = (k15 && k15.lows) || [];
@@ -4010,12 +4011,21 @@ function csTradePlan(entry, atr, dir, capital, k15, riskPct) {
   let stopDist = Math.min(maxDist, Math.max(riskStopDist, Math.abs(entry - techStop)));
   const stop = dir > 0 ? entry - stopDist : entry + stopDist;
   const stopPct = stopDist / entry * 100;
-  // Teto/piso estrutural (range 24h ≈ 96 velas TF15) para clampar os alvos.
+  // Alcance realista dos alvos. Parte-se do range de 24h (96 velas TF15) mas
+  // deixa-se margem: pelo menos uma extensão de 1× range além da entrada (1,5×
+  // se o regime estiver alinhado com a direção — tendências rompem o range).
+  // Só clampa quando o alvo em R:R excede este alcance, o que dá tento ao R:R
+  // sem penalizar setups legítimos a meio do range.
   const w = closes.slice(-96), hi = w.length ? Math.max(...w) : entry * 2, lo = w.length ? Math.min(...w) : entry / 2;
+  const range = Math.max(hi - lo, entry * 1e-4);
+  const trendAligned = (regimeType === 'trend_up' && dir > 0) || (regimeType === 'trend_down' && dir < 0);
+  const mult = trendAligned ? 1.5 : 1.0;
+  const reachUp = Math.max(hi, entry + mult * range);
+  const reachDn = Math.min(lo, entry - mult * range);
   const tps = CS_CFG.tp.map(t => {
     let px = dir > 0 ? entry + t.r * stopDist : entry - t.r * stopDist, clamped = false;
-    if (dir > 0 && hi > entry && px > hi) { px = hi; clamped = true; }
-    if (dir < 0 && lo < entry && px < lo) { px = lo; clamped = true; }
+    if (dir > 0 && px > reachUp) { px = reachUp; clamped = true; }
+    if (dir < 0 && px < reachDn) { px = reachDn; clamped = true; }
     const r = Math.abs(px - entry) / stopDist;
     return { price: px, rTarget: t.r, r, close: t.close, pct: Math.abs(px - entry) / entry * 100, clamped };
   });
@@ -4173,12 +4183,14 @@ async function scanCs(force) {
         const comp = csComposite(sigs, regime);
         c.sigs = { ...sigs, regime }; c.dir = comp.finalDir; c.score = comp.score; c.fit = comp.fit;
         c.oiChg6h = (oi && oi.length >= 25) ? (oi[oi.length - 1] - oi[oi.length - 25]) / oi[oi.length - 25] * 100 : null;
-        c.plan = csTradePlan(c.price, c.atr, c.dir, CS_CFG.capital, c.k15, CS_CFG.riskPct);
+        c.plan = csTradePlan(c.price, c.atr, c.dir, CS_CFG.capital, c.k15, CS_CFG.riskPct, regime.type);
         c.sentiment = csSentiment(lsr, c.fr, c.oiChg6h, c.dir);
       } catch (e) { c.err = true; }
     }, CS_CFG.concurrency);
-    const scored = enrich.filter(c => !c.err && c.score >= CS_CFG.scoreThreshold).sort((a, b) => b.score - a.score);
-    csData = { shortlist: scored.slice(0, CS_CFG.shortlistMax), universeSize, enriched: enrich.length, btc24, avgFund, ts: Date.now() };
+    // Guarda todos os candidatos com direção resolvida (ordenados por score). O
+    // render decide quais viram Sugestão e quais ficam no Radar de mercado.
+    const scored = enrich.filter(c => !c.err && c.dir !== 0).sort((a, b) => b.score - a.score);
+    csData = { candidates: scored, universeSize, enriched: enrich.length, btc24, avgFund, ts: Date.now() };
     csLastScan = Date.now();
     csRender();
   } catch (e) {
@@ -4199,22 +4211,25 @@ function csRender() {
   if (be) { be.textContent = csData.btc24 == null ? '—' : (csData.btc24 >= 0 ? '+' : '') + csData.btc24.toFixed(2) + '%'; be.style.color = csData.btc24 == null ? '' : csData.btc24 >= 0 ? 'var(--green)' : 'var(--red)'; }
   set('cs-x-fund', (csData.avgFund >= 0 ? '+' : '') + csData.avgFund.toFixed(4) + '%');
   const listEl = document.getElementById('cs-list'); if (!listEl) return;
-  const all = csData.shortlist;
+  const all = csData.candidates || [];
   all.forEach(c => {
     c.nConfl = [c.sigs.h1, c.sigs.h2, c.sigs.h3, c.sigs.st].filter(x => x.on).length;
     c.confidence = csConfidence(c.score, c.plan, c.sentiment, c.nConfl);
   });
-  const isSug = c => c.dir !== 0 && c.plan && !c.plan.rejected && c.confidence >= 4;
-  const sug = all.filter(isSug).sort((a, b) => b.confidence - a.confidence);
-  const desc = all.filter(c => !isSug(c));
+  const isSug = c => c.score >= CS_CFG.scoreThreshold && c.plan && !c.plan.rejected && c.confidence >= 4;
+  const sug = all.filter(isSug).sort((a, b) => b.confidence - a.confidence).slice(0, CS_CFG.shortlistMax);
+  const sugSet = new Set(sug.map(c => c.symbol));
+  const radar = all.filter(c => !sugSet.has(c.symbol)).slice(0, CS_CFG.radarMax);
   set('cs-x-short', sug.length);
+  let html = '';
   if (!sug.length) {
-    listEl.innerHTML = `<div class="cs-nosetup"><div class="cs-nosetup-h">Sem setup de alta probabilidade neste momento</div>` +
-      `<div class="cs-nosetup-b">O universo foi avaliado mas nenhum candidato passou os filtros de direção, custos e R:R ≥ ${CS_CFG.minRR}. A ausência de setup é um resultado válido — preferimos qualidade a quantidade.</div></div>` +
-      csDescHtml(desc);
-    return;
+    html += `<div class="cs-nosetup"><div class="cs-nosetup-h">Sem setup de alta probabilidade neste momento</div>` +
+      `<div class="cs-nosetup-b">O universo foi avaliado mas nenhum candidato reuniu confluência suficiente (score ≥ ${CS_CFG.scoreThreshold}), R:R ≥ ${CS_CFG.minRR} e confiança ≥ 4/10 em simultâneo. A ausência de setup é um resultado válido — preferimos qualidade a quantidade. Em baixo, o radar mostra o que o mercado tinha de mais próximo e o que lhe faltou.</div></div>`;
+  } else {
+    html += sug.map((c, i) => csRenderCard(c, i + 1)).join('');
   }
-  listEl.innerHTML = sug.map((c, i) => csRenderCard(c, i + 1)).join('') + csDescHtml(desc);
+  html += csRadarHtml(radar, !sug.length);
+  listEl.innerHTML = html;
 }
 
 function csRenderCard(c, id) {
@@ -4309,18 +4324,27 @@ function csRenderEvidence(c) {
   </div>`;
 }
 
-// Secção compacta de candidatos descartados (não sugeridos).
-function csDescHtml(desc) {
-  if (!desc.length) return '';
-  const rows = desc.slice(0, 12).map(c => {
+// Radar de mercado: candidatos mais próximos que não chegaram a Sugestão, com
+// o motivo do corte. Dá transparência (sobretudo quando não há sugestões).
+function csRadarHtml(radar, openByDefault) {
+  if (!radar.length) return '';
+  const rows = radar.map(c => {
     const side = c.dir > 0 ? 'Long' : c.dir < 0 ? 'Short' : '—';
-    let reason = 'baixa confiança';
-    if (!c.dir) reason = 'sem direção resolvida';
-    else if (c.plan && c.plan.rejectedRR) reason = `R:R ${c.plan.blendedRR.toFixed(2)} < ${CS_CFG.minRR}`;
-    else if (c.plan && c.plan.rejectedCost) reason = 'alvo não paga custos';
-    return `<div class="cs-desc-row"><span class="cs-desc-sym">${c.coin}</span><span class="cs-desc-side ${c.dir > 0 ? 'long' : c.dir < 0 ? 'short' : ''}">${side}</span><span class="cs-desc-score">score ${c.score.toFixed(0)}</span><span class="cs-desc-reason">${reason}</span></div>`;
+    let reason;
+    if (c.score < CS_CFG.scoreThreshold) reason = `confluência fraca · score ${c.score.toFixed(0)}/${CS_CFG.scoreThreshold}`;
+    else if (!c.plan) reason = 'sem plano de trade';
+    else if (c.plan.rejectedRR) reason = `R:R ${c.plan.blendedRR.toFixed(2)} < ${CS_CFG.minRR} — sem espaço no range`;
+    else if (c.plan.rejectedCost) reason = 'alvo não paga 2× os custos';
+    else reason = `confiança ${(c.confidence || 0).toFixed(1)}/10 < 4`;
+    const tags = [];
+    if (c.sigs.h1.on) tags.push('Funding');
+    if (c.sigs.h2.on) tags.push('OI');
+    if (c.sigs.h3.on) tags.push('Cascata');
+    if (c.sigs.st.on) tags.push('Estrutura');
+    const tagStr = tags.length ? tags.join(' · ') : CS_REG_LABEL[c.sigs.regime.type] || '—';
+    return `<div class="cs-desc-row"><span class="cs-desc-sym">${c.coin}</span><span class="cs-desc-side ${c.dir > 0 ? 'long' : c.dir < 0 ? 'short' : ''}">${side}</span><span class="cs-desc-score">${tagStr}</span><span class="cs-desc-reason">${reason}</span></div>`;
   }).join('');
-  return `<details class="cs-desc"><summary class="cs-desc-h">Candidatos descartados (${desc.length}) — filtrados por direção, custos ou R:R</summary><div class="cs-desc-body">${rows}</div></details>`;
+  return `<details class="cs-desc"${openByDefault ? ' open' : ''}><summary class="cs-desc-h">Radar de mercado (${radar.length}) — candidatos mais próximos e o que lhes faltou</summary><div class="cs-desc-body">${rows}</div></details>`;
 }
 
 // Quantidade do ativo com resolução adaptada à magnitude.
@@ -4340,7 +4364,7 @@ function csCfgChange() {
   const rv = parseFloat(riskEl && riskEl.value);
   if (isFinite(rv) && rv > 0) CS_CFG.riskPct = Math.max(CS_CFG.riskMin, Math.min(CS_CFG.riskMax, rv));
   csSaveCfg();
-  if (csData) { csData.shortlist.forEach(c => { c.plan = csTradePlan(c.price, c.atr, c.dir, CS_CFG.capital, c.k15, CS_CFG.riskPct); }); csRender(); }
+  if (csData) { (csData.candidates || []).forEach(c => { c.plan = csTradePlan(c.price, c.atr, c.dir, CS_CFG.capital, c.k15, CS_CFG.riskPct, c.sigs.regime.type); }); csRender(); }
 }
 function renderCsTab() {
   const cap = document.getElementById('cs-capital'); if (cap && !cap.value) cap.value = CS_CFG.capital;
