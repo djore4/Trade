@@ -1,0 +1,7 @@
+# Generated, reproducible artifacts — not source.
+dataset.json
+report.md
+report.html
+report.json
+__pycache__/
+*.pyc
