@@ -1589,6 +1589,59 @@ html.light .mnav-btn.active { color: var(--orange); }
       tecnicamente interessante, <b>não</b> garantia de lucro. Confirma sempre no gráfico e usa gestão de risco.</div>
     </div>
 
+    <!-- ── Validação honesta (out-of-sample, líquido de custos) — harness validate-signal ── -->
+    <style>
+      .val-card{border:1px solid var(--border);background:var(--s2);border-radius:14px;padding:16px 18px;margin-bottom:16px}
+      .val-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:space-between}
+      .val-title{font-size:14px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px}
+      .val-title .val-dot{width:7px;height:7px;border-radius:50%;background:var(--orange)}
+      .val-sub{font-size:11px;color:var(--faint);line-height:1.5;margin-top:6px;max-width:720px}
+      .val-ctrl{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+      .val-ctrl input,.val-ctrl select{background:var(--s3,#1a1a1a);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 9px;font-size:12px;font-family:inherit}
+      .val-ctrl input{width:104px;text-transform:uppercase}
+      .val-run{display:inline-flex;align-items:center;gap:6px;background:var(--orange);color:#111;border:none;border-radius:8px;padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer}
+      .val-run:disabled{opacity:.55;cursor:default}
+      .val-body{margin-top:14px}
+      .val-verdict{display:inline-flex;align-items:center;gap:8px;font-weight:800;font-size:13px;letter-spacing:.03em;padding:7px 13px;border-radius:9px;text-transform:uppercase}
+      .val-verdict.bad{background:rgba(220,60,60,.14);color:var(--red);border:1px solid rgba(220,60,60,.35)}
+      .val-verdict.warn{background:rgba(230,150,40,.14);color:var(--orange);border:1px solid rgba(230,150,40,.35)}
+      .val-verdict.good{background:rgba(50,180,110,.14);color:var(--green);border:1px solid rgba(50,180,110,.35)}
+      .val-verdict.neutral{background:var(--s3,#1a1a1a);color:var(--faint);border:1px solid var(--border)}
+      .val-meta{font-size:11px;color:var(--faint);margin-top:8px}
+      .val-tbl{width:100%;border-collapse:collapse;margin-top:12px;font-size:12px;overflow-x:auto;display:block}
+      .val-tbl th,.val-tbl td{text-align:right;padding:7px 10px;border-bottom:1px solid var(--border);white-space:nowrap}
+      .val-tbl th:first-child,.val-tbl td:first-child{text-align:left}
+      .val-tbl th{color:var(--faint);font-weight:600;text-transform:uppercase;font-size:9.5px;letter-spacing:.06em}
+      .val-tbl td{font-family:'JetBrains Mono',monospace;color:var(--text)}
+      .val-tbl tr.oos td{font-weight:700}
+      .val-tbl td.neg{color:var(--red)} .val-tbl td.pos{color:var(--green)}
+      .val-note{font-size:10.5px;color:var(--faint);line-height:1.6;margin-top:12px;border-top:1px dashed var(--border);padding-top:10px}
+      .val-empty{font-size:12px;color:var(--faint)}
+    </style>
+    <div class="val-card">
+      <div class="val-head">
+        <div>
+          <div class="val-title"><span class="val-dot"></span>Validação honesta — out-of-sample, líquido de custos</div>
+          <div class="val-sub">Não gera sinal para negociar: <b>mede</b> se estes indicadores têm edge real depois de custos, em dados que o sistema nunca viu (OOS). O veredito correto inclui <b>«sem edge»</b>. Corre o harness <code>validate-signal</code> na Bybit v5 (sinal na vela fechada N, execução no open de N+1; taker×2 + slippage×2 + funding).</div>
+        </div>
+        <div class="val-ctrl">
+          <input id="val-symbol" value="BTCUSDT" spellcheck="false" aria-label="símbolo">
+          <select id="val-tf" aria-label="timeframe">
+            <option value="60">1h</option>
+            <option value="15">15m</option>
+            <option value="240">4h</option>
+          </select>
+          <button class="val-run" id="val-run" onclick="runValidation()">
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.2" stroke="currentColor" stroke-width="1.4"/><line x1="9" y1="9" x2="12.5" y2="12.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+            <span>Correr validação</span>
+          </button>
+        </div>
+      </div>
+      <div class="val-body" id="val-body">
+        <div class="val-empty">Escolhe par e timeframe e corre a validação. Puxa milhares de velas — demora alguns segundos.</div>
+      </div>
+    </div>
+
     <div class="trd-kpis" id="trd-kpis">
       <div class="trd-kpi"><div class="trd-kpi-lbl">Mercados analisados</div><div class="trd-kpi-val" id="trd-k-count">—</div><div class="trd-kpi-sub" id="trd-k-count-sub">perpétuos USDT</div></div>
       <div class="trd-kpi"><div class="trd-kpi-lbl">Melhor Long</div><div class="trd-kpi-val g" id="trd-k-long">—</div><div class="trd-kpi-sub" id="trd-k-long-sub">—</div></div>
@@ -1770,6 +1823,7 @@ const T212_URL      = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/get
 const STOCK_URL     = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/get-stock-history';
 const NEWS_URL      = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/get-news';
 const AGENT_URL     = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/trade-advisor';
+const VALIDATE_URL  = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/validate-signal'; // harness de validação OOS
 const SUPABASE_REST = 'https://yifxgiwmibjaornighvt.supabase.co/rest/v1'; // alvos de saída (transversal)
 
 // Feeds RSS por fonte (com fallbacks). Passam pelo proxy get-news (server-side).
@@ -2022,6 +2076,73 @@ async function trdPool(items, worker, concurrency = 6) {
   }
   for (let i = 0; i < Math.min(concurrency, q.length); i++) running.push(next());
   await Promise.all(running);
+}
+
+// ── Validação honesta (harness validate-signal). NÃO gera sinal para negociar:
+//    mede edge OOS líquido de custos e mostra o veredito, incluindo "sem edge".
+const VAL_TF_LABEL = { '15': '15m', '60': '1h', '240': '4h' };
+let valRunning = false;
+
+async function runValidation() {
+  if (valRunning) return;
+  const body = document.getElementById('val-body');
+  const btn  = document.getElementById('val-run');
+  const symbol = (document.getElementById('val-symbol').value || 'BTCUSDT').trim().toUpperCase();
+  const tf = document.getElementById('val-tf').value;
+  const maxBars = tf === '60' ? 8000 : 6000;  // ~n>200 trades OOS mantendo a resposta rápida
+  valRunning = true;
+  if (btn) btn.disabled = true;
+  body.innerHTML = `<div class="val-empty">A puxar velas da Bybit e a correr o backtest para <b>${symbol} · ${VAL_TF_LABEL[tf] || tf}</b>… (alguns segundos)</div>`;
+  try {
+    const url = `${VALIDATE_URL}?symbol=${encodeURIComponent(symbol)}&tf=${tf}&maxBars=${maxBars}`;
+    const r = await fetch(url, { headers: { apikey: SUPABASE_KEY } });
+    const d = await r.json();
+    if (!r.ok || d.error) { body.innerHTML = `<div class="val-empty">Não deu para validar: ${d.error || ('HTTP ' + r.status)}.</div>`; return; }
+    body.innerHTML = renderValidation(d);
+  } catch (e) {
+    body.innerHTML = `<div class="val-empty">Erro de rede ao contactar o validador: ${e.message}.</div>`;
+  } finally {
+    valRunning = false;
+    if (btn) btn.disabled = false;
+  }
+}
+
+function renderValidation(d) {
+  const rep = d.report || {};
+  const oos = rep.oos, is = rep.is;
+  const tfLbl = VAL_TF_LABEL[d.tf] || d.tf;
+  if (!oos || !oos.n) {
+    return `<div class="val-empty">Sem trades out-of-sample suficientes para <b>${d.symbol} · ${tfLbl}</b>. O harness recusa-se a dar veredito — não forçar.</div>`;
+  }
+  // Veredito: só o OOS conta. expectancy_R é a métrica-rei; n≥200 = amostra suficiente.
+  const exp = oos.expectancy_R, enough = oos.n >= 200;
+  let vClass, vText;
+  if (exp > 0 && enough)      { vClass = 'good';    vText = '✓ Edge OOS — estudar mais'; }
+  else if (exp > 0 && !enough){ vClass = 'warn';    vText = '≈ Inconclusivo — amostra insuficiente'; }
+  else                        { vClass = 'bad';     vText = '✕ Sem edge — não negociar'; }
+
+  const pct = (x) => (x == null ? '—' : (x * 100).toFixed(1) + '%');
+  const rr  = (x) => (x == null ? '—' : (x >= 0 ? '+' : '') + x.toFixed(3) + ' R');
+  const pf  = (x) => (x == null ? '∞' : x.toFixed(2));
+  const cls = (x) => (x == null ? '' : (x > 0 ? 'pos' : (x < 0 ? 'neg' : '')));
+  const rowFor = (s, label, isOos) => !s || !s.n ? '' : `
+    <tr class="${isOos ? 'oos' : ''}">
+      <td>${label}</td><td>${s.n}</td><td>${pct(s.win_rate)}</td>
+      <td class="${cls(s.expectancy_R)}">${rr(s.expectancy_R)}</td><td>${pf(s.profit_factor)}</td>
+    </tr>`;
+
+  const from = (d.from || '').slice(0, 10), to = (d.to || '').slice(0, 10);
+  return `
+    <div class="val-verdict ${vClass}">${vText}</div>
+    <div class="val-meta">${d.symbol} · ${tfLbl} · ${d.bars_fetched} velas (${from} → ${to}) · corte OOS ${(rep.cut_date || '').slice(0,10)} · amostra OOS ${enough ? 'suficiente (n≥200)' : '<b>insuficiente (n<200)</b>'}</div>
+    <table class="val-tbl">
+      <thead><tr><th>Split</th><th>n</th><th>win%</th><th>expectancy</th><th>PF</th></tr></thead>
+      <tbody>
+        ${rowFor(is, 'In-sample', false)}
+        ${rowFor(oos, 'Out-of-sample', true)}
+      </tbody>
+    </table>
+    <div class="val-note"><b>Como ler:</b> só o <b>out-of-sample</b> conta (dados nunca vistos). A métrica-rei é a <b>expectancy em R por trade, líquida de custos</b> — &gt; 0 = há edge; ≤ 0 = não há. IS a brilhar e OOS a colapsar = overfit. Drawdown e retorno total são omitidos de propósito: com trades sobrepostos, esses números são artefactos do modelo — as métricas fiáveis são as por-trade acima.</div>`;
 }
 
 async function scanTrades(force) {
