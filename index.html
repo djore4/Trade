@@ -5209,6 +5209,22 @@ function clipToWindow(raw, range) {
   const clip  = raw.filter(p => p.t >= start);
   return clip.length >= 2 ? clip : raw;
 }
+// Cache curto (em memória) das respostas do proxy de ações (Yahoo). O mesmo
+// símbolo/janela é pedido por vários time-frames e widgets; como o proxy é lento,
+// guardar ~45s evita repetir chamadas e acelera muito a troca de frames curtos
+// (ex.: 24H, 1H e 4H usam todos range=1d,5m -> uma só ida ao servidor).
+const stockHistCache = {};   // key -> { t, p: Promise<json> }
+function fetchStockHist(symbol, range, interval) {
+  const key = symbol + '|' + range + '|' + interval;
+  const c = stockHistCache[key];
+  if (c && Date.now() - c.t < 45000) return c.p;
+  const p = fetch(`${STOCK_URL}?symbol=${encodeURIComponent(symbol)}&range=${range}&interval=${interval}`,
+                  { headers: { Authorization: `Bearer ${SUPABASE_KEY}` } })
+    .then(r => r.json())
+    .catch(e => { delete stockHistCache[key]; throw e; });   // falha não fica em cache
+  stockHistCache[key] = { t: Date.now(), p };
+  return p;
+}
 // Time-frames -> range/interval do Yahoo (para ações T212 isoladas).
 const STOCK_RANGE_CFG = {
   '1H':  { range: '1d',  interval: '5m'  },
@@ -5322,8 +5338,7 @@ async function loadPortfolioSeries(range) {
     const qty = h ? parseFloat(h.qty || 0) : 0;
     const m = STOCK_RANGE_CFG[range] || STOCK_RANGE_CFG['6M'];
     try {
-      const r = await fetch(`${STOCK_URL}?symbol=${encodeURIComponent(pfIsolate)}&range=${m.range}&interval=${m.interval}`, { headers: { Authorization: `Bearer ${SUPABASE_KEY}` } });
-      const d = await r.json();
+      const d = await fetchStockHist(pfIsolate, m.range, m.interval);
       if (token !== pfToken) return;
       const pts = Array.isArray(d?.points) ? d.points : [];
       if (pts.length < 2) { pfSeries = []; drawPortfolioChart(); return; }
@@ -5367,8 +5382,7 @@ async function loadPortfolioSeries(range) {
     const qty = parseFloat(h.qty || 0), usd = parseFloat(h.usd || 0), avg = parseFloat(h.avg || 0);
     const cost = (avg > 0 && qty > 0) ? avg * qty : usd; // capital investido (custo médio × qty)
     try {
-      const r = await fetch(`${STOCK_URL}?symbol=${encodeURIComponent(h.ticker)}&range=${stockCfg.range}&interval=${stockCfg.interval}`, { headers: { Authorization: `Bearer ${SUPABASE_KEY}` } });
-      const d = await r.json();
+      const d = await fetchStockHist(h.ticker, stockCfg.range, stockCfg.interval);
       const arr = (Array.isArray(d?.points) ? d.points : []).map(p => ({ t: p.t, c: p.c })).sort((a, b) => a.t - b.t);
       return { qty, usd, cost, arr };
     } catch (e) { return { qty, usd, cost, arr: [] }; }
@@ -5610,6 +5624,12 @@ function positionCrosshair(frac) {
     dotF.style.top  = (toTop(ctx.flow[i].v) * 100) + '%';
     dotF.style.background = '#f7931a';
     rows += `<div class="db-ct-row"><span class="db-ct-dot" style="background:#f7931a"></span>Inflows<span class="db-ct-val">$${fmt(ctx.flow[i].v, 2)}</span></div>`;
+    // Diferença Valor − Inflows = leitura total (ROI em USD) naquele instante.
+    const diff = ctx.pts[i].v - ctx.flow[i].v;
+    const dcol = diff >= 0 ? 'var(--green)' : 'var(--red)';
+    rows += `<div class="db-ct-row" style="border-top:1px solid var(--border);margin-top:3px;padding-top:3px">` +
+      `<span class="db-ct-dot" style="background:transparent"></span>Total` +
+      `<span class="db-ct-val" style="color:${dcol}">${diff >= 0 ? '+' : '−'}$${fmt(Math.abs(diff), 2)}</span></div>`;
   } else {
     dotF.style.display = 'none';
   }
@@ -5831,9 +5851,7 @@ function setTkr(idx) {
 async function loadTkrQuote(t) {
   if (t.src !== 'yh') return;                        // BTC vem da Bybit ao vivo
   try {
-    const r = await fetch(`${STOCK_URL}?symbol=${encodeURIComponent(t.key)}&range=5d&interval=1d`,
-                          { headers: { Authorization: `Bearer ${SUPABASE_KEY}` } });
-    const d = await r.json();
+    const d = await fetchStockHist(t.key, '5d', '1d');
     const pts = (Array.isArray(d?.points) ? d.points : []).filter(p => p && p.c != null);
     if (pts.length) {
       const last = pts[pts.length - 1].c;
@@ -5972,8 +5990,7 @@ async function fetchT212Daily() {
   const real = t212Holdings.filter(h => (parseFloat(h.usd) || 0) > 0);
   await Promise.all(real.map(async h => {
     try {
-      const r = await fetch(`${STOCK_URL}?symbol=${encodeURIComponent(h.ticker)}&range=5d&interval=1d`, { headers: { Authorization: `Bearer ${SUPABASE_KEY}` } });
-      const d = await r.json();
+      const d = await fetchStockHist(h.ticker, '5d', '1d');
       const pts = Array.isArray(d?.points) ? d.points : [];
       if (pts.length >= 2) {
         const prev = pts[pts.length - 2].c, last = pts[pts.length - 1].c;
@@ -6387,15 +6404,17 @@ function renderDbDistribution() {
   if (!walletData && srcHasBybit()) { el.innerHTML = '<div class="db-empty">A aguardar dados...</div>'; return; }
 
   const items = [];
+  // Distribuição ignora "pó": só entram ativos com pelo menos 5 USD.
+  const DIST_MIN_USD = 5;
   if (srcHasBybit()) (walletData?.coin || []).forEach(c => {
     const usd = parseFloat(c.usdValue || 0);
-    if (usd < 0.01) return;
+    if (usd < DIST_MIN_USD) return;
     const qty = parseFloat(c.walletBalance || 0);
     items.push({ sym: c.coin, qty, usd, price: qty > 0 ? usd / qty : 0, color: COIN_COLORS[c.coin], isT212: false });
   });
   if (srcHasT212()) (t212Holdings || []).forEach(h => {
     const usd = parseFloat(h.usd || 0);
-    if (usd <= 0) return;
+    if (usd < DIST_MIN_USD) return;
     // Cor distinta da ETH (#7c8fff) para os arcos não se confundirem no donut.
     items.push({ sym: h.ticker, qty: parseFloat(h.qty || 0), usd, price: parseFloat(h.price || 0), color: '#c084fc', isT212: true });
   });
