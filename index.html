@@ -464,8 +464,28 @@ html.hide-values .privacy-btn { color: var(--orange); }
 .db-roi-lbl { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: var(--faint); }
 .db-roi-usd { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; }
 .db-roi-pct { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 5px; }
-.db-chart-wrap { height: 110px; margin: 14px 0 0; position: relative; overflow: hidden; }
+.db-chart-wrap { height: 110px; margin: 14px 0 0; position: relative; overflow: hidden; touch-action: none; }
 .db-chart-svg { width: 100%; height: 100%; display: block; }
+/* Crosshair do gráfico principal (linha vertical + pontos + rótulo de valores) */
+.db-cross { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
+.db-cross-line {
+  position: absolute; top: 0; bottom: 0; width: 1px; left: 0;
+  background: var(--dim); opacity: .55; transform: translateX(-0.5px);
+}
+.db-cross-dot {
+  position: absolute; width: 9px; height: 9px; border-radius: 50%;
+  transform: translate(-50%, -50%); box-shadow: 0 0 0 2px var(--s1);
+}
+.db-cross-tip {
+  position: absolute; top: 6px; z-index: 4; pointer-events: none;
+  background: var(--s2); border: 1px solid var(--border2); border-radius: 8px;
+  padding: 6px 9px; font-size: 10px; line-height: 1.45; color: var(--text);
+  white-space: nowrap; box-shadow: 0 6px 20px rgba(0,0,0,.35);
+}
+.db-cross-tip .db-ct-time { color: var(--faint); font-size: 9px; font-weight: 600; letter-spacing: .04em; margin-bottom: 3px; }
+.db-cross-tip .db-ct-row { display: flex; align-items: center; gap: 6px; font-family: 'JetBrains Mono', monospace; }
+.db-cross-tip .db-ct-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.db-cross-tip .db-ct-val { font-weight: 600; margin-left: auto; padding-left: 8px; }
 .db-chart-legend { display: flex; justify-content: center; gap: 16px; margin-top: 8px; }
 .db-cl-item { display: flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 600; color: var(--dim); text-transform: uppercase; letter-spacing: .06em; }
 .db-cl-line { width: 16px; height: 3px; border-radius: 2px; display: inline-block; }
@@ -1317,8 +1337,15 @@ html.light .mnav-btn.active { color: var(--orange); }
     </div>
 
     <!-- Sparkline chart -->
-    <div class="db-chart-wrap">
+    <div id="db-chart-wrap" class="db-chart-wrap">
       <svg id="db-chart-svg" class="db-chart-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+      <!-- Crosshair: linha vertical + pontos nas séries + rótulo com os valores -->
+      <div id="db-cross" class="db-cross" style="display:none">
+        <div class="db-cross-line"></div>
+        <div id="db-cross-dot-v" class="db-cross-dot"></div>
+        <div id="db-cross-dot-f" class="db-cross-dot" style="display:none"></div>
+      </div>
+      <div id="db-cross-tip" class="db-cross-tip" style="display:none"></div>
     </div>
     <div id="db-chart-legend" class="db-chart-legend" style="display:none"></div>
 
@@ -5162,6 +5189,26 @@ const PF_RANGE_CFG = {
   'TUDO':{ interval: 'W',   limit: 208 },
 };
 const PF_STABLE = new Set(['USDT','USDC','USDD','DAI','TUSD','FDUSD','BUSD','USDE']);
+// Duração (em segundos) da janela de cada time-frame curto. As klines da Bybit já
+// respeitam a janela, mas o proxy das ações (Yahoo) devolve sempre ~1 dia mesmo num
+// "1H"/"4H", o que esticava o eixo e distorcia os frames curtos do gráfico principal.
+// Aqui recortamos a série à janela pedida para o eixo temporal ficar correto.
+const PF_WINDOW_S = {
+  '1H': 3600, '4H': 14400, '12H': 43200, '24H': 86400,
+  '1S': 604800, '1M': 2678400,
+};
+// Recorta uma série [{t,v}] à janela do time-frame (t em s ou ms). Se ficar com
+// menos de 2 pontos (ex.: mercado fechado, sem dados recentes), mantém a série
+// completa para não deixar o gráfico vazio.
+function clipToWindow(raw, range) {
+  const winS = PF_WINDOW_S[range];
+  if (!winS || !raw || raw.length < 2) return raw;
+  const lastT = raw[raw.length - 1].t;
+  const unit  = lastT > 1e11 ? 1000 : 1;     // timestamps em milissegundos ou segundos
+  const start = lastT - winS * unit;
+  const clip  = raw.filter(p => p.t >= start);
+  return clip.length >= 2 ? clip : raw;
+}
 // Time-frames -> range/interval do Yahoo (para ações T212 isoladas).
 const STOCK_RANGE_CFG = {
   '1H':  { range: '1d',  interval: '5m'  },
@@ -5280,7 +5327,7 @@ async function loadPortfolioSeries(range) {
       if (token !== pfToken) return;
       const pts = Array.isArray(d?.points) ? d.points : [];
       if (pts.length < 2) { pfSeries = []; drawPortfolioChart(); return; }
-      const raw = pts.map(p => ({ t: p.t, v: qty * p.c }));
+      const raw = clipToWindow(pts.map(p => ({ t: p.t, v: qty * p.c })), range);
       pfCache[ckey] = raw;
       pfSeries = anchorSeries(raw);
       // Inflows: capital investido = custo médio × qty (a T212 dá-nos o avg).
@@ -5371,10 +5418,14 @@ async function loadPortfolioSeries(range) {
     raw.push({ t, v });
     rawFlow.push({ t, v: f });
   });
-  pfCache[ckey] = raw;
-  pfFlowCache[ckey] = rawFlow;
-  pfSeries = anchorSeries(raw);
-  pfFlowSeries = anchorFlow(rawFlow);
+  // Recorta à janela do time-frame (as ações trazem ~1 dia mesmo num frame curto);
+  // raw e rawFlow partilham a mesma timeline, por isso ficam sempre alinhados.
+  const rawClip = clipToWindow(raw, range);
+  const rawFlowClip = clipToWindow(rawFlow, range);
+  pfCache[ckey] = rawClip;
+  pfFlowCache[ckey] = rawFlowClip;
+  pfSeries = anchorSeries(rawClip);
+  pfFlowSeries = anchorFlow(rawFlowClip);
   drawPortfolioChart();
 }
 
@@ -5426,6 +5477,7 @@ function drawPortfolioChart() {
     svg.innerHTML = `<line x1="0" y1="${H/2}" x2="${W}" y2="${H/2}" stroke="var(--s3)" stroke-width="2" stroke-dasharray="6 6"/>`;
     updatePfChartLegend(false);
     updatePfRoi(null, null);
+    pfChartCtx = null; hideCrosshair();
     return;
   }
 
@@ -5485,6 +5537,107 @@ function drawPortfolioChart() {
   updatePfChartLegend(!!flow, isUp);
   updatePfRoi(pts, flow);
   updatePfPnl(pts);
+
+  // Guarda a geometria para o crosshair mapear o cursor -> ponto mais próximo.
+  pfChartCtx = { pts, flow, minV, vRng, t0: pts[0].t, tRng, pad, W, H, lc };
+  updateCrosshairFromLast();   // se o cursor estava pousado, reposiciona sobre os novos dados
+}
+
+// ── CROSSHAIR do gráfico principal ────────────────────────────────────────────
+// Ao passar/arrastar o cursor sobre o gráfico, mostra uma linha vertical e o valor
+// de cada série (Valor e Inflows) nesse instante, com a data/hora do ponto.
+let pfChartCtx = null;
+let pfCrossFrac = null;   // última posição do cursor (fração 0..1), p/ reposicionar após redraw
+
+function fmtCrossTime(t) {
+  const ms = t < 1e11 ? t * 1000 : t;           // timestamps em s ou ms
+  const span = pfChartCtx ? (pfChartCtx.tRng * (pfChartCtx.t0 < 1e11 ? 1000 : 1)) : 0;
+  const d = new Date(ms);
+  return span > 0 && span < 2 * 864e5
+    ? d.toLocaleString('pt-PT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+    : d.toLocaleDateString('pt-PT', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function hideCrosshair() {
+  pfCrossFrac = null;
+  const cr = document.getElementById('db-cross');
+  const tip = document.getElementById('db-cross-tip');
+  if (cr)  cr.style.display = 'none';
+  if (tip) tip.style.display = 'none';
+}
+
+// Reposiciona o crosshair na última fração conhecida (após um redraw dos dados).
+function updateCrosshairFromLast() {
+  if (pfCrossFrac == null) return;
+  positionCrosshair(pfCrossFrac);
+}
+
+// Coloca o crosshair na fração horizontal `frac` (0..1) do gráfico.
+function positionCrosshair(frac) {
+  const wrap = document.getElementById('db-chart-wrap');
+  const cr   = document.getElementById('db-cross');
+  const tip  = document.getElementById('db-cross-tip');
+  const dotV = document.getElementById('db-cross-dot-v');
+  const dotF = document.getElementById('db-cross-dot-f');
+  const ctx  = pfChartCtx;
+  if (!wrap || !cr || !ctx || !ctx.pts || ctx.pts.length < 2) { hideCrosshair(); return; }
+
+  frac = Math.max(0, Math.min(1, frac));
+  pfCrossFrac = frac;
+  const targetT = ctx.t0 + frac * ctx.tRng;
+
+  // Ponto mais próximo (por tempo) da série de valor.
+  let i = 0, best = Infinity;
+  for (let k = 0; k < ctx.pts.length; k++) {
+    const dt = Math.abs(ctx.pts[k].t - targetT);
+    if (dt < best) { best = dt; i = k; }
+  }
+
+  const px = (ctx.pts[i].t - ctx.t0) / ctx.tRng;   // fração horizontal exata do ponto
+  const wpx = wrap.clientWidth;
+  const toTop = v => (ctx.H - ctx.pad - ((v - ctx.minV) / ctx.vRng) * (ctx.H - ctx.pad * 2)) / ctx.H;
+
+  cr.style.display = 'block';
+  cr.querySelector('.db-cross-line').style.left = (px * 100) + '%';
+  dotV.style.left = (px * 100) + '%';
+  dotV.style.top  = (toTop(ctx.pts[i].v) * 100) + '%';
+  dotV.style.background = ctx.lc;
+
+  let rows = `<div class="db-ct-row"><span class="db-ct-dot" style="background:${ctx.lc}"></span>Valor<span class="db-ct-val">$${fmt(ctx.pts[i].v, 2)}</span></div>`;
+  if (ctx.flow && ctx.flow[i]) {
+    dotF.style.display = 'block';
+    dotF.style.left = (px * 100) + '%';
+    dotF.style.top  = (toTop(ctx.flow[i].v) * 100) + '%';
+    dotF.style.background = '#f7931a';
+    rows += `<div class="db-ct-row"><span class="db-ct-dot" style="background:#f7931a"></span>Inflows<span class="db-ct-val">$${fmt(ctx.flow[i].v, 2)}</span></div>`;
+  } else {
+    dotF.style.display = 'none';
+  }
+
+  tip.style.display = 'block';
+  tip.innerHTML = `<div class="db-ct-time">${fmtCrossTime(ctx.pts[i].t)}</div>${rows}`;
+  // Posiciona o rótulo do lado oposto ao cursor quando este está perto do bordo direito.
+  const tipW = tip.offsetWidth || 120;
+  let left = px * wpx + 12;
+  if (left + tipW > wpx - 4) left = px * wpx - tipW - 12;
+  if (left < 4) left = 4;
+  tip.style.left = left + 'px';
+}
+
+function initPfCrosshair() {
+  const wrap = document.getElementById('db-chart-wrap');
+  if (!wrap || wrap._crossInit) return;
+  wrap._crossInit = true;
+  const onMove = e => {
+    if (!pfChartCtx) return;
+    const rect = wrap.getBoundingClientRect();
+    if (!rect.width) return;
+    positionCrosshair((e.clientX - rect.left) / rect.width);
+  };
+  wrap.addEventListener('pointerdown', onMove);
+  wrap.addEventListener('pointermove', e => { if (e.pointerType === 'mouse' || e.buttons) onMove(e); });
+  wrap.addEventListener('pointerleave', hideCrosshair);
+  wrap.addEventListener('pointercancel', hideCrosshair);
 }
 
 // ROI real do portefólio = distância entre a linha de valor e a de inflows
@@ -5728,7 +5881,8 @@ function updateHeaderInvPnl() {
 // mostramos o marcador (placeholder) para o ativo continuar visível na lista.
 const T212_PLACEHOLDER = [{ ticker: 'MSTR', name: 'MicroStrategy', qty: 0, usd: 0, pnl: 0 }];
 let t212Holdings = [];
-async function fetchT212Holdings() {
+async function fetchT212Holdings(attempt = 0) {
+  let got = false;   // true quando a T212 respondeu mesmo com posições reais
   try {
     const r = await fetch(T212_URL, { headers: { Authorization: `Bearer ${SUPABASE_KEY}` } });
     const d = await r.json();
@@ -5741,11 +5895,25 @@ async function fetchT212Holdings() {
         const ticker = String(p.ticker || '').split('_')[0] || p.ticker || '?';
         return { ticker, name: 'Trading 212', qty, usd: qty * cur, pnl, avg: parseFloat(p.averagePrice || 0), price: cur };
       });
+      got = true;
     } else if (!t212HasRealData()) {
       // Erro transitório (ex.: 429/502 por rate-limit da T212) NÃO apaga bons dados.
       t212Holdings = T212_PLACEHOLDER.slice(); // sem credenciais / sem posições
     }
   } catch (e) { if (!t212HasRealData()) t212Holdings = T212_PLACEHOLDER.slice(); }
+  // A API da T212 falha por vezes logo no 1.º carregamento (rate-limit/502) e as
+  // ações (ex.: MSTR, SPCX) só apareciam ao refrescar a página. Enquanto não houver
+  // dados reais, volta a tentar com recuo exponencial (2s, 4s, 8s, 16s) e recompõe
+  // total/curva + lista quando a T212 finalmente responder — sem refrescar à mão.
+  if (!got && !t212HasRealData() && attempt < 4) {
+    setTimeout(() => {
+      fetchT212Holdings(attempt + 1).then(() => {
+        if (!t212HasRealData()) return;                 // continua sem dados: espera a próxima tentativa
+        fetchT212Daily().then(() => { if (dbCurrentSubTab === 'assets') renderDbAssets(); });
+        refreshAfterT212();   // recompõe total, curva e a lista de ativos
+      });
+    }, 2000 * Math.pow(2, attempt));
+  }
   return t212Holdings;
 }
 function t212HasRealData() { return t212Holdings.some(h => (parseFloat(h.usd) || 0) > 0); }
@@ -6688,6 +6856,7 @@ function drawPerpChart(arr) {
   refreshAfterT212(); // total + curva passam a incluir a Trading 212
   initHrSwipe();      // widget do hashrate deslizável (períodos)
   initTkrSwipe();     // widget de cotações deslizável (BTC · ações · índices · commodities)
+  initPfCrosshair();  // linha vertical de leitura no gráfico principal do portefólio
   fetchTkrQuotes();   // cotações de ações/índices/commodities (BTC já vem do fetchMarket)
   pvInit();           // modo privado: reaplica a máscara de valores se estiver ativo
   setInterval(fetchMarket,        5000);
