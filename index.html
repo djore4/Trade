@@ -5628,7 +5628,7 @@ function positionCrosshair(frac) {
     const diff = ctx.pts[i].v - ctx.flow[i].v;
     const dcol = diff >= 0 ? 'var(--green)' : 'var(--red)';
     rows += `<div class="db-ct-row" style="border-top:1px solid var(--border);margin-top:3px;padding-top:3px">` +
-      `<span class="db-ct-dot" style="background:transparent"></span>Total` +
+      `<span class="db-ct-dot" style="background:transparent"></span>ROI` +
       `<span class="db-ct-val" style="color:${dcol}">${diff >= 0 ? '+' : '−'}$${fmt(Math.abs(diff), 2)}</span></div>`;
   } else {
     dotF.style.display = 'none';
