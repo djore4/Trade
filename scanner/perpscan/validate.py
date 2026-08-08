@@ -175,6 +175,7 @@ def evaluate_symbol(k: Klines, cfg: Config, rng: random.Random, strategy: str = 
             i += 1
             continue
         gate_trades.append({"i": i, "r": r, "dur": dur, "stop_pct": s.stop_pct,
+                            "cost_r": cost / s.stop_pct,
                             "third": min(2, (i - warm) * 3 // max(1, span_len))})
         i += dur + 1                        # NÃO-SOBREPOSIÇÃO: retoma após o fecho
 
@@ -224,6 +225,7 @@ def run_validation(klines_by_symbol: Dict[str, Klines], cfg: Config = DEFAULT,
     gate_all: List[float] = []
     base_all: List[float] = []
     thirds: List[List[float]] = [[], [], []]
+    cost_rs: List[float] = []
     decisions = 0
     total_bars = 0
     n_syms = len(klines_by_symbol)
@@ -234,6 +236,7 @@ def run_validation(klines_by_symbol: Dict[str, Klines], cfg: Config = DEFAULT,
         res = evaluate_symbol(k, cfg, rng, strategy, fund)
         for t in res["gate"]:
             gate_all.append(t["r"])
+            cost_rs.append(t["cost_r"])
             thirds[t["third"]].append(t["r"])
         base_all.extend(t["r"] for t in res["base"])
         decisions += res["decisions"]
@@ -262,6 +265,7 @@ def run_validation(klines_by_symbol: Dict[str, Klines], cfg: Config = DEFAULT,
         "thirds_means": thirds_means, "thirds_ns": [len(x) for x in thirds],
         "checks": {"a": check_a, "b": check_b, "c": check_c},
         "approved": approved, "months_est": months_est,
+        "cost_r": mean(cost_rs) if cost_rs else 0.0,
         "trades_per_symbol_month": trades_per_month, "cfg": cfg,
     }
 
@@ -286,6 +290,12 @@ def format_report(res: dict) -> str:
     lines.append(f"{'Mediana':<30}{g['median']:>12.3f}{b['median']:>12.3f}")
     lines.append(f"{'Desvio-padrão':<30}{g['std']:>12.3f}{b['std']:>12.3f}")
     lines.append(f"{'% positivos':<30}{g['pos']:>11.1f}%{b['pos']:>11.1f}%")
+    lines.append("")
+    cr = res["cost_r"]
+    lines.append(f"Decomposição do gate:  bruto {g['mean'] + cr:+.3f} R  "
+                 f"−  custos {cr:.3f} R  =  líquido {g['mean']:+.3f} R")
+    if g['mean'] + cr > 0 >= g['mean']:
+        lines.append("  → há vantagem BRUTA real; são os custos que a consomem toda.")
     lines.append("")
     tm = res["thirds_means"]
     tn = res["thirds_ns"]

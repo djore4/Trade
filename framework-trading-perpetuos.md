@@ -398,4 +398,13 @@ Como a camada encaixa no sistema e o que a rodeia:
 | 2026-08-08 | **v1** — reversão nos extremos do range | 10 símb./~12d | REPROVADA: −0.43 R vs −0.22 do aleatório (p=5e-5, pior que o acaso) |
 | 2026-08-08 | **v1** — repetida em janela maior | 22 símb./~42d | REPROVADA: −0.04 R (bate o aleatório mas expectância negativa; sinal inverteu entre janelas → instável) |
 | 2026-08-08 | **v2** — pullback com a tendência + veto de funding (alvo tp1, horizonte 48) | 16 símb./5.6 meses, 2914 trades | REPROVADA (B, C): −0.070 R vs −0.281 do aleatório. Bate o acaso de forma clara e **estável** (p=3e-14; terços −0.091/−0.061/−0.055) mas não paga os custos. A seleção funciona; a expectância não. |
-| — | **v3** — v2 com alvo no extremo da tendência (tp2) e horizonte 240 | *por correr* | *pendente* |
+| 2026-08-08 | **v3** — v2 com alvo no extremo da tendência (tp2) e horizonte 240 | 15 símb./3 meses, 964 trades | REPROVADA (B, C): −0.014 R vs −0.252 do aleatório. Progressão v1→v2→v3: −0.43 → −0.070 → −0.014. Cada correção de coerência aproximou de zero, mas a expectância continua negativa. |
+| — | **v3 em TF superior** — mesma estratégia, TF240 | *por correr* | *pendente: `--tf 240 --months 12`* |
+
+**Diagnóstico transversal (custos).** O relatório passa a decompor
+`bruto − custos = líquido`. Em TF60 o piso de custo obriga a stops de ≈1.4%,
+logo cada trade paga ≈0.11 R só de custos. Com uma vantagem bruta de ordem
++0.10 R, os custos consomem-na toda. **Não é a seleção que falha — é a
+aritmética do timeframe.** Daí o teste seguinte ser em TF superior (onde o ATR
+em % é maior e o mesmo custo fixo pesa proporcionalmente menos), e não mais uma
+variação de regras de entrada.
