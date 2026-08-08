@@ -83,6 +83,8 @@ Opções úteis:
 | Opção | Efeito |
 |---|---|
 | `--strategy v1` | corre a hipótese antiga (reversão) — **rejeitada**, só para comparação |
+| `--target tp1` | alvo no primeiro nível (saída de reversão); default é `tp2`, o extremo da tendência |
+| `--exit trail` | stop dinâmico — **EXPERIMENTAL, não calibrado**: inventa lucro em martingala, não decide nada |
 | `--months N` | meses de história (paginado); sem isto usa `--limit` barras |
 | `--no-funding` | desliga o veto de funding (menos pedidos à API, mais rápido) |
 | `--exclude ABC,XYZ` | exclui baseCoins extra do universo |

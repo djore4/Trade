@@ -30,7 +30,9 @@ from collections import deque
 from statistics import mean, median
 from typing import Dict, List, Optional, Tuple
 
-from .backtest import stddev, summary, triple_barrier_ex, welch
+from .backtest import stddev, summary, trailing_exit, triple_barrier_ex, welch
+from dataclasses import replace
+
 from .config import Config, DEFAULT
 from .gates import gate_structure, gate_trend_pullback
 from .structure import Klines
@@ -160,8 +162,15 @@ def evaluate_symbol(k: Klines, cfg: Config, rng: random.Random, strategy: str = 
             continue
         decisions += 1
         s = setups[0]
-        r, dur = triple_barrier_ex(k.h[i + 1:], k.l[i + 1:], k.c[i + 1:],
-                                   s.entry, s.stop, s.tp1, s.direction, cost, cfg.val_horizon)
+        if cfg.exit_mode == "trail":
+            r, dur = trailing_exit(k.h[i + 1:], k.l[i + 1:], k.c[i + 1:],
+                                   s.entry, s.stop, s.direction, s.atr,
+                                   cfg.trail_atr, cost, cfg.val_horizon)
+        else:
+            r, dur = triple_barrier_ex(k.h[i + 1:], k.l[i + 1:], k.c[i + 1:],
+                                       s.entry, s.stop,
+                                       s.tp2 if cfg.target == "tp2" else s.tp1,
+                                       s.direction, cost, cfg.val_horizon)
         if r is None:
             i += 1
             continue
@@ -187,8 +196,13 @@ def evaluate_symbol(k: Klines, cfg: Config, rng: random.Random, strategy: str = 
         stop = entry * (1 - med_stop) if d > 0 else entry * (1 + med_stop)
         tp = (entry * (1 + med_stop * cfg.val_target_r) if d > 0
               else entry * (1 - med_stop * cfg.val_target_r))
-        r, dur = triple_barrier_ex(k.h[j + 1:], k.l[j + 1:], k.c[j + 1:],
-                                   entry, stop, tp, d, cost, cfg.val_horizon)
+        if cfg.exit_mode == "trail":
+            r, dur = trailing_exit(k.h[j + 1:], k.l[j + 1:], k.c[j + 1:],
+                                   entry, stop, d, pre["atr"][j] or (entry * med_stop),
+                                   cfg.trail_atr, cost, cfg.val_horizon)
+        else:
+            r, dur = triple_barrier_ex(k.h[j + 1:], k.l[j + 1:], k.c[j + 1:],
+                                       entry, stop, tp, d, cost, cfg.val_horizon)
         if r is None:
             continue
         span = range(j, min(j + dur + 1, N))
@@ -259,7 +273,8 @@ def format_report(res: dict) -> str:
     lines = []
     lines.append(f"Estratégia: {res['strategy']} · símbolos: {res['symbols']} · "
                  f"história ≈ {res['months_est']:.1f} meses/símbolo · "
-                 f"TF {cfg.val_tf}m · horizonte {cfg.val_horizon} barras")
+                 f"TF {cfg.val_tf}m · saída {cfg.exit_mode}/{cfg.target} · "
+                 f"horizonte {cfg.val_horizon} barras")
     lines.append(f"Decisões do gate: {res['decisions']} · trades (não-sobrepostas): "
                  f"{g['n']} (≈{res['trades_per_symbol_month']:.1f}/símbolo/mês) · "
                  f"baseline: {b['n']}")
@@ -331,6 +346,10 @@ def main() -> None:
     ap.add_argument("--limit", type=int, default=DEFAULT.val_kline_limit,
                     help="barras por símbolo quando --months não é dado")
     ap.add_argument("--horizon", type=int, default=DEFAULT.val_horizon)
+    ap.add_argument("--exit", choices=["tp", "trail"], default=None,
+                    help="tp = barreiras limitadas (calibrada); trail = EXPERIMENTAL, não validada")
+    ap.add_argument("--target", choices=["tp1", "tp2"], default=None,
+                    help="tp1 = nível oposto mais próximo; tp2 = extremo da tendência (default)")
     ap.add_argument("--no-funding", action="store_true",
                     help="desliga o veto de funding (menos pedidos à API)")
     ap.add_argument("--exclude", default="",
@@ -366,6 +385,13 @@ def main() -> None:
     bars = int(args.months * 30 * 24 * 60 / tf_min) if args.months else args.limit
     cfg = Config(val_tf=args.tf, val_kline_limit=bars, val_horizon=args.horizon,
                  val_universe=args.universe)
+    if args.exit:
+        cfg = replace(cfg, exit_mode=args.exit)
+    if args.target:
+        cfg = replace(cfg, target=args.target)
+    if cfg.exit_mode == "trail":
+        print("AVISO: saída 'trail' NÃO está calibrada (inventa lucro em martingala).\n"
+              "       Os números que saírem daqui não servem para decidir nada.\n")
 
     funding_by_symbol: Optional[Dict[str, tuple]] = None
     if args.demo:

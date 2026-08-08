@@ -42,6 +42,52 @@ def triple_barrier(fh: Sequence[float], fl: Sequence[float], fc: Sequence[float]
     return triple_barrier_ex(fh, fl, fc, entry, stop, tp, direction, cost_frac, horizon)[0]
 
 
+def trailing_exit(fh: Sequence[float], fl: Sequence[float], fc: Sequence[float],
+                  entry: float, stop: float, direction: int, atr: float,
+                  trail_mult: float, cost_frac: float,
+                  horizon: int) -> Tuple[Optional[float], int]:
+    """Saída por stop dinâmico (chandelier) — coerente com uma entrada de momentum.
+
+    Sem alvo fixo: o stop segue o extremo favorável a `trail_mult`×ATR de
+    distância e nunca recua. A posição só fecha quando a tendência se vira
+    (stop tocado) ou no limite do horizonte. É isto que deixa correr os
+    ganhos — o oposto de cortar no primeiro nível à frente.
+
+    Devolve (R líquido de custos, barras_consumidas).
+    """
+    risk = abs(entry - stop)
+    if not (risk > 0) or not fc:
+        return None, 0
+    cost_r = cost_frac * entry / risk
+    n = min(horizon, len(fc))
+    trail = stop
+    best = entry
+    for i in range(n):
+        if direction > 0:
+            if fl[i] <= trail:                       # stop tocado
+                return (trail - entry) / risk - cost_r, i + 1
+            best = max(best, fh[i])
+            nt = max(trail, best - trail_mult * atr)
+            # Se o nível de trailing já está no preço ou acima dele, a posição
+            # sai A MERCADO agora — não fica uma ordem pousada à espera. Deixá-la
+            # pousada daria uma opção grátis: se o preço subisse, mantinha-se o
+            # ganho; se caísse, saía-se ao preço antigo. Isso é look-ahead.
+            if nt >= fc[i]:
+                return (fc[i] - entry) / risk - cost_r, i + 1
+            trail = nt
+        else:
+            if fh[i] >= trail:
+                return (entry - trail) / risk - cost_r, i + 1
+            best = min(best, fl[i])
+            nt = min(trail, best + trail_mult * atr)
+            if nt <= fc[i]:
+                return (entry - fc[i]) / risk - cost_r, i + 1
+            trail = nt
+    exit_px = fc[n - 1]                              # horizonte → mark-to-close
+    raw = (exit_px - entry) / risk if direction > 0 else (entry - exit_px) / risk
+    return raw - cost_r, n
+
+
 def stddev(a: Sequence[float]) -> float:
     """Desvio-padrão amostral (n-1); 0 se < 2 elementos."""
     if len(a) < 2:

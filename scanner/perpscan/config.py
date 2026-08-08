@@ -43,11 +43,23 @@ class Config:
     funding_z_window: int = 100                   # períodos do z-score (~33 dias a 8h)
     funding_min_obs: int = 20                     # mínimo de observações para calcular z
 
+    # ── Saída (v3): coerência com a tese de momentum (secção 6.5) ──
+    # "tp" = barreiras limitadas (ÚNICA calibrada: E[R]~0 em martingala).
+    # "trail" = stop dinâmico — EXPERIMENTAL, NÃO VALIDADO: sem alvo superior a
+    # cauda é tão pesada que a média de R não é estimável nas amostras que temos
+    # (E[R] aparente +0.13 numa martingala, onde tem de ser 0). Não usar para
+    # decidir nada.
+    exit_mode: str = "tp"
+    trail_atr: float = 2.5
+    # Alvo: "tp1" = nível oposto mais próximo (saída de reversão);
+    #       "tp2" = extremo da tendência (coerente com a tese de momentum).
+    target: str = "tp2"
+
     # ── Fase 3 — validação (secção 8) ──
     val_tf: str = "60"
     val_kline_limit: int = 1000
     val_months: float = 6.0                       # história alvo (≥6 meses, secção 8)
-    val_horizon: int = 48
+    val_horizon: int = 240                        # ~10 dias em TF60: espaço para a tendência
     val_universe: int = 50
     val_baseline_mult: int = 3
     val_target_r: float = 1.5                     # alvo em R do baseline de controlo

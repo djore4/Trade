@@ -223,7 +223,35 @@ Dado `entry`, `stop`, `tp`, `dir` e o futuro (highs/lows/closes após a entrada)
 - `custo_R = custo_round_trip_fração × entry / |entry − stop|` (custos em unidades
   de R).
 
-`HORIZON` `[SUP]`: 48 barras no TF de validação.
+`HORIZON` `[SUP]`: 240 barras no TF de validação (v3 — ~10 dias em TF60: uma
+tese de momentum precisa de espaço para a tendência se desenvolver; 48 barras
+truncava-a).
+
+### 6.5 Escolha do alvo e calibração da régua
+
+**Alvo.** `tp1` (nível oposto mais próximo) é uma saída de *reversão*: corta o
+ganho no primeiro obstáculo. Colada a uma entrada de *momentum* é incoerente —
+o lucro de seguir tendências vem da cauda direita. O default passa a `tp2`
+(extremo da tendência).
+
+**Saída dinâmica (trailing): NÃO VALIDADA.** Foi implementada e rejeitada como
+instrumento de medida. Numa martingala — onde nenhum lucro é possível — a
+versão com stop dinâmico dá E[R] ≈ +0.11 a +0.13, quando tem de dar 0. Duas
+causas encontradas e corrigidas (stop pousado acima do mercado; opção grátis ao
+deixar a ordem à espera em vez de sair a mercado), mas o viés persiste: **sem
+alvo superior a distribuição de R tem cauda tão pesada que a média não é
+estimável** com as amostras disponíveis. Fica em `--exit trail` com aviso
+explícito e não decide nada.
+
+**Regra geral (calibração):** antes de uma regra de saída ser usada para julgar
+uma estratégia, tem de provar E[R] ≈ 0 numa martingala com caminho intra-barra.
+Testado em `tests/test_harness_power.py::TestExitCalibration`.
+
+> Nota metodológica descoberta pelo caminho: séries sintéticas com **uma barra =
+> um salto** são inadequadas para testar stops. O preço ultrapassa o nível em
+> ~0.6% antes de ser detetado, e a convenção "o stop enche no nível" passa a
+> valer ~+0.4 R de lucro fictício por trade. As séries de teste passaram a ter
+> caminho intra-barra (20 micro-passos).
 
 ### 6.4 Sizing (herdado da app, para as sugestões)
 
@@ -351,7 +379,9 @@ Como a camada encaixa no sistema e o que a rodeia:
 | `COST_FLOOR_MULT` | 8 × round-trip | 6.2 | prompt |
 | `custo round-trip` | ≈ 0.17% | 6.1 | app |
 | `MIN_RR1` | 1.0 | 5.2 | `[SUP]` |
-| `HORIZON` | 48 barras | 6.3 | `[SUP]` |
+| `HORIZON` | 240 barras | 6.3 | `[SUP]` |
+| `target` | tp2 (extremo) | 6.5 | v3 |
+| `exit_mode` | tp (calibrada) | 6.5 | v3 |
 | `abandono p` | 0.05 | 8 | prompt |
 | `TREND_SMA` | 120 barras | 5.3 | `[SUP]` |
 | `TREND_SLOPE_BARS` | 24 barras | 5.3 | `[SUP]` |
@@ -367,4 +397,5 @@ Como a camada encaixa no sistema e o que a rodeia:
 |---|---|---|---|
 | 2026-08-08 | **v1** — reversão nos extremos do range | 10 símb./~12d | REPROVADA: −0.43 R vs −0.22 do aleatório (p=5e-5, pior que o acaso) |
 | 2026-08-08 | **v1** — repetida em janela maior | 22 símb./~42d | REPROVADA: −0.04 R (bate o aleatório mas expectância negativa; sinal inverteu entre janelas → instável) |
-| — | **v2** — pullback com a tendência + veto de funding | *por correr* | *pendente: `--strategy v2 --months 6`* |
+| 2026-08-08 | **v2** — pullback com a tendência + veto de funding (alvo tp1, horizonte 48) | 16 símb./5.6 meses, 2914 trades | REPROVADA (B, C): −0.070 R vs −0.281 do aleatório. Bate o acaso de forma clara e **estável** (p=3e-14; terços −0.091/−0.061/−0.055) mas não paga os custos. A seleção funciona; a expectância não. |
+| — | **v3** — v2 com alvo no extremo da tendência (tp2) e horizonte 240 | *por correr* | *pendente* |
