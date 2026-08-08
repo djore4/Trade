@@ -92,6 +92,17 @@ Opções úteis:
 | `--split dev` | primeiros 70% do histórico (**default**) — é aqui que se trabalha |
 | `--split holdout` | últimos 30%, **teste final único**; exige `--confirmo-holdout` |
 
+## Configuração congelada (validada em DEV)
+
+```bash
+python -m perpscan.validate --universe 20 --tf 240 --months 12 --no-triage
+```
+
+TF de 4h, alvo no extremo da tendência, veto de funding e filtro de qualidade do
+universo ligados, **triagem técnica desligada** (piora: baixa a vantagem bruta
+de +0.109 para +0.076 R). Qualquer desvio a esta linha deixa de ser a
+configuração validada.
+
 ## Estratégias
 
 - **v2 (ativa)** — `gate_trend_pullback`: só negoceia **a favor da tendência**

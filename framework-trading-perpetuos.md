@@ -447,6 +447,31 @@ Como a camada encaixa no sistema e o que a rodeia:
 | 2026-08-08 | **v3 + triagem técnica** (ADX/RSI/volume + qualidade do universo) | 18 símb./6 meses, DEV, 1401 trades | REPROVADA (B, C): bruto +0.052 − custos 0.105 = **−0.053 R**. A triagem cortou 63% dos setups e ainda assim não fechou a conta. |
 | 2026-08-08 | **v3 em TF240, sem triagem** — mesma estratégia, timeframe de 4h | 13 símb./12 meses, DEV, 635 trades | **APROVADA em DEV** (A, B, C): bruto +0.109 − custos 0.068 = **+0.041 R**. Previsão pré-registada era +0.03 a +0.06 — confirmada. **Ressalva séria: sub-períodos em queda (+0.188 / +0.033 / −0.071).** |
 
+### CONFIGURAÇÃO CONGELADA (decidida em DEV, 2026-08-08)
+
+Escolhida entre as duas candidatas testadas em DEV, antes de tocar no holdout:
+
+```
+python -m perpscan.validate --universe 20 --tf 240 --months 12 --no-triage
+```
+
+`v2` (pullback com a tendência) · TF **240m** · saída `tp` com alvo `tp2` ·
+horizonte 240 barras · veto de funding **ligado** · filtro de qualidade do
+universo **ligado** · **triagem técnica DESLIGADA**.
+
+**A triagem técnica (ADX/RSI/volume) é excluída — piora o resultado.** Nos
+mesmos dados: sem triagem bruto +0.109 → líquido +0.041 (p=0.013, APROVADO);
+com triagem bruto +0.076 → líquido +0.008 (p=0.13, REPROVADO). Cortou 670
+setups e baixou a vantagem bruta em 30%: os setups que elimina eram, em média,
+**melhores** que os que mantém. O código fica disponível (é o default do
+`triage.py`, ligado com omissão de `--no-triage`) mas está fora da
+configuração validada.
+
+> Correção a duas afirmações minhas, ambas desmentidas pelos dados: (1) "cortar
+> 80% dos setups paga a portagem 5× menos vezes" — a não-sobreposição faz
+> entrar outro setup no lugar do cortado; (2) "menos trades, melhores trades" —
+> estes filtros cortaram preferencialmente os bons.
+
 ### Confirmação do diagnóstico de custos
 
 A previsão foi feita **antes** de correr, com mecanismo explícito: o custo é
