@@ -336,7 +336,31 @@ def main() -> None:
     ap.add_argument("--exclude", default="",
                     help="baseCoins extra a excluir, ex. --exclude ABC,XYZ")
     ap.add_argument("--demo", action="store_true", help="dados sintéticos, sem rede")
+    ap.add_argument("--list-universe", action="store_true",
+                    help="diagnóstico: mostra o universo devolvido pela Bybit e sai")
     args = ap.parse_args()
+
+    if args.list_universe:
+        from . import bybit
+        raw = bybit._get("/v5/market/tickers", {"category": "linear"})
+        lst = raw.get("result", {}).get("list", [])
+        print(f"Símbolos devolvidos pela API: {len(lst)}")
+        print(f"nextPageCursor: {raw.get('result', {}).get('nextPageCursor', '(nenhum)')!r}")
+        usdt = [t for t in lst if t["symbol"].endswith("USDT")]
+        print(f"Pares USDT: {len(usdt)}")
+        vals = []
+        for t in usdt:
+            try:
+                vals.append((float(t.get("turnover24h") or 0), t["symbol"]))
+            except (TypeError, ValueError):
+                vals.append((0.0, t["symbol"] + " (turnover ilegível)"))
+        vals.sort(reverse=True)
+        print(f"Com turnover ≥ 30M: {sum(1 for v, _ in vals if v >= 30e6)}")
+        print(f"Com turnover = 0 ou ilegível: {sum(1 for v, _ in vals if v <= 0)}")
+        print("\nTop 30 por turnover 24h:")
+        for v, s in vals[:30]:
+            print(f"  {s:<16} {v/1e6:>12,.1f}M")
+        return
 
     tf_min = TF_MIN.get(args.tf, 60)
     bars = int(args.months * 30 * 24 * 60 / tf_min) if args.months else args.limit
