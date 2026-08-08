@@ -444,7 +444,39 @@ Como a camada encaixa no sistema e o que a rodeia:
 | 2026-08-08 | **v1** — repetida em janela maior | 22 símb./~42d | REPROVADA: −0.04 R (bate o aleatório mas expectância negativa; sinal inverteu entre janelas → instável) |
 | 2026-08-08 | **v2** — pullback com a tendência + veto de funding (alvo tp1, horizonte 48) | 16 símb./5.6 meses, 2914 trades | REPROVADA (B, C): −0.070 R vs −0.281 do aleatório. Bate o acaso de forma clara e **estável** (p=3e-14; terços −0.091/−0.061/−0.055) mas não paga os custos. A seleção funciona; a expectância não. |
 | 2026-08-08 | **v3** — v2 com alvo no extremo da tendência (tp2) e horizonte 240 | 15 símb./3 meses, 964 trades | REPROVADA (B, C): −0.014 R vs −0.252 do aleatório. Progressão v1→v2→v3: −0.43 → −0.070 → −0.014. Cada correção de coerência aproximou de zero, mas a expectância continua negativa. |
+| 2026-08-08 | **v3 + triagem técnica** (ADX/RSI/volume + qualidade do universo) | 18 símb./6 meses, DEV, 1401 trades | REPROVADA (B, C): bruto +0.052 − custos 0.105 = **−0.053 R**. A triagem cortou 63% dos setups e ainda assim não fechou a conta. |
 | — | **v3 em TF superior** — mesma estratégia, TF240 | *por correr* | *pendente: `--tf 240 --months 12`* |
+
+### Conclusão replicada (4 hipóteses, mesma assinatura)
+
+| Hipótese | Bruto | Custos | Líquido | Bate o acaso? |
+|---|---|---|---|---|
+| v1 reversão | — | ~0.12 | −0.43 | não (pior) |
+| v2 tendência | ~+0.04 | ~0.11 | −0.070 | sim |
+| v3 alvo estendido | ~+0.09 | ~0.11 | −0.014 | sim |
+| v3 + triagem | +0.052 | 0.105 | −0.053 | sim |
+
+Em todas as variantes que **batem o acaso**, a vantagem bruta situa-se entre
++0.04 e +0.09 R e o custo por trade entre 0.105 e 0.11 R. **O custo é cerca do
+dobro da vantagem.** Quatro alterações independentes à lógica de entrada, saída
+e filtragem não moveram esta relação — o que indica que o problema não está na
+seleção (que funciona, de forma estatisticamente significativa e repetida) mas
+na **aritmética do timeframe**.
+
+Restam duas alavancas, ambas aritméticas e não de estratégia:
+1. **Timeframe superior** — o custo é fixo em %, o ATR cresce com o timeframe,
+   logo `custo_R = custo/stop_pct` cai.
+2. **Ordens maker** — reduz `cost_per_side` de 0.055% para ~0.02%.
+
+Se nenhuma resolver, a conclusão honesta é que esta família de estratégias não
+paga os custos em perpétuos da Bybit, e o projeto para aqui.
+
+**Nota sobre a alavanca da triagem (correção a uma afirmação minha).** Prevendo
+"cortar 80% dos setups = pagar a portagem 5× menos vezes", subestimei a
+interação com a regra de não-sobreposição: quando um setup é cortado, a linha
+temporal fica livre e **outro setup mais tarde entra no seu lugar**. Cortar 63%
+dos setups reduziu as trades apenas 40% (21→13 por símbolo/mês). A alavanca
+existe mas é bastante mais fraca do que afirmei.
 
 **Diagnóstico transversal (custos).** O relatório passa a decompor
 `bruto − custos = líquido`. Em TF60 o piso de custo obriga a stops de ≈1.4%,
