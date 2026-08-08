@@ -445,7 +445,25 @@ Como a camada encaixa no sistema e o que a rodeia:
 | 2026-08-08 | **v2** — pullback com a tendência + veto de funding (alvo tp1, horizonte 48) | 16 símb./5.6 meses, 2914 trades | REPROVADA (B, C): −0.070 R vs −0.281 do aleatório. Bate o acaso de forma clara e **estável** (p=3e-14; terços −0.091/−0.061/−0.055) mas não paga os custos. A seleção funciona; a expectância não. |
 | 2026-08-08 | **v3** — v2 com alvo no extremo da tendência (tp2) e horizonte 240 | 15 símb./3 meses, 964 trades | REPROVADA (B, C): −0.014 R vs −0.252 do aleatório. Progressão v1→v2→v3: −0.43 → −0.070 → −0.014. Cada correção de coerência aproximou de zero, mas a expectância continua negativa. |
 | 2026-08-08 | **v3 + triagem técnica** (ADX/RSI/volume + qualidade do universo) | 18 símb./6 meses, DEV, 1401 trades | REPROVADA (B, C): bruto +0.052 − custos 0.105 = **−0.053 R**. A triagem cortou 63% dos setups e ainda assim não fechou a conta. |
-| — | **v3 em TF superior** — mesma estratégia, TF240 | *por correr* | *pendente: `--tf 240 --months 12`* |
+| 2026-08-08 | **v3 em TF240, sem triagem** — mesma estratégia, timeframe de 4h | 13 símb./12 meses, DEV, 635 trades | **APROVADA em DEV** (A, B, C): bruto +0.109 − custos 0.068 = **+0.041 R**. Previsão pré-registada era +0.03 a +0.06 — confirmada. **Ressalva séria: sub-períodos em queda (+0.188 / +0.033 / −0.071).** |
+
+### Confirmação do diagnóstico de custos
+
+A previsão foi feita **antes** de correr, com mecanismo explícito: o custo é
+fixo em %, o ATR cresce com o timeframe, logo `custo_R = custo/stop_pct` cai.
+De TF60 para TF240 o custo por trade caiu 0.105 → 0.068 (−35%) e a vantagem
+bruta manteve-se (+0.09 → +0.109), tornando o líquido positivo pela primeira
+vez. A hipótese era falsificável (se o bruto colapsasse, a explicação estaria
+errada) e não colapsou.
+
+**Frequência:** 4.1 trades/símbolo/mês, contra 21 em TF60. É a paciência que o
+sistema dizia querer e não praticava.
+
+**Ressalva que impede celebrar.** Os sub-períodos **declinam**: +0.188 → +0.033
+→ −0.071. O último terço já é negativo, e o **holdout é ainda mais recente** que
+esse terço. Há risco real de o resultado não se sustentar. O critério C passa
+(2 de 3 positivos) mas a direção da série é o sinal mais informativo aqui, e
+aponta para baixo. Só o holdout decide — e abre uma única vez.
 
 ### Conclusão replicada (4 hipóteses, mesma assinatura)
 
