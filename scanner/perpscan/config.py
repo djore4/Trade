@@ -16,7 +16,7 @@ class Config:
     # ── Gate 0 — liquidez (secção 5.1) ──
     min_turnover: float = 30e6                    # [SUP] turnover 24h mínimo (USD)
 
-    # ── Gate 1 — estrutura (secção 5.2) ──
+    # ── Gate 1 — estrutura (secção 5.2, v1 — REJEITADA; mantida para comparação) ──
     tf: str = "15"                                # timeframe de trabalho
     kline_limit: int = 300
     atr_n: int = 14
@@ -32,15 +32,31 @@ class Config:
     cost_floor_mult: float = 8.0                  # piso de custo = 8× round-trip (prompt §2)
     min_rr1: float = 1.0
 
+    # ── Gate 1 v2 — pullback com a tendência (secção 5.3) ──
+    trend_sma: int = 120                          # [SUP] SMA de tendência (≈5 dias em TF60)
+    trend_slope_bars: int = 24                    # [SUP] barras para medir o declive da SMA
+    trend_slope_atr: float = 0.1                  # [SUP] declive mínimo em ×ATR (senão "sem tendência")
+    pullback_lookback: int = 48                   # [SUP] janela do extremo recente (≈2 dias)
+    pullback_min_atr: float = 1.0                 # [SUP] recuo mínimo desde o extremo (senão "perseguir")
+    entry_tol_atr: float = 0.5                    # [SUP] distância máx. ao nível para haver zona de entrada
+    funding_z_veto: float = 2.0                   # veto: funding extremo do lado do trade
+    funding_z_window: int = 100                   # períodos do z-score (~33 dias a 8h)
+    funding_min_obs: int = 20                     # mínimo de observações para calcular z
+
     # ── Fase 3 — validação (secção 8) ──
     val_tf: str = "60"
     val_kline_limit: int = 1000
+    val_months: float = 6.0                       # história alvo (≥6 meses, secção 8)
     val_horizon: int = 48
-    val_universe: int = 60
+    val_universe: int = 50
     val_baseline_mult: int = 3
     val_target_r: float = 1.5                     # alvo em R do baseline de controlo
     abandon_p: float = 0.05
+    analysis_window: int = 300                    # barras passadas ao gate em cada decisão
     seed: int = 0x5EED                            # PRNG do baseline (reprodutível)
+    # Universo só-cripto: baseCoins não-cripto conhecidos (ações/metais tokenizados).
+    # Lista curada — estende com --exclude no CLI se aparecerem mais.
+    denylist_base: tuple = ("XAU", "XAG", "SPCX", "SNDK", "SOXL", "CYS")
 
     def cost_rt(self) -> float:
         """Custo round-trip em fração de preço (≈ 0.0017)."""

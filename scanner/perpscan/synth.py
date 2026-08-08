@@ -43,3 +43,34 @@ def synth_trend(n: int = 200, start: float = 100.0, step: float = 0.5) -> Klines
         h.append(px + 0.2)
         l.append(px - step / 2 - 0.2)
     return Klines(o=o, h=h, l=l, c=c, v=[1.0] * n)
+
+
+# Segmentos (preço_inicial, preço_final, nº_barras) da escada ascendente padrão:
+# sobe em degraus, cada patamar com DOIS toques no suporte/resistência (níveis
+# confirmáveis), e termina num pullback junto ao suporte — o setup v2 clássico.
+STAIRCASE_UP = [
+    (80, 100, 50), (100, 110, 12), (110, 106, 6), (106, 110, 6), (110, 106, 6),
+    (106, 118, 14), (118, 112, 7), (112, 118, 7), (118, 112, 7),
+    (112, 126, 14), (126, 119, 8), (119, 126, 8), (126, 119, 8), (119, 119.15, 5),
+]
+# Escada descendente que termina EM mínimo novo (sem pullback) — quem compra ou
+# vende aqui está a perseguir; a v2 tem de recusar.
+STAIRCASE_DOWN = [
+    (120, 100, 70), (100, 90, 12), (90, 94, 6), (94, 90, 6), (90, 94, 6),
+    (94, 82, 14), (82, 88, 7), (88, 82, 7), (82, 88, 7), (88, 74, 14),
+]
+
+
+def synth_staircase(segs=None, up: bool = True, w: float = 0.15) -> Klines:
+    """Série em escada a partir de segmentos lineares (ver STAIRCASE_UP/DOWN)."""
+    if segs is None:
+        segs = STAIRCASE_UP if up else STAIRCASE_DOWN
+    c = [float(segs[0][0])]
+    for a, b, n in segs:
+        for j in range(1, n + 1):
+            c.append(a + (b - a) * j / n)
+    o = [c[0]] + c[:-1]
+    h = [x + w for x in c]
+    l = [x - w for x in c]
+    return Klines(o=o, h=h, l=l, c=c, v=[1.0] * len(c),
+                  t=[float(i) for i in range(len(c))])

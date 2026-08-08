@@ -50,32 +50,55 @@ Usa random walks sintéticos. O resultado esperado é **NÃO-significativo** —
 suposto: em dados sem edge, o critério de abandono tem de disparar. Serve para
 confirmar que o harness e o veredicto funcionam.
 
-**Real (no teu computador, com acesso à Bybit):**
+**Real (no teu computador, com acesso à Bybit) — o teste a sério:**
 
 ```bash
 cd scanner
 pip install -r requirements.txt
-python -m perpscan.validate --universe 50 --tf 60 --limit 1000
+python -m perpscan.validate --universe 50 --months 6
 ```
 
 Isto:
-1. vai buscar os 50 pares mais líquidos (turnover ≥ 30M);
-2. puxa ~1000 klines TF60 de cada;
-3. corre `gate_structure` em **walk-forward** (sem look-ahead);
-4. avalia cada setup por **barreira tripla líquida de custos**;
+1. vai buscar os 50 pares de cripto mais líquidos (turnover ≥ 30M) — **exclui
+   ações e metais tokenizados** (XAU, SOXL, SNDK…);
+2. pagina **6 meses** de klines TF60 de cada, mais o histórico de funding;
+3. corre a estratégia em **walk-forward** (sem look-ahead, funding
+   point-in-time);
+4. avalia cada setup por **barreira tripla líquida de custos**, com trades
+   **não-sobrepostas**;
 5. constrói o **baseline aleatório** (mesmos símbolos/horas, mesma distância de
-   stop, mesmo alvo em R);
-6. imprime as duas distribuições de R e o **veredicto** do critério de abandono
-   (secção 8): se `p ≥ 0.05` ou a média não for superior, o gate é cosmético e
-   **não se avança para a Fase 4**.
+   stop, mesmo alvo em R, também sem sobreposição);
+6. imprime as distribuições de R, os **três sub-períodos**, e o veredicto dos
+   **três critérios** da secção 8 (A: bate o acaso · B: expectância > 0 ·
+   C: consistente).
 
-> Nota sobre "6 meses": 1000 barras de TF60 ≈ 42 dias. Para ≥ 6 meses de história,
-> aumenta `--limit` (a Bybit lima a 1000 por pedido — a paginação por
-> `start/end` é o próximo passo natural em `bybit.py`) ou usa um TF maior.
+Demora bastante (6 meses × 50 símbolos). Para um teste mais rápido primeiro:
+
+```bash
+python -m perpscan.validate --universe 15 --months 3
+```
+
+Opções úteis:
+
+| Opção | Efeito |
+|---|---|
+| `--strategy v1` | corre a hipótese antiga (reversão) — **rejeitada**, só para comparação |
+| `--months N` | meses de história (paginado); sem isto usa `--limit` barras |
+| `--no-funding` | desliga o veto de funding (menos pedidos à API, mais rápido) |
+| `--exclude ABC,XYZ` | exclui baseCoins extra do universo |
+
+## Estratégias
+
+- **v2 (ativa)** — `gate_trend_pullback`: só negoceia **a favor da tendência**
+  (SMA120 com declive), à entrada de um **recuo** a um nível testado, com **veto
+  de funding** no lado sobrelotado. Sem sinal completo, não faz nada.
+  Ver secção 5.3 do framework.
+- **v1 (rejeitada)** — `gate_structure`: reversão nos extremos do range.
+  Reprovada na validação (ver Apêndice B do framework). Mantida como grupo de
+  controlo.
 
 ## O que falta (próximos passos da componente Python)
 
-- Paginação de klines para history longa (≥ 6 meses) em `bybit.py`.
 - Portar a camada de pressão (H1–H4) e a pontuação qualitativa (secção 7) — só
   **depois** da Fase 3 passar.
 - Paper trader / walk-forward contínuo e kill-switch (secção 9).

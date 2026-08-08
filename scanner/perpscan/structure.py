@@ -18,6 +18,7 @@ class Klines:
     l: List[float] = field(default_factory=list)
     c: List[float] = field(default_factory=list)
     v: List[float] = field(default_factory=list)
+    t: List[float] = field(default_factory=list)   # timestamps (ms) — opcional
 
     def __len__(self) -> int:  # nº de barras
         return len(self.c)

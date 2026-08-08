@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import re
 import time
-from typing import List
+from typing import Iterable, List, Tuple
 
 from .structure import Klines
 
@@ -32,10 +32,16 @@ def coin_of(symbol: str) -> str:
     return re.sub(r"USDT$", "", symbol)
 
 
-def fetch_universe(min_turnover: float, top: int | None = None) -> tuple[list[dict], int]:
-    """Perps USDT ordenados por turnover. Devolve (lista_filtrada, universo_total)."""
+def fetch_universe(min_turnover: float, top: int | None = None,
+                   exclude: Iterable[str] = ()) -> tuple[list[dict], int, list[str]]:
+    """Perps USDT ordenados por turnover, SÓ cripto.
+
+    `exclude`: baseCoins a retirar (ações/metais tokenizados — secção 2 do
+    framework). Devolve (lista_filtrada, universo_total, excluidos).
+    """
+    excl = {e.upper() for e in exclude}
     d = _get("/v5/market/tickers", {"category": "linear"})
-    rows = []
+    rows, removed = [], []
     for t in d.get("result", {}).get("list", []):
         sym = t["symbol"]
         if not sym.endswith("USDT") or re.search(r"[0-9]", coin_of(sym)):
@@ -47,24 +53,85 @@ def fetch_universe(min_turnover: float, top: int | None = None) -> tuple[list[di
             continue
         if price <= 0:
             continue
-        rows.append({"symbol": sym, "coin": coin_of(sym), "price": price, "turnover": turnover})
+        base = coin_of(sym)
+        if base.upper() in excl:
+            if turnover >= min_turnover:
+                removed.append(sym)
+            continue
+        rows.append({"symbol": sym, "coin": base, "price": price, "turnover": turnover})
     rows.sort(key=lambda x: x["turnover"], reverse=True)
     full = len(rows)
     filt = [r for r in rows if r["turnover"] >= min_turnover]
     if top:
         filt = filt[:top]
-    return filt, full
+    return filt, full, removed
 
 
-def fetch_kline(symbol: str, interval: str, limit: int) -> Klines:
-    """Klines cronológicas (antigo → recente)."""
-    d = _get("/v5/market/kline",
-             {"category": "linear", "symbol": symbol, "interval": interval, "limit": limit})
-    lst = list(reversed(d.get("result", {}).get("list", [])))
+def _rows_to_klines(rows_newest_first: List[list]) -> Klines:
+    lst = list(reversed(rows_newest_first))            # cronológico
     return Klines(
         o=[float(x[1]) for x in lst],
         h=[float(x[2]) for x in lst],
         l=[float(x[3]) for x in lst],
         c=[float(x[4]) for x in lst],
         v=[float(x[5]) for x in lst],
+        t=[float(x[0]) for x in lst],
     )
+
+
+def fetch_kline(symbol: str, interval: str, limit: int) -> Klines:
+    """Klines cronológicas (antigo → recente), 1 pedido (máx. 1000 barras)."""
+    d = _get("/v5/market/kline",
+             {"category": "linear", "symbol": symbol, "interval": interval,
+              "limit": min(limit, 1000)})
+    return _rows_to_klines(d.get("result", {}).get("list", []))
+
+
+def fetch_kline_paged(symbol: str, interval: str, bars: int) -> Klines:
+    """Klines cronológicas com paginação para trás — permite ≥6 meses de história.
+
+    A Bybit lima cada pedido a 1000 barras; pagina-se com `end` = timestamp da
+    barra mais antiga − 1 até juntar `bars` barras (ou acabar a história).
+    """
+    rows: List[list] = []
+    end: int | None = None
+    while len(rows) < bars:
+        params = {"category": "linear", "symbol": symbol, "interval": interval, "limit": 1000}
+        if end is not None:
+            params["end"] = end
+        d = _get("/v5/market/kline", params)
+        lst = d.get("result", {}).get("list", [])       # mais recente → mais antigo
+        if not lst:
+            break
+        rows.extend(lst)
+        oldest = int(lst[-1][0])
+        end = oldest - 1
+        if len(lst) < 1000:
+            break                                       # história esgotada
+        time.sleep(0.06)                                # cortesia com o rate limit
+    return _rows_to_klines(rows[:bars])
+
+
+def fetch_funding_paged(symbol: str, since_ms: float) -> Tuple[List[int], List[float]]:
+    """Histórico de funding até `since_ms`, paginado (200/pedido, períodos de 8h).
+
+    Devolve (timestamps_ms, rates) cronológicos, para z-score point-in-time.
+    """
+    out: List[dict] = []
+    end: int | None = None
+    while True:
+        params = {"category": "linear", "symbol": symbol, "limit": 200}
+        if end is not None:
+            params["endTime"] = end
+        d = _get("/v5/market/funding/history", params)
+        lst = d.get("result", {}).get("list", [])
+        if not lst:
+            break
+        out.extend(lst)
+        oldest = int(lst[-1]["fundingRateTimestamp"])
+        if oldest <= since_ms or len(lst) < 200:
+            break
+        end = oldest - 1
+        time.sleep(0.06)
+    pairs = sorted((int(x["fundingRateTimestamp"]), float(x["fundingRate"])) for x in out)
+    return [p[0] for p in pairs], [p[1] for p in pairs]

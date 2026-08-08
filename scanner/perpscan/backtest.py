@@ -6,32 +6,40 @@ from statistics import mean, median, pstdev
 from typing import List, Optional, Sequence, Tuple
 
 
-def triple_barrier(fh: Sequence[float], fl: Sequence[float], fc: Sequence[float],
-                   entry: float, stop: float, tp: float, direction: int,
-                   cost_frac: float, horizon: int) -> Optional[float]:
-    """Barreira tripla líquida de custos. Devolve R (múltiplos de risco) ou None.
+def triple_barrier_ex(fh: Sequence[float], fl: Sequence[float], fc: Sequence[float],
+                      entry: float, stop: float, tp: float, direction: int,
+                      cost_frac: float, horizon: int) -> Tuple[Optional[float], int]:
+    """Barreira tripla líquida de custos. Devolve (R, barras_consumidas).
 
     fh/fl/fc: futuros (após a entrada). cost_frac: round-trip em fração de preço.
+    barras_consumidas permite impor trades NÃO-sobrepostas na validação.
     """
     risk = abs(entry - stop)
     if not (risk > 0) or not fc:
-        return None
+        return None, 0
     cost_r = cost_frac * entry / risk                 # custos em unidades de R
     n = min(horizon, len(fc))
     for i in range(n):
         if direction > 0:
             if fl[i] <= stop:
-                return -1 - cost_r
+                return -1 - cost_r, i + 1
             if fh[i] >= tp:
-                return (tp - entry) / risk - cost_r
+                return (tp - entry) / risk - cost_r, i + 1
         else:
             if fh[i] >= stop:
-                return -1 - cost_r
+                return -1 - cost_r, i + 1
             if fl[i] <= tp:
-                return (entry - tp) / risk - cost_r
+                return (entry - tp) / risk - cost_r, i + 1
     exit_px = fc[n - 1]                                # timeout → mark-to-close
     raw = (exit_px - entry) / risk if direction > 0 else (entry - exit_px) / risk
-    return raw - cost_r
+    return raw - cost_r, n
+
+
+def triple_barrier(fh: Sequence[float], fl: Sequence[float], fc: Sequence[float],
+                   entry: float, stop: float, tp: float, direction: int,
+                   cost_frac: float, horizon: int) -> Optional[float]:
+    """Compat: só o R da barreira tripla (ver triple_barrier_ex)."""
+    return triple_barrier_ex(fh, fl, fc, entry, stop, tp, direction, cost_frac, horizon)[0]
 
 
 def stddev(a: Sequence[float]) -> float:

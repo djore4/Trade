@@ -111,7 +111,16 @@ Motivo de rejeição obrigatório e específico, ex.:
 (bid/ask) e de profundidade do livro. Enquanto não existirem, o turnover é o
 proxy único.
 
-### 5.2 Gate 1 — Estrutura
+### 5.2 Gate 1 — Estrutura (v1 — **REJEITADA**, mantida para comparação)
+
+> **ESTADO: REJEITADA na validação de 2026-08-08.** Em walk-forward sobre dados
+> reais da Bybit, a hipótese "reverter nos extremos do range" foi *pior* que
+> entradas aleatórias numa janela (10 símbolos/12 dias: média −0.43 R vs −0.22,
+> p=5e-5) e instável noutra (22 símbolos/42 dias: média −0.04 R, ainda
+> negativa). Diagnóstico: aposta contra o momentum documentado de cripto, sem
+> filtro de tendência, com sobre-negociação (~10 decisões/símbolo/dia). O
+> código permanece disponível (`--strategy v1`) como grupo de comparação.
+> A hipótese ativa é a **v2 (secção 5.3)**.
 
 Trabalha sobre klines TF15 (≥ ~300 barras). Passos, na ordem em que rejeitam:
 
@@ -145,6 +154,39 @@ Saída de `gate_structure`: `(setups, motivos_de_rejeicao)`. Os motivos são
 **obrigatórios e específicos** — nunca `"falhou"`. Cada setup traz `dir`, `entry`,
 `stop`, `stop_dist`, `tp1`, `tp2`, `rr1`, `rr2`, os níveis usados e um `why`
 legível.
+
+### 5.3 Gate 1 v2 — Pullback com a tendência  *(hipótese ativa)*
+
+Fundamento (práticas documentadas de traders sistemáticos e discricionários de
+cripto): (a) **momentum/continuação** é o efeito mais robusto em cripto —
+negoceia-se **com** a tendência de fundo, nunca contra; (b) a entrada é no
+**recuo a um nível testado**, nunca a perseguir o movimento; (c) **funding
+extremo** marca o lado sobrelotado — não se entra do lado da multidão que paga;
+(d) **poucas trades**: sem sinal completo, o sistema não faz nada (paciência
+como regra).
+
+Passos de `gate_trend_pullback`, na ordem em que rejeitam:
+
+1. **ATR** — como na v1.
+2. **Tendência.** `SMA(TREND_SMA=120)` `[SUP]`: exige declive
+   `> ±TREND_SLOPE_ATR=0.1×ATR` `[SUP]` em `TREND_SLOPE_BARS=24` barras **e**
+   preço do lado certo da média. Alta → só LONG; baixa → só SHORT; plana →
+   rejeita: *"sem tendência definida … — sem trade: paciência"*.
+3. **Pullback.** Recuo desde o extremo das últimas `PULLBACK_LOOKBACK=48` barras
+   ≥ `PULLBACK_MIN_ATR=1.0×ATR` `[SUP]`; senão rejeita: *"perseguir o
+   movimento; esperar o recuo"*.
+4. **Zona de entrada.** Preço a ≤ `ENTRY_TOL_ATR=0.5×ATR` `[SUP]` de um nível
+   confirmado (≥2 toques) do lado da entrada (suporte para LONG, resistência
+   para SHORT); senão rejeita: *"longe do suporte/resistência mais próximo"*.
+5. **Veto de funding (H1 como veto).** `z(funding) ≥ +2` bloqueia LONG;
+   `≤ −2` bloqueia SHORT: *"lado sobrelotado a pagar; veto de posicionamento"*.
+   Calculado **point-in-time** (só observações anteriores à barra de decisão).
+6. **Risco/alvos** — mesma mecânica da secção 6 (piso de custo, banda de ATR,
+   stop ancorado no nível com folga 0.15×ATR). **TP1 = nível oposto mais
+   próximo** além do piso de custo; **TP2 = extremo recente**.
+
+Saída idêntica à v1: `(setups, motivos_de_rejeicao)`, motivos obrigatórios e
+específicos, `why` legível.
 
 ---
 
@@ -219,18 +261,57 @@ A camada estrutural só é aceite se provar que **não é cosmética**. Metodolo
    **mesmo alvo em R**. Direção aleatória.
 6. **Comparação de distribuições de R:** média, mediana, desvio, % de resultados
    positivos, e **teste de significância** (Welch dos dois grupos).
+7. **Trades não-sobrepostas.** Depois de uma entrada, o símbolo fica ocupado até
+   a trade fechar (stop, TP ou timeout). Sem isto, a mesma oscilação é contada
+   dezenas de vezes e a estatística infla artificialmente. Aplica-se igualmente
+   ao baseline.
+8. **Sub-períodos.** A amostra é dividida em **três terços cronológicos** e a
+   média de R é reportada em cada um.
 
-### Critério de abandono (definido à partida)
+### Critérios de aprovação (definidos à partida)
 
-> Se os setups aprovados **não** se distinguirem do baseline aleatório de forma
-> **estatisticamente significativa** (`p < 0.05` **e** média de R superior), o
-> gate é **cosmético** e **não se avança para a Fase 4**.
+Os **três** têm de passar. Falha um → REPROVADO.
+
+> **A. Distingue-se do acaso.** Welch `p < 0.05` **e** média de R superior à do
+> baseline aleatório.
 >
-> Neste caso, dizê-lo diretamente. **Não** procurar parametrizações alternativas
-> até encontrar uma que "funcione" — isso é sobreajuste e não se dá por ele.
+> **B. Expectância positiva.** Média de R **> 0**, líquida de custos. Bater o
+> baseline com expectância negativa é perder dinheiro mais devagar — não é edge.
+> *(Critério acrescentado em 2026-08-08: a v1 "passou" o A com média −0.04 R, o
+> que expôs a lacuna de só comparar com o aleatório.)*
+>
+> **C. Consistência.** Média positiva em **≥2 dos 3 sub-períodos**. Um edge que
+> só existe numa janela é ruído com sorte. *(A v1 inverteu de sinal entre duas
+> janelas — significativamente pior numa, significativamente melhor noutra.)*
 
-O harness (`scanner/perpscan/validate.py`) imprime as duas distribuições, o `p`, e
-o veredicto explícito segundo esta regra.
+### Critério de abandono
+
+> Se os critérios não passarem, dizê-lo diretamente. **Não** procurar
+> parametrizações alternativas até encontrar uma que "funcione" — isso é
+> sobreajuste e não se dá por ele.
+>
+> O caminho legítimo é **rever a hipótese** à luz do que falhou (que critério,
+> em que sub-período) e testar a hipótese revista — registando a rejeição
+> anterior, como está feito na secção 5.2 para a v1.
+
+O harness (`scanner/perpscan/validate.py`) imprime as duas distribuições, os
+sub-períodos, o `p`, os três critérios com ✓/✗, e o veredicto explícito.
+
+### Validação do próprio harness (controlos)
+
+Um veredicto só tem valor se a régua souber distinguir os dois casos. Ambos os
+controlos correm nos testes (`tests/test_harness_power.py`):
+
+- **Controlo positivo** — séries com momentum genuíno (o efeito que a v2 diz
+  explorar): o harness **aprova** (média +0.44 R, positiva nos três terços,
+  p≈1e-14). Prova que é *capaz* de detetar edge.
+- **Controlo negativo** — passeio aleatório, sem edge por construção: o harness
+  **reprova**. Prova que não aprova ruído.
+- **Sem look-ahead** — alterar o futuro depois da barra de decisão não muda a
+  decisão.
+
+Sem o controlo positivo, um "REPROVADO" seria ambíguo (régua cega ou ausência de
+edge?). Com ele, é informação.
 
 ---
 
@@ -272,3 +353,18 @@ Como a camada encaixa no sistema e o que a rodeia:
 | `MIN_RR1` | 1.0 | 5.2 | `[SUP]` |
 | `HORIZON` | 48 barras | 6.3 | `[SUP]` |
 | `abandono p` | 0.05 | 8 | prompt |
+| `TREND_SMA` | 120 barras | 5.3 | `[SUP]` |
+| `TREND_SLOPE_BARS` | 24 barras | 5.3 | `[SUP]` |
+| `TREND_SLOPE_ATR` | 0.1 × ATR | 5.3 | `[SUP]` |
+| `PULLBACK_LOOKBACK` | 48 barras | 5.3 | `[SUP]` |
+| `PULLBACK_MIN_ATR` | 1.0 × ATR | 5.3 | `[SUP]` |
+| `ENTRY_TOL_ATR` | 0.5 × ATR | 5.3 | `[SUP]` |
+| `FUNDING_Z_VETO` | ±2.0 | 5.3 | app/prompt |
+
+### Apêndice B — Registo de hipóteses testadas
+
+| Data | Hipótese | Amostra | Resultado |
+|---|---|---|---|
+| 2026-08-08 | **v1** — reversão nos extremos do range | 10 símb./~12d | REPROVADA: −0.43 R vs −0.22 do aleatório (p=5e-5, pior que o acaso) |
+| 2026-08-08 | **v1** — repetida em janela maior | 22 símb./~42d | REPROVADA: −0.04 R (bate o aleatório mas expectância negativa; sinal inverteu entre janelas → instável) |
+| — | **v2** — pullback com a tendência + veto de funding | *por correr* | *pendente: `--strategy v2 --months 6`* |
