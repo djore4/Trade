@@ -296,6 +296,55 @@ Cada corte traz motivo específico, como nos gates.
 
 ---
 
+## 7.2 Estudo de features — medir em vez de adivinhar
+
+A triagem da secção 7 foi escolhida a olho e **piorou** o resultado (bruto
++0.109 → +0.076). A lição não é "menos indicadores": é que escolher filtros por
+plausibilidade não funciona. Passa a medir-se.
+
+**Bateria disponível** (`features.py`, todos em versão rolante — o valor na
+barra `i` usa só dados até `i`, verificado por teste):
+
+| Família | Indicadores |
+|---|---|
+| Momentum/tendência | EMA 21/50/200, SMA 50/200, **Bull Market Support Band** (SMA 20 semanas + EMA 21 semanas), MACD(12,26,9), momentum 6/24/72 barras |
+| Força/direção | ADX(14), spread +DI/−DI |
+| Osciladores | RSI(14) |
+| Volatilidade | Bollinger %B e largura, ATR em % do preço |
+| Volume | rácio vs média(20), z-score |
+| Derivados | z-score do funding (point-in-time), variação do open interest |
+| Do próprio setup | R:R até TP1 e TP2, distância do stop |
+
+As features direcionais são **orientadas a favor do trade** (num SHORT o sinal
+inverte-se), senão a média de um lado anularia a do outro.
+
+**Método** (`study.py`): para cada setup aprovado regista-se o vetor de features
+na decisão e o R realizado; cada indicador é dividido em tercis e compara-se o R
+médio do tercil de cima com o de baixo (Welch), mais correlação de Spearman.
+
+**Correção obrigatória para testes múltiplos (Benjamini-Hochberg, q=0.10).**
+Testar 20 indicadores dá 20 oportunidades de encontrar sinal por acaso: com
+p<0.05 espera-se ~1 falsa descoberta só por sorte. Sem esta correção o estudo
+produziria indicadores falsos com aparência científica. Nota que o BH **não**
+garante zero falsos positivos — controla a *fracção* deles em média, e há teste
+que o verifica. Por isso a tabela nunca deve ser lida como "estes N funcionam".
+
+O estudo **só corre em DEV** — o CLI recusa-o no holdout.
+
+### Dados que NÃO entram, e porquê
+
+- **Order book** (profundidade, desequilíbrio bid/ask): a Bybit só devolve o
+  snapshot **atual**; não há histórico via REST. É impossível fazer backtest com
+  ele. Pode ser usado no scanner ao vivo (tab SCAN), nunca na validação — e um
+  indicador que não se consegue validar não deve decidir trades.
+- **Market cap**: não existe na API da Bybit. Precisaria de outra fonte
+  (CoinGecko/CMC) com histórico alinhado e tratamento de viés de sobrevivência.
+  O `turnover` 24h e o filtro de qualidade do universo cobrem hoje a mesma
+  intenção (liquidez e maturidade). Fica como trabalho separado, não como
+  suposição silenciosa.
+
+---
+
 ## 8. Validação e critério de abandono  *(espinha dorsal)*
 
 A camada estrutural só é aceite se provar que **não é cosmética**. Metodologia:

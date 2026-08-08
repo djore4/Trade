@@ -103,6 +103,22 @@ universo ligados, **triagem técnica desligada** (piora: baixa a vantagem bruta
 de +0.109 para +0.076 R). Qualquer desvio a esta linha deixa de ser a
 configuração validada.
 
+## Estudo de features (que indicadores têm sinal?)
+
+```bash
+python -m perpscan.validate --universe 20 --tf 240 --months 12 --no-triage --estudo
+python -m perpscan.validate --universe 20 --tf 240 --months 12 --no-triage --estudo --with-oi
+```
+
+Mede ~20 indicadores (RSI, MACD, Bollinger, EMAs/SMAs, Bull Market Support Band,
+volume, ADX, funding, open interest, R:R…) contra o R realizado de cada trade,
+com correção de Benjamini-Hochberg para testes múltiplos. Só corre em DEV.
+
+`--with-oi` acrescenta open interest (mais pedidos à API, mais lento).
+
+Não inclui **order book** (a Bybit não dá histórico — impossível de validar) nem
+**market cap** (não está na API da Bybit). Ver secção 7.2 do framework.
+
 ## Estratégias
 
 - **v2 (ativa)** — `gate_trend_pullback`: só negoceia **a favor da tendência**

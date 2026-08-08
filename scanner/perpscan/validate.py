@@ -36,6 +36,7 @@ from dataclasses import replace
 from .config import Config, DEFAULT
 from .gates import gate_structure, gate_trend_pullback
 from .triage import triage, universe_quality
+from .features import precompute_features, features_at
 from .structure import Klines
 
 TF_MIN = {"1": 1, "3": 3, "5": 5, "15": 15, "30": 30, "60": 60,
@@ -125,11 +126,24 @@ def _funding_z_at(fund_ts: List[int], fund_rate: List[float],
     return (cur - mean(hist)) / sd if sd > 0 else 0.0
 
 
+def _oi_change_at(oi_ts: List[int], oi_v: List[float], t_bar: float,
+                  back: int = 6) -> Optional[float]:
+    """Variação % do open interest nas últimas `back` observações, point-in-time."""
+    idx = bisect.bisect_right(oi_ts, t_bar) - 1
+    if idx < back:
+        return None
+    prev = oi_v[idx - back]
+    if not prev:
+        return None
+    return (oi_v[idx] - prev) / prev * 100.0
+
+
 # ── Avaliação de um símbolo: walk-forward, trades não-sobrepostas ──────────────
 def evaluate_symbol(k: Klines, cfg: Config, rng: random.Random, strategy: str = "v2",
                     funding: Optional[Tuple[List[int], List[float]]] = None,
                     i_from: Optional[int] = None, i_to: Optional[int] = None,
-                    use_triage: bool = True) -> dict:
+                    use_triage: bool = True, collect_features: bool = False,
+                    oi: Optional[Tuple[List[int], List[float]]] = None) -> dict:
     N = len(k.c)
     w = cfg.analysis_window
     warm = max(w, cfg.trend_sma + cfg.trend_slope_bars + 2,
@@ -143,6 +157,7 @@ def evaluate_symbol(k: Klines, cfg: Config, rng: random.Random, strategy: str = 
         return empty
     warm = start
     pre = _precompute(k, cfg)
+    feats = precompute_features(k, cfg.val_tf) if collect_features else None
     prefilter = _prefilter_v2 if strategy == "v2" else _prefilter_v1
     cost = cfg.cost_rt()
     span_len = last - warm
@@ -188,7 +203,22 @@ def evaluate_symbol(k: Klines, cfg: Config, rng: random.Random, strategy: str = 
         if r is None:
             i += 1
             continue
+        fv = None
+        if feats is not None:
+            fv = features_at(feats, i, s.direction)
+            fz2 = (_funding_z_at(funding[0], funding[1], k.t[i], cfg)
+                   if (funding and k.t) else None)
+            if fz2 is not None:
+                fv["funding_z"] = fz2 * s.direction     # + = funding contra o trade
+            if oi and k.t:
+                oz = _oi_change_at(oi[0], oi[1], k.t[i])
+                if oz is not None:
+                    fv["oi_chg_pct"] = oz
+            fv["rr1"] = s.rr1
+            fv["rr2"] = s.rr2
+            fv["stop_pct"] = s.stop_pct
         gate_trades.append({"i": i, "r": r, "dur": dur, "stop_pct": s.stop_pct,
+                            "features": fv,
                             "cost_r": cost / s.stop_pct,
                             "third": min(2, (i - warm) * 3 // max(1, span_len))})
         i += dur + 1                        # NÃO-SOBREPOSIÇÃO: retoma após o fecho
@@ -236,12 +266,15 @@ def evaluate_symbol(k: Klines, cfg: Config, rng: random.Random, strategy: str = 
 def run_validation(klines_by_symbol: Dict[str, Klines], cfg: Config = DEFAULT,
                    strategy: str = "v2",
                    funding_by_symbol: Optional[Dict[str, tuple]] = None,
-                   split: str = "dev", use_triage: bool = True) -> dict:
+                   split: str = "dev", use_triage: bool = True,
+                   collect_features: bool = False,
+                   oi_by_symbol: Optional[Dict[str, tuple]] = None) -> dict:
     rng = random.Random(cfg.seed)
     gate_all: List[float] = []
     base_all: List[float] = []
     thirds: List[List[float]] = [[], [], []]
     cost_rs: List[float] = []
+    feature_records: List[Tuple[Dict[str, float], float]] = []
     decisions = 0
     cuts = 0
     total_bars = 0
@@ -261,8 +294,12 @@ def run_validation(klines_by_symbol: Dict[str, Klines], cfg: Config = DEFAULT,
             i_from, i_to = cut_i, None
         else:
             i_from, i_to = None, None
-        res = evaluate_symbol(k, cfg, rng, strategy, fund, i_from, i_to, use_triage)
+        res = evaluate_symbol(k, cfg, rng, strategy, fund, i_from, i_to, use_triage,
+                              collect_features,
+                              oi_by_symbol.get(sym) if oi_by_symbol else None)
         for t in res["gate"]:
+            if t.get("features"):
+                feature_records.append((t["features"], t["r"]))
             gate_all.append(t["r"])
             cost_rs.append(t["cost_r"])
             thirds[t["third"]].append(t["r"])
@@ -297,6 +334,7 @@ def run_validation(klines_by_symbol: Dict[str, Klines], cfg: Config = DEFAULT,
         "approved": approved, "months_est": months_est,
         "cost_r": mean(cost_rs) if cost_rs else 0.0,
         "cuts": cuts, "split": split, "triage": use_triage,
+        "feature_records": feature_records,
         "trades_per_symbol_month": trades_per_month, "cfg": cfg,
     }
 
@@ -404,6 +442,10 @@ def main() -> None:
                          "UMA ÚNICA VEZ; all = tudo")
     ap.add_argument("--confirmo-holdout", action="store_true",
                     help="obrigatório para abrir o holdout — é irreversível")
+    ap.add_argument("--estudo", action="store_true",
+                    help="mede cada indicador contra o R realizado (só em DEV)")
+    ap.add_argument("--with-oi", action="store_true",
+                    help="inclui open interest no estudo (mais pedidos à API)")
     ap.add_argument("--no-triage", action="store_true",
                     help="desliga a camada de triagem (para comparar)")
     ap.add_argument("--demo", action="store_true", help="dados sintéticos, sem rede")
@@ -453,7 +495,13 @@ def main() -> None:
         print("AVISO: saída 'trail' NÃO está calibrada (inventa lucro em martingala).\n"
               "       Os números que saírem daqui não servem para decidir nada.\n")
 
+    if args.estudo and args.split != "dev":
+        print("RECUSADO: o estudo de features é exploratório e só corre em DEV.\n"
+              "Explorar 20 indicadores no holdout queimava-o sem nada em troca.")
+        return
+
     funding_by_symbol: Optional[Dict[str, tuple]] = None
+    oi_by_symbol: Optional[Dict[str, tuple]] = None
     if args.demo:
         print("MODO DEMO — random walks sintéticos (sem rede). Esperado REPROVADO: "
               "valida o harness e o veredicto, não o gate.\n")
@@ -485,6 +533,11 @@ def main() -> None:
                 if funding_by_symbol is not None and k.t:
                     funding_by_symbol[sym] = bybit.fetch_funding_paged(sym, k.t[0])
                     extra = f" + {len(funding_by_symbol[sym][0])} fundings"
+                if args.with_oi and args.estudo:
+                    if oi_by_symbol is None:
+                        oi_by_symbol = {}
+                    oi_by_symbol[sym] = bybit.fetch_oi_paged(sym, cfg.val_tf, bars)
+                    extra += f" + {len(oi_by_symbol[sym][0])} OI"
                 print(f"  [{i}/{len(uni)}] {sym} — {len(k.c)} barras{extra}", flush=True)
             except Exception as e:  # noqa: BLE001
                 print(f"  [{i}/{len(uni)}] {sym} — falhou: {e}", flush=True)
@@ -495,9 +548,20 @@ def main() -> None:
     print("(esta é a parte pesada — num tablet pode levar vários minutos por símbolo)\n",
           flush=True)
     res = run_validation(klines, cfg, args.strategy, funding_by_symbol,
-                         split=args.split, use_triage=not args.no_triage)
+                         split=args.split, use_triage=not args.no_triage,
+                         collect_features=args.estudo, oi_by_symbol=oi_by_symbol)
     print()
     print(format_report(res))
+    if args.estudo:
+        from .study import analyse, format_study
+        recs = res["feature_records"]
+        print()
+        print("=" * 82)
+        if len(recs) < 60:
+            print(f"Amostra insuficiente para o estudo ({len(recs)} trades). "
+                  f"Aumenta --universe ou --months.")
+        else:
+            print(format_study(analyse(recs), len(recs)))
 
 
 if __name__ == "__main__":

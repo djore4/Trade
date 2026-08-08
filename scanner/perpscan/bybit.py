@@ -135,3 +135,32 @@ def fetch_funding_paged(symbol: str, since_ms: float) -> Tuple[List[int], List[f
         time.sleep(0.06)
     pairs = sorted((int(x["fundingRateTimestamp"]), float(x["fundingRate"])) for x in out)
     return [p[0] for p in pairs], [p[1] for p in pairs]
+
+
+def fetch_oi_paged(symbol: str, interval: str, bars: int) -> Tuple[List[int], List[float]]:
+    """Open interest histórico, paginado. Devolve (timestamps_ms, valores) cronológicos.
+
+    `interval` aceita 5min/15min/30min/1h/4h/1d (mapeado a partir do TF de klines).
+    """
+    tf_map = {"5": "5min", "15": "15min", "30": "30min", "60": "1h",
+              "240": "4h", "D": "1d"}
+    iv = tf_map.get(interval, "4h")
+    rows: List[dict] = []
+    cursor = None
+    while len(rows) < bars:
+        params = {"category": "linear", "symbol": symbol,
+                  "intervalTime": iv, "limit": 200}
+        if cursor:
+            params["cursor"] = cursor
+        d = _get("/v5/market/open-interest", params)
+        res = d.get("result", {})
+        lst = res.get("list", [])
+        if not lst:
+            break
+        rows.extend(lst)
+        cursor = res.get("nextPageCursor")
+        if not cursor:
+            break
+        time.sleep(0.06)
+    pairs = sorted((int(x["timestamp"]), float(x["openInterest"])) for x in rows)
+    return [p[0] for p in pairs], [p[1] for p in pairs]
