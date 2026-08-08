@@ -105,6 +105,8 @@ def format_study(res: dict, total_trades: int) -> str:
     rows = res["rows"]
     L = []
     L.append(f"ESTUDO DE FEATURES — {total_trades} trades, {res['n_tested']} indicadores testados")
+    L.append("Alvo: R BRUTO (antes de custos). O R líquido subtrai custo/stop_pct, o que")
+    L.append("ordena mecanicamente as perdas pelo tamanho do stop e criaria sinal falso.")
     L.append(f"Correção para testes múltiplos: Benjamini-Hochberg, FDR q={res['q']:.2f}")
     L.append("")
     L.append(f"{'indicador':<18}{'R tercil↓':>10}{'R médio':>9}{'R tercil↑':>10}"

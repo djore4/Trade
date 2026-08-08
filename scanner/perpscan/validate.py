@@ -299,7 +299,11 @@ def run_validation(klines_by_symbol: Dict[str, Klines], cfg: Config = DEFAULT,
                               oi_by_symbol.get(sym) if oi_by_symbol else None)
         for t in res["gate"]:
             if t.get("features"):
-                feature_records.append((t["features"], t["r"]))
+                # Estudo sobre o R BRUTO (antes de custos). O R líquido é
+                # R_bruto − custo/stop_pct, o que ordena mecanicamente as trades
+                # perdedoras pelo tamanho do stop e cria correlação falsa em
+                # atr_pct/stop_pct. O bruto remove esse acoplamento.
+                feature_records.append((t["features"], t["r"] + t["cost_r"]))
             gate_all.append(t["r"])
             cost_rs.append(t["cost_r"])
             thirds[t["third"]].append(t["r"])

@@ -331,6 +331,30 @@ que o verifica. Por isso a tabela nunca deve ser lida como "estes N funcionam".
 
 O estudo **só corre em DEV** — o CLI recusa-o no holdout.
 
+### Resultado do estudo (2026-08-08, TF240, 13 símbolos, 611 trades, DEV)
+
+**Nenhum dos 24 indicadores sobrevive à correção de Benjamini-Hochberg.** Nem
+RSI, MACD, Bollinger, EMAs/SMAs, Bull Market Support Band, ADX, volume, funding
+ou open interest. Os mais fortes ficaram muito acima do limiar corrigido
+(`oi_chg_pct` p=0.023, `atr_pct` p=0.046; o limiar BH para o 1.º lugar com 24
+testes é 0.0042).
+
+Leitura correta: **ausência de evidência, não evidência de ausência.** Com 611
+trades (~200 por tercil) só se detetariam efeitos grandes. O que se pode afirmar
+é que nenhum destes indicadores tem efeito grande o suficiente para ser
+distinguido do acaso nesta amostra — e portanto construir filtros a partir dos
+"melhores" da tabela seria escolher ruído, exatamente como aconteceu com a
+triagem ADX/RSI/volume.
+
+**Artefacto detetado e corrigido.** Na primeira execução, `atr_pct` e `stop_pct`
+apareceram com valores idênticos e correlação de Spearman alta (0.54)
+incompatível com a fraca diferença de médias. A causa não era sinal de mercado:
+o R líquido é `R_bruto − custo/stop_pct`, e como ~70% das trades fecham no stop
+(R ≈ −1 − custo_R), essas ficam **ordenadas de forma quase determinística pelo
+tamanho do stop**. O estudo passou a medir contra o **R bruto**, o que elimina o
+acoplamento. É mais um caso do mesmo padrão deste projeto: o instrumento a
+produzir sinal que não existe.
+
 ### Dados que NÃO entram, e porquê
 
 - **Order book** (profundidade, desequilíbrio bid/ask): a Bybit só devolve o
