@@ -271,8 +271,9 @@ def run_validation(klines_by_symbol: Dict[str, Klines], cfg: Config = DEFAULT,
         cuts += res.get("cut", 0)
         total_bars += len(k.c)
         if n_syms >= 10:
-            print(f"  avaliado {sym} ({n_done}/{n_syms}) — "
-                  f"{len(res['gate'])} trades", flush=True)
+            print(f"  avaliado {sym} ({n_done}/{n_syms}) — {len(res['gate'])} trades"
+                  f"{', %d cortados' % res.get('cut', 0) if res.get('cut') else ''}",
+                  flush=True)
 
     gate, base = summary(gate_all), summary(base_all)
     t, p = welch(gate_all, base_all)
@@ -461,13 +462,13 @@ def main() -> None:
         from . import bybit  # import tardio (rede)
         exclude = set(cfg.denylist_base) | {s for s in args.exclude.upper().split(",") if s}
         print(f"A obter universo (top {cfg.val_universe} por turnover ≥ "
-              f"{cfg.min_turnover / 1e6:.0f}M, só cripto)…")
+              f"{cfg.min_turnover / 1e6:.0f}M, só cripto)…", flush=True)
         uni, _full, removed = bybit.fetch_universe(cfg.min_turnover, cfg.val_universe, exclude)
         if removed:
-            print(f"  excluídos (não-cripto): {', '.join(sorted(removed))}")
+            print(f"  excluídos (não-cripto): {', '.join(sorted(removed))}", flush=True)
         if len(uni) < args.universe:
             print(f"  aviso: só {len(uni)} pares cumprem o filtro de liquidez "
-                  f"(pedidos {args.universe})")
+                  f"(pedidos {args.universe})", flush=True)
         klines = {}
         funding_by_symbol = {} if (args.strategy == "v2" and not args.no_funding) else None
         for i, m in enumerate(uni, 1):
@@ -489,8 +490,10 @@ def main() -> None:
                 print(f"  [{i}/{len(uni)}] {sym} — falhou: {e}", flush=True)
 
     if args.split == "holdout":
-        print("\n*** TESTE FINAL NO HOLDOUT — resultado definitivo, sem repetições ***\n")
-    print("A correr walk-forward + baseline (trades não-sobrepostas)…\n", flush=True)
+        print("\n*** TESTE FINAL NO HOLDOUT — resultado definitivo, sem repetições ***\n", flush=True)
+    print("A correr walk-forward + baseline (trades não-sobrepostas)…", flush=True)
+    print("(esta é a parte pesada — num tablet pode levar vários minutos por símbolo)\n",
+          flush=True)
     res = run_validation(klines, cfg, args.strategy, funding_by_symbol,
                          split=args.split, use_triage=not args.no_triage)
     print()
