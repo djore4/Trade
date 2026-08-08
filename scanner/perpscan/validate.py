@@ -35,6 +35,7 @@ from dataclasses import replace
 
 from .config import Config, DEFAULT
 from .gates import gate_structure, gate_trend_pullback
+from .triage import triage, universe_quality
 from .structure import Klines
 
 TF_MIN = {"1": 1, "3": 3, "5": 5, "15": 15, "30": 30, "60": 60,
@@ -126,15 +127,21 @@ def _funding_z_at(fund_ts: List[int], fund_rate: List[float],
 
 # ── Avaliação de um símbolo: walk-forward, trades não-sobrepostas ──────────────
 def evaluate_symbol(k: Klines, cfg: Config, rng: random.Random, strategy: str = "v2",
-                    funding: Optional[Tuple[List[int], List[float]]] = None) -> dict:
+                    funding: Optional[Tuple[List[int], List[float]]] = None,
+                    i_from: Optional[int] = None, i_to: Optional[int] = None,
+                    use_triage: bool = True) -> dict:
     N = len(k.c)
     w = cfg.analysis_window
     warm = max(w, cfg.trend_sma + cfg.trend_slope_bars + 2,
                cfg.range_lookback + cfg.atr_n + 2)
     last = N - cfg.val_horizon - 1
-    empty = {"gate": [], "base": [], "decisions": 0}
-    if last <= warm:
+    empty = {"gate": [], "base": [], "decisions": 0, "cut": 0}
+    if i_to is not None:
+        last = min(last, i_to)
+    start = warm if i_from is None else max(warm, i_from)
+    if last <= start:
         return empty
+    warm = start
     pre = _precompute(k, cfg)
     prefilter = _prefilter_v2 if strategy == "v2" else _prefilter_v1
     cost = cfg.cost_rt()
@@ -142,6 +149,7 @@ def evaluate_symbol(k: Klines, cfg: Config, rng: random.Random, strategy: str = 
 
     gate_trades: List[dict] = []          # {i, r, dur, stop_pct, third}
     decisions = 0
+    cut = 0
     i = warm
     while i < last:
         if not prefilter(k, pre, i, cfg):
@@ -160,8 +168,14 @@ def evaluate_symbol(k: Klines, cfg: Config, rng: random.Random, strategy: str = 
         if not setups:
             i += 1
             continue
-        decisions += 1
         s = setups[0]
+        if use_triage:
+            ok, _cuts = triage(win, s.direction, cfg)
+            if not ok:
+                cut += 1
+                i += 1
+                continue
+        decisions += 1
         if cfg.exit_mode == "trail":
             r, dur = trailing_exit(k.h[i + 1:], k.l[i + 1:], k.c[i + 1:],
                                    s.entry, s.stop, s.direction, s.atr,
@@ -214,32 +228,47 @@ def evaluate_symbol(k: Klines, cfg: Config, rng: random.Random, strategy: str = 
         base_trades.append({"i": j, "r": r,
                             "third": min(2, (j - warm) * 3 // max(1, span_len))})
 
-    return {"gate": gate_trades, "base": base_trades, "decisions": decisions}
+    return {"gate": gate_trades, "base": base_trades, "decisions": decisions,
+            "cut": cut}
 
 
 # ── Agregação e veredicto ──────────────────────────────────────────────────────
 def run_validation(klines_by_symbol: Dict[str, Klines], cfg: Config = DEFAULT,
                    strategy: str = "v2",
-                   funding_by_symbol: Optional[Dict[str, tuple]] = None) -> dict:
+                   funding_by_symbol: Optional[Dict[str, tuple]] = None,
+                   split: str = "dev", use_triage: bool = True) -> dict:
     rng = random.Random(cfg.seed)
     gate_all: List[float] = []
     base_all: List[float] = []
     thirds: List[List[float]] = [[], [], []]
     cost_rs: List[float] = []
     decisions = 0
+    cuts = 0
     total_bars = 0
     n_syms = len(klines_by_symbol)
     for n_done, (sym, k) in enumerate(klines_by_symbol.items(), 1):
         if len(k.c) < cfg.analysis_window + cfg.val_horizon + 20:
             continue
         fund = funding_by_symbol.get(sym) if funding_by_symbol else None
-        res = evaluate_symbol(k, cfg, rng, strategy, fund)
+        # HOLDOUT: o corte é cronológico. Em 'dev' só se decide na parte antiga;
+        # em 'holdout' só na parte final (que pode olhar para trás nos
+        # indicadores — isso não é fuga, é o passado da própria decisão).
+        n_bars = len(k.c)
+        cut_i = int(n_bars * (1 - cfg.holdout_frac))
+        if split == "dev":
+            i_from, i_to = None, cut_i
+        elif split == "holdout":
+            i_from, i_to = cut_i, None
+        else:
+            i_from, i_to = None, None
+        res = evaluate_symbol(k, cfg, rng, strategy, fund, i_from, i_to, use_triage)
         for t in res["gate"]:
             gate_all.append(t["r"])
             cost_rs.append(t["cost_r"])
             thirds[t["third"]].append(t["r"])
         base_all.extend(t["r"] for t in res["base"])
         decisions += res["decisions"]
+        cuts += res.get("cut", 0)
         total_bars += len(k.c)
         if n_syms >= 10:
             print(f"  avaliado {sym} ({n_done}/{n_syms}) — "
@@ -266,6 +295,7 @@ def run_validation(klines_by_symbol: Dict[str, Klines], cfg: Config = DEFAULT,
         "checks": {"a": check_a, "b": check_b, "c": check_c},
         "approved": approved, "months_est": months_est,
         "cost_r": mean(cost_rs) if cost_rs else 0.0,
+        "cuts": cuts, "split": split, "triage": use_triage,
         "trades_per_symbol_month": trades_per_month, "cfg": cfg,
     }
 
@@ -279,6 +309,10 @@ def format_report(res: dict) -> str:
                  f"história ≈ {res['months_est']:.1f} meses/símbolo · "
                  f"TF {cfg.val_tf}m · saída {cfg.exit_mode}/{cfg.target} · "
                  f"horizonte {cfg.val_horizon} barras")
+    lines.append(f"Divisão: {res['split'].upper()}"
+                 f"{' (últimos %d%% do histórico)' % round(cfg.holdout_frac * 100) if res['split'] == 'holdout' else ''}"
+                 f" · triagem: {'LIGADA' if res['triage'] else 'desligada'}"
+                 f"{' · cortados pela triagem: %d' % res['cuts'] if res['triage'] else ''}")
     lines.append(f"Decisões do gate: {res['decisions']} · trades (não-sobrepostas): "
                  f"{g['n']} (≈{res['trades_per_symbol_month']:.1f}/símbolo/mês) · "
                  f"baseline: {b['n']}")
@@ -364,6 +398,13 @@ def main() -> None:
                     help="desliga o veto de funding (menos pedidos à API)")
     ap.add_argument("--exclude", default="",
                     help="baseCoins extra a excluir, ex. --exclude ABC,XYZ")
+    ap.add_argument("--split", choices=["dev", "holdout", "all"], default="dev",
+                    help="dev = primeiros 70%% (default); holdout = últimos 30%%, "
+                         "UMA ÚNICA VEZ; all = tudo")
+    ap.add_argument("--confirmo-holdout", action="store_true",
+                    help="obrigatório para abrir o holdout — é irreversível")
+    ap.add_argument("--no-triage", action="store_true",
+                    help="desliga a camada de triagem (para comparar)")
     ap.add_argument("--demo", action="store_true", help="dados sintéticos, sem rede")
     ap.add_argument("--list-universe", action="store_true",
                     help="diagnóstico: mostra o universo devolvido pela Bybit e sai")
@@ -389,6 +430,14 @@ def main() -> None:
         print("\nTop 30 por turnover 24h:")
         for v, s in vals[:30]:
             print(f"  {s:<16} {v/1e6:>12,.1f}M")
+        return
+
+    if args.split == "holdout" and not args.confirmo_holdout:
+        print("RECUSADO: o holdout são os últimos 30% do histórico, guardados para\n"
+              "UM ÚNICO teste final. Abrir e voltar a afinar destrói o seu valor —\n"
+              "passa a ser mais um conjunto de treino e deixamos de saber se a\n"
+              "estratégia funciona ou se foi moldada aos dados.\n\n"
+              "Se é mesmo o teste final, repete com --confirmo-holdout.")
         return
 
     tf_min = TF_MIN.get(args.tf, 60)
@@ -426,6 +475,10 @@ def main() -> None:
             try:
                 k = (bybit.fetch_kline_paged(sym, cfg.val_tf, bars) if bars > 1000
                      else bybit.fetch_kline(sym, cfg.val_tf, bars))
+                okq, whyq = universe_quality(len(k.c), m["turnover"], cfg)
+                if not okq:
+                    print(f"  [{i}/{len(uni)}] {sym} — EXCLUÍDO: {whyq}", flush=True)
+                    continue
                 klines[sym] = k
                 extra = ""
                 if funding_by_symbol is not None and k.t:
@@ -435,8 +488,11 @@ def main() -> None:
             except Exception as e:  # noqa: BLE001
                 print(f"  [{i}/{len(uni)}] {sym} — falhou: {e}", flush=True)
 
-    print("\nA correr walk-forward + baseline (trades não-sobrepostas)…\n", flush=True)
-    res = run_validation(klines, cfg, args.strategy, funding_by_symbol)
+    if args.split == "holdout":
+        print("\n*** TESTE FINAL NO HOLDOUT — resultado definitivo, sem repetições ***\n")
+    print("A correr walk-forward + baseline (trades não-sobrepostas)…\n", flush=True)
+    res = run_validation(klines, cfg, args.strategy, funding_by_symbol,
+                         split=args.split, use_triage=not args.no_triage)
     print()
     print(format_report(res))
 

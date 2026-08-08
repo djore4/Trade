@@ -65,7 +65,8 @@ class TestNonOverlapEngine(unittest.TestCase):
         segs = ([(60, 80, 160)] + STAIRCASE_UP[:-1] + [(119, 119.15, 20)])
         k = synth_staircase(segs=segs)
         cfg = replace(C, val_horizon=4)
-        res = evaluate_symbol(k, cfg, random.Random(1), strategy="v2")
+        # triagem desligada: aqui testa-se a mecânica de não-sobreposição, não os filtros
+        res = evaluate_symbol(k, cfg, random.Random(1), strategy="v2", use_triage=False)
         self.assertGreaterEqual(len(res["gate"]), 1)     # o motor encontra o setup
         ends = -1
         for t in res["gate"]:                            # não-sobreposição estrita

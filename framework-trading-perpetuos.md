@@ -262,13 +262,37 @@ Testado em `tests/test_harness_power.py::TestExitCalibration`.
 
 ---
 
-## 7. Pontuação qualitativa (resumo)
+## 7. Camada de triagem (análise técnica)
 
-Só se aplica a pares que **passaram os gates**. Score composto determinístico a
-partir de H1–H4 + regime + estrutura (pesos na secção 4), traduzido em confiança
-0–10 e ajustado por R:R, nº de confluências e alinhamento do posicionamento.
-Mesmo input → mesmo score. O score **nunca** ressuscita um par rejeitado pelos
-gates.
+Só se aplica a setups que **passaram os gates**. **Só corta, nunca ressuscita** —
+um setup rejeitado por um gate continua rejeitado.
+
+**Fundamento aritmético.** Cada trade paga uma portagem fixa em R
+(`custo_round_trip / distância_do_stop` ≈ 0.11 R em TF60). Com uma vantagem
+bruta da mesma ordem, o lucro líquido é nulo. A alavanca não é *acertar mais* —
+é **negociar menos**: ficar com a fração melhor dos setups paga a portagem
+proporcionalmente menos vezes.
+
+Filtros (`triage.py`), todos com limiares **de manual**, não procurados nos dados:
+
+1. **ADX ≥ 25**, medido **no extremo recente, antes do recuo**. Medi-lo na barra
+   de entrada seria contraditório: durante um recuo o ADX cai por construção,
+   logo exigir ADX alto no recuo é exigir que o recuo não exista. O que interessa
+   é a força da tendência que fez a pausa.
+2. **RSI(14)** não esticado na direção do trade (≥70 corta LONG, ≤30 corta
+   SHORT): entrar num recuo é comprar fraqueza temporária; com o RSI no extremo,
+   o movimento já foi feito.
+3. **Volume < 3× a média(20)**: um recuo com clímax de volume é distribuição ou
+   pânico, não uma pausa ordenada.
+4. **Long/short ratio** (desligado por defeito — histórico limitado na API):
+   corta quando ≥60% das contas estão do mesmo lado do trade.
+
+**Qualidade do universo** (`universe_quality`, triagem fundamental mínima):
+exige ≥2000 barras de histórico, o que exclui listagens recentes — o universo
+observado incluía tokens acabados de listar (BLESS, GWEI, TUT, MMT, BTW) a par
+de BTC e ETH.
+
+Cada corte traz motivo específico, como nos gates.
 
 ---
 
@@ -324,6 +348,27 @@ Os **três** têm de passar. Falha um → REPROVADO.
 
 O harness (`scanner/perpscan/validate.py`) imprime as duas distribuições, os
 sub-períodos, o `p`, os três critérios com ✓/✗, e o veredicto explícito.
+
+### 8.1 Holdout — a regra que impede o auto-engano
+
+A partir da introdução da camada de triagem (secção 7), o histórico é dividido
+**cronologicamente**:
+
+- **DEV — primeiros 70%.** É aqui que se desenvolve, compara e ajusta.
+- **HOLDOUT — últimos 30%.** Fechado à chave. Serve para **um único** teste
+  final.
+
+O CLI **recusa** abrir o holdout sem `--confirmo-holdout`. Abrir, ver o
+resultado e voltar a afinar transforma-o em mais um conjunto de treino: a partir
+daí deixa de haver forma de saber se a estratégia funciona ou se foi moldada aos
+dados. A divisão é sobre as **decisões**, não sobre os indicadores — uma decisão
+no holdout pode olhar para trás para calcular médias, o que é o seu próprio
+passado e não fuga de informação.
+
+Motivo pelo qual isto foi introduzido agora: os filtros da secção 7 foram
+escolhidos **depois** de ver a v1, v2 e v3 falharem. Escolher filtros à luz de
+resultados já vistos é exatamente como se produz sobreajuste sem dar por ele. O
+holdout é a única defesa.
 
 ### Validação do próprio harness (controlos)
 

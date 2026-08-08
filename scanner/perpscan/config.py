@@ -55,6 +55,26 @@ class Config:
     #       "tp2" = extremo da tendência (coerente com a tese de momentum).
     target: str = "tp2"
 
+    # ── Camada de triagem (secção 7) — limiares de MANUAL, não procurados ──
+    triage_adx: bool = True
+    adx_n: int = 14
+    adx_min: float = 25.0            # limiar clássico de "tendência estabelecida"
+    triage_rsi: bool = True
+    rsi_n: int = 14
+    rsi_high: float = 70.0           # sobrecomprado (clássico)
+    rsi_low: float = 30.0            # sobrevendido (clássico)
+    triage_volume: bool = True
+    vol_n: int = 20
+    vol_climax: float = 3.0          # 3× a média = clímax (herdado da H3 da app)
+    triage_lsr: bool = False         # exige account-ratio; history limitada
+    lsr_crowded: float = 60.0        # % de contas de um lado = multidão
+    # Qualidade do universo (triagem 'fundamental' mínima)
+    min_history_bars: int = 2000     # exclui listagens recentes
+    quality_turnover: float = 30e6
+
+    # ── Holdout (secção 8.1): os últimos X% NUNCA são vistos no desenvolvimento ──
+    holdout_frac: float = 0.30
+
     # ── Fase 3 — validação (secção 8) ──
     val_tf: str = "60"
     val_kline_limit: int = 1000

@@ -88,6 +88,9 @@ Opções úteis:
 | `--months N` | meses de história (paginado); sem isto usa `--limit` barras |
 | `--no-funding` | desliga o veto de funding (menos pedidos à API, mais rápido) |
 | `--exclude ABC,XYZ` | exclui baseCoins extra do universo |
+| `--no-triage` | desliga a camada de triagem (para medir quanto ela contribui) |
+| `--split dev` | primeiros 70% do histórico (**default**) — é aqui que se trabalha |
+| `--split holdout` | últimos 30%, **teste final único**; exige `--confirmo-holdout` |
 
 ## Estratégias
 
