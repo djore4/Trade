@@ -1,0 +1,4 @@
+# Núcleo (structure, gates, backtest, validate, synth, testes) NÃO precisa de nada
+# além da stdlib do Python ≥ 3.10.
+# Só o cliente de rede (perpscan/bybit.py) precisa de:
+requests>=2.31
