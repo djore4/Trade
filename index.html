@@ -1212,6 +1212,89 @@ html.light .mnav-btn.active { color: var(--orange); }
 .pos-exit-cell { flex: 1; background: var(--s1); padding: 7px 11px; text-align: center; }
 .pos-exit-cell-lbl { font-size: 8.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--faint); margin-bottom: 3px; }
 .pos-exit-cell-val { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 700; }
+/* ── TAB SCAN — Camada Estrutural ─────────────────────────────────────────── */
+.sl-wrap { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; padding-bottom: 96px; }
+.sl-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.sl-title { font-size: 19px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 9px; }
+.sl-badge { font-size: 11px; font-weight: 600; color: var(--orange); background: rgba(247,147,26,0.12); border: 1px solid rgba(247,147,26,0.3); border-radius: 6px; padding: 2px 7px; }
+.sl-sub { font-size: 12.5px; color: var(--dim); margin-top: 5px; max-width: 760px; line-height: 1.55; }
+.sl-sub b { color: var(--text); font-weight: 600; }
+.sl-btn { flex-shrink: 0; display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 600; color: #1a1206; background: linear-gradient(135deg, var(--orange), #e6862a); border: none; border-radius: 9px; padding: 9px 15px; cursor: pointer; transition: filter .15s; }
+.sl-btn:hover { filter: brightness(1.06); }
+.sl-btn.busy { opacity: .7; pointer-events: none; }
+.sl-btn.busy svg { animation: mktSpin .8s linear infinite; }
+.sl-btn-sm { padding: 6px 12px; font-size: 11.5px; margin-left: auto; }
+.sl-note { font-size: 11.5px; color: var(--dim); line-height: 1.55; background: var(--s1); border: 1px solid var(--border); border-radius: 10px; padding: 11px 13px; }
+.sl-note b { color: var(--text); }
+.sl-note code { background: var(--s3); padding: 1px 5px; border-radius: 4px; font-size: 11px; }
+.sl-sup { color: var(--yellow); font-weight: 600; }
+.sl-section { background: var(--s1); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+.sl-section-h { font-size: 13.5px; font-weight: 700; color: var(--text); margin-bottom: 12px; display: flex; align-items: center; gap: 9px; }
+.sl-phase { font-size: 10.5px; font-weight: 700; color: var(--blue); background: rgba(124,143,255,0.12); border: 1px solid rgba(124,143,255,0.3); border-radius: 6px; padding: 2px 7px; }
+/* Testes */
+.sl-tests-h { font-size: 12.5px; font-weight: 600; margin-bottom: 10px; }
+.sl-tests-h.ok { color: var(--green); }
+.sl-tests-h.bad { color: var(--red); }
+.sl-tests-b { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px; }
+.sl-test { display: flex; gap: 9px; align-items: flex-start; background: var(--s2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; }
+.sl-test.ok { border-left: 2px solid var(--green); }
+.sl-test.bad { border-left: 2px solid var(--red); }
+.sl-test-i { font-weight: 700; flex-shrink: 0; }
+.sl-test.ok .sl-test-i { color: var(--green); }
+.sl-test.bad .sl-test-i { color: var(--red); }
+.sl-test-n { font-size: 11.5px; font-weight: 600; color: var(--text); }
+.sl-test-d { font-size: 10.5px; color: var(--faint); margin-top: 2px; word-break: break-word; }
+/* Contexto Fase 2 */
+.sl-ctx { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 12px; }
+.sl-ctx-item { background: var(--s2); padding: 10px 12px; }
+.sl-ctx-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: .04em; color: var(--faint); }
+.sl-ctx-val { font-size: 18px; font-weight: 700; color: var(--text); margin-top: 2px; }
+.sl-ctx-sub { font-size: 10px; color: var(--dim); margin-top: 1px; }
+/* Cartões de setup */
+.sl-list { display: flex; flex-direction: column; gap: 10px; }
+.sl-card { background: var(--s2); border: 1px solid var(--border); border-radius: 11px; padding: 12px 14px; }
+.sl-card.long { border-left: 3px solid var(--green); }
+.sl-card.short { border-left: 3px solid var(--red); }
+.sl-card-h { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.sl-card-sym { font-size: 15px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 8px; }
+.sl-card-side { font-size: 10.5px; font-weight: 700; border-radius: 5px; padding: 2px 7px; }
+.sl-card-side.l { color: var(--green); background: rgba(45,212,160,0.12); }
+.sl-card-side.s { color: var(--red); background: rgba(247,100,122,0.12); }
+.sl-card-rr { font-size: 11.5px; color: var(--dim); }
+.sl-card-rr b { color: var(--text); }
+.sl-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-bottom: 10px; }
+.sl-card-grid > div { background: var(--s1); border-radius: 7px; padding: 7px 9px; }
+.sl-card-grid span { display: block; font-size: 10px; color: var(--faint); }
+.sl-card-grid b { font-size: 12.5px; color: var(--text); font-weight: 600; }
+.sl-card-why { font-size: 11.5px; color: var(--dim); line-height: 1.55; }
+.sl-card-lvls { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+.sl-lvl { font-size: 10.5px; color: var(--blue); background: rgba(124,143,255,0.1); border: 1px solid rgba(124,143,255,0.25); border-radius: 5px; padding: 2px 7px; cursor: help; }
+/* Zero setups */
+.sl-none { background: var(--s2); border: 1px dashed var(--border2); border-radius: 11px; padding: 16px; text-align: center; }
+.sl-none-h { font-size: 14px; font-weight: 700; color: var(--text); }
+.sl-none-b { font-size: 12px; color: var(--dim); margin-top: 6px; line-height: 1.55; }
+/* Rejeições */
+.sl-rej { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 12px; }
+.sl-rej-h { font-size: 11.5px; font-weight: 600; color: var(--dim); margin-bottom: 8px; }
+.sl-rej-b { display: flex; flex-direction: column; gap: 3px; max-height: 320px; overflow-y: auto; }
+.sl-rej-row { display: grid; grid-template-columns: 64px 30px 1fr; gap: 8px; align-items: center; font-size: 11px; padding: 3px 0; }
+.sl-rej-sym { font-weight: 600; color: var(--text); }
+.sl-rej-g { font-size: 9.5px; color: var(--faint); }
+.sl-rej-r { color: var(--dim); }
+/* Validação */
+.sl-val-meta { font-size: 11px; color: var(--dim); margin-bottom: 10px; }
+.sl-val-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+.sl-val-tbl th, .sl-val-tbl td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--border); }
+.sl-val-tbl th { color: var(--faint); font-weight: 600; font-size: 11px; }
+.sl-val-tbl td:first-child { color: var(--dim); }
+.sl-val-tbl td:not(:first-child) { color: var(--text); font-weight: 600; text-align: right; }
+.sl-val-tbl th:not(:first-child) { text-align: right; }
+.sl-val-t { font-size: 11.5px; color: var(--dim); margin-top: 10px; }
+.sl-verdict { margin-top: 12px; border-radius: 10px; padding: 12px 14px; font-size: 12.5px; line-height: 1.6; }
+.sl-verdict.ok { color: var(--green); background: rgba(45,212,160,0.08); border: 1px solid rgba(45,212,160,0.25); }
+.sl-verdict.bad { color: var(--red); background: rgba(247,100,122,0.08); border: 1px solid rgba(247,100,122,0.25); }
+.sl-verdict b { color: var(--text); }
+.sl-disclaimer { font-size: 10.5px; color: var(--faint); line-height: 1.55; text-align: center; padding: 0 20px; }
 </style>
 </head>
 <body>
@@ -1235,7 +1318,7 @@ html.light .mnav-btn.active { color: var(--orange); }
     </button>
     <button class="tab-btn" data-tab="cryptoscan" onclick="switchTab('cryptoscan',this)">
       <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="4.6" cy="4.6" r="3.4" stroke="currentColor" stroke-width="1.3" fill="none"/><line x1="7.2" y1="7.2" x2="10" y2="10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M3 4.6h3.2M4.6 3v3.2" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
-      CryptoScan
+      SCAN
     </button>
     <button class="tab-btn" data-tab="noticias" onclick="switchTab('noticias',this)">
       <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x=".5" y="1.5" width="10" height="8" rx="1.5" stroke="currentColor" stroke-width="1.4" fill="none"/><line x1="3" y1="4.5" x2="8" y2="4.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><line x1="3" y1="7" x2="6.5" y2="7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
@@ -1432,108 +1515,56 @@ html.light .mnav-btn.active { color: var(--orange); }
   </div>
 </div>
 
-<!-- ─── TAB: CRYPTOSCAN — Screener de oportunidades (funil determinístico) ─── -->
+<!-- ─── TAB: SCAN — Camada Estrutural (seleção de setups por estrutura) ─── -->
 <div class="tab-pane" id="tab-cryptoscan">
-  <div class="cs-wrap">
+  <div class="sl-wrap">
 
-    <!-- Cabeçalho -->
-    <div class="cs-head">
+    <div class="sl-head">
       <div>
-        <div class="cs-title">CryptoScan <span class="cs-badge">Sugestões v2</span></div>
-        <div class="cs-sub">Sugestões de trade em perpétuos USDT da Bybit — <b>long ou short</b>, o que tiver maior potencial líquido. O edge vem de <b>posicionamento</b> (funding, open interest, cascatas de liquidação, long/short ratio), filtrado por regime e passado por um <b>risk engine</b> rigoroso: cada ideia sai como uma Sugestão de Trade completa, com stop, TP1/2/3, sizing e score de confiança. Nunca é execução automática.</div>
+        <div class="sl-title">SCAN <span class="sl-badge">Camada Estrutural</span></div>
+        <div class="sl-sub">Decide <b>que pares têm sequer um trade utilizável</b> — antes de qualquer pontuação qualitativa. Dois <b>gates binários</b> (liquidez + estrutura de preço) que nenhuma pontuação compensa. Cada nível e cada rejeição trazem uma <b>justificação legível</b>. Zero candidatos é um resultado válido, não um bug.</div>
       </div>
-      <button class="cs-scan-btn" id="cs-scan-btn" onclick="scanCs(true)">
+      <button class="sl-btn" id="sl-scan-btn" onclick="slScan()">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.2" stroke="currentColor" stroke-width="1.4"/><line x1="9" y1="9" x2="12.5" y2="12.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
-        <span>Correr scan</span>
+        <span>Correr gates</span>
       </button>
     </div>
 
-    <!-- Contexto de mercado + config -->
-    <div class="cs-ctx">
-      <div class="cs-ctx-item"><div class="cs-ctx-lbl">Universo</div><div class="cs-ctx-val" id="cs-x-universe">—</div><div class="cs-ctx-sub">perps ≥ 30M turnover</div></div>
-      <div class="cs-ctx-item"><div class="cs-ctx-lbl">Sugestões</div><div class="cs-ctx-val" id="cs-x-short">—</div><div class="cs-ctx-sub">passam custos, R:R e confiança</div></div>
-      <div class="cs-ctx-item"><div class="cs-ctx-lbl">BTC 24h</div><div class="cs-ctx-val" id="cs-x-btc">—</div><div class="cs-ctx-sub">contexto direcional</div></div>
-      <div class="cs-ctx-item"><div class="cs-ctx-lbl">Funding médio</div><div class="cs-ctx-val" id="cs-x-fund">—</div><div class="cs-ctx-sub">do universo /8h</div></div>
-      <label class="cs-field"><span>Capital (USD)</span><input type="number" id="cs-capital" min="100" step="100" oninput="csCfgChange()"></label>
-      <label class="cs-field"><span>Risco/trade %</span><input type="number" id="cs-risk" min="0.5" max="1" step="0.05" oninput="csCfgChange()"></label>
+    <div class="sl-note">
+      Nota: <b>framework-trading-perpetuos.md</b> não está no repositório — os limiares marcados <span class="sl-sup">[SUP]</span> (turnover, tolerância de cluster, zona morta, banda de ATR) derivam da prática já existente na app e precisam de reconciliação com o documento. O <b>piso de custo</b> é fixo: distância mínima ao stop = máx(banda de ATR, 8× custo round-trip).
     </div>
 
-    <!-- Limites de gestão de risco (não negociáveis) + pesos -->
-    <div class="cs-weights">
-      <span class="cs-wlbl">Risco:</span>
-      <span class="cs-wchip">/trade <b>0,5–1%</b></span>
-      <span class="cs-wchip">/dia <b>2%</b></span>
-      <span class="cs-wchip">/semana <b>5%</b></span>
-      <span class="cs-wchip">Drawdown máx <b>12%</b></span>
-      <span class="cs-wchip">Alav. máx <b>1,8×</b></span>
-      <span class="cs-wchip">R:R mín <b>1,8</b></span>
-      <span class="cs-wsep"></span>
-      <span class="cs-wlbl">Pesos:</span>
-      <span class="cs-wchip">Funding <b>30</b></span>
-      <span class="cs-wchip">OI <b>25</b></span>
-      <span class="cs-wchip">Cascata <b>20</b></span>
-      <span class="cs-wchip">Regime <b>15</b></span>
-      <span class="cs-wchip">Estrutura <b>10</b></span>
+    <!-- FASE 1 — testes unitários (correm ao abrir a tab) -->
+    <div class="sl-section">
+      <div class="sl-section-h"><span class="sl-phase">Fase 1</span> Extrator estrutural — testes com séries sintéticas</div>
+      <div id="sl-tests" class="sl-tests"><div class="db-empty">A correr testes…</div></div>
     </div>
 
-    <!-- Sugestões (injetadas por JS) -->
-    <div id="cs-list" class="cs-list"><div class="db-empty">Corre um scan para gerar sugestões de trade…</div></div>
-
-    <!-- Painéis de referência -->
-    <div class="cs-ref">
-
-      <div class="cs-refbox">
-        <div class="cs-refbox-h">Hipóteses de edge (posicionamento)</div>
-        <div class="cs-refbox-b">
-          <div class="cs-hyp"><span class="cs-hyp-tag">H1</span><div><b>Funding squeeze.</b> Funding com z-score ≥ |2| (≈100 períodos) = um lado sobrelotado a pagar. Se o preço não confirma, o unwind é violento na direção oposta. z ≥ +2 com preço 24h ≤ +0,5% → <span class="sh">SHORT</span>; z ≤ −2 com preço 24h ≥ −0,5% → <span class="lo">LONG</span>.</div></div>
-          <div class="cs-hyp"><span class="cs-hyp-tag">H2</span><div><b>OI divergence.</b> OI +5% em 6h com preço a variar &lt;0,4% = combustível bidirecional (direção neutra). OI −6% em 6h = flush/exaustão → fade do movimento recente.</div></div>
-          <div class="cs-hyp"><span class="cs-hyp-tag">H3</span><div><b>Cascade fade.</b> Vela (TF15) com range &gt;2,5×ATR(14), volume &gt;3× média(20) e OI −2% em 2h = proxy de cascata → mean-reversion contra a vela. <em>Proxy REST; adapter pronto para o websocket de liquidações.</em></div></div>
-          <div class="cs-hyp"><span class="cs-hyp-tag">H4</span><div><b>Filtro de regime (1h).</b> ADX(14) ≥ 25 → trending; largura de Bollinger no percentil &lt;15% → squeeze (penaliza tudo exceto breakout); resto → ranging. Mean-reversion só pontua bem em ranging.</div></div>
-          <div class="cs-hyp"><span class="cs-hyp-tag alt">+</span><div><b>Estrutura.</b> Posição do preço no range de 24h: ≤12% favorece LONG, ≥88% favorece SHORT. Peso baixo, melhora o R:R de entrada.</div></div>
-        </div>
+    <!-- FASE 2 — gates sobre o universo -->
+    <div class="sl-section">
+      <div class="sl-section-h"><span class="sl-phase">Fase 2</span> Gates sobre o universo Bybit (perps USDT)</div>
+      <div class="sl-ctx">
+        <div class="sl-ctx-item"><div class="sl-ctx-lbl">Universo total</div><div class="sl-ctx-val" id="sl-x-universe">—</div><div class="sl-ctx-sub">perps USDT</div></div>
+        <div class="sl-ctx-item"><div class="sl-ctx-lbl">Avaliados</div><div class="sl-ctx-val" id="sl-x-eval">—</div><div class="sl-ctx-sub">passam Gate 0 (liquidez)</div></div>
+        <div class="sl-ctx-item"><div class="sl-ctx-lbl">Aprovados</div><div class="sl-ctx-val" id="sl-x-approved">—</div><div class="sl-ctx-sub">têm setup estrutural</div></div>
+        <div class="sl-ctx-item"><div class="sl-ctx-lbl">Último scan</div><div class="sl-ctx-val" id="sl-x-ts">—</div><div class="sl-ctx-sub">TF15</div></div>
       </div>
-
-      <div class="cs-refbox">
-        <div class="cs-refbox-h">Custos, R:R e breakeven</div>
-        <div class="cs-refbox-b">
-          <div class="cs-ev">
-            <div class="cs-ev-row"><span>Taker fee (por lado)</span><b>0,055%</b></div>
-            <div class="cs-ev-row"><span>Slippage estimado (por lado)</span><b>0,030%</b></div>
-            <div class="cs-ev-row tot"><span>Custo round-trip</span><b class="o">≈ 0,17%</b></div>
-          </div>
-          <div class="cs-refbox-note">Nenhuma sugestão sai com <b>TP1 a pagar &lt;2× os custos</b> ou <b>R:R combinado &lt; 1,8</b>. O R:R combinado pondera TP1/TP2/TP3 pelos <b>partial closes</b> (40%/35%/25%) e clampa os alvos ao extremo do range de 24h — setups a meio do range são rejeitados por não terem espaço. Cada sugestão mostra <b>p_win_breakeven</b> = (1 + custos_em_R)/(1 + R:R): a taxa de acerto mínima para empatar. Win rate isolado não é métrica; o que importa é a expectância líquida.</div>
-        </div>
-      </div>
-
-      <div class="cs-refbox">
-        <div class="cs-refbox-h">O funil → Sugestão de Trade</div>
-        <div class="cs-refbox-b">
-          <div class="cs-funnel">
-            <div class="cs-funnel-step"><span class="cs-fn-n">1</span><div><b>Universo (~60)</b><p>USDT-perps com turnover ≥ 30M; enriquecem os top-45.</p></div></div>
-            <div class="cs-funnel-step"><span class="cs-fn-n">2</span><div><b>Scoring determinístico</b><p>H1–H4 + estrutura → score composto. Mesmo input → mesmo score.</p></div></div>
-            <div class="cs-funnel-step"><span class="cs-fn-n">3</span><div><b>Risk engine</b><p>Stop técnico+risco, TP1/2/3, sizing USDT+unidades, cap 1,8×, rejeição por custos/R:R.</p></div></div>
-            <div class="cs-funnel-step"><span class="cs-fn-n">4</span><div><b>Sugestão + confiança</b><p>Sentimento de posicionamento, confluências a favor/contra, score X/10, urgência e validade.</p></div></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="cs-refbox">
-        <div class="cs-refbox-h">Sentimento &amp; camadas backend <span class="cs-flag">fora do browser</span></div>
-        <div class="cs-refbox-b">
-          <div class="cs-refbox-note"><b>Ativo aqui, ao vivo:</b> sentimento de <b>posicionamento</b> derivado da Bybit v5 — long/short account ratio, funding e OI. Para perps é frequentemente mais acionável que o sentimento social.</div>
-          <div class="cs-refbox-note" style="margin-top:9px">As camadas com estado ou chaves secretas pertencem a um serviço Python e <b>não correm no browser</b>:</div>
-          <ul class="cs-list-ul">
-            <li><b>Sentimento social</b>: Grok/X, LunarCrush, Santiment e notícias (CoinDesk, The Block) — precisam de chaves de API.</li>
-            <li><b>On-chain</b>: Glassnode / Nansen / CryptoQuant — fluxos de exchange, cohorts, stablecoins.</li>
-            <li><b>LLM analyst</b>: veto qualitativo cético sobre a shortlist, coluna separada que não altera o score determinístico.</li>
-            <li><b>Paper trader &amp; walk-forward</b>: loop de 15 min com fees/slippage/funding, kill-switch diário −3%; go-live só após ≥60 dias de paper com expectância positiva.</li>
-          </ul>
-        </div>
-      </div>
-
+      <div id="sl-list" class="sl-list"><div class="db-empty">Corre os gates para ver que pares têm um setup estrutural utilizável…</div></div>
     </div>
 
-    <div class="cs-disclaimer">Ferramenta de apoio à decisão — <b>nunca execução automática nem aconselhamento financeiro</b>. Sugestões calculadas a partir de dados públicos da Bybit v5 (tickers, kline TF15/TF60, funding history, open interest, long/short ratio). Proxy de liquidações via REST. Aprovação humana obrigatória antes de qualquer ordem.</div>
+    <!-- FASE 3 — validação -->
+    <div class="sl-section">
+      <div class="sl-section-h">
+        <span class="sl-phase">Fase 3</span> Validação — o gate distingue-se do acaso?
+        <button class="sl-btn sl-btn-sm" id="sl-val-btn" onclick="slValidate()"><span>Correr validação</span></button>
+      </div>
+      <div class="sl-note">
+        Corre <code>gateStructure</code> em walk-forward sobre história real (Bybit v5, TF60), avalia cada setup aprovado por <b>barreira tripla líquida de custos</b>, e compara com um <b>baseline de controlo</b> (entradas aleatórias, mesmos símbolos/horas, mesma distância de stop, mesmo alvo em R). <b>Critério de abandono definido à partida:</b> se os setups não se distinguirem do acaso de forma estatisticamente significativa, o gate é cosmético e não se avança para a Fase 4. Corre no browser — mais lento e com menos história que um harness dedicado.
+      </div>
+      <div id="sl-val-out" class="sl-val"><div class="db-empty">Ainda não corrida.</div></div>
+    </div>
+
+    <div class="sl-disclaimer">Ferramenta de apoio à decisão — <b>nunca execução automática nem aconselhamento financeiro</b>. Dados públicos da Bybit v5 (tickers, kline). Aprovação humana obrigatória.</div>
 
   </div>
 </div>
@@ -3921,603 +3952,573 @@ async function fetchLiquidations() {
   } catch(e) {}
 }
 
-// ── CRYPTOSCAN — Screener determinístico (funil de posicionamento) ───────────
-// Universo de perps USDT (Bybit v5 público) → scoring H1-H4 + estrutura →
-// shortlist top-12 com trade plan e p_win_breakeven. Núcleo determinístico do
-// sistema CryptoScan; LLM/paper/backtest são backend (fora do browser).
-const CS_CFG = {
-  minTurnover: 30e6,           // filtro de universo (USD)
-  universeTop: 45,             // símbolos enriquecidos por turnover (perf browser)
-  weights: { funding: 30, oi: 25, cascade: 20, regime: 15, structure: 10 },
-  scoreThreshold: 30,
-  shortlistMax: 12,
-  radarMax: 10,              // candidatos mostrados no radar quando ficam abaixo da fasquia
-  fundingZ: 2,                 // |z| para H1
-  adxTrend: 25,
-  bbSqueezePct: 15,            // percentil de largura BB → squeeze
-  costPerSide: 0.055 + 0.030,  // % (fee taker + slippage) por lado
-  // ── Escala de saída (partial closes) — TP em múltiplos de R e % da posição a fechar
-  tp: [ { r: 1.0, close: 0.40 }, { r: 2.0, close: 0.35 }, { r: 3.5, close: 0.25 } ],
-  minRR: 1.8,                  // rejeita a sugestão se o R:R combinado for < 1,8
-  // ── Gestão de risco (limites do sistema, não negociáveis)
-  riskPct: 0.75,              // % do capital por trade (variável: 0,5–1%)
-  riskMin: 0.5, riskMax: 1.0,
-  dailyRiskPct: 2,            // risco máximo diário
-  weeklyRiskPct: 5,          // risco máximo semanal
-  maxDrawdownPct: 12,        // drawdown máximo do sistema
-  maxLev: 1.8,
-  stopAtr: 1.2,              // stop de risco = 1,2×ATR(14)
-  stopAtrMax: 2.5,           // teto do stop (evita sizing minúsculo em stops técnicos largos)
-  capital: 10000,
-  concurrency: 8,
+// ══════════════════════════════════════════════════════════════════════════════
+// SCAN — Camada Estrutural  (structural selection layer)
+// ══════════════════════════════════════════════════════════════════════════════
+// Decide QUE pares têm sequer um trade utilizável, ANTES de qualquer pontuação
+// qualitativa. Baseado na prompt "camada estrutural do scanner".
+//
+// Arquitetura desta app: browser-only (não há harness Python). Por isso a Fase 3
+// (validação) corre client-side sobre klines históricas reais da Bybit v5.
+//
+// NOTA: framework-trading-perpetuos.md NÃO está no repositório. Os limiares
+// marcados [SUP] (suposição) derivam da prática já existente na app (custos,
+// turnover, ATR14) e precisam de reconciliação quando o documento existir.
+//
+// Camadas:
+//   SL (objeto)  — funções PURAS, sem rede, testáveis com dados sintéticos:
+//                  atr, swingPivots, clusterLevels, rangeBounds, gate0,
+//                  gateStructure, tripleBarrier.
+//   Fase 1 UI    — testes unitários com séries sintéticas (têm de passar).
+//   Fase 2       — Gate 0 (liquidez) + Gate 1 (estrutura), binários.
+//   Fase 3       — validação: gate vs baseline aleatório, líquido de custos,
+//                  com teste de significância e critério de abandono.
+// ══════════════════════════════════════════════════════════════════════════════
+
+const SL_CFG = {
+  // ── Custos (reusa o modelo já existente na app) ──
+  costPerSide: 0.055 + 0.030,        // % por lado (taker fee + slippage estimado)
+
+  // ── Gate 0 — liquidez ──
+  minTurnover: 30e6,                 // [SUP] turnover 24h mínimo (USD) — framework §5
+
+  // ── Gate 1 — estrutura ──
+  tf: '15',                          // timeframe de trabalho da estrutura
+  klineLimit: 300,                   // barras a pedir por símbolo
+  atrN: 14,                          // período do ATR
+  pivotLeft: 3, pivotRight: 3,       // fractais confirmados (right barras à direita)
+  clusterTolAtr: 0.6,               // [SUP] tolerância de cluster, em múltiplos de ATR
+  minTouches: 2,                     // toques mínimos para um nível ser "nível"
+  rangeLookback: 96,                 // barras do range (TF15 × 96 ≈ 24h)
+  deadZoneLo: 0.35, deadZoneHi: 0.65,// [SUP] percentil do range = zona morta (sem trade)
+  atrBandMin: 1.0, atrBandMax: 2.5,  // [SUP] distância ao stop admissível, em ATR
+  costFloorMult: 8,                  // piso de custo = 8× custo round-trip (prompt §2)
+  minRR1: 1.0,                       // R:R mínimo até TP1 para o setup ser utilizável
+
+  // ── Fase 3 — validação ──
+  valTf: '60',                       // timeframe da validação (mais barras de história)
+  valKlineLimit: 1000,               // história por símbolo
+  valHorizon: 48,                    // barras máximas do trade (barreira vertical)
+  valUniverse: 60,                   // símbolos a varrer na validação
+  valBaselineMult: 3,                // nº de entradas aleatórias por setup aprovado
+  abandonP: 0.05,                    // p-value do critério de abandono
 };
-try {
-  const s = JSON.parse(localStorage.getItem('csCfg') || '{}');
-  if (s.capital > 0) CS_CFG.capital = s.capital;
-  if (s.riskPct >= CS_CFG.riskMin && s.riskPct <= CS_CFG.riskMax) CS_CFG.riskPct = s.riskPct;
-} catch (e) {}
-const CS_COST_RT = 2 * CS_CFG.costPerSide;   // round-trip ≈ 0,17%
-const csSaveCfg = () => { try { localStorage.setItem('csCfg', JSON.stringify({ capital: CS_CFG.capital, riskPct: CS_CFG.riskPct })); } catch (e) {} };
+const SL_COST_RT = () => 2 * SL_CFG.costPerSide / 100;  // round-trip em fração (≈0.0017)
 
-let csData = null, csScanning = false, csLastScan = 0, csExpanded = null;
+// ══════════════════════════════════════════════════════════════════════════════
+// SL — funções puras (sem rede). klines = { h:[], l:[], c:[] } cronológico (antigo→novo)
+// ══════════════════════════════════════════════════════════════════════════════
+const SL = {
 
-// ── Helpers de estatística e indicadores ──
-const csMean = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
-const csStd = a => { if (a.length < 2) return 0; const m = csMean(a); return Math.sqrt(a.reduce((s, v) => s + (v - m) ** 2, 0) / a.length); };
-const csSMA = (a, p) => a.length < p ? null : csMean(a.slice(-p));
+  // ── ATR de Wilder. Devolve o último valor (número) ou null se série curta. ──
+  atr(k, n = SL_CFG.atrN) {
+    const { h, l, c } = k, N = c.length;
+    if (N < n + 1) return null;
+    const tr = [];
+    for (let i = 1; i < N; i++)
+      tr.push(Math.max(h[i] - l[i], Math.abs(h[i] - c[i - 1]), Math.abs(l[i] - c[i - 1])));
+    let atr = tr.slice(0, n).reduce((a, b) => a + b, 0) / n;
+    for (let i = n; i < tr.length; i++) atr = (atr * (n - 1) + tr[i]) / n;
+    return atr;
+  },
 
-function csATR(h, l, c, p = 14) {
-  const n = c.length; if (n < p + 1) return null;
-  const tr = [];
-  for (let i = 1; i < n; i++) tr.push(Math.max(h[i] - l[i], Math.abs(h[i] - c[i - 1]), Math.abs(l[i] - c[i - 1])));
-  let atr = csMean(tr.slice(0, p));
-  for (let i = p; i < tr.length; i++) atr = (atr * (p - 1) + tr[i]) / p;
-  return atr;
+  // ── Pivots fractais CONFIRMADOS (não repintam). ──
+  // Um topo em i é pivot se h[i] for o máximo estrito da janela [i-left, i+right];
+  // só é confirmado quando existem 'right' barras à direita. Idem para fundos.
+  swingPivots(k, left = SL_CFG.pivotLeft, right = SL_CFG.pivotRight) {
+    const { h, l, c } = k, N = c.length, piv = [];
+    for (let i = left; i < N - right; i++) {   // i < N-right ⇒ confirmado, sem repaint
+      let isHi = true, isLo = true;
+      for (let j = i - left; j <= i + right; j++) {
+        if (j === i) continue;
+        if (h[j] >= h[i]) isHi = false;
+        if (l[j] <= l[i]) isLo = false;
+      }
+      const barsAgo = (N - 1) - i;
+      if (isHi) piv.push({ index: i, price: h[i], type: 'high', barsAgo });
+      if (isLo) piv.push({ index: i, price: l[i], type: 'low', barsAgo });
+    }
+    return piv;
+  },
+
+  // ── Agrupa pivots próximos (dentro de 'tol' em preço) e conta toques. ──
+  // Cada nível traz uma justificação legível: quantos toques, a que preço,
+  // há quantas barras foi o toque mais recente.
+  clusterLevels(pivots, tol) {
+    if (!pivots.length || !(tol > 0)) return [];
+    const byPrice = pivots.slice().sort((a, b) => a.price - b.price);
+    const clusters = [];
+    let cur = [byPrice[0]];
+    for (let i = 1; i < byPrice.length; i++) {
+      const ref = cur.reduce((s, p) => s + p.price, 0) / cur.length;
+      if (Math.abs(byPrice[i].price - ref) <= tol) cur.push(byPrice[i]);
+      else { clusters.push(cur); cur = [byPrice[i]]; }
+    }
+    clusters.push(cur);
+    return clusters.map(g => {
+      const price = g.reduce((s, p) => s + p.price, 0) / g.length;
+      const touches = g.length;
+      const lastBarsAgo = Math.min(...g.map(p => p.barsAgo));
+      const nHi = g.filter(p => p.type === 'high').length;
+      const kind = nHi >= touches - nHi ? 'resistência' : 'suporte';
+      const barsList = g.map(p => p.barsAgo).sort((a, b) => a - b).join(', ');
+      const why = `${touches} toque(s) ~ ${price.toPrecision(6)} — ${kind}; ` +
+                  `toque mais recente há ${lastBarsAgo} barras (todos: há ${barsList} barras)`;
+      return { price, touches, lastBarsAgo, kind, why };
+    }).sort((a, b) => a.price - b.price);
+  },
+
+  // ── Limites do range recente + posição relativa do preço no range. ──
+  rangeBounds(k, lookback = SL_CFG.rangeLookback) {
+    const { h, l, c } = k, N = c.length;
+    const s = Math.max(0, N - lookback);
+    const hi = Math.max(...h.slice(s)), lo = Math.min(...l.slice(s));
+    const price = c[N - 1];
+    const span = hi - lo;
+    const pos = span > 0 ? (price - lo) / span : 0.5;   // 0 = fundo do range, 1 = topo
+    const why = `range de ${N - s} barras: ${lo.toPrecision(6)}–${hi.toPrecision(6)}; ` +
+                `preço ${price.toPrecision(6)} no percentil ${(pos * 100).toFixed(0)}%`;
+    return { hi, lo, mid: (hi + lo) / 2, span, price, pos, why };
+  },
+
+  // ── Gate 0 — liquidez (binário). ──
+  gate0(mkt, cfg = SL_CFG) {
+    if (!(mkt.turnover >= cfg.minTurnover))
+      return { pass: false, reason: `liquidez insuficiente: turnover 24h ${(mkt.turnover / 1e6).toFixed(1)}M < ${(cfg.minTurnover / 1e6).toFixed(0)}M [SUP §5]` };
+    if (!(mkt.price > 0) || !isFinite(mkt.price))
+      return { pass: false, reason: 'preço inválido/indisponível' };
+    return { pass: true, reason: `turnover 24h ${(mkt.turnover / 1e6).toFixed(1)}M ≥ ${(cfg.minTurnover / 1e6).toFixed(0)}M` };
+  },
+
+  // ── Gate 1 — estrutura (binário). Devolve { setups, rejections }. ──
+  // Os motivos de rejeição são OBRIGATÓRIOS e ESPECÍFICOS.
+  gateStructure(k, cfg = SL_CFG) {
+    const rejections = [], setups = [];
+    const push = r => { rejections.push(r); return { setups, rejections }; };
+
+    const atr = SL.atr(k, cfg.atrN);
+    if (atr == null) return push('série de klines demasiado curta para ATR');
+    if (!(atr > 0)) return push('ATR nulo — sem volatilidade mensurável');
+
+    const rb = SL.rangeBounds(k, cfg.rangeLookback);
+    const price = rb.price;
+
+    // Zona morta: preço a meio do range não tem trade estrutural.
+    if (rb.pos > cfg.deadZoneLo && rb.pos < cfg.deadZoneHi)
+      return push(`preço no percentil ${(rb.pos * 100).toFixed(0)}% do range — zona morta ` +
+                  `(${(cfg.deadZoneLo * 100).toFixed(0)}–${(cfg.deadZoneHi * 100).toFixed(0)}%): sem borda estrutural`);
+
+    const dir = rb.pos <= cfg.deadZoneLo ? +1 : -1;   // fundo→LONG, topo→SHORT
+
+    // Níveis a partir de fractais confirmados agrupados.
+    const pivots = SL.swingPivots(k, cfg.pivotLeft, cfg.pivotRight);
+    const levels = SL.clusterLevels(pivots, cfg.clusterTolAtr * atr)
+      .filter(L => L.touches >= cfg.minTouches);
+    if (!levels.length)
+      return push(`sem níveis confirmados (≥${cfg.minTouches} toques) na tolerância de ${cfg.clusterTolAtr}×ATR`);
+
+    // ── Piso de custo e banda de ATR ──
+    const costRtPrice = price * SL_COST_RT();                 // custo round-trip em preço
+    const costFloor = cfg.costFloorMult * costRtPrice;        // distância mínima ao stop
+    const bandMin = cfg.atrBandMin * atr, bandMax = cfg.atrBandMax * atr;
+
+    // Se o ATR é baixo demais para haver stop acima do piso E dentro da banda de ATR.
+    if (costFloor > bandMax)
+      return push(`ATR baixo demais: piso de custo (${cfg.costFloorMult}× round-trip = ` +
+                  `${(costFloor / price * 100).toFixed(2)}%) ultrapassa o topo da banda de ATR ` +
+                  `(${cfg.atrBandMax}×ATR = ${(bandMax / price * 100).toFixed(2)}%). ` +
+                  `Nenhum stop cabe acima do piso e dentro da banda → usar timeframe superior`);
+
+    // Distância mínima ao stop = máximo entre banda de ATR e piso de custo (prompt §2).
+    const minStopDist = Math.max(bandMin, costFloor);
+    if (minStopDist > bandMax)
+      return push(`distância mínima ao stop (${(minStopDist / price * 100).toFixed(2)}%) excede o topo ` +
+                  `da banda de ATR (${(bandMax / price * 100).toFixed(2)}%) → usar timeframe superior`);
+
+    // Entrada = preço atual. Stop do lado da entrada (suporte p/ long, resistência p/ short).
+    const entry = price;
+    let stop, stopFrom;
+    if (dir > 0) {
+      const below = levels.filter(L => L.price < entry).sort((a, b) => b.price - a.price)[0];
+      stop = below ? below.price - 0.15 * atr : entry - minStopDist;
+      stopFrom = below;
+    } else {
+      const above = levels.filter(L => L.price > entry).sort((a, b) => a.price - b.price)[0];
+      stop = above ? above.price + 0.15 * atr : entry + minStopDist;
+      stopFrom = above;
+    }
+    let stopDist = Math.abs(entry - stop);
+    // Impõe o piso de custo / banda mínima.
+    if (stopDist < minStopDist) { stopDist = minStopDist; stop = dir > 0 ? entry - stopDist : entry + stopDist; }
+    // Estrutura demasiado larga: stop além do topo da banda de ATR.
+    if (stopDist > bandMax)
+      return push(`stop estrutural a ${(stopDist / price * 100).toFixed(2)}% excede a banda de ATR ` +
+                  `(${cfg.atrBandMax}×ATR = ${(bandMax / price * 100).toFixed(2)}%): risco por trade excessivo`);
+
+    // Alvos: TP1 = nível OPOSTO mais PRÓXIMO; TP2 = extremo do range.
+    const opp = dir > 0
+      ? levels.filter(L => L.price > entry + costFloor).sort((a, b) => a.price - b.price)
+      : levels.filter(L => L.price < entry - costFloor).sort((a, b) => b.price - a.price);
+    const rangeExtreme = dir > 0 ? rb.hi : rb.lo;
+    if (!opp.length && !(dir > 0 ? rangeExtreme > entry + costFloor : rangeExtreme < entry - costFloor))
+      return push(`sem nível oposto acima do piso de custo (${(costFloor / price * 100).toFixed(2)}%) — sem espaço para TP1`);
+
+    const tp1 = opp.length ? opp[0].price : rangeExtreme;
+    const tp2 = rangeExtreme;
+    const rr1 = Math.abs(tp1 - entry) / stopDist;
+    const rr2 = Math.abs(tp2 - entry) / stopDist;
+    if (rr1 < cfg.minRR1)
+      return push(`R:R até TP1 = ${rr1.toFixed(2)} < ${cfg.minRR1}: alvo próximo demais para o stop exigido pelo piso de custo`);
+
+    const sideTxt = dir > 0 ? 'LONG (fundo do range)' : 'SHORT (topo do range)';
+    const why =
+      `${sideTxt}. ${rb.why}. ` +
+      `Stop em ${stop.toPrecision(6)} (${(stopDist / price * 100).toFixed(2)}% ≈ ${(stopDist / atr).toFixed(2)}×ATR` +
+      `${stopFrom ? `, ancorado no nível de ${stopFrom.touches} toques` : ', sem nível — piso de custo/ATR'}). ` +
+      `Piso de custo ${cfg.costFloorMult}× round-trip = ${(costFloor / price * 100).toFixed(2)}%. ` +
+      `TP1 ${tp1.toPrecision(6)} (nível oposto mais próximo, R:R ${rr1.toFixed(2)}); ` +
+      `TP2 ${tp2.toPrecision(6)} (extremo do range, R:R ${rr2.toFixed(2)}).`;
+
+    setups.push({ dir, entry, stop, stopDist, stopPct: stopDist / price, tp1, tp2, rr1, rr2, atr, levels, range: rb, why });
+    return { setups, rejections };
+  },
+
+  // ── Barreira tripla líquida de custos. Devolve R (múltiplos de risco). ──
+  // fh/fl/fc: futuros (após a entrada). costFrac: custo round-trip em fração de preço.
+  tripleBarrier(fh, fl, fc, entry, stop, tp, dir, costFrac, horizon = SL_CFG.valHorizon) {
+    const risk = Math.abs(entry - stop);
+    if (!(risk > 0) || !fc.length) return null;
+    const costR = costFrac * entry / risk;             // custo round-trip em unidades de R
+    const n = Math.min(horizon, fc.length);
+    for (let i = 0; i < n; i++) {
+      if (dir > 0) {
+        if (fl[i] <= stop) return -1 - costR;
+        if (fh[i] >= tp)   return (tp - entry) / risk - costR;
+      } else {
+        if (fh[i] >= stop) return -1 - costR;
+        if (fl[i] <= tp)   return (entry - tp) / risk - costR;
+      }
+    }
+    const exit = fc[n - 1];                             // timeout → mark-to-close
+    const raw = dir > 0 ? (exit - entry) / risk : (entry - exit) / risk;
+    return raw - costR;
+  },
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Estatística para a Fase 3
+// ══════════════════════════════════════════════════════════════════════════════
+const slMean = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
+const slMedian = a => { if (!a.length) return 0; const s = a.slice().sort((x, y) => x - y); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+const slStd = a => { if (a.length < 2) return 0; const m = slMean(a); return Math.sqrt(a.reduce((s, v) => s + (v - m) ** 2, 0) / (a.length - 1)); };
+const slPctPos = a => a.length ? a.filter(x => x > 0).length / a.length * 100 : 0;
+// erf de Abramowitz-Stegun 7.1.26 → normal CDF → p-value bicaudal do t de Welch (aprox. normal).
+function slErf(x) {
+  const s = x < 0 ? -1 : 1; x = Math.abs(x);
+  const t = 1 / (1 + 0.3275911 * x);
+  const y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x);
+  return s * y;
 }
-function csADX(h, l, c, p = 14) {
-  const n = c.length; if (n < 2 * p + 2) return null;
-  const tr = [], pdm = [], mdm = [];
-  for (let i = 1; i < n; i++) {
-    const up = h[i] - h[i - 1], dn = l[i - 1] - l[i];
-    pdm.push(up > dn && up > 0 ? up : 0);
-    mdm.push(dn > up && dn > 0 ? dn : 0);
-    tr.push(Math.max(h[i] - l[i], Math.abs(h[i] - c[i - 1]), Math.abs(l[i] - c[i - 1])));
-  }
-  const wilder = arr => { let s = arr.slice(0, p).reduce((a, b) => a + b, 0); const o = [s]; for (let i = p; i < arr.length; i++) { s = s - s / p + arr[i]; o.push(s); } return o; };
-  const trS = wilder(tr), pS = wilder(pdm), mS = wilder(mdm), dx = [];
-  for (let i = 0; i < trS.length; i++) {
-    const t = trS[i] || 1e-9, pdi = 100 * pS[i] / t, mdi = 100 * mS[i] / t;
-    dx.push(100 * Math.abs(pdi - mdi) / ((pdi + mdi) || 1e-9));
-  }
-  if (dx.length < p) return null;
-  let adx = csMean(dx.slice(0, p));
-  for (let i = p; i < dx.length; i++) adx = (adx * (p - 1) + dx[i]) / p;
-  return adx;
-}
-// Largura de Bollinger (20,2) = (banda sup − inf)/média = 4σ/média; percentil do último valor.
-function csBBWidthPct(closes, p = 20) {
-  if (closes.length < p + 30) return null;
-  const widths = [];
-  for (let i = p; i <= closes.length; i++) {
-    const w = closes.slice(i - p, i), m = csMean(w);
-    widths.push(m ? 4 * csStd(w) / m : 0);
-  }
-  const cur = widths[widths.length - 1], sorted = widths.slice().sort((a, b) => a - b);
-  return { cur, pct: sorted.filter(x => x <= cur).length / sorted.length * 100 };
+function slWelch(a, b) {
+  const na = a.length, nb = b.length;
+  if (na < 2 || nb < 2) return { t: 0, p: 1 };
+  const ma = slMean(a), mb = slMean(b), va = slStd(a) ** 2, vb = slStd(b) ** 2;
+  const se = Math.sqrt(va / na + vb / nb);
+  if (!(se > 0)) return { t: 0, p: 1 };
+  const t = (ma - mb) / se;
+  const p = 2 * (1 - 0.5 * (1 + slErf(Math.abs(t) / Math.SQRT2)));   // aprox. normal
+  return { t, p: Math.max(0, Math.min(1, p)) };
 }
 
-// ── Fetchers Bybit v5 (cronológico: mais antigo → mais recente) ──
-async function csFetchKline(sym, interval, limit) {
+// ══════════════════════════════════════════════════════════════════════════════
+// Fetchers (rede) — mantidos FORA das funções puras
+// ══════════════════════════════════════════════════════════════════════════════
+async function slFetchKline(sym, interval, limit) {
   const r = await fetch(`${BYBIT}/v5/market/kline?category=linear&symbol=${sym}&interval=${interval}&limit=${limit}`);
   const d = await r.json();
-  const list = (d?.result?.list || []).slice().reverse();
-  return { closes: list.map(k => +k[4]), highs: list.map(k => +k[2]), lows: list.map(k => +k[3]), opens: list.map(k => +k[1]), vols: list.map(k => +k[5]) };
+  const list = (d?.result?.list || []).slice().reverse();   // cronológico
+  return { o: list.map(x => +x[1]), h: list.map(x => +x[2]), l: list.map(x => +x[3]), c: list.map(x => +x[4]), v: list.map(x => +x[5]) };
 }
-async function csFetchFunding(sym) {
-  const r = await fetch(`${BYBIT}/v5/market/funding/history?category=linear&symbol=${sym}&limit=100`);
+async function slFetchUniverse(minTurnover, max) {
+  const r = await fetch(`${BYBIT}/v5/market/tickers?category=linear`);
   const d = await r.json();
-  return (d?.result?.list || []).map(x => parseFloat(x.fundingRate) * 100).reverse();
+  let uni = (d?.result?.list || [])
+    .filter(t => /USDT$/.test(t.symbol) && !/[0-9]/.test(coinOf(t.symbol)))
+    .map(t => ({ symbol: t.symbol, coin: coinOf(t.symbol), price: parseFloat(t.lastPrice), turnover: parseFloat(t.turnover24h) || 0 }))
+    .filter(c => isFinite(c.price) && c.price > 0);
+  uni.sort((a, b) => b.turnover - a.turnover);
+  const full = uni.length;
+  return { list: uni.filter(c => c.turnover >= minTurnover).slice(0, max || uni.length), full };
 }
-async function csFetchOI(sym) {
-  const r = await fetch(`${BYBIT}/v5/market/open-interest?category=linear&symbol=${sym}&intervalTime=15min&limit=96`);
-  const d = await r.json();
-  return (d?.result?.list || []).map(x => +x.openInterest).filter(v => v > 0).reverse();
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Estado + entrada da tab
+// ══════════════════════════════════════════════════════════════════════════════
+let slScanData = null, slScanning = false, slTestsRan = false, slValidating = false, slValData = null;
+
+function renderCsTab() {          // chamada por switchTab('cryptoscan')
+  if (!slTestsRan) slRunTests();  // Fase 1: os testes correm ao abrir a tab
 }
-// Long/Short account ratio (posicionamento do crowd) — sentimento REAL de derivados.
-async function csFetchLSR(sym) {
+
+// ══════════════════════════════════════════════════════════════════════════════
+// FASE 1 — Testes unitários com séries sintéticas
+// ══════════════════════════════════════════════════════════════════════════════
+// Construtores de séries sintéticas ─────────────────────────────────────────────
+// Range em zig-zag: toca lo e hi repetidamente (níveis confirmáveis por fractais);
+// 'endFrac' fixa a posição final do preço no range (0 = fundo, 1 = topo).
+function slSynthRange({ n = 200, lo = 100, hi = 120, period = 20, endFrac = 0.03 } = {}) {
+  const o = [], h = [], l = [], c = [];
+  const span = hi - lo;
+  for (let i = 0; i < n; i++) {
+    const seg = Math.floor(i / period), up = seg % 2 === 0, t = (i % period) / period;
+    const px = up ? lo + span * t : hi - span * t;   // triângulo com declive (sem empates adjacentes)
+    const op = i ? c[i - 1] : px, w = 0.15 * (span / 20);
+    o.push(op); c.push(px);
+    h.push(px + w);   // wick baseado no próprio preço da barra → picos sem empates
+    l.push(px - w);
+  }
+  // Fixa a posição final do preço dentro do range.
+  const endPx = lo + span * endFrac;
+  c[n - 1] = endPx; h[n - 1] = endPx + 0.1 * (span / 20); l[n - 1] = endPx - 0.1 * (span / 20);
+  return { o, h, l, c };
+}
+// Tendência monotónica: sem topos/fundos locais → nenhum nível confirmável.
+function slSynthTrend(n = 200, start = 100, step = 0.5) {
+  const o = [], h = [], l = [], c = [];
+  for (let i = 0; i < n; i++) { const px = start + step * i; o.push(px - step / 2); c.push(px); h.push(px + 0.2); l.push(px - step / 2 - 0.2); }
+  return { o, h, l, c };
+}
+
+function slRunTests() {
+  slTestsRan = true;
+  const results = [];
+  const assert = (name, cond, detail) => results.push({ name, pass: !!cond, detail });
+
+  // Caso 1 — RANGE largo, preço no fundo → 1 setup LONG utilizável.
+  const kR = slSynthRange({ endFrac: 0.03 });
+  const atrR = SL.atr(kR);
+  const pivR = SL.swingPivots(kR);
+  const lvlR = SL.clusterLevels(pivR, SL_CFG.clusterTolAtr * atrR).filter(L => L.touches >= SL_CFG.minTouches);
+  const gR = SL.gateStructure(kR);
+  assert('Range: ATR > 0', atrR > 0, `ATR=${atrR?.toFixed(3)}`);
+  assert('Range: ≥2 níveis confirmados (toques repetidos)', lvlR.length >= 2, lvlR.map(L => `${L.touches}×@${L.price.toFixed(2)}`).join('  '));
+  assert('Range: gate devolve exatamente 1 setup', gR.setups.length === 1, gR.setups[0]?.why || gR.rejections.join(' | '));
+  assert('Range: setup é LONG (preço no fundo)', gR.setups[0]?.dir === 1, `dir=${gR.setups[0]?.dir}`);
+  assert('Range: TP1 é o nível oposto (≤ TP2 extremo do range)', gR.setups[0] && gR.setups[0].tp1 <= gR.setups[0].tp2 + 1e-9, `TP1=${gR.setups[0]?.tp1?.toFixed(2)} TP2=${gR.setups[0]?.tp2?.toFixed(2)}`);
+
+  // Caso 2 — mesmo range, mas preço a MEIO → ZERO setups, motivo "zona morta".
+  const kM = slSynthRange({ endFrac: 0.50 });
+  const gM = SL.gateStructure(kM);
+  assert('Zona morta: ZERO setups', gM.setups.length === 0, `${gM.setups.length} setups`);
+  assert('Zona morta: motivo é "zona morta"', /zona morta/.test(gM.rejections.join(' ')), gM.rejections.join(' | '));
+
+  // Caso 3 — range de AMPLITUDE minúscula (ATR baixo) → ZERO, motivo "timeframe superior".
+  const kF = slSynthRange({ lo: 100, hi: 100.4, endFrac: 0.03 });
+  const gF = SL.gateStructure(kF);
+  assert('Vol. baixa: ZERO setups', gF.setups.length === 0, `${gF.setups.length} setups`);
+  assert('Vol. baixa: motivo sugere timeframe superior', /timeframe superior/.test(gF.rejections.join(' ')), gF.rejections.join(' | '));
+
+  // Caso 4 — TENDÊNCIA monotónica → ZERO setups, motivo "sem níveis confirmados".
+  const kT = slSynthTrend();
+  const gT = SL.gateStructure(kT);
+  assert('Tendência: ZERO setups', gT.setups.length === 0, `${gT.setups.length} setups`);
+  assert('Tendência: motivo é "sem níveis confirmados"', /sem níveis confirmados/.test(gT.rejections.join(' ')), gT.rejections.join(' | '));
+
+  // Caso 5 — barreira tripla: TP puro dá R positivo; stop puro dá ≈ −1 (menos custos).
+  const rWin = SL.tripleBarrier([102, 105], [99.9, 99.9], [100, 105], 100, 99, 104, 1, SL_COST_RT());
+  const rLoss = SL.tripleBarrier([100.5, 101], [98, 98], [99, 98], 100, 99, 104, 1, SL_COST_RT());
+  assert('Barreira: TP → R ≈ +4 (líquido de custos)', rWin > 3.5 && rWin < 4.1, `R=${rWin?.toFixed(3)}`);
+  assert('Barreira: stop → R ≈ −1 (líquido de custos)', rLoss < -0.9 && rLoss > -1.3, `R=${rLoss?.toFixed(3)}`);
+
+  slRenderTests(results);
+  return results;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// FASE 2 — varrimento do universo pelos gates (binários)
+// ══════════════════════════════════════════════════════════════════════════════
+async function slScan() {
+  if (slScanning) return;
+  slScanning = true;
+  const btn = document.getElementById('sl-scan-btn'); if (btn) btn.classList.add('busy');
+  const listEl = document.getElementById('sl-list');
+  if (listEl) listEl.innerHTML = '<div class="db-empty">A avaliar o universo pelos gates… (pode demorar ~1 min)</div>';
   try {
-    const r = await fetch(`${BYBIT}/v5/market/account-ratio?category=linear&symbol=${sym}&period=1h&limit=24`);
-    const d = await r.json();
-    return (d?.result?.list || []).map(x => ({ buy: parseFloat(x.buyRatio), sell: parseFloat(x.sellRatio) })).reverse();
-  } catch (e) { return []; }
-}
-
-// ── Sinais (cada um: { score 0-100, dir -1|0|+1, ev, on }) ──
-// H1 — Funding squeeze: funding extremo (|z|≥2) sem confirmação de preço → fade.
-function csH1(fund, chg24) {
-  if (!fund || fund.length < 20) return { score: 0, dir: 0, ev: 'Sem histórico de funding.', on: false };
-  const cur = fund[fund.length - 1], hist = fund.slice(0, -1), m = csMean(hist), sd = csStd(hist);
-  const z = sd > 0 ? (cur - m) / sd : 0;
-  let dir = 0, on = false;
-  if (z >= CS_CFG.fundingZ && chg24 <= 0.5) { dir = -1; on = true; }        // crowd long vulnerável → SHORT
-  else if (z <= -CS_CFG.fundingZ && chg24 >= -0.5) { dir = 1; on = true; }  // crowd short vulnerável → LONG
-  const score = on ? Math.max(45, Math.min(100, 45 + (Math.abs(z) - CS_CFG.fundingZ) * 20)) : 0;
-  const ev = `Funding ${cur.toFixed(4)}%/8h · z=${z.toFixed(2)} (${cur >= 0 ? 'longs' : 'shorts'} pagam) · preço 24h ${chg24 >= 0 ? '+' : ''}${chg24.toFixed(2)}%. ` +
-    (on ? (dir < 0 ? 'Crowd long sobrelotado sem confirmação → fade SHORT.' : 'Crowd short sobrelotado sem confirmação → fade LONG.') : 'Sem squeeze qualificado.');
-  return { score, dir, ev, on };
-}
-// H2 — OI divergence: acumulação sem progresso (bidirecional) ou flush (fade).
-function csH2(oi, closes15) {
-  if (!oi || oi.length < 25 || closes15.length < 25) return { score: 0, dir: 0, ev: 'Sem dados de OI.', on: false };
-  const oiNow = oi[oi.length - 1], oi6 = oi[oi.length - 25], oiChg = (oiNow - oi6) / oi6 * 100;
-  const pxNow = closes15[closes15.length - 1], px6 = closes15[closes15.length - 25], pxChg = (pxNow - px6) / px6 * 100;
-  let dir = 0, on = false, score = 0, ev;
-  if (oiChg > 5 && Math.abs(pxChg) < 0.4) {
-    on = true; dir = 0; score = Math.min(100, 55 + (oiChg - 5) * 3);
-    ev = `OI +${oiChg.toFixed(1)}% em 6h com preço ${pxChg >= 0 ? '+' : ''}${pxChg.toFixed(2)}% (plano) → combustível bidirecional; direção resolvida pelos outros sinais.`;
-  } else if (oiChg < -6) {
-    on = true; dir = pxChg > 0 ? -1 : 1; score = Math.min(100, 55 + (Math.abs(oiChg) - 6) * 3);
-    ev = `OI ${oiChg.toFixed(1)}% em 6h = flush/exaustão. Movimento recente ${pxChg >= 0 ? '+' : ''}${pxChg.toFixed(2)}% → fade ${dir < 0 ? 'SHORT' : 'LONG'}.`;
-  } else {
-    ev = `OI ${oiChg >= 0 ? '+' : ''}${oiChg.toFixed(1)}% em 6h · preço ${pxChg >= 0 ? '+' : ''}${pxChg.toFixed(2)}%. Sem divergência qualificada.`;
-  }
-  return { score, dir, ev, on };
-}
-// H3 — Cascade fade (proxy REST): vela extrema + volume + queda de OI → mean-reversion.
-function csH3(k, oi) {
-  const { highs, lows, closes, opens, vols } = k;
-  if (closes.length < 25) return { score: 0, dir: 0, ev: 'Sem dados TF15.', on: false };
-  const atr = csATR(highs, lows, closes, 14), i = closes.length - 1;
-  const range = highs[i] - lows[i], volAvg = csMean(vols.slice(-21, -1));
-  const volMult = volAvg > 0 ? vols[i] / volAvg : 0;
-  let oi2h = null;
-  if (oi && oi.length >= 9) { const a = oi[oi.length - 1], b = oi[oi.length - 9]; oi2h = (a - b) / b * 100; }
-  const on = atr > 0 && range > 2.5 * atr && volMult > 3 && oi2h != null && oi2h < -2;
-  let dir = 0, score = 0;
-  if (on) { dir = closes[i] < opens[i] ? 1 : -1; score = Math.min(100, 60 + (volMult - 3) * 6); }
-  const ev = `Range ${atr > 0 ? (range / atr).toFixed(1) : '—'}×ATR · vol ${volMult.toFixed(1)}× · OI 2h ${oi2h == null ? '—' : (oi2h >= 0 ? '+' : '') + oi2h.toFixed(1) + '%'}. ` +
-    (on ? `Proxy de cascata → mean-reversion ${dir > 0 ? 'LONG' : 'SHORT'}.` : 'Sem cascata qualificada.');
-  return { score, dir, ev, on };
-}
-// Estrutura — posição no range de 24h (96 velas TF15).
-function csStructure(closes15) {
-  if (closes15.length < 96) return { score: 0, dir: 0, ev: 'Sem range 24h.', on: false };
-  const w = closes15.slice(-96), hi = Math.max(...w), lo = Math.min(...w), px = closes15[closes15.length - 1];
-  const pos = hi > lo ? (px - lo) / (hi - lo) * 100 : 50;
-  let dir = 0, on = false, score = 0;
-  if (pos <= 12) { dir = 1; on = true; score = 100 - pos * 3; }
-  else if (pos >= 88) { dir = -1; on = true; score = 60 + (pos - 88) * 3; }
-  score = Math.max(0, Math.min(100, score));
-  const ev = `Preço a ${pos.toFixed(0)}% do range 24h. ` + (on ? (dir > 0 ? 'Perto do fundo → favorece LONG.' : 'Perto do topo → favorece SHORT.') : 'Meio do range.');
-  return { score, dir, ev, on };
-}
-// H4 — Regime (TF 1h): trending / ranging / squeeze.
-function csRegime(k60) {
-  const { highs, lows, closes } = k60;
-  if (closes.length < 50) return { type: 'ranging', ev: 'Dados 1h insuficientes.', adx: null, bbPct: null };
-  const adx = csADX(highs, lows, closes, 14), bb = csBBWidthPct(closes, 20);
-  const sma20 = csSMA(closes, 20), px = closes[closes.length - 1];
-  let type;
-  if (bb && bb.pct < CS_CFG.bbSqueezePct) type = 'squeeze';
-  else if (adx != null && adx >= CS_CFG.adxTrend) type = px >= sma20 ? 'trend_up' : 'trend_down';
-  else type = 'ranging';
-  return { type, ev: `ADX ${adx == null ? '—' : adx.toFixed(0)} · BB width p${bb ? Math.round(bb.pct) : '—'} →`, adx, bbPct: bb ? bb.pct : null };
-}
-// Fit de regime (0-100): mean-reversion favorece ranging; continuação favorece trend alinhado; squeeze penaliza.
-function csRegimeFit(regime, dir, mrOn) {
-  switch (regime.type) {
-    case 'squeeze':     return 25;
-    case 'ranging':     return mrOn ? 80 : 55;
-    case 'trend_up':    return dir > 0 ? 85 : dir < 0 ? 30 : 50;
-    case 'trend_down':  return dir < 0 ? 85 : dir > 0 ? 30 : 50;
-    default:            return 50;
-  }
-}
-
-// ── Scoring composto (determinístico) ──
-function csComposite(sigs, regime) {
-  const W = CS_CFG.weights;
-  const parts = [
-    { k: 'funding',   ...sigs.h1, w: W.funding },
-    { k: 'oi',        ...sigs.h2, w: W.oi },
-    { k: 'cascade',   ...sigs.h3, w: W.cascade },
-    { k: 'structure', ...sigs.st, w: W.structure },
-  ];
-  let vote = 0;
-  for (const p of parts) vote += p.dir * p.score * p.w;
-  const finalDir = vote > 0 ? 1 : vote < 0 ? -1 : 0;
-  let score = 0;
-  for (const p of parts) {
-    const contrib = p.score * p.w / 100;              // 0..w
-    if (p.dir === 0) score += contrib * 0.5;           // neutro conta a 50%
-    else if (p.dir === finalDir) score += contrib;     // alinhado
-    else score -= contrib * 0.7;                       // contraditório subtrai 70%
-  }
-  const mrOn = sigs.h3.dir !== 0 || sigs.st.dir !== 0;
-  const fit = csRegimeFit(regime, finalDir, mrOn);
-  score += fit * W.regime / 100;
-  return { finalDir, score: Math.max(0, score), fit };
-}
-
-// ── Trade plan + risk engine ──
-// Stop de risco (1,2×ATR) + stop técnico (swing recente 20 barras TF15). O stop
-// final é o mais afastado dos dois (protege do ruído), com teto em 2,5×ATR. Os
-// alvos TP1/2/3 são múltiplos de R, mas clampados ao extremo do range 24h — o
-// que dá tento real ao R:R combinado (setups a meio do range são rejeitados).
-function csTradePlan(entry, atr, dir, capital, k15, riskPct, regimeType) {
-  if (!dir || !atr || !entry) return null;
-  const rp = (riskPct != null ? riskPct : CS_CFG.riskPct);
-  const closes = (k15 && k15.closes) || [], highs = (k15 && k15.highs) || [], lows = (k15 && k15.lows) || [];
-  const riskStopDist = CS_CFG.stopAtr * atr;
-  const riskStop = dir > 0 ? entry - riskStopDist : entry + riskStopDist;
-  // Stop técnico: além do swing recente (20 barras) + buffer de 0,15×ATR.
-  const buf = 0.15 * atr;
-  let techStop;
-  if (dir > 0) techStop = (lows.length ? Math.min(...lows.slice(-20)) : riskStop) - buf;
-  else techStop = (highs.length ? Math.max(...highs.slice(-20)) : riskStop) + buf;
-  const maxDist = CS_CFG.stopAtrMax * atr;
-  let stopDist = Math.min(maxDist, Math.max(riskStopDist, Math.abs(entry - techStop)));
-  const stop = dir > 0 ? entry - stopDist : entry + stopDist;
-  const stopPct = stopDist / entry * 100;
-  // Alcance realista dos alvos. Parte-se do range de 24h (96 velas TF15) mas
-  // deixa-se margem: pelo menos uma extensão de 1× range além da entrada (1,5×
-  // se o regime estiver alinhado com a direção — tendências rompem o range).
-  // Só clampa quando o alvo em R:R excede este alcance, o que dá tento ao R:R
-  // sem penalizar setups legítimos a meio do range.
-  const w = closes.slice(-96), hi = w.length ? Math.max(...w) : entry * 2, lo = w.length ? Math.min(...w) : entry / 2;
-  const range = Math.max(hi - lo, entry * 1e-4);
-  const trendAligned = (regimeType === 'trend_up' && dir > 0) || (regimeType === 'trend_down' && dir < 0);
-  const mult = trendAligned ? 1.5 : 1.0;
-  const reachUp = Math.max(hi, entry + mult * range);
-  const reachDn = Math.min(lo, entry - mult * range);
-  const tps = CS_CFG.tp.map(t => {
-    let px = dir > 0 ? entry + t.r * stopDist : entry - t.r * stopDist, clamped = false;
-    if (dir > 0 && px > reachUp) { px = reachUp; clamped = true; }
-    if (dir < 0 && px < reachDn) { px = reachDn; clamped = true; }
-    const r = Math.abs(px - entry) / stopDist;
-    return { price: px, rTarget: t.r, r, close: t.close, pct: Math.abs(px - entry) / entry * 100, clamped };
-  });
-  const wSum = tps.reduce((s, t) => s + t.close, 0) || 1;
-  const blendedRR = tps.reduce((s, t) => s + t.r * t.close, 0) / wSum;
-  const rejectedCost = tps[0].pct <= 2 * CS_COST_RT;    // TP1 tem de pagar ≥2× custos
-  const rejectedRR = blendedRR < CS_CFG.minRR;          // R:R combinado tem de ser ≥1,8
-  const rejected = rejectedCost || rejectedRR;
-  const riskUsd = capital * rp / 100;
-  let qty = riskUsd / stopDist, notional = qty * entry, lev = notional / capital, capped = false;
-  if (lev > CS_CFG.maxLev) { capped = true; lev = CS_CFG.maxLev; notional = lev * capital; qty = notional / entry; }
-  const costsInR = CS_COST_RT / stopPct;                // custo round-trip em unidades de R
-  const pWinBE = (1 + costsInR) / (1 + blendedRR);      // taxa de acerto mínima p/ empatar
-  // Zona de entrada: ±0,15×ATR à volta do preço atual.
-  return {
-    entry, zLo: entry - buf, zHi: entry + buf, stop, riskStop, techStop, stopDist, stopPct,
-    tps, blendedRR, rejected, rejectedCost, rejectedRR, riskUsd, qty, notional, lev, capped, pWinBE, riskPct: rp,
-  };
-}
-
-// ── Sentimento de posicionamento (Bybit: L/S ratio + funding + OI) ──
-// Não é sentimento social (X/notícias precisam de backend com chaves). É o
-// posicionamento real do crowd nos derivados — para perps é o sinal mais acionável.
-// align: +1 = crowd do lado OPOSTO ao trade (a favor do fade), −1 = crowd do mesmo lado.
-function csSentiment(lsr, funding, oiChg, dir) {
-  if (!lsr || !lsr.length) return { longPct: null, tone: 'na', align: 0, text: 'Posicionamento (L/S ratio) indisponível para este par.' };
-  const last = lsr[lsr.length - 1], longPct = last.buy * 100, shortPct = last.sell * 100;
-  const prev = lsr.length >= 7 ? lsr[lsr.length - 7] : lsr[0];   // ≈6h atrás
-  const dLong = (last.buy - prev.buy) * 100;
-  let tone = 'neutral';
-  if (longPct >= 60) tone = 'crowded-long';
-  else if (longPct <= 40) tone = 'crowded-short';
-  let align = 0;
-  if (tone === 'crowded-long') align = dir < 0 ? 1 : dir > 0 ? -1 : 0;
-  else if (tone === 'crowded-short') align = dir > 0 ? 1 : dir < 0 ? -1 : 0;
-  const fundTxt = funding >= 0 ? `longs pagam +${funding.toFixed(4)}%/8h` : `shorts pagam ${funding.toFixed(4)}%/8h`;
-  const oiTxt = oiChg == null ? '' : ` · OI 6h ${oiChg >= 0 ? '+' : ''}${oiChg.toFixed(1)}%`;
-  const text = `Contas Bybit ${longPct.toFixed(0)}% long / ${shortPct.toFixed(0)}% short (${dLong >= 0 ? '+' : ''}${dLong.toFixed(1)}pp em 6h) · ${fundTxt}${oiTxt}.`;
-  return { longPct, shortPct, dLong, tone, align, text };
-}
-
-// Score de confiança 0–10 a partir do score composto, ajustado por R:R, nº de
-// confluências e alinhamento do sentimento de posicionamento.
-function csConfidence(score, plan, sentiment, nConfl) {
-  let c = score / 10;                              // score ~0–100 → 0–10
-  if (plan) {
-    if (plan.rejected) c -= 3;
-    else if (plan.blendedRR >= 2.4) c += 0.6;
-    else if (plan.blendedRR >= 2.0) c += 0.3;
-    if (plan.capped) c -= 0.3;
-  } else c -= 3;
-  if (nConfl >= 3) c += 0.6; else if (nConfl <= 1) c -= 0.5;
-  if (sentiment) { if (sentiment.align > 0) c += 0.5; else if (sentiment.align < 0) c -= 0.7; }
-  return Math.max(1, Math.min(10, c));
-}
-
-// Tipo de setup (etiqueta legível) a partir do sinal dominante e do regime.
-function csSetupType(c) {
-  const s = c.sigs;
-  if (s.h3.on) return 'Cascade Fade · Reversal';
-  if (s.h1.on) return 'Funding Squeeze · Reversal';
-  if (s.h2.on && s.h2.dir !== 0) return 'OI Flush · Fade';
-  const reg = s.regime.type;
-  if (reg === 'squeeze') return 'Squeeze · pré-breakout';
-  if ((reg === 'trend_up' && c.dir > 0) || (reg === 'trend_down' && c.dir < 0)) return 'Trend Continuation';
-  if (s.st.on) return 'Range Reversal';
-  return c.dir > 0 ? 'Long tático' : 'Short tático';
-}
-
-// Confluências a favor / contra (listas para o card).
-function csConfluences(c, sentiment) {
-  const pro = [], con = [], s = c.sigs, dir = c.dir;
-  const add = (sig, label) => {
-    if (!sig.on) return;
-    if (sig.dir === 0) pro.push(label + ' (combustível, direção neutra)');
-    else if (sig.dir === dir) pro.push(label);
-    else con.push(label + ' aponta o lado oposto');
-  };
-  add(s.h1, 'H1 Funding squeeze');
-  add(s.h2, 'H2 OI divergence');
-  add(s.h3, 'H3 Cascata → mean-reversion');
-  add(s.st, 'Estrutura — extremo do range 24h');
-  const reg = CS_REG_LABEL[s.regime.type] || s.regime.type;
-  if (c.fit >= 70) pro.push(`Regime ${reg} favorece (fit ${c.fit.toFixed(0)})`);
-  else if (c.fit <= 40) con.push(`Regime ${reg} desfavorável (fit ${c.fit.toFixed(0)})`);
-  if (sentiment) {
-    if (sentiment.align > 0) pro.push('Posicionamento Bybit — crowd do lado oposto (a favor do fade)');
-    else if (sentiment.align < 0) con.push('Posicionamento Bybit — crowd do mesmo lado do trade');
-  }
-  const p = c.plan;
-  if (p && !p.rejected) pro.push(`R:R combinado ${p.blendedRR.toFixed(2)} (TP1/2/3)`);
-  if (p && p.rejectedCost) con.push('TP1 não paga 2× os custos');
-  if (p && p.rejectedRR) con.push(`R:R combinado ${p.blendedRR.toFixed(2)} < ${CS_CFG.minRR} (alvos clampados no range)`);
-  if (p && p.capped) con.push('Alavancagem no cap 1,8× — sizing limitado');
-  return { pro, con };
-}
-
-// Nível de urgência e janela de validade da sugestão.
-function csUrgency(c) {
-  const s = c.sigs;
-  if (s.h3.on) return 'Alta';
-  if (c.score >= 65 && (s.h1.on || s.h2.on)) return 'Alta';
-  if (c.score >= 50) return 'Média';
-  return 'Baixa';
-}
-function csValidity(c) {
-  if (c.sigs.h3.on) return 'próximas 2–6h';
-  const reg = c.sigs.regime.type;
-  if (reg === 'trend_up' || reg === 'trend_down') return 'próximas 12–24h';
-  return 'próximas 4–12h';
-}
-// Justificação detalhada (concatena a evidência dos sinais ativos + regime + sentimento).
-function csJustify(c, sentiment) {
-  const s = c.sigs, bits = [];
-  if (s.h1.on) bits.push(s.h1.ev);
-  if (s.h3.on) bits.push(s.h3.ev);
-  if (s.h2.on) bits.push(s.h2.ev);
-  if (s.st.on) bits.push(s.st.ev);
-  bits.push(`Regime 1h: ${s.regime.ev} ${CS_REG_LABEL[s.regime.type] || s.regime.type} (fit ${c.fit.toFixed(0)}).`);
-  if (sentiment && sentiment.tone !== 'na') bits.push(sentiment.text);
-  return bits.join(' ');
-}
-
-// ── Orquestração do scan ──
-async function scanCs(force) {
-  if (csScanning) return;
-  if (!force && csData && Date.now() - csLastScan < 60000) { csRender(); return; }
-  csScanning = true;
-  const btn = document.getElementById('cs-scan-btn'); if (btn) btn.classList.add('busy');
-  const listEl = document.getElementById('cs-list');
-  if (listEl && !csData) listEl.innerHTML = '<div class="db-empty">A avaliar o universo… (pode demorar ~1 min)</div>';
-  try {
-    const r = await fetch(`${BYBIT}/v5/market/tickers?category=linear`);
-    const d = await r.json();
-    let uni = (d?.result?.list || [])
-      .filter(t => /USDT$/.test(t.symbol) && !/[0-9]/.test(coinOf(t.symbol)))
-      .map(t => ({ symbol: t.symbol, coin: coinOf(t.symbol), price: parseFloat(t.lastPrice), chg24: parseFloat(t.price24hPcnt) * 100, fr: parseFloat(t.fundingRate) * 100, turnover: parseFloat(t.turnover24h) || 0 }))
-      .filter(c => c.turnover >= CS_CFG.minTurnover && isFinite(c.price) && c.price > 0);
-    uni.sort((a, b) => b.turnover - a.turnover);
-    const universeSize = uni.length;
-    const enrich = uni.slice(0, CS_CFG.universeTop);
-    const btc = uni.find(c => c.symbol === 'BTCUSDT');
-    const btc24 = btc ? btc.chg24 : null;
-    const avgFund = csMean(enrich.map(c => c.fr));
-    await trdPool(enrich, async c => {
+    const { list, full } = await slFetchUniverse(SL_CFG.minTurnover, 120);
+    const approved = [], rejected = [];
+    let g0fail = 0;
+    await trdPool(list, async m => {
+      const g0 = SL.gate0(m);
+      if (!g0.pass) { g0fail++; rejected.push({ symbol: m.symbol, coin: m.coin, gate: 0, reason: g0.reason }); return; }
       try {
-        const [k15, k60, fund, oi, lsr] = await Promise.all([
-          csFetchKline(c.symbol, '15', 200), csFetchKline(c.symbol, '60', 120),
-          csFetchFunding(c.symbol), csFetchOI(c.symbol), csFetchLSR(c.symbol),
-        ]);
-        c.atr = csATR(k15.highs, k15.lows, k15.closes, 14);
-        c.k15 = { closes: k15.closes, highs: k15.highs, lows: k15.lows };   // guardado p/ recomputar o plano ao mudar config
-        const sigs = { h1: csH1(fund, c.chg24), h2: csH2(oi, k15.closes), h3: csH3(k15, oi), st: csStructure(k15.closes) };
-        const regime = csRegime(k60);
-        const comp = csComposite(sigs, regime);
-        c.sigs = { ...sigs, regime }; c.dir = comp.finalDir; c.score = comp.score; c.fit = comp.fit;
-        c.oiChg6h = (oi && oi.length >= 25) ? (oi[oi.length - 1] - oi[oi.length - 25]) / oi[oi.length - 25] * 100 : null;
-        c.plan = csTradePlan(c.price, c.atr, c.dir, CS_CFG.capital, c.k15, CS_CFG.riskPct, regime.type);
-        c.sentiment = csSentiment(lsr, c.fr, c.oiChg6h, c.dir);
-      } catch (e) { c.err = true; }
-    }, CS_CFG.concurrency);
-    // Guarda todos os candidatos com direção resolvida (ordenados por score). O
-    // render decide quais viram Sugestão e quais ficam no Radar de mercado.
-    const scored = enrich.filter(c => !c.err && c.dir !== 0).sort((a, b) => b.score - a.score);
-    csData = { candidates: scored, universeSize, enriched: enrich.length, btc24, avgFund, ts: Date.now() };
-    csLastScan = Date.now();
-    csRender();
+        const k = await slFetchKline(m.symbol, SL_CFG.tf, SL_CFG.klineLimit);
+        const g1 = SL.gateStructure(k);
+        if (g1.setups.length) approved.push({ ...m, setup: g1.setups[0], g0 });
+        else rejected.push({ symbol: m.symbol, coin: m.coin, gate: 1, reason: g1.rejections[0] || 'sem setup' });
+      } catch (e) { rejected.push({ symbol: m.symbol, coin: m.coin, gate: 1, reason: 'falha ao obter klines' }); }
+    }, 8);
+    approved.sort((a, b) => b.setup.rr1 - a.setup.rr1);
+    slScanData = { approved, rejected, universeFull: full, universeEval: list.length, g0fail, ts: Date.now() };
+    slRenderScan();
   } catch (e) {
-    console.error('scanCs error', e);
-    if (listEl && !csData) listEl.innerHTML = '<div class="db-empty">Falha ao obter dados da Bybit. Tenta correr o scan de novo.</div>';
+    console.error('slScan error', e);
+    if (listEl) listEl.innerHTML = '<div class="db-empty">Falha ao obter dados da Bybit. Tenta de novo.</div>';
   } finally {
-    csScanning = false;
-    const b = document.getElementById('cs-scan-btn'); if (b) b.classList.remove('busy');
+    slScanning = false;
+    if (btn) btn.classList.remove('busy');
   }
 }
 
-// ── Render — Sugestões de Trade ──
-const CS_REG_LABEL = { trend_up: 'Trend ↑', trend_down: 'Trend ↓', ranging: 'Ranging', squeeze: 'Squeeze' };
-function csRender() {
-  if (!csData) return;
-  set('cs-x-universe', csData.universeSize);
-  const be = document.getElementById('cs-x-btc');
-  if (be) { be.textContent = csData.btc24 == null ? '—' : (csData.btc24 >= 0 ? '+' : '') + csData.btc24.toFixed(2) + '%'; be.style.color = csData.btc24 == null ? '' : csData.btc24 >= 0 ? 'var(--green)' : 'var(--red)'; }
-  set('cs-x-fund', (csData.avgFund >= 0 ? '+' : '') + csData.avgFund.toFixed(4) + '%');
-  const listEl = document.getElementById('cs-list'); if (!listEl) return;
-  const all = csData.candidates || [];
-  all.forEach(c => {
-    c.nConfl = [c.sigs.h1, c.sigs.h2, c.sigs.h3, c.sigs.st].filter(x => x.on).length;
-    c.confidence = csConfidence(c.score, c.plan, c.sentiment, c.nConfl);
-  });
-  const isSug = c => c.score >= CS_CFG.scoreThreshold && c.plan && !c.plan.rejected && c.confidence >= 4;
-  const sug = all.filter(isSug).sort((a, b) => b.confidence - a.confidence).slice(0, CS_CFG.shortlistMax);
-  const sugSet = new Set(sug.map(c => c.symbol));
-  const radar = all.filter(c => !sugSet.has(c.symbol)).slice(0, CS_CFG.radarMax);
-  set('cs-x-short', sug.length);
-  let html = '';
-  if (!sug.length) {
-    html += `<div class="cs-nosetup"><div class="cs-nosetup-h">Sem setup de alta probabilidade neste momento</div>` +
-      `<div class="cs-nosetup-b">O universo foi avaliado mas nenhum candidato reuniu confluência suficiente (score ≥ ${CS_CFG.scoreThreshold}), R:R ≥ ${CS_CFG.minRR} e confiança ≥ 4/10 em simultâneo. A ausência de setup é um resultado válido — preferimos qualidade a quantidade. Em baixo, o radar mostra o que o mercado tinha de mais próximo e o que lhe faltou.</div></div>`;
-  } else {
-    html += sug.map((c, i) => csRenderCard(c, i + 1)).join('');
+// ══════════════════════════════════════════════════════════════════════════════
+// FASE 3 — validação: gate vs baseline aleatório, líquido de custos
+// ══════════════════════════════════════════════════════════════════════════════
+async function slValidate() {
+  if (slValidating) return;
+  slValidating = true;
+  const btn = document.getElementById('sl-val-btn'); if (btn) btn.classList.add('busy');
+  const out = document.getElementById('sl-val-out');
+  if (out) out.innerHTML = '<div class="db-empty">A correr a validação sobre história real… (pode demorar vários minutos)</div>';
+  try {
+    const { list } = await slFetchUniverse(SL_CFG.minTurnover, SL_CFG.valUniverse);
+    const gateR = [], baseR = [];
+    const cost = SL_COST_RT();
+    const cfg = { ...SL_CFG, rangeLookback: 96 };
+    let decisions = 0;
+    const rnd = mulberry32(0x5eed);   // determinístico → reprodutível
+
+    await trdPool(list, async m => {
+      let k;
+      try { k = await slFetchKline(m.symbol, SL_CFG.valTf, SL_CFG.valKlineLimit); } catch (e) { return; }
+      const N = k.c.length;
+      const warm = Math.max(cfg.rangeLookback, cfg.atrN + cfg.pivotLeft + cfg.pivotRight + 5);
+      const stopPcts = [];
+      // Walk-forward: em cada barra decide-se com dados ATÉ i; avalia-se com i+1…
+      for (let i = warm; i < N - cfg.valHorizon - 1; i++) {
+        const win = { h: k.h.slice(0, i + 1), l: k.l.slice(0, i + 1), c: k.c.slice(0, i + 1) };
+        const g = SL.gateStructure(win, cfg);
+        if (!g.setups.length) continue;
+        decisions++;
+        const s = g.setups[0];
+        const fh = k.h.slice(i + 1), fl = k.l.slice(i + 1), fc = k.c.slice(i + 1);
+        const r = SL.tripleBarrier(fh, fl, fc, s.entry, s.stop, s.tp1, s.dir, cost, cfg.valHorizon);
+        if (r != null) { gateR.push(r); stopPcts.push(s.stopPct); }
+      }
+      // Baseline: mesmas horas do símbolo, entradas aleatórias, MESMA distância de
+      // stop (mediana dos aprovados) e MESMO alvo em R (a mediana do R:R até TP1).
+      const medStop = stopPcts.length ? slMedian(stopPcts) : 0.02;
+      const targetR = 1.5;   // alvo fixo em R para o controlo (comparável a TP1)
+      const nBase = Math.min(gateR.length * SL_CFG.valBaselineMult, 400);
+      for (let b = 0; b < nBase; b++) {
+        const i = warm + Math.floor(rnd() * (N - cfg.valHorizon - warm - 2));
+        if (i <= warm || i >= N - cfg.valHorizon - 1) continue;
+        const entry = k.c[i], dir = rnd() < 0.5 ? 1 : -1;
+        const stop = dir > 0 ? entry * (1 - medStop) : entry * (1 + medStop);
+        const tp = dir > 0 ? entry * (1 + medStop * targetR) : entry * (1 - medStop * targetR);
+        const r = SL.tripleBarrier(k.h.slice(i + 1), k.l.slice(i + 1), k.c.slice(i + 1), entry, stop, tp, dir, cost, cfg.valHorizon);
+        if (r != null) baseR.push(r);
+      }
+    }, 6);
+
+    const stat = arr => ({ n: arr.length, mean: slMean(arr), median: slMedian(arr), std: slStd(arr), pos: slPctPos(arr) });
+    const gate = stat(gateR), base = stat(baseR);
+    const welch = slWelch(gateR, baseR);
+    const significant = welch.p < SL_CFG.abandonP && gate.mean > base.mean;
+    slValData = { gate, base, welch, significant, decisions, symbols: list.length, ts: Date.now() };
+    slRenderValidation();
+  } catch (e) {
+    console.error('slValidate error', e);
+    if (out) out.innerHTML = '<div class="db-empty">Falha na validação. Tenta de novo.</div>';
+  } finally {
+    slValidating = false;
+    if (btn) btn.classList.remove('busy');
   }
-  html += csRadarHtml(radar, !sug.length);
+}
+// PRNG determinístico (reprodutibilidade da validação)
+function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Render
+// ══════════════════════════════════════════════════════════════════════════════
+function slEsc(s) { return String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])); }
+
+function slRenderTests(results, ctx) {
+  const el = document.getElementById('sl-tests'); if (!el) return;
+  const passed = results.filter(r => r.pass).length, total = results.length;
+  const allPass = passed === total;
+  el.innerHTML =
+    `<div class="sl-tests-h ${allPass ? 'ok' : 'bad'}">Fase 1 · Testes unitários (séries sintéticas): ` +
+    `<b>${passed}/${total}</b> ${allPass ? '✓ tudo a passar' : '✗ há falhas — não confiar nos gates'}</div>` +
+    `<div class="sl-tests-b">` +
+    results.map(r =>
+      `<div class="sl-test ${r.pass ? 'ok' : 'bad'}"><span class="sl-test-i">${r.pass ? '✓' : '✗'}</span>` +
+      `<div><div class="sl-test-n">${slEsc(r.name)}</div>` +
+      `<div class="sl-test-d">${slEsc(r.detail || '')}</div></div></div>`
+    ).join('') +
+    `</div>`;
+}
+
+function slRenderScan() {
+  const d = slScanData; if (!d) return;
+  const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+  set('sl-x-universe', d.universeFull);
+  set('sl-x-eval', d.universeEval);
+  set('sl-x-approved', d.approved.length);
+  set('sl-x-ts', 'há ' + timeAgo(d.ts));
+  const listEl = document.getElementById('sl-list'); if (!listEl) return;
+
+  let html = '';
+  if (!d.approved.length) {
+    html += `<div class="sl-none"><div class="sl-none-h">Zero setups estruturais.</div>` +
+      `<div class="sl-none-b">O universo (${d.universeEval} pares avaliados) foi todo rejeitado pelos gates. ` +
+      `Ausência de setup é um <b>resultado válido</b>, não um bug — os gates são binários e nenhuma pontuação os compensa.</div></div>`;
+  } else {
+    html += d.approved.map(a => {
+      const s = a.setup, sd = s.dir > 0 ? 'LONG' : 'SHORT';
+      return `<div class="sl-card ${s.dir > 0 ? 'long' : 'short'}">` +
+        `<div class="sl-card-h"><div class="sl-card-sym">${slEsc(a.coin)}<span class="sl-card-side ${s.dir > 0 ? 'l' : 's'}">${sd}</span></div>` +
+        `<div class="sl-card-rr">R:R TP1 <b>${s.rr1.toFixed(2)}</b> · TP2 <b>${s.rr2.toFixed(2)}</b></div></div>` +
+        `<div class="sl-card-grid">` +
+        `<div><span>Entrada</span><b>${s.entry.toPrecision(6)}</b></div>` +
+        `<div><span>Stop</span><b>${s.stop.toPrecision(6)} (${(s.stopPct * 100).toFixed(2)}%)</b></div>` +
+        `<div><span>TP1 (oposto +próx.)</span><b>${s.tp1.toPrecision(6)}</b></div>` +
+        `<div><span>TP2 (extremo range)</span><b>${s.tp2.toPrecision(6)}</b></div></div>` +
+        `<div class="sl-card-why">${slEsc(s.why)}</div>` +
+        `<div class="sl-card-lvls">${s.levels.map(L => `<span class="sl-lvl" title="${slEsc(L.why)}">${L.touches}× ${L.price.toPrecision(6)}</span>`).join('')}</div>` +
+        `</div>`;
+    }).join('');
+  }
+
+  // Amostra de rejeições (transparência: porquê é que a maioria não passa)
+  const rej = d.rejected.slice(0, 40);
+  html += `<div class="sl-rej"><div class="sl-rej-h">Rejeitados — Gate 0 (liquidez): ${d.g0fail} · Gate 1 (estrutura): ${d.rejected.length - d.g0fail}</div>` +
+    `<div class="sl-rej-b">` +
+    rej.map(r => `<div class="sl-rej-row"><span class="sl-rej-sym">${slEsc(r.coin)}</span><span class="sl-rej-g">G${r.gate}</span><span class="sl-rej-r">${slEsc(r.reason)}</span></div>`).join('') +
+    `</div></div>`;
   listEl.innerHTML = html;
 }
 
-function csRenderCard(c, id) {
-  const p = c.plan, s = c.sigs;
-  const sideCls = c.dir > 0 ? 'long' : 'short', sideLbl = c.dir > 0 ? 'LONG' : 'SHORT';
-  const conf = c.confidence, urg = csUrgency(c), setup = csSetupType(c);
-  const urgCls = urg === 'Alta' ? 'hi' : urg === 'Média' ? 'md' : 'lo';
-  const { pro, con } = csConfluences(c, c.sentiment);
-  const tfLbl = '15m · filtro 1h';
-  // Escada de saída (TP1/2/3 + stop)
-  const tpRows = p.tps.map((t, i) => `<div class="cs-lvl tp">
-      <span class="cs-lvl-k">TP${i + 1}${t.clamped ? ' <em>(range)</em>' : ''}</span>
-      <span class="cs-lvl-px g">${fmtPx(t.price)}</span>
-      <span class="cs-lvl-pct">+${t.pct.toFixed(2)}%</span>
-      <span class="cs-lvl-r">${t.r.toFixed(1)}R</span>
-      <span class="cs-lvl-close">fecha ${(t.close * 100).toFixed(0)}%</span>
-    </div>`).join('');
-  const stopRow = `<div class="cs-lvl stop">
-      <span class="cs-lvl-k">Stop</span>
-      <span class="cs-lvl-px r">${fmtPx(p.stop)}</span>
-      <span class="cs-lvl-pct">−${p.stopPct.toFixed(2)}%</span>
-      <span class="cs-lvl-r">1R</span>
-      <span class="cs-lvl-close">técnico + 1,2×ATR</span>
-    </div>`;
-  const proHtml = pro.length ? pro.map(x => `<li class="pro">${x}</li>`).join('') : '<li class="muted">—</li>';
-  const conHtml = con.length ? con.map(x => `<li class="con">${x}</li>`).join('') : '<li class="muted">Sem riscos relevantes assinalados.</li>';
-  const sentDot = c.sentiment.tone === 'crowded-long' ? 'r' : c.sentiment.tone === 'crowded-short' ? 'g' : '';
-  const open = csExpanded === c.symbol;
-  return `<div class="cs-sug ${sideCls}">
-    <div class="cs-sug-top">
-      <div class="cs-sug-idwrap">
-        <div class="cs-sug-id">SUGESTÃO #${id}</div>
-        <div class="cs-sug-pair"><span class="cs-side ${sideCls}">${sideLbl}</span><span class="cs-sug-coin">${c.coin}<small>${fmtPx(c.price)}</small></span></div>
-        <div class="cs-sug-meta"><span class="cs-sug-setup">${setup}</span><span class="cs-sug-tf">${tfLbl}</span><span class="cs-urg ${urgCls}">Urgência ${urg}</span></div>
-      </div>
-      <div class="cs-sug-conf">
-        <div class="cs-conf-num">${conf.toFixed(1)}<small>/10</small></div>
-        <div class="cs-conf-bar"><div class="cs-conf-fill" style="width:${conf * 10}%"></div></div>
-        <div class="cs-conf-lbl">Confiança</div>
-      </div>
-    </div>
-
-    <div class="cs-sug-grid">
-      <div class="cs-kv"><div class="cs-kv-l">Entrada ideal</div><div class="cs-kv-v">${fmtPx(p.entry)}</div></div>
-      <div class="cs-kv"><div class="cs-kv-l">Zona de entrada</div><div class="cs-kv-v">${fmtPx(p.zLo)} – ${fmtPx(p.zHi)}</div></div>
-      <div class="cs-kv"><div class="cs-kv-l">R:R combinado</div><div class="cs-kv-v o">${p.blendedRR.toFixed(2)} : 1</div></div>
-      <div class="cs-kv"><div class="cs-kv-l">Risco / trade</div><div class="cs-kv-v">${fmtUsd(p.riskUsd)} · ${p.riskPct}%</div></div>
-      <div class="cs-kv"><div class="cs-kv-l">Position size</div><div class="cs-kv-v">${fmtUsd(p.notional)} · ${csFmtQty(p.qty)} ${c.coin}</div></div>
-      <div class="cs-kv"><div class="cs-kv-l">Alavancagem</div><div class="cs-kv-v ${p.capped ? 'o' : ''}">${p.lev.toFixed(2)}×${p.capped ? ' · cap' : ''}</div></div>
-      <div class="cs-kv"><div class="cs-kv-l">p_win breakeven</div><div class="cs-kv-v">${(p.pWinBE * 100).toFixed(0)}%</div></div>
-      <div class="cs-kv"><div class="cs-kv-l">Validade</div><div class="cs-kv-v sm">${csValidity(c)}</div></div>
-    </div>
-
-    <div class="cs-lvls">${tpRows}${stopRow}</div>
-
-    <div class="cs-sug-cols">
-      <div class="cs-sug-col"><div class="cs-col-h up">Confluências a favor</div><ul class="cs-col-list">${proHtml}</ul></div>
-      <div class="cs-sug-col"><div class="cs-col-h dn">Confluências contra / riscos</div><ul class="cs-col-list">${conHtml}</ul></div>
-    </div>
-
-    <div class="cs-sug-sent">
-      <div class="cs-sent-line"><span class="cs-sent-tag">Sentimento · posicionamento (Bybit)</span><span class="cs-sent-dot ${sentDot}"></span><span class="cs-sent-txt">${c.sentiment.text}</span></div>
-      <div class="cs-sent-line na"><span class="cs-sent-tag">Sentimento · X + notícias</span><span class="cs-sent-txt">N/D — requer serviço backend com chaves (Grok/X, LunarCrush, notícias). Ver painel “Pipeline backend”.</span></div>
-    </div>
-
-    <div class="cs-sug-just"><b>Justificação:</b> ${csJustify(c, c.sentiment)}</div>
-
-    <div class="cs-sug-foot">
-      <button class="cs-ev-btn" onclick="csToggle('${c.symbol}')">${open ? 'Ocultar' : 'Ver'} evidência dos sinais<svg class="cs-chev ${open ? 'up' : ''}" width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3 1.5 6.5 5 3 8.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-    </div>
-    ${open ? csRenderEvidence(c) : ''}
-  </div>`;
-}
-
-// Grelha de evidência por sinal (expandível dentro do card).
-function csRenderEvidence(c) {
-  const s = c.sigs;
-  const card = (tag, title, sig) => {
-    const dc = sig.dir > 0 ? 'long' : sig.dir < 0 ? 'short' : 'flat';
-    const dl = sig.dir > 0 ? 'long' : sig.dir < 0 ? 'short' : 'neutro';
-    return `<div class="cs-ev-card"><div class="cs-ev-h">${tag} · ${title}<span class="cs-ev-dir ${dc}">${sig.on ? dl : 'off'} · ${(sig.score || 0).toFixed(0)}</span></div><div class="cs-ev-txt">${sig.ev}</div></div>`;
-  };
-  const regCard = `<div class="cs-ev-card"><div class="cs-ev-h">H4 · Regime<span class="cs-ev-dir flat">${CS_REG_LABEL[s.regime.type] || s.regime.type} · fit ${c.fit.toFixed(0)}</span></div><div class="cs-ev-txt">${s.regime.ev} ${CS_REG_LABEL[s.regime.type] || s.regime.type}.</div></div>`;
-  return `<div class="cs-detail">
-    <div class="cs-ev-grid">
-      ${card('H1', 'Funding squeeze', s.h1)}
-      ${card('H2', 'OI divergence', s.h2)}
-      ${card('H3', 'Cascade fade', s.h3)}
-      ${card('+', 'Estrutura', s.st)}
-      ${regCard}
-    </div>
-  </div>`;
-}
-
-// Radar de mercado: candidatos mais próximos que não chegaram a Sugestão, com
-// o motivo do corte. Dá transparência (sobretudo quando não há sugestões).
-function csRadarHtml(radar, openByDefault) {
-  if (!radar.length) return '';
-  const rows = radar.map(c => {
-    const side = c.dir > 0 ? 'Long' : c.dir < 0 ? 'Short' : '—';
-    let reason;
-    if (c.score < CS_CFG.scoreThreshold) reason = `confluência fraca · score ${c.score.toFixed(0)}/${CS_CFG.scoreThreshold}`;
-    else if (!c.plan) reason = 'sem plano de trade';
-    else if (c.plan.rejectedRR) reason = `R:R ${c.plan.blendedRR.toFixed(2)} < ${CS_CFG.minRR} — sem espaço no range`;
-    else if (c.plan.rejectedCost) reason = 'alvo não paga 2× os custos';
-    else reason = `confiança ${(c.confidence || 0).toFixed(1)}/10 < 4`;
-    const tags = [];
-    if (c.sigs.h1.on) tags.push('Funding');
-    if (c.sigs.h2.on) tags.push('OI');
-    if (c.sigs.h3.on) tags.push('Cascata');
-    if (c.sigs.st.on) tags.push('Estrutura');
-    const tagStr = tags.length ? tags.join(' · ') : CS_REG_LABEL[c.sigs.regime.type] || '—';
-    return `<div class="cs-desc-row"><span class="cs-desc-sym">${c.coin}</span><span class="cs-desc-side ${c.dir > 0 ? 'long' : c.dir < 0 ? 'short' : ''}">${side}</span><span class="cs-desc-score">${tagStr}</span><span class="cs-desc-reason">${reason}</span></div>`;
-  }).join('');
-  return `<details class="cs-desc"${openByDefault ? ' open' : ''}><summary class="cs-desc-h">Radar de mercado (${radar.length}) — candidatos mais próximos e o que lhes faltou</summary><div class="cs-desc-body">${rows}</div></details>`;
-}
-
-// Quantidade do ativo com resolução adaptada à magnitude.
-function csFmtQty(q) {
-  const a = Math.abs(q);
-  if (!isFinite(a) || a === 0) return '0';
-  if (a >= 1000) return fmt(a, 0);
-  if (a >= 1) return fmt(a, 3);
-  return fmt(a, Math.min(8, 6));
-}
-
-function csToggle(sym) { csExpanded = csExpanded === sym ? null : sym; csRender(); }
-function csCfgChange() {
-  const capEl = document.getElementById('cs-capital'), riskEl = document.getElementById('cs-risk');
-  const cv = parseFloat(capEl && capEl.value);
-  if (isFinite(cv) && cv > 0) CS_CFG.capital = cv;
-  const rv = parseFloat(riskEl && riskEl.value);
-  if (isFinite(rv) && rv > 0) CS_CFG.riskPct = Math.max(CS_CFG.riskMin, Math.min(CS_CFG.riskMax, rv));
-  csSaveCfg();
-  if (csData) { (csData.candidates || []).forEach(c => { c.plan = csTradePlan(c.price, c.atr, c.dir, CS_CFG.capital, c.k15, CS_CFG.riskPct, c.sigs.regime.type); }); csRender(); }
-}
-function renderCsTab() {
-  const cap = document.getElementById('cs-capital'); if (cap && !cap.value) cap.value = CS_CFG.capital;
-  const rk = document.getElementById('cs-risk'); if (rk && !rk.value) rk.value = CS_CFG.riskPct;
-  scanCs(false);
+function slRenderValidation() {
+  const v = slValData; const out = document.getElementById('sl-val-out'); if (!v || !out) return;
+  const row = (lbl, g, b, fmt) => `<tr><td>${lbl}</td><td>${fmt(g)}</td><td>${fmt(b)}</td></tr>`;
+  const f2 = x => x.toFixed(3), f1 = x => x.toFixed(1) + '%';
+  const verdict = v.significant
+    ? `<div class="sl-verdict ok"><b>Estatisticamente significativo.</b> Os setups aprovados distinguem-se do baseline aleatório ` +
+      `(p = ${v.welch.p.toExponential(2)} < ${SL_CFG.abandonP}, média de R superior). O gate não é cosmético — pode seguir para a Fase 4.</div>`
+    : `<div class="sl-verdict bad"><b>Não significativo (critério de abandono).</b> Os setups aprovados NÃO se distinguem do baseline aleatório ` +
+      `de forma significativa (p = ${v.welch.p.toExponential(2)} ≥ ${SL_CFG.abandonP}${v.gate.mean <= v.base.mean ? ', e a média de R não é sequer superior' : ''}). ` +
+      `Pela regra definida à partida, o gate é cosmético e <b>NÃO se avança para a Fase 4</b>. ` +
+      `Não procurar parametrizações alternativas até "funcionar" — isso é sobreajuste.</div>`;
+  out.innerHTML =
+    `<div class="sl-val-meta">${v.symbols} símbolos · ${v.decisions} decisões do gate · ${v.gate.n} trades avaliados · baseline ${v.base.n} trades · TF ${SL_CFG.valTf}m · horizonte ${SL_CFG.valHorizon} barras</div>` +
+    `<table class="sl-val-tbl"><thead><tr><th>Métrica (R, líquido de custos)</th><th>Gate</th><th>Aleatório</th></tr></thead><tbody>` +
+    row('Nº de trades', v.gate, v.base, x => x.n) +
+    row('Média', v.gate, v.base, x => f2(x.mean)) +
+    row('Mediana', v.gate, v.base, x => f2(x.median)) +
+    row('Desvio-padrão', v.gate, v.base, x => f2(x.std)) +
+    row('% resultados positivos', v.gate, v.base, x => f1(x.pos)) +
+    `</tbody></table>` +
+    `<div class="sl-val-t">Teste de Welch (aprox. normal): t = ${v.welch.t.toFixed(2)}, p = ${v.welch.p.toExponential(2)}.</div>` +
+    verdict;
 }
 
 // ── HEATMAP DE LIQUIDAÇÕES (estimativa a partir do OI + escalões) ─────────────
