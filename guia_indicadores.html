@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ler indicadores sem vibe check · CryptoScan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0B0E11;
+  --panel:#14181F;
+  --panel-2:#0F1318;
+  --border:#232830;
+  --text:#EAECEF;
+  --text-dim:#848E9C;
+  --text-dimmer:#5E6673;
+  --green:#0ECB81;
+  --red:#F6465D;
+  --amber:#F0B90B;
+  --green-soft:rgba(14,203,129,.10);
+  --red-soft:rgba(246,70,93,.10);
+  --amber-soft:rgba(240,185,11,.09);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:'IBM Plex Sans',system-ui,sans-serif;
+  font-size:15px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+.wrap{max-width:920px;margin:0 auto;padding:0 18px 90px}
+
+/* ─── HEADER ─────────────────────────────── */
+header.top{padding:44px 0 26px}
+.eyebrow{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--amber);margin:0 0 14px;font-weight:500;
+}
+h1.title{
+  font-size:34px;line-height:1.14;font-weight:700;margin:0 0 16px;
+  letter-spacing:-.01em;
+}
+.tese{
+  color:var(--text-dim);font-size:16px;max-width:640px;margin:0;
+  border-left:2px solid var(--border);padding-left:16px;
+}
+.tese strong{color:var(--text);font-weight:600}
+
+/* ─── STICKY TICKER NAV ──────────────────── */
+nav.ticker{
+  position:sticky;top:0;z-index:20;
+  margin:0 -18px 30px;padding:10px 18px;
+  background:rgba(11,14,17,.72);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  display:flex;gap:8px;overflow-x:auto;
+  scrollbar-width:none;
+}
+nav.ticker::-webkit-scrollbar{display:none}
+nav.ticker a{
+  flex:0 0 auto;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px;font-weight:600;letter-spacing:.04em;
+  color:var(--text-dim);text-decoration:none;
+  padding:6px 11px;border-radius:6px;
+  border:1px solid var(--border);
+  background:var(--panel-2);
+  transition:color .15s,border-color .15s,background .15s;
+  white-space:nowrap;
+}
+nav.ticker a:hover{color:var(--text);border-color:var(--text-dimmer)}
+nav.ticker a.x{color:var(--amber);border-color:rgba(240,185,11,.35)}
+
+/* ─── PANELS ─────────────────────────────── */
+section.ind{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:24px;
+  margin:0 0 20px;
+  scroll-margin-top:64px;
+}
+.ind-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.chip{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px;font-weight:600;letter-spacing:.05em;
+  color:var(--bg);background:var(--text-dim);
+  padding:3px 8px;border-radius:5px;
+}
+.ind-name{font-size:19px;font-weight:600;margin:0}
+.mede{
+  color:var(--text-dim);font-size:14px;margin:4px 0 18px;
+}
+.mede b{color:var(--text);font-weight:600}
+.mede .lbl{
+  font-family:'IBM Plex Mono',monospace;color:var(--text-dimmer);
+  font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-right:6px;
+}
+
+/* ─── DIAGRAM ────────────────────────────── */
+.diagram{
+  background:var(--panel-2);
+  border:1px solid var(--border);
+  border-radius:7px;
+  padding:16px;margin:0 0 20px;
+}
+.diagram svg{display:block;width:100%;height:auto}
+.dg-cap{
+  font-family:'IBM Plex Mono',monospace;font-size:10.5px;
+  color:var(--text-dimmer);letter-spacing:.05em;
+  margin-top:8px;text-transform:uppercase;
+}
+
+/* ─── CASE BOXES ─────────────────────────── */
+.cases{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 18px}
+.case{
+  border-radius:7px;padding:14px 15px;
+  border:1px solid var(--border);
+}
+.case.down{background:var(--red-soft);border-color:rgba(246,70,93,.25)}
+.case.up{background:var(--green-soft);border-color:rgba(14,203,129,.25)}
+.case-lbl{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px;font-weight:600;letter-spacing:.04em;
+  margin:0 0 9px;
+}
+.case.down .case-lbl{color:var(--red)}
+.case.up .case-lbl{color:var(--green)}
+.case-num{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12.5px;line-height:1.7;color:var(--text);
+  background:rgba(0,0,0,.25);
+  border-radius:5px;padding:9px 11px;margin:0 0 10px;
+  white-space:pre-wrap;overflow-x:auto;
+}
+.case-read{font-size:13.5px;color:var(--text-dim);margin:0}
+.case-read b{color:var(--text);font-weight:600}
+
+/* ─── CALLOUTS ───────────────────────────── */
+.callout{
+  border-radius:7px;padding:12px 14px;margin:0 0 12px;
+  font-size:13.5px;line-height:1.55;
+  border:1px solid var(--border);
+}
+.callout:last-child{margin-bottom:0}
+.callout .tag{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;font-weight:600;letter-spacing:.09em;
+  padding:2px 7px;border-radius:4px;margin-right:9px;
+  display:inline-block;
+}
+.callout.erro{background:var(--amber-soft);border-color:rgba(240,185,11,.3)}
+.callout.erro .tag{color:var(--bg);background:var(--amber)}
+.callout.rigor{background:var(--panel-2)}
+.callout.rigor .tag{color:var(--text-dim);background:var(--border)}
+.callout-body{color:var(--text-dim)}
+.callout-body b{color:var(--text);font-weight:600}
+
+/* ─── SECTION LABEL ──────────────────────── */
+.sec-label{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--text-dimmer);font-weight:600;
+  margin:38px 0 16px;padding-bottom:8px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;
+}
+.sec-label::before{content:"//";color:var(--amber)}
+
+/* EXTRA tag linking to hypothesis */
+.hyp-tag{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;font-weight:600;letter-spacing:.05em;
+  color:var(--amber);background:var(--amber-soft);
+  border:1px solid rgba(240,185,11,.3);
+  padding:4px 9px;border-radius:5px;
+  display:inline-flex;align-items:center;gap:6px;margin-top:14px;
+}
+.hyp-tag::before{content:"↳";color:var(--text-dim)}
+
+/* ─── CLOSING ────────────────────────────── */
+.closing{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-left:3px solid var(--amber);
+  border-radius:8px;padding:26px 24px;margin:34px 0 0;
+}
+.closing h2{font-size:20px;font-weight:700;margin:0 0 8px}
+.closing .sub{color:var(--text-dim);font-size:14px;margin:0 0 20px}
+ol.rigor-list{margin:0;padding:0;list-style:none;counter-reset:r}
+ol.rigor-list li{
+  counter-increment:r;
+  position:relative;padding:14px 0 14px 46px;
+  border-top:1px solid var(--border);
+}
+ol.rigor-list li:first-child{border-top:none}
+ol.rigor-list li::before{
+  content:counter(r);
+  position:absolute;left:0;top:13px;
+  width:28px;height:28px;border-radius:6px;
+  background:var(--panel-2);border:1px solid var(--border);
+  color:var(--amber);font-family:'IBM Plex Mono',monospace;
+  font-weight:600;font-size:13px;
+  display:flex;align-items:center;justify-content:center;
+}
+ol.rigor-list li b{color:var(--text);font-weight:600;display:block;margin-bottom:2px}
+ol.rigor-list li span{color:var(--text-dim);font-size:13.5px}
+
+footer.foot{
+  margin-top:40px;padding-top:20px;border-top:1px solid var(--border);
+  color:var(--text-dimmer);font-size:12px;
+  font-family:'IBM Plex Mono',monospace;letter-spacing:.03em;
+}
+
+/* ─── RESPONSIVE ─────────────────────────── */
+@media (max-width:640px){
+  .cases{grid-template-columns:1fr}
+  h1.title{font-size:27px}
+  section.ind{padding:18px}
+  .wrap{padding:0 14px 70px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ══ HEADER ══ -->
+<header class="top">
+  <p class="eyebrow">Guia de estudo · CryptoScan</p>
+  <h1 class="title">Ler indicadores sem vibe check</h1>
+  <p class="tese">O objetivo não é decorar definições — é <strong>reconhecer padrões</strong>. Cada indicador só significa alguma coisa quando cruza com outro e com um horizonte de invalidação. O resto é ruído com cor bonita.</p>
+</header>
+
+<!-- ══ STICKY TICKER NAV ══ -->
+<nav class="ticker" aria-label="Navegação de indicadores">
+  <a href="#fund">FUND</a>
+  <a href="#oi">OI</a>
+  <a href="#cvd">CVD</a>
+  <a href="#tbsr">TBSR</a>
+  <a href="#ls">L/S</a>
+  <a href="#liq">LIQ</a>
+  <a href="#rsi">RSI</a>
+  <a href="#book">BOOK</a>
+  <a href="#extra" class="x">EXTRA</a>
+</nav>
+
+<!-- ══════════ 1 · FUNDING ══════════ -->
+<section class="ind" id="fund">
+  <div class="ind-head">
+    <span class="chip">FUND</span>
+    <h2 class="ind-name">Funding Rate</h2>
+  </div>
+  <p class="mede"><span class="lbl">Mede</span> a taxa periódica (normalmente 8h) que <b>longs pagam a shorts</b> — ou vice-versa — para ancorar o preço do perpétuo ao spot. Positivo = longs pagam (excesso de alavancagem comprada); negativo = shorts pagam.</p>
+
+  <div class="diagram">
+    <svg viewBox="0 0 560 120" role="img" aria-label="Barras de funding a comprimir">
+      <line x1="0" y1="60" x2="560" y2="60" stroke="#232830" stroke-width="1"/>
+      <!-- barras positivas a decrescer (compressão) -->
+      <rect x="20"  y="18" width="26" height="42" fill="#0ECB81" opacity=".85"/>
+      <rect x="66"  y="26" width="26" height="34" fill="#0ECB81" opacity=".8"/>
+      <rect x="112" y="34" width="26" height="26" fill="#0ECB81" opacity=".7"/>
+      <rect x="158" y="42" width="26" height="18" fill="#0ECB81" opacity=".6"/>
+      <rect x="204" y="50" width="26" height="10" fill="#0ECB81" opacity=".5"/>
+      <rect x="250" y="55" width="26" height="5"  fill="#0ECB81" opacity=".4"/>
+      <!-- viragem negativa -->
+      <rect x="296" y="60" width="26" height="8"  fill="#F6465D" opacity=".5"/>
+      <rect x="342" y="60" width="26" height="18" fill="#F6465D" opacity=".6"/>
+      <rect x="388" y="60" width="26" height="30" fill="#F6465D" opacity=".75"/>
+      <rect x="434" y="60" width="26" height="24" fill="#F6465D" opacity=".65"/>
+      <rect x="480" y="60" width="26" height="14" fill="#F6465D" opacity=".55"/>
+      <text x="20" y="112" fill="#5E6673" font-family="IBM Plex Mono" font-size="11">funding esticado (+)</text>
+      <text x="392" y="112" fill="#5E6673" font-family="IBM Plex Mono" font-size="11">viragem (−)</text>
+    </svg>
+    <div class="dg-cap">Funding extremo comprime → reversão para o outro lado</div>
+  </div>
+
+  <div class="cases">
+    <div class="case down">
+      <p class="case-lbl">▼ Caso — Queda</p>
+      <div class="case-num">Funding: +0.12% / 8h
+(≈ 0.36% / dia)
+Preço: lateral há 6h
+OI: a subir +8%</div>
+      <p class="case-read">Longs muito alavancados a pagar caro e o preço <b>não avança</b>. Combustível para uma cascata de liquidações longs: qualquer mecha desce.</p>
+    </div>
+    <div class="case up">
+      <p class="case-lbl">▲ Caso — Subida</p>
+      <div class="case-num">Funding: −0.09% / 8h
+(≈ −0.27% / dia)
+Preço: a fazer fundos
+OI: estável</div>
+      <p class="case-read">Shorts a pagar para manter posição num fundo. <b>Short squeeze</b> provável: cobertura forçada empurra o preço para cima.</p>
+    </div>
+  </div>
+
+  <div class="callout erro">
+    <span class="tag">ERRO</span>
+    <span class="callout-body">Ler funding positivo como "bullish" só porque é verde. Funding <b>alto</b> não é força — é <b>posicionamento esticado</b>, geralmente um sinal de reversão iminente, não de continuação.</span>
+  </div>
+  <div class="callout rigor">
+    <span class="tag">RIGOR</span>
+    <span class="callout-body">Anualiza (×3×365) e compara com o <b>baseline histórico do par</b>: +0.01% é normal, +0.1% é extremo. Sem baseline, não sabes o que é "alto". Cruza sempre com OI e preço — funding sozinho não dá direção.</span>
+  </div>
+</section>
+
+<!-- ══════════ 2 · OPEN INTEREST ══════════ -->
+<section class="ind" id="oi">
+  <div class="ind-head">
+    <span class="chip">OI</span>
+    <h2 class="ind-name">Open Interest</h2>
+  </div>
+  <p class="mede"><span class="lbl">Mede</span> o <b>total de contratos em aberto</b> (dinheiro alavancado no mercado). Não diz direção sozinho — diz se está a entrar ou a sair capital. A leitura vem do <b>cruzamento com o preço</b>.</p>
+
+  <div class="diagram">
+    <svg viewBox="0 0 560 140" role="img" aria-label="Cruzamento preço e open interest">
+      <line x1="0" y1="130" x2="560" y2="130" stroke="#232830" stroke-width="1"/>
+      <!-- preço a subir -->
+      <polyline points="20,100 120,80 220,58 320,42 420,30 540,20" fill="none" stroke="#EAECEF" stroke-width="2.2"/>
+      <!-- OI a subir junto (confirmação) então a divergir -->
+      <polyline points="20,115 120,102 220,88 320,80 420,86 540,98" fill="none" stroke="#F0B90B" stroke-width="2.2" stroke-dasharray="1"/>
+      <circle cx="320" cy="42" r="4" fill="#EAECEF"/>
+      <circle cx="320" cy="80" r="4" fill="#F0B90B"/>
+      <line x1="320" y1="42" x2="320" y2="80" stroke="#5E6673" stroke-width="1" stroke-dasharray="3 3"/>
+      <text x="30" y="35" fill="#EAECEF" font-family="IBM Plex Mono" font-size="11">preço ▲</text>
+      <text x="30" y="128" fill="#F0B90B" font-family="IBM Plex Mono" font-size="11">OI ▲ → depois cai</text>
+      <text x="336" y="66" fill="#5E6673" font-family="IBM Plex Mono" font-size="10">divergência</text>
+    </svg>
+    <div class="dg-cap">Preço sobe + OI cai = subida sem convicção (short covering)</div>
+  </div>
+
+  <div class="cases">
+    <div class="case down">
+      <p class="case-lbl">▼ Caso — Queda</p>
+      <div class="case-num">Preço: −3%
+OI: +12%
+Funding: a virar +</div>
+      <p class="case-read">Preço a cair com OI a <b>subir</b> = capital novo a abrir <b>shorts</b> com convicção. Tendência de queda com combustível, não exaustão.</p>
+    </div>
+    <div class="case up">
+      <p class="case-lbl">▲ Caso — Subida</p>
+      <div class="case-num">Preço: +2%
+OI: −9%
+Funding: neutro</div>
+      <p class="case-read">Preço a subir com OI a <b>cair</b> = <b>short covering</b>, não compra fresca. Subida real mas de fôlego curto: sem OI novo, não sustenta.</p>
+    </div>
+  </div>
+
+  <div class="callout erro">
+    <span class="tag">ERRO</span>
+    <span class="callout-body">Achar que "OI a subir = bullish". OI a subir só diz que <b>entra alavancagem</b> — pode ser tudo short. A direção vem do sinal do preço no mesmo intervalo, nunca do OI isolado.</span>
+  </div>
+  <div class="callout rigor">
+    <span class="tag">RIGOR</span>
+    <span class="callout-body">Usa a <b>variação de OI (ΔOI) na mesma janela</b> da variação de preço — o nível absoluto não interessa. Confere se está denominado em USD ou em moeda (OI em USD sobe só porque o preço subiu). Cruza com funding para separar longs de shorts.</span>
+  </div>
+</section>
+
+<!-- ══════════ 3 · CVD ══════════ -->
+<section class="ind" id="cvd">
+  <div class="ind-head">
+    <span class="chip">CVD</span>
+    <h2 class="ind-name">Cumulative Volume Delta</h2>
+  </div>
+  <p class="mede"><span class="lbl">Mede</span> a soma acumulada de <b>(volume comprador agressor − volume vendedor agressor)</b>. Mostra quem está a executar a mercado. O sinal forte é a <b>divergência</b> entre CVD e preço.</p>
+
+  <div class="diagram">
+    <svg viewBox="0 0 560 140" role="img" aria-label="Divergência entre preço e CVD">
+      <line x1="0" y1="130" x2="560" y2="130" stroke="#232830" stroke-width="1"/>
+      <!-- preço faz topo mais alto -->
+      <polyline points="20,90 140,60 260,75 380,40 540,55" fill="none" stroke="#EAECEF" stroke-width="2.2"/>
+      <!-- CVD faz topo mais baixo (divergência bearish) -->
+      <polyline points="20,105 140,80 260,90 380,95 540,110" fill="none" stroke="#F6465D" stroke-width="2.2"/>
+      <circle cx="380" cy="40" r="4" fill="#EAECEF"/>
+      <circle cx="380" cy="95" r="4" fill="#F6465D"/>
+      <text x="30" y="30" fill="#EAECEF" font-family="IBM Plex Mono" font-size="11">preço: topo + alto</text>
+      <text x="300" y="128" fill="#F6465D" font-family="IBM Plex Mono" font-size="11">CVD: topo + baixo →</text>
+    </svg>
+    <div class="dg-cap">Preço faz máximo mais alto, CVD não → compradores a esgotar</div>
+  </div>
+
+  <div class="cases">
+    <div class="case down">
+      <p class="case-lbl">▼ Caso — Queda</p>
+      <div class="case-num">Preço: novo topo local
+CVD: topo mais baixo
+(divergência bearish)</div>
+      <p class="case-read">O preço subiu mas <b>menos agressão compradora</b> o sustentou — provável absorção/distribuição. Fraqueza escondida atrás do verde.</p>
+    </div>
+    <div class="case up">
+      <p class="case-lbl">▲ Caso — Subida</p>
+      <div class="case-num">Preço: novo fundo local
+CVD: fundo mais alto
+(divergência bullish)</div>
+      <p class="case-read">Preço fez mínimo mas a <b>venda agressora secou</b>. Vendedores exaustos: base para reversão para cima.</p>
+    </div>
+  </div>
+
+  <div class="callout erro">
+    <span class="tag">ERRO</span>
+    <span class="callout-body">Comparar CVD entre exchanges como se fossem a mesma escala. CVD é <b>relativo e não normalizado</b> — só faz sentido a divergência <b>dentro do mesmo feed</b> e da mesma janela. O valor absoluto não significa nada.</span>
+  </div>
+  <div class="callout rigor">
+    <span class="tag">RIGOR</span>
+    <span class="callout-body">Fixa a <b>janela e o ponto de reset</b> (CVD de sessão vs acumulado infinito dão leituras opostas). Confirma a divergência com estrutura de preço e OI — CVD sozinho gera falsos sinais em mercados finos.</span>
+  </div>
+</section>
+
+<!-- ══════════ 4 · TBSR ══════════ -->
+<section class="ind" id="tbsr">
+  <div class="ind-head">
+    <span class="chip">TBSR</span>
+    <h2 class="ind-name">Taker Buy/Sell Ratio</h2>
+  </div>
+  <p class="mede"><span class="lbl">Mede</span> o rácio entre <b>volume de compra a mercado e volume de venda a mercado</b> num intervalo. &gt;1 = agressão compradora domina; &lt;1 = vendedora. É o CVD instantâneo, por barra.</p>
+
+  <div class="diagram">
+    <svg viewBox="0 0 560 120" role="img" aria-label="Rácio taker buy sell em torno de 1">
+      <line x1="0" y1="60" x2="560" y2="60" stroke="#5E6673" stroke-width="1" stroke-dasharray="4 4"/>
+      <text x="8" y="56" fill="#5E6673" font-family="IBM Plex Mono" font-size="10">1.0</text>
+      <rect x="30"  y="40" width="30" height="20" fill="#0ECB81" opacity=".7"/>
+      <rect x="74"  y="30" width="30" height="30" fill="#0ECB81" opacity=".8"/>
+      <rect x="118" y="60" width="30" height="16" fill="#F6465D" opacity=".7"/>
+      <rect x="162" y="22" width="30" height="38" fill="#0ECB81" opacity=".9"/>
+      <rect x="206" y="60" width="30" height="10" fill="#F6465D" opacity=".6"/>
+      <rect x="250" y="14" width="30" height="46" fill="#0ECB81" opacity=".95"/>
+      <rect x="294" y="60" width="30" height="34" fill="#F6465D" opacity=".85"/>
+      <rect x="338" y="60" width="30" height="44" fill="#F6465D" opacity=".9"/>
+      <rect x="382" y="60" width="30" height="24" fill="#F6465D" opacity=".75"/>
+      <rect x="426" y="48" width="30" height="12" fill="#0ECB81" opacity=".6"/>
+      <rect x="470" y="60" width="30" height="20" fill="#F6465D" opacity=".7"/>
+      <rect x="514" y="60" width="30" height="30" fill="#F6465D" opacity=".8"/>
+    </svg>
+    <div class="dg-cap">Barras acima da linha = takers a comprar; abaixo = a vender</div>
+  </div>
+
+  <div class="cases">
+    <div class="case down">
+      <p class="case-lbl">▼ Caso — Queda</p>
+      <div class="case-num">TBSR (15m): 0.68
+Preço: a testar suporte
+Vela: rejeição no topo</div>
+      <p class="case-read">Venda a mercado a dominar num teste de suporte. Se o suporte é fino, os <b>takers vendedores</b> partem-no — perde-se o nível.</p>
+    </div>
+    <div class="case up">
+      <p class="case-lbl">▲ Caso — Subida</p>
+      <div class="case-num">TBSR (15m): 1.55
+Preço: a romper resistência
+Volume: acima da média</div>
+      <p class="case-read">Compra agressiva a validar o rompimento. <b>Takers</b> a pagar o spread para entrar = convicção real, não wick.</p>
+    </div>
+  </div>
+
+  <div class="callout erro">
+    <span class="tag">ERRO</span>
+    <span class="callout-body">Tratar TBSR &gt; 1 como compra "inteligente". Takers <b>pagam o spread</b> — muitas vezes é retalho a perseguir o preço, não posicionamento informado. Um pico de TBSR num topo é frequentemente exaustão.</span>
+  </div>
+  <div class="callout rigor">
+    <span class="tag">RIGOR</span>
+    <span class="callout-body">Define o <b>timeframe</b> do rácio (1m vs 1h contam histórias diferentes) e compara com a <b>média móvel do próprio rácio</b>, não com o 1.0 nu. Cruza com o nível de preço: TBSR só importa junto a suporte/resistência.</span>
+  </div>
+</section>
+
+<!-- ══════════ 5 · LONGS vs SHORTS ══════════ -->
+<section class="ind" id="ls">
+  <div class="ind-head">
+    <span class="chip">L/S</span>
+    <h2 class="ind-name">Longs vs Shorts (por contas)</h2>
+  </div>
+  <p class="mede"><span class="lbl">Mede</span> a <b>percentagem de contas</b> (não de volume) posicionadas long vs short. Retrato do <b>retalho</b>. Extremos funcionam como indicador de sentimento contrário.</p>
+
+  <div class="diagram">
+    <svg viewBox="0 0 560 120" role="img" aria-label="Barras opostas de longs e shorts">
+      <text x="8" y="34" fill="#0ECB81" font-family="IBM Plex Mono" font-size="11">LONG</text>
+      <text x="8" y="86" fill="#F6465D" font-family="IBM Plex Mono" font-size="11">SHORT</text>
+      <line x1="280" y1="10" x2="280" y2="110" stroke="#232830" stroke-width="1"/>
+      <!-- long bar (72%) para a direita -->
+      <rect x="70" y="20" width="410" height="26" fill="#0ECB81" opacity=".8"/>
+      <text x="486" y="38" fill="#0ECB81" font-family="IBM Plex Mono" font-size="12">72%</text>
+      <!-- short bar (28%) -->
+      <rect x="70" y="72" width="159" height="26" fill="#F6465D" opacity=".8"/>
+      <text x="236" y="90" fill="#F6465D" font-family="IBM Plex Mono" font-size="12">28%</text>
+    </svg>
+    <div class="dg-cap">Retalho maioritariamente long → alvo de liquidação por baixo</div>
+  </div>
+
+  <div class="cases">
+    <div class="case down">
+      <p class="case-lbl">▼ Caso — Queda</p>
+      <div class="case-num">Contas long: 74%
+Contas short: 26%
+Preço: perto de máximos</div>
+      <p class="case-read">Retalho lotado no lado long perto do topo. A liquidez para caçar está <b>por baixo</b> — cenário clássico de sweep de longs.</p>
+    </div>
+    <div class="case up">
+      <p class="case-lbl">▲ Caso — Subida</p>
+      <div class="case-num">Contas short: 68%
+Contas long: 32%
+Preço: perto de mínimos</div>
+      <p class="case-read">Retalho a apostar na queda num fundo. Combustível de <b>short squeeze</b> acumulado por cima do preço.</p>
+    </div>
+  </div>
+
+  <div class="callout erro">
+    <span class="tag">ERRO</span>
+    <span class="callout-body">Confundir <b>% de contas</b> com <b>% de posição</b>. 74% das contas long pode ser dinheiro pequeno; uma baleia short do outro lado pesa mais em USD. O rácio de contas é sentimento de retalho, não de capital.</span>
+  </div>
+  <div class="callout rigor">
+    <span class="tag">RIGOR</span>
+    <span class="callout-body">Distingue a métrica <b>por contas</b> da métrica <b>por posição (top traders)</b> — dão sinais opostos de propósito. Usa como <b>contra-indicador só em extremos</b> com baseline histórico; entre 45–55% não diz nada.</span>
+  </div>
+</section>
+
+<!-- ══════════ 6 · LIQUIDAÇÕES ══════════ -->
+<section class="ind" id="liq">
+  <div class="ind-head">
+    <span class="chip">LIQ</span>
+    <h2 class="ind-name">Liquidações</h2>
+  </div>
+  <p class="mede"><span class="lbl">Mede</span> o <b>valor de posições fechadas à força</b> pela exchange quando a margem esgota. Picos marcam capitulação e, muitas vezes, o fim de um movimento — não o princípio.</p>
+
+  <div class="diagram">
+    <svg viewBox="0 0 560 120" role="img" aria-label="Mini histograma de liquidações">
+      <line x1="0" y1="60" x2="560" y2="60" stroke="#232830" stroke-width="1"/>
+      <!-- liquidações longs (para baixo, vermelho) com um pico -->
+      <rect x="20"  y="60" width="18" height="8"  fill="#F6465D" opacity=".5"/>
+      <rect x="52"  y="60" width="18" height="14" fill="#F6465D" opacity=".55"/>
+      <rect x="84"  y="60" width="18" height="10" fill="#F6465D" opacity=".5"/>
+      <rect x="116" y="60" width="18" height="26" fill="#F6465D" opacity=".65"/>
+      <rect x="148" y="60" width="18" height="52" fill="#F6465D" opacity=".95"/>
+      <rect x="180" y="60" width="18" height="30" fill="#F6465D" opacity=".7"/>
+      <rect x="212" y="60" width="18" height="12" fill="#F6465D" opacity=".5"/>
+      <!-- liquidações shorts (para cima, verde) -->
+      <rect x="340" y="48" width="18" height="12" fill="#0ECB81" opacity=".5"/>
+      <rect x="372" y="34" width="18" height="26" fill="#0ECB81" opacity=".65"/>
+      <rect x="404" y="10" width="18" height="50" fill="#0ECB81" opacity=".95"/>
+      <rect x="436" y="40" width="18" height="20" fill="#0ECB81" opacity=".6"/>
+      <rect x="468" y="50" width="18" height="10" fill="#0ECB81" opacity=".5"/>
+      <text x="120" y="112" fill="#F6465D" font-family="IBM Plex Mono" font-size="10">cascata longs</text>
+      <text x="360" y="112" fill="#0ECB81" font-family="IBM Plex Mono" font-size="10">squeeze shorts</text>
+    </svg>
+    <div class="dg-cap">Pico único de liquidação = clímax, não continuação</div>
+  </div>
+
+  <div class="cases">
+    <div class="case down">
+      <p class="case-lbl">▼ Caso — Queda</p>
+      <div class="case-num">Liq longs: $180M em 5m
+Preço: −6% de mecha
+Wick: recupera 60%</div>
+      <p class="case-read">Cascata de longs num flash. O pico <b>e</b> a recuperação da mecha dizem: liquidez esgotada em baixo, <b>fim da perna</b>, não início.</p>
+    </div>
+    <div class="case up">
+      <p class="case-lbl">▲ Caso — Subida</p>
+      <div class="case-num">Liq shorts: $95M em 10m
+Preço: +4%
+OI: a cair a par</div>
+      <p class="case-read">Short squeeze a resolver-se. Com OI a cair no mesmo intervalo, o combustível <b>gasta-se</b> — o movimento tende a estabilizar após o pico.</p>
+    </div>
+  </div>
+
+  <div class="callout erro">
+    <span class="tag">ERRO</span>
+    <span class="callout-body">Entrar <b>a favor</b> de uma cascata de liquidações ("está a cair, vou short"). No pico já não há posições para liquidar — é frequentemente o <b>ponto de reversão</b>. Liquidação é exaustão, não tendência.</span>
+  </div>
+  <div class="callout rigor">
+    <span class="tag">RIGOR</span>
+    <span class="callout-body">Sabe que os dados de liquidação são <b>sub-reportados</b> (exchanges limitam o feed a um evento/segundo). Usa a <b>concentração no tempo</b> (um pico vs distribuição gradual), não o total, e cruza com o comportamento da mecha e ΔOI.</span>
+  </div>
+</section>
+
+<!-- ══════════ 7 · RSI ══════════ -->
+<section class="ind" id="rsi">
+  <div class="ind-head">
+    <span class="chip">RSI</span>
+    <h2 class="ind-name">RSI multi-período</h2>
+  </div>
+  <p class="mede"><span class="lbl">Mede</span> a <b>força relativa</b> dos ganhos vs perdas recentes (0–100). O valor nu diz pouco; o sinal está na <b>divergência preço/RSI</b> e no <b>alinhamento entre timeframes</b>.</p>
+
+  <div class="diagram">
+    <svg viewBox="0 0 560 150" role="img" aria-label="Divergência de RSI com zonas de sobrecompra">
+      <rect x="0" y="14" width="560" height="24" fill="#F6465D" opacity=".07"/>
+      <rect x="0" y="112" width="560" height="24" fill="#0ECB81" opacity=".07"/>
+      <line x1="0" y1="26"  x2="560" y2="26"  stroke="#F6465D" stroke-width="1" stroke-dasharray="3 3" opacity=".5"/>
+      <line x1="0" y1="124" x2="560" y2="124" stroke="#0ECB81" stroke-width="1" stroke-dasharray="3 3" opacity=".5"/>
+      <text x="8" y="22" fill="#F6465D" font-family="IBM Plex Mono" font-size="10">70</text>
+      <text x="8" y="136" fill="#0ECB81" font-family="IBM Plex Mono" font-size="10">30</text>
+      <!-- preço (branco) topos mais altos -->
+      <polyline points="20,90 160,50 300,60 440,30 540,45" fill="none" stroke="#EAECEF" stroke-width="2"/>
+      <!-- RSI (âmbar) topos mais baixos → divergência -->
+      <polyline points="20,60 160,20 300,40 440,55 540,70" fill="none" stroke="#F0B90B" stroke-width="2"/>
+      <circle cx="440" cy="30" r="3.5" fill="#EAECEF"/>
+      <circle cx="440" cy="55" r="3.5" fill="#F0B90B"/>
+      <text x="30" y="112" fill="#EAECEF" font-family="IBM Plex Mono" font-size="10">preço ▲</text>
+      <text x="30" y="128" fill="#F0B90B" font-family="IBM Plex Mono" font-size="10">RSI ▼ divergência</text>
+    </svg>
+    <div class="dg-cap">Preço faz topo mais alto, RSI mais baixo → momentum a enfraquecer</div>
+  </div>
+
+  <div class="cases">
+    <div class="case down">
+      <p class="case-lbl">▼ Caso — Queda</p>
+      <div class="case-num">RSI 1h: 78 (sobrecompra)
+RSI 4h: 71
+RSI 1d: 68
++ divergência bearish 4h</div>
+      <p class="case-read">Sobrecompra <b>alinhada</b> em vários períodos com divergência. Momentum a esgotar-se de forma estrutural, não só num timeframe.</p>
+    </div>
+    <div class="case up">
+      <p class="case-lbl">▲ Caso — Subida</p>
+      <div class="case-num">RSI 1h: 24 (sobrevenda)
+RSI 4h: 31
+RSI 1d: 44
++ divergência bullish 1h</div>
+      <p class="case-read">Sobrevenda de curto prazo com divergência, mas <b>1d ainda neutro</b> — reversão provável de curto alcance, não fundo maior.</p>
+    </div>
+  </div>
+
+  <div class="callout erro">
+    <span class="tag">ERRO</span>
+    <span class="callout-body">Vender só porque "RSI &gt; 70". Numa tendência forte o RSI <b>fica sobrecomprado durante semanas</b>. Sobrecompra é força, não sinal de venda — o sinal vem da <b>divergência</b>, não do nível.</span>
+  </div>
+  <div class="callout rigor">
+    <span class="tag">RIGOR</span>
+    <span class="callout-body">Fixa o <b>período de cálculo</b> (14 é o default, mas 7 vs 21 muda tudo) e lê <b>múltiplos timeframes juntos</b> — um RSI só num período é ruído. O sinal robusto é divergência + alinhamento multi-período, com um nível de invalidação definido.</span>
+  </div>
+</section>
+
+<!-- ══════════ 8 · ORDERBOOK ══════════ -->
+<section class="ind" id="book">
+  <div class="ind-head">
+    <span class="chip">BOOK</span>
+    <h2 class="ind-name">Orderbook Depth</h2>
+  </div>
+  <p class="mede"><span class="lbl">Mede</span> o <b>volume de ordens limite</b> empilhado em cada nível de preço (bids vs asks). Mostra onde há liquidez — mas é o dado <b>mais fácil de falsificar</b> (spoofing).</p>
+
+  <div class="diagram">
+    <svg viewBox="0 0 560 130" role="img" aria-label="Blocos de profundidade do livro de ordens">
+      <line x1="280" y1="8" x2="280" y2="122" stroke="#F0B90B" stroke-width="1.5"/>
+      <text x="256" y="120" fill="#F0B90B" font-family="IBM Plex Mono" font-size="10">mid</text>
+      <!-- bids (verde) à esquerda, blocos -->
+      <rect x="180" y="20" width="96"  height="14" fill="#0ECB81" opacity=".8"/>
+      <rect x="120" y="40" width="156" height="14" fill="#0ECB81" opacity=".7"/>
+      <rect x="200" y="60" width="76"  height="14" fill="#0ECB81" opacity=".6"/>
+      <rect x="60"  y="80" width="216" height="14" fill="#0ECB81" opacity=".9"/>
+      <rect x="210" y="100" width="66" height="14" fill="#0ECB81" opacity=".5"/>
+      <text x="66" y="76" fill="#0ECB81" font-family="IBM Plex Mono" font-size="10">parede de bids</text>
+      <!-- asks (vermelho) à direita -->
+      <rect x="284" y="20"  width="70"  height="14" fill="#F6465D" opacity=".6"/>
+      <rect x="284" y="40"  width="120" height="14" fill="#F6465D" opacity=".7"/>
+      <rect x="284" y="60"  width="200" height="14" fill="#F6465D" opacity=".9"/>
+      <rect x="284" y="80"  width="90"  height="14" fill="#F6465D" opacity=".6"/>
+      <rect x="284" y="100" width="140" height="14" fill="#F6465D" opacity=".75"/>
+      <text x="360" y="56" fill="#F6465D" font-family="IBM Plex Mono" font-size="10">parede de asks</text>
+    </svg>
+    <div class="dg-cap">Paredes grandes: liquidez real ou isco? Só o comportamento no toque confirma</div>
+  </div>
+
+  <div class="cases">
+    <div class="case down">
+      <p class="case-lbl">▼ Caso — Queda</p>
+      <div class="case-num">Ask wall: 2,400 BTC @ resist.
+Bids: finos por baixo
+Preço: a aproximar-se</div>
+      <p class="case-read">Teto de venda com <b>pouco suporte</b> por baixo. Se a parede segurar e não for absorvida, o preço rejeita e cai pelo vazio de bids.</p>
+    </div>
+    <div class="case up">
+      <p class="case-lbl">▲ Caso — Subida</p>
+      <div class="case-num">Bid wall: 3,100 BTC @ suporte
+Asks acima: finos
+Ordens a mercado a bater</div>
+      <p class="case-read">Chão de compra a absorver a venda. Com asks finos por cima, uma vez limpo o suporte imediato o preço <b>salta</b> pelo vazio.</p>
+    </div>
+  </div>
+
+  <div class="callout erro">
+    <span class="tag">ERRO</span>
+    <span class="callout-body">Tratar uma parede visível como suporte/resistência garantido. Ordens limite <b>cancelam-se num instante</b> — o spoofing existe precisamente para te induzir. Uma parede que "desaparece" quando o preço chega nunca foi liquidez real.</span>
+  </div>
+  <div class="callout rigor">
+    <span class="tag">RIGOR</span>
+    <span class="callout-body">O livro é uma <b>fotografia instantânea</b>, não um compromisso. Confirma com o <b>fluxo executado</b> (trades a bater na parede vs a parede a fugir) e olha para a profundidade agregada de várias exchanges, não de uma só.</span>
+  </div>
+</section>
+
+<!-- ══════════ EXTRA ══════════ -->
+<div class="sec-label" id="extra">Extra · fora dos ecrãs originais</div>
+
+<section class="ind">
+  <div class="ind-head">
+    <span class="chip" style="background:var(--amber)">HEAT</span>
+    <h2 class="ind-name">Liquidation Heatmap (por nível de preço)</h2>
+  </div>
+  <p class="mede"><span class="lbl">Mede</span> onde estão <b>acumuladas as liquidações potenciais</b> por nível de preço — não as já ocorridas, mas o "combustível" empilhado. As zonas mais quentes agem como ímanes de liquidez.</p>
+
+  <div class="diagram">
+    <svg viewBox="0 0 560 130" role="img" aria-label="Mapa de calor de liquidações por nível">
+      <polyline points="20,70 120,55 220,72 320,50 420,66 540,58" fill="none" stroke="#EAECEF" stroke-width="2"/>
+      <!-- bandas de calor -->
+      <rect x="0" y="24" width="560" height="10" fill="#F0B90B" opacity=".55"/>
+      <text x="8" y="20" fill="#F0B90B" font-family="IBM Plex Mono" font-size="10">zona quente ↑ (shorts)</text>
+      <rect x="0" y="98" width="560" height="10" fill="#F6465D" opacity=".45"/>
+      <text x="8" y="122" fill="#F6465D" font-family="IBM Plex Mono" font-size="10">zona quente ↓ (longs)</text>
+    </svg>
+    <div class="dg-cap">Preço tende a ser puxado para os clusters de liquidação</div>
+  </div>
+
+  <div class="cases" style="grid-template-columns:1fr">
+    <div class="case up" style="background:var(--panel-2);border-color:var(--border)">
+      <p class="case-lbl" style="color:var(--amber)">◆ Caso prático</p>
+      <div class="case-num">Cluster de longs: −4% abaixo (28k BTC)
+Preço: lateral, sem catalisador
+Funding: levemente positivo</div>
+      <p class="case-read">Um íman de liquidez claro por baixo, sem notícia que justifique subida. A leitura é: <b>alta probabilidade de sweep</b> até ao cluster antes de qualquer perna sustentada para cima. A entrada de baixo risco é <b>depois</b> do sweep, não antes.</p>
+    </div>
+  </div>
+  <span class="hyp-tag">Hipótese: cascade fade</span>
+</section>
+
+<section class="ind">
+  <div class="ind-head">
+    <span class="chip" style="background:var(--amber)">BASIS</span>
+    <h2 class="ind-name">Basis (perp vs spot)</h2>
+  </div>
+  <p class="mede"><span class="lbl">Mede</span> a <b>diferença de preço entre o perpétuo (ou futuro) e o spot</b>. Basis positivo = perp caro (contango, mercado esticado long); negativo = perp barato (backwardation, medo/deleverage).</p>
+
+  <div class="diagram">
+    <svg viewBox="0 0 560 130" role="img" aria-label="Convergência de basis entre perp e spot">
+      <!-- spot (branco) -->
+      <polyline points="20,80 140,72 260,74 380,68 540,66" fill="none" stroke="#EAECEF" stroke-width="2"/>
+      <!-- perp (verde) acima, a convergir -->
+      <polyline points="20,40 140,48 260,56 380,62 540,66" fill="none" stroke="#0ECB81" stroke-width="2"/>
+      <line x1="20" y1="40" x2="20" y2="80" stroke="#5E6673" stroke-width="1" stroke-dasharray="3 3"/>
+      <text x="26" y="34" fill="#0ECB81" font-family="IBM Plex Mono" font-size="10">perp (prémio)</text>
+      <text x="400" y="82" fill="#EAECEF" font-family="IBM Plex Mono" font-size="10">spot</text>
+      <text x="26" y="102" fill="#5E6673" font-family="IBM Plex Mono" font-size="10">basis a comprimir →</text>
+    </svg>
+    <div class="dg-cap">Prémio elevado a comprimir = desalavancagem em curso</div>
+  </div>
+
+  <div class="cases" style="grid-template-columns:1fr">
+    <div class="case up" style="background:var(--panel-2);border-color:var(--border)">
+      <p class="case-lbl" style="color:var(--amber)">◆ Caso prático</p>
+      <div class="case-num">Basis anualizado: +18%
+Funding: +0.09%/8h
+OI: máximos históricos</div>
+      <p class="case-read">Perp a negociar muito acima do spot com OI eufórico. Estrutura <b>esticada e cara</b>: qualquer choque força desalavancagem e o basis colapsa para zero, arrastando o preço. A leitura é fragilidade, não força.</p>
+    </div>
+  </div>
+  <span class="hyp-tag">Hipótese: basis compression</span>
+</section>
+
+<!-- ══════════ CLOSING ══════════ -->
+<div class="closing">
+  <h2>Princípio que atravessa tudo</h2>
+  <p class="sub">Nenhum indicador acima significa nada por si. Uma leitura só é rigorosa quando cumpre os quatro requisitos:</p>
+  <ol class="rigor-list">
+    <li>
+      <b>Janela de cálculo</b>
+      <span>Que período/timeframe estás a ler? +0.1% de funding em 8h ≠ em 1h. RSI(7) ≠ RSI(21). Sem janela fixa, os números não são comparáveis nem entre si nem no tempo.</span>
+    </li>
+    <li>
+      <b>Baseline histórico</b>
+      <span>"Alto" e "baixo" só existem contra a distribuição normal do próprio par. Compara sempre com a média/percentis históricos, nunca com um número absoluto ou com outro ativo.</span>
+    </li>
+    <li>
+      <b>Cruzamento com outra população</b>
+      <span>Um indicador confirma-se noutro. Funding com OI e preço; CVD com estrutura; L/S de contas com L/S de posição. Um sinal isolado é uma hipótese, não uma leitura.</span>
+    </li>
+    <li>
+      <b>Horizonte de invalidação</b>
+      <span>Antes de agir, define o que provaria que estás errado e em quanto tempo. Sem nível e prazo de invalidação, não é análise — é narrativa a posteriori.</span>
+    </li>
+  </ol>
+</div>
+
+<footer class="foot">
+  guia_indicadores.html · CryptoScan · reconhecer padrões &gt; decorar definições
+</footer>
+
+</div>
+</body>
+</html>

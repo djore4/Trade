@@ -1245,6 +1245,10 @@ html.light .mnav-btn.active { color: var(--orange); }
       <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M5.5.8 6.7 4l3.3 1.2L6.7 6.5 5.5 9.7 4.3 6.5 1 5.2 4.3 4z" stroke="currentColor" stroke-width="1.1" fill="none" stroke-linejoin="round"/></svg>
       Agente
     </button>
+    <button class="tab-btn" data-tab="tutorial" onclick="switchTab('tutorial',this)">
+      <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1 2.2A1 1 0 0 1 2 1.2h3.5v7.6H2a1 1 0 0 0-1 1z" stroke="currentColor" stroke-width="1.1" fill="none" stroke-linejoin="round"/><path d="M10 2.2A1 1 0 0 0 9 1.2H5.5v7.6H9a1 1 0 0 1 1 1z" stroke="currentColor" stroke-width="1.1" fill="none" stroke-linejoin="round"/></svg>
+      Tutorial
+    </button>
   </nav>
   <div class="hdr-right">
     <div class="hdr-pill hdr-pill-btn" onclick="switchTab('dashboard')" title="ROI de spot (portefólio) — clica para ver o gráfico" style="cursor:pointer">
@@ -1788,6 +1792,13 @@ html.light .mnav-btn.active { color: var(--orange); }
   </div>
 </div>
 
+<!-- ─── TAB: TUTORIAL — Guia de indicadores ──────────── -->
+<div class="tab-pane" id="tab-tutorial" style="padding:0">
+  <iframe id="tutorial-frame" title="Guia de indicadores — Ler indicadores sem vibe check"
+          style="width:100%;height:100%;border:0;display:block;background:#0B0E11"
+          loading="lazy"></iframe>
+</div>
+
 </div><!-- #content -->
 </div><!-- #app -->
 
@@ -1833,6 +1844,10 @@ html.light .mnav-btn.active { color: var(--orange); }
   <button class="mnav-btn" data-tab="agente" onclick="switchTab('agente',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 13.9 8l5.5 1.9L13.9 12 12 17.5 10.1 12 4.5 9.9 10.1 8z"/></svg>
     <span class="mnav-lbl">Agente</span>
+  </button>
+  <button class="mnav-btn" data-tab="tutorial" onclick="switchTab('tutorial',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5A1.5 1.5 0 0 1 4.5 3H11v16H4.5A1.5 1.5 0 0 0 3 20.5z"/><path d="M21 4.5A1.5 1.5 0 0 0 19.5 3H13v16h6.5a1.5 1.5 0 0 1 1.5 1.5z"/></svg>
+    <span class="mnav-lbl">Tutorial</span>
   </button>
 </nav>
 
@@ -1924,6 +1939,10 @@ function switchTab(id, btn) {
   if (id === 'trade')      renderTradeTab();
   if (id === 'cryptoscan') renderCsTab();
   if (id === 'agente')     renderAgentTab();
+  if (id === 'tutorial') {
+    const f = document.getElementById('tutorial-frame');
+    if (f && !f.src) f.src = 'guia_indicadores.html';
+  }
 }
 
 // Secções do tab Mercado: Preço · Estrutura · Sentimento · Heatmap (init lazy).
