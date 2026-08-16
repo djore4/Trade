@@ -616,16 +616,33 @@ html.light .mnav-btn.active { color: var(--orange); }
 .cs-list-ul { margin: 10px 0 0; padding-left: 17px; display: flex; flex-direction: column; gap: 6px; }
 .cs-list-ul li { font-size: 11px; color: var(--dim); line-height: 1.5; } .cs-list-ul li b { color: var(--text); font-weight: 600; }
 .cs-disclaimer { font-size: 10.5px; color: var(--faint); line-height: 1.5; text-align: center; padding: 4px 20px; }
+/* ── Config editável (capital · risco · sensibilidade) ── */
+.cs-cfg { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
+.cs-cfg .cs-field input, .cs-cfg .cs-field select { width: 150px; }
+.cs-cfg select { font-family: inherit; font-size: 13px; font-weight: 600; color: var(--text); background: var(--s2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; outline: none; cursor: pointer; }
+.cs-cfg select:focus { border-color: var(--orange); }
+.cs-cfg-note { flex: 1 1 100%; font-size: 11px; color: var(--dim); line-height: 1.55; }
+.cs-cfg-note b { color: var(--text); font-weight: 600; }
+.cs-help { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 50%; border: 1px solid var(--border); color: var(--faint); font-size: 9px; font-weight: 700; cursor: help; margin-left: 3px; vertical-align: middle; }
+.cs-help:hover, .cs-help:focus { color: var(--orange); border-color: var(--orange); outline: none; }
+/* ── Painéis de referência colapsáveis ── */
+.cs-refs { display: flex; flex-direction: column; gap: 8px; }
+summary.cs-refbox-h { cursor: pointer; list-style: none; user-select: none; }
+summary.cs-refbox-h::-webkit-details-marker { display: none; }
+summary.cs-refbox-h::after { content: '⌄'; margin-left: auto; color: var(--faint); font-size: 15px; line-height: 1; transition: transform .18s; }
+details.cs-refbox[open] > summary.cs-refbox-h::after { transform: rotate(180deg); }
+details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
 @media (max-width: 860px) {
   .cs-ref { grid-template-columns: 1fr; }
   .cs-ctx { grid-template-columns: 1fr 1fr; }
-  .cs-ctx .cs-field { grid-column: span 2; }
-  .cs-field input { width: 100%; }
+  .cs-head { flex-direction: column; align-items: stretch; }
+  .cs-scan-btn { justify-content: center; }
+  .cs-cfg .cs-field { flex: 1 1 140px; }
+  .cs-cfg .cs-field input, .cs-cfg .cs-field select { width: 100%; }
   .cs-row-main { grid-template-columns: 26px 1fr 70px; grid-template-areas: "rank sym score"; row-gap: 8px; }
   .cs-rank { grid-area: rank; } .cs-sym-wrap { grid-area: sym; } .cs-score-wrap { grid-area: score; }
   .cs-tags, .cs-plan-mini, .cs-be { display: none; }
 }
-#cs-risk { width: 92px; }
 /* ── Sugestões de Trade (cards completos) ──────────────────────────── */
 .cs-nosetup { background: var(--s1); border: 1px solid var(--border); border-radius: 12px; padding: 22px 20px; text-align: center; }
 .cs-nosetup-h { font-size: 14px; font-weight: 700; color: var(--text); }
@@ -1316,7 +1333,7 @@ html.light .mnav-btn.active { color: var(--orange); }
     <div class="cs-head">
       <div>
         <div class="cs-title">CryptoScan <span class="cs-badge">Sugestões v2</span></div>
-        <div class="cs-sub">Sugestões de trade em perpétuos USDT da Bybit — <b>long ou short</b>, o que tiver maior potencial líquido. O edge vem de <b>posicionamento</b> (funding, open interest, cascatas de liquidação, long/short ratio), filtrado por regime e passado por um <b>risk engine</b> rigoroso: cada ideia sai como uma Sugestão de Trade completa, com stop, TP1/2/3, sizing e score de confiança. Nunca é execução automática.</div>
+        <div class="cs-sub">Poucas sugestões de trade de <b>alta convicção</b> em perpétuos da Bybit — <b>long ou short</b>, o que tiver maior potencial líquido. Cada ideia sai completa: entrada, stop, TP1/2/3, sizing e score de confiança. Nunca é execução automática.</div>
       </div>
       <button class="cs-scan-btn" id="cs-scan-btn" onclick="scanCs(true)">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.2" stroke="currentColor" stroke-width="1.4"/><line x1="9" y1="9" x2="12.5" y2="12.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
@@ -1324,53 +1341,54 @@ html.light .mnav-btn.active { color: var(--orange); }
       </button>
     </div>
 
-    <!-- Contexto de mercado + config -->
+    <!-- Contexto de mercado (só leitura) -->
     <div class="cs-ctx">
       <div class="cs-ctx-item"><div class="cs-ctx-lbl">Universo</div><div class="cs-ctx-val" id="cs-x-universe">—</div><div class="cs-ctx-sub">perps ≥ 30M turnover</div></div>
-      <div class="cs-ctx-item"><div class="cs-ctx-lbl">Sugestões</div><div class="cs-ctx-val" id="cs-x-short">—</div><div class="cs-ctx-sub">passam custos, R:R e confiança</div></div>
+      <div class="cs-ctx-item"><div class="cs-ctx-lbl">Sugestões</div><div class="cs-ctx-val" id="cs-x-short">—</div><div class="cs-ctx-sub">passam o funil</div></div>
       <div class="cs-ctx-item"><div class="cs-ctx-lbl">BTC 24h</div><div class="cs-ctx-val" id="cs-x-btc">—</div><div class="cs-ctx-sub">contexto direcional</div></div>
       <div class="cs-ctx-item"><div class="cs-ctx-lbl">Funding médio</div><div class="cs-ctx-val" id="cs-x-fund">—</div><div class="cs-ctx-sub">do universo /8h</div></div>
-      <label class="cs-field"><span>Capital (USD)</span><input type="number" id="cs-capital" min="100" step="100" oninput="csCfgChange()"></label>
-      <label class="cs-field"><span>Risco/trade %</span><input type="number" id="cs-risk" min="0.5" max="1" step="0.05" oninput="csCfgChange()"></label>
     </div>
 
-    <!-- Limites de gestão de risco (não negociáveis) + pesos -->
-    <div class="cs-weights">
-      <span class="cs-wlbl">Risco:</span>
-      <span class="cs-wchip">/trade <b>0,5–1%</b></span>
-      <span class="cs-wchip">/dia <b>2%</b></span>
-      <span class="cs-wchip">/semana <b>5%</b></span>
-      <span class="cs-wchip">Drawdown máx <b>12%</b></span>
-      <span class="cs-wchip">Alav. máx <b>1,8×</b></span>
-      <span class="cs-wchip">R:R mín <b>1,8</b></span>
-      <span class="cs-wsep"></span>
-      <span class="cs-wlbl">Pesos:</span>
-      <span class="cs-wchip">Funding <b>30</b></span>
-      <span class="cs-wchip">OI <b>25</b></span>
-      <span class="cs-wchip">Cascata <b>20</b></span>
-      <span class="cs-wchip">Regime <b>15</b></span>
-      <span class="cs-wchip">Estrutura <b>10</b></span>
+    <!-- Configuração editável -->
+    <div class="cs-cfg">
+      <label class="cs-field"><span>Capital (USD) <i class="cs-help" tabindex="0" title="O teu capital de referência. Serve só para calcular o tamanho da posição de cada sugestão.">?</i></span><input type="number" id="cs-capital" min="100" step="100" oninput="csCfgChange()"></label>
+      <label class="cs-field"><span>Risco/trade % <i class="cs-help" tabindex="0" title="Quanto do capital arriscas SE o stop for atingido. Ex.: 10 000 $ × 0,75% = arriscas 75 $ por trade. Define o tamanho da posição, não o lucro. Limitado a 0,5–1%.">?</i></span><input type="number" id="cs-risk" min="0.5" max="1" step="0.05" oninput="csCfgChange()" onchange="csCfgChange(true)"></label>
+      <label class="cs-field"><span>Sensibilidade <i class="cs-help" tabindex="0" title="Quão exigente é o funil. Rigoroso = só ideias muito fortes (pode não haver nenhuma). Permissivo = mostra mais candidatos, de menor convicção. Não inventa edge — apenas baixa a fasquia da fasquia de score/confiança.">?</i></span>
+        <select id="cs-sens" onchange="csSensChange()">
+          <option value="strict">Rigoroso</option>
+          <option value="balanced">Equilibrado</option>
+          <option value="loose">Permissivo</option>
+        </select>
+      </label>
+      <div class="cs-cfg-note" id="cs-cfg-note"></div>
     </div>
 
     <!-- Sugestões (injetadas por JS) -->
     <div id="cs-list" class="cs-list"><div class="db-empty">Corre um scan para gerar sugestões de trade…</div></div>
 
-    <!-- Painéis de referência -->
-    <div class="cs-ref">
+    <!-- Painéis de referência (colapsados para reduzir ruído) -->
+    <div class="cs-refs">
 
-      <div class="cs-refbox">
-        <div class="cs-refbox-h">Hipóteses de edge (posicionamento)</div>
+      <details class="cs-refbox" id="cs-how">
+        <summary class="cs-refbox-h">Como funciona — hipóteses de edge + funil</summary>
         <div class="cs-refbox-b">
+          <p class="cs-refbox-note" style="margin:0 0 12px">O edge vem de <b>posicionamento</b> (funding, open interest, cascatas de liquidação, long/short ratio), filtrado por regime e passado por um <b>risk engine</b>. O motor é determinístico: mesmo input → mesmo score.</p>
           <div class="cs-hyp"><span class="cs-hyp-tag">H1</span><div><b>Funding squeeze.</b> Funding com z-score ≥ |2| (≈100 períodos) = um lado sobrelotado a pagar. Se o preço não confirma, o unwind é violento na direção oposta. z ≥ +2 com preço 24h ≤ +0,5% → <span class="sh">SHORT</span>; z ≤ −2 com preço 24h ≥ −0,5% → <span class="lo">LONG</span>.</div></div>
           <div class="cs-hyp"><span class="cs-hyp-tag">H2</span><div><b>OI divergence.</b> OI +5% em 6h com preço a variar &lt;0,4% = combustível bidirecional (direção neutra). OI −6% em 6h = flush/exaustão → fade do movimento recente.</div></div>
           <div class="cs-hyp"><span class="cs-hyp-tag">H3</span><div><b>Cascade fade.</b> Vela (TF15) com range &gt;2,5×ATR(14), volume &gt;3× média(20) e OI −2% em 2h = proxy de cascata → mean-reversion contra a vela. <em>Proxy REST; adapter pronto para o websocket de liquidações.</em></div></div>
           <div class="cs-hyp"><span class="cs-hyp-tag">H4</span><div><b>Filtro de regime (1h).</b> ADX(14) ≥ 25 → trending; largura de Bollinger no percentil &lt;15% → squeeze (penaliza tudo exceto breakout); resto → ranging. Mean-reversion só pontua bem em ranging.</div></div>
           <div class="cs-hyp"><span class="cs-hyp-tag alt">+</span><div><b>Estrutura.</b> Posição do preço no range de 24h: ≤12% favorece LONG, ≥88% favorece SHORT. Peso baixo, melhora o R:R de entrada.</div></div>
+          <div class="cs-funnel" style="margin-top:14px">
+            <div class="cs-funnel-step"><span class="cs-fn-n">1</span><div><b>Universo (~60)</b><p>USDT-perps com turnover ≥ 30M; enriquecem os top-45.</p></div></div>
+            <div class="cs-funnel-step"><span class="cs-fn-n">2</span><div><b>Scoring determinístico</b><p>H1–H4 + estrutura → score composto. Mesmo input → mesmo score.</p></div></div>
+            <div class="cs-funnel-step"><span class="cs-fn-n">3</span><div><b>Risk engine</b><p>Stop técnico+risco, TP1/2/3, sizing USDT+unidades, cap 1,8×, rejeição por custos/R:R.</p></div></div>
+            <div class="cs-funnel-step"><span class="cs-fn-n">4</span><div><b>Sugestão + confiança</b><p>Sentimento de posicionamento, confluências a favor/contra, score X/10, urgência e validade.</p></div></div>
+          </div>
         </div>
-      </div>
+      </details>
 
-      <div class="cs-refbox">
-        <div class="cs-refbox-h">Custos, R:R e breakeven</div>
+      <details class="cs-refbox">
+        <summary class="cs-refbox-h">Custos, R:R e breakeven</summary>
         <div class="cs-refbox-b">
           <div class="cs-ev">
             <div class="cs-ev-row"><span>Taker fee (por lado)</span><b>0,055%</b></div>
@@ -1379,22 +1397,33 @@ html.light .mnav-btn.active { color: var(--orange); }
           </div>
           <div class="cs-refbox-note">Nenhuma sugestão sai com <b>TP1 a pagar &lt;2× os custos</b> ou <b>R:R combinado &lt; 1,8</b>. O R:R combinado pondera TP1/TP2/TP3 pelos <b>partial closes</b> (40%/35%/25%) e clampa os alvos ao extremo do range de 24h — setups a meio do range são rejeitados por não terem espaço. Cada sugestão mostra <b>p_win_breakeven</b> = (1 + custos_em_R)/(1 + R:R): a taxa de acerto mínima para empatar. Win rate isolado não é métrica; o que importa é a expectância líquida.</div>
         </div>
-      </div>
+      </details>
 
-      <div class="cs-refbox">
-        <div class="cs-refbox-h">O funil → Sugestão de Trade</div>
+      <details class="cs-refbox">
+        <summary class="cs-refbox-h">Regras de risco e pesos do motor <span class="cs-flag">fixos</span></summary>
         <div class="cs-refbox-b">
-          <div class="cs-funnel">
-            <div class="cs-funnel-step"><span class="cs-fn-n">1</span><div><b>Universo (~60)</b><p>USDT-perps com turnover ≥ 30M; enriquecem os top-45.</p></div></div>
-            <div class="cs-funnel-step"><span class="cs-fn-n">2</span><div><b>Scoring determinístico</b><p>H1–H4 + estrutura → score composto. Mesmo input → mesmo score.</p></div></div>
-            <div class="cs-funnel-step"><span class="cs-fn-n">3</span><div><b>Risk engine</b><p>Stop técnico+risco, TP1/2/3, sizing USDT+unidades, cap 1,8×, rejeição por custos/R:R.</p></div></div>
-            <div class="cs-funnel-step"><span class="cs-fn-n">4</span><div><b>Sugestão + confiança</b><p>Sentimento de posicionamento, confluências a favor/contra, score X/10, urgência e validade.</p></div></div>
+          <p class="cs-refbox-note" style="margin:0 0 12px">Estes valores são <b>limites fixos do sistema</b> (não editáveis): garantem que nenhuma sugestão ultrapassa o risco definido. Os <b>pesos</b> mostram quanto cada sinal conta no score composto (0–100).</p>
+          <div class="cs-weights">
+            <span class="cs-wlbl">Risco:</span>
+            <span class="cs-wchip">/trade <b>0,5–1%</b></span>
+            <span class="cs-wchip">/dia <b>2%</b></span>
+            <span class="cs-wchip">/semana <b>5%</b></span>
+            <span class="cs-wchip">Drawdown máx <b>12%</b></span>
+            <span class="cs-wchip">Alav. máx <b>1,8×</b></span>
+            <span class="cs-wchip">R:R mín <b>1,8</b></span>
+            <span class="cs-wsep"></span>
+            <span class="cs-wlbl">Pesos:</span>
+            <span class="cs-wchip">Funding <b>30</b></span>
+            <span class="cs-wchip">OI <b>25</b></span>
+            <span class="cs-wchip">Cascata <b>20</b></span>
+            <span class="cs-wchip">Regime <b>15</b></span>
+            <span class="cs-wchip">Estrutura <b>10</b></span>
           </div>
         </div>
-      </div>
+      </details>
 
-      <div class="cs-refbox">
-        <div class="cs-refbox-h">Sentimento &amp; camadas backend <span class="cs-flag">fora do browser</span></div>
+      <details class="cs-refbox">
+        <summary class="cs-refbox-h">Sentimento &amp; camadas backend <span class="cs-flag">fora do browser</span></summary>
         <div class="cs-refbox-b">
           <div class="cs-refbox-note"><b>Ativo aqui, ao vivo:</b> sentimento de <b>posicionamento</b> derivado da Bybit v5 — long/short account ratio, funding e OI. Para perps é frequentemente mais acionável que o sentimento social.</div>
           <div class="cs-refbox-note" style="margin-top:9px">As camadas com estado ou chaves secretas pertencem a um serviço Python e <b>não correm no browser</b>:</div>
@@ -1405,7 +1434,7 @@ html.light .mnav-btn.active { color: var(--orange); }
             <li><b>Paper trader &amp; walk-forward</b>: loop de 15 min com fees/slippage/funding, kill-switch diário −3%; go-live só após ≥60 dias de paper com expectância positiva.</li>
           </ul>
         </div>
-      </div>
+      </details>
 
     </div>
 
@@ -3246,7 +3275,9 @@ const CS_CFG = {
   minTurnover: 30e6,           // filtro de universo (USD)
   universeTop: 45,             // símbolos enriquecidos por turnover (perf browser)
   weights: { funding: 30, oi: 25, cascade: 20, regime: 15, structure: 10 },
-  scoreThreshold: 30,
+  scoreThreshold: 30,          // fasquia de score (sobreposta pela sensibilidade)
+  minConfidence: 4,            // confiança mínima /10 (sobreposta pela sensibilidade)
+  sensitivity: 'balanced',     // 'strict' | 'balanced' | 'loose'
   shortlistMax: 12,
   radarMax: 10,              // candidatos mostrados no radar quando ficam abaixo da fasquia
   fundingZ: 2,                 // |z| para H1
@@ -3268,13 +3299,28 @@ const CS_CFG = {
   capital: 10000,
   concurrency: 8,
 };
+// Presets de sensibilidade do funil: baixam/sobem a fasquia de score e confiança.
+// NÃO alteram os sinais nem inventam edge — só decidem quantos candidatos passam.
+const CS_SENS = {
+  strict:   { scoreThreshold: 30, minConfidence: 4.0, label: 'Rigoroso' },
+  balanced: { scoreThreshold: 22, minConfidence: 3.5, label: 'Equilibrado' },
+  loose:    { scoreThreshold: 16, minConfidence: 3.0, label: 'Permissivo' },
+};
+function csApplySensitivity(key) {
+  CS_CFG.sensitivity = CS_SENS[key] ? key : 'balanced';
+  const s = CS_SENS[CS_CFG.sensitivity];
+  CS_CFG.scoreThreshold = s.scoreThreshold;
+  CS_CFG.minConfidence = s.minConfidence;
+}
 try {
   const s = JSON.parse(localStorage.getItem('csCfg') || '{}');
   if (s.capital > 0) CS_CFG.capital = s.capital;
   if (s.riskPct >= CS_CFG.riskMin && s.riskPct <= CS_CFG.riskMax) CS_CFG.riskPct = s.riskPct;
+  if (s.sensitivity) CS_CFG.sensitivity = s.sensitivity;
 } catch (e) {}
+csApplySensitivity(CS_CFG.sensitivity);
 const CS_COST_RT = 2 * CS_CFG.costPerSide;   // round-trip ≈ 0,17%
-const csSaveCfg = () => { try { localStorage.setItem('csCfg', JSON.stringify({ capital: CS_CFG.capital, riskPct: CS_CFG.riskPct })); } catch (e) {} };
+const csSaveCfg = () => { try { localStorage.setItem('csCfg', JSON.stringify({ capital: CS_CFG.capital, riskPct: CS_CFG.riskPct, sensitivity: CS_CFG.sensitivity })); } catch (e) {} };
 
 let csData = null, csScanning = false, csLastScan = 0, csExpanded = null;
 
@@ -3681,7 +3727,7 @@ function csRender() {
     c.nConfl = [c.sigs.h1, c.sigs.h2, c.sigs.h3, c.sigs.st].filter(x => x.on).length;
     c.confidence = csConfidence(c.score, c.plan, c.sentiment, c.nConfl);
   });
-  const isSug = c => c.score >= CS_CFG.scoreThreshold && c.plan && !c.plan.rejected && c.confidence >= 4;
+  const isSug = c => c.score >= CS_CFG.scoreThreshold && c.plan && !c.plan.rejected && c.confidence >= CS_CFG.minConfidence;
   const sug = all.filter(isSug).sort((a, b) => b.confidence - a.confidence).slice(0, CS_CFG.shortlistMax);
   const sugSet = new Set(sug.map(c => c.symbol));
   const radar = all.filter(c => !sugSet.has(c.symbol)).slice(0, CS_CFG.radarMax);
@@ -3689,7 +3735,7 @@ function csRender() {
   let html = '';
   if (!sug.length) {
     html += `<div class="cs-nosetup"><div class="cs-nosetup-h">Sem setup de alta probabilidade neste momento</div>` +
-      `<div class="cs-nosetup-b">O universo foi avaliado mas nenhum candidato reuniu confluência suficiente (score ≥ ${CS_CFG.scoreThreshold}), R:R ≥ ${CS_CFG.minRR} e confiança ≥ 4/10 em simultâneo. A ausência de setup é um resultado válido — preferimos qualidade a quantidade. Em baixo, o radar mostra o que o mercado tinha de mais próximo e o que lhe faltou.</div></div>`;
+      `<div class="cs-nosetup-b">O universo foi avaliado mas nenhum candidato reuniu confluência suficiente (score ≥ ${CS_CFG.scoreThreshold}), R:R ≥ ${CS_CFG.minRR} e confiança ≥ ${CS_CFG.minConfidence.toFixed(1)}/10 em simultâneo. A ausência de setup é um resultado válido — preferimos qualidade a quantidade. Se quiseres ver mais candidatos, baixa a <b>Sensibilidade</b> no topo. Em baixo, o radar mostra o que o mercado tinha de mais próximo e o que lhe faltou.</div></div>`;
   } else {
     html += sug.map((c, i) => csRenderCard(c, i + 1)).join('');
   }
@@ -3800,7 +3846,7 @@ function csRadarHtml(radar, openByDefault) {
     else if (!c.plan) reason = 'sem plano de trade';
     else if (c.plan.rejectedRR) reason = `R:R ${c.plan.blendedRR.toFixed(2)} < ${CS_CFG.minRR} — sem espaço no range`;
     else if (c.plan.rejectedCost) reason = 'alvo não paga 2× os custos';
-    else reason = `confiança ${(c.confidence || 0).toFixed(1)}/10 < 4`;
+    else reason = `confiança ${(c.confidence || 0).toFixed(1)}/10 < ${CS_CFG.minConfidence.toFixed(1)}`;
     const tags = [];
     if (c.sigs.h1.on) tags.push('Funding');
     if (c.sigs.h2.on) tags.push('OI');
@@ -3822,18 +3868,40 @@ function csFmtQty(q) {
 }
 
 function csToggle(sym) { csExpanded = csExpanded === sym ? null : sym; csRender(); }
-function csCfgChange() {
+// snap=true (no blur do campo) faz o valor do input refletir o clamp 0,5–1%.
+function csCfgChange(snap) {
   const capEl = document.getElementById('cs-capital'), riskEl = document.getElementById('cs-risk');
   const cv = parseFloat(capEl && capEl.value);
   if (isFinite(cv) && cv > 0) CS_CFG.capital = cv;
   const rv = parseFloat(riskEl && riskEl.value);
   if (isFinite(rv) && rv > 0) CS_CFG.riskPct = Math.max(CS_CFG.riskMin, Math.min(CS_CFG.riskMax, rv));
+  if (snap && riskEl) riskEl.value = CS_CFG.riskPct;
   csSaveCfg();
+  csUpdateCfgNote();
   if (csData) { (csData.candidates || []).forEach(c => { c.plan = csTradePlan(c.price, c.atr, c.dir, CS_CFG.capital, c.k15, CS_CFG.riskPct, c.sigs.regime.type); }); csRender(); }
+}
+// Muda a exigência do funil. Não refaz o scan — o gate é aplicado no render.
+function csSensChange() {
+  const el = document.getElementById('cs-sens');
+  csApplySensitivity(el ? el.value : 'balanced');
+  csSaveCfg();
+  csUpdateCfgNote();
+  if (csData) csRender();
+}
+// Nota explicativa por baixo da config: risco em $ por trade + fasquia ativa.
+function csUpdateCfgNote() {
+  const el = document.getElementById('cs-cfg-note'); if (!el) return;
+  const risco = CS_CFG.capital * CS_CFG.riskPct / 100;
+  const lbl = (CS_SENS[CS_CFG.sensitivity] || CS_SENS.balanced).label;
+  const pt = x => String(x).replace('.', ',');
+  el.innerHTML = `Arriscas <b>${fmtUsd(risco)}</b> por trade (${CS_CFG.capital.toLocaleString('pt-PT')} $ × ${pt(CS_CFG.riskPct)}%). ` +
+    `Funil <b>${lbl}</b>: passam candidatos com score ≥ <b>${CS_CFG.scoreThreshold}</b> e confiança ≥ <b>${pt(CS_CFG.minConfidence.toFixed(1))}/10</b>.`;
 }
 function renderCsTab() {
   const cap = document.getElementById('cs-capital'); if (cap && !cap.value) cap.value = CS_CFG.capital;
   const rk = document.getElementById('cs-risk'); if (rk && !rk.value) rk.value = CS_CFG.riskPct;
+  const sn = document.getElementById('cs-sens'); if (sn) sn.value = CS_CFG.sensitivity;
+  csUpdateCfgNote();
   scanCs(false);
 }
 
@@ -4188,7 +4256,7 @@ function buildAgentContext() {
         ? c.confidence : csConfidence(c.score, c.plan, c.sentiment, nConfl);
     });
     const sugs = cand
-      .filter(c => c.score >= CS_CFG.scoreThreshold && c.plan && !c.plan.rejected && c._conf >= 4)
+      .filter(c => c.score >= CS_CFG.scoreThreshold && c.plan && !c.plan.rejected && c._conf >= CS_CFG.minConfidence)
       .sort((a, b) => b._conf - a._conf)
       .slice(0, CS_CFG.shortlistMax);
     const fmtSug = c => {
@@ -4212,7 +4280,7 @@ function buildAgentContext() {
     const head = `CRYPTOSCAN — sugestões do scan de há ${timeAgo(csData.ts)}`
       + (csData.universeSize ? ` · universo ${csData.universeSize}` : '')
       + (csData.btc24 != null ? ` · BTC ${csData.btc24 >= 0 ? '+' : ''}${fmt(csData.btc24, 1)}% 24h` : '')
-      + '\n(cada sugestão passou score, R:R ≥ ' + CS_CFG.minRR + ' e confiança ≥ 4/10; aprovação humana obrigatória — nada aqui é garantia)';
+      + '\n(cada sugestão passou score, R:R ≥ ' + CS_CFG.minRR + ' e confiança ≥ ' + CS_CFG.minConfidence.toFixed(1) + '/10; aprovação humana obrigatória — nada aqui é garantia)';
     if (sugs.length) L.push(head + '\n- ' + sugs.map(fmtSug).join('\n- '));
     else L.push(head + '\nSem setup de alta probabilidade neste scan (resultado válido — qualidade acima de quantidade).');
   }
@@ -4241,7 +4309,7 @@ function renderAgentCtxStrip() {
     csData.candidates.forEach(c => {
       const conf = (typeof c.confidence === 'number') ? c.confidence
         : csConfidence(c.score, c.plan, c.sentiment, [c.sigs.h1, c.sigs.h2, c.sigs.h3, c.sigs.st].filter(x => x && x.on).length);
-      if (c.plan && !c.plan.rejected && c.score >= CS_CFG.scoreThreshold && conf >= 4 && (!best || conf > best.conf)) {
+      if (c.plan && !c.plan.rejected && c.score >= CS_CFG.scoreThreshold && conf >= CS_CFG.minConfidence && (!best || conf > best.conf)) {
         best = { conf, dir: c.dir, coin: c.coin };
       }
     });
