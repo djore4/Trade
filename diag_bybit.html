@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diagnóstico de histórico — Bybit v5</title>
+<style>
+  :root { --bg:#0b0d12; --s1:#12151c; --s2:#181c25; --border:#242a36; --text:#e6e9ef; --dim:#9aa3b2; --faint:#5f6875; --orange:#f7931a; --green:#2dd4a0; --red:#f7647a; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; line-height:1.5; padding:16px; -webkit-text-size-adjust:100%; }
+  .wrap { max-width:820px; margin:0 auto; }
+  h1 { font-size:18px; margin:0 0 4px; display:flex; align-items:center; gap:8px; }
+  .sub { font-size:12.5px; color:var(--dim); margin:0 0 16px; }
+  .sub b { color:var(--text); }
+  .ctrl { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:14px; }
+  input { background:var(--s2); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:9px 11px; font-size:14px; font-family:'JetBrains Mono',monospace; text-transform:uppercase; width:150px; outline:none; }
+  input:focus { border-color:var(--orange); }
+  button { background:var(--orange); color:#11130a; border:none; border-radius:8px; padding:9px 16px; font-size:13px; font-weight:700; cursor:pointer; }
+  button:disabled { opacity:.55; cursor:default; }
+  .prog { font-size:11.5px; color:var(--faint); font-family:'JetBrains Mono',monospace; margin-left:auto; }
+  table { width:100%; border-collapse:collapse; font-size:12.5px; margin-top:6px; }
+  th,td { text-align:left; padding:9px 10px; border-bottom:1px solid var(--border); vertical-align:top; }
+  th { color:var(--faint); font-size:10px; text-transform:uppercase; letter-spacing:.06em; font-weight:600; }
+  td.mono, td .mono { font-family:'JetBrains Mono',monospace; }
+  .tag { font-size:10px; font-weight:700; padding:2px 7px; border-radius:5px; white-space:nowrap; }
+  .ok { background:rgba(45,212,160,.14); color:var(--green); }
+  .part { background:rgba(247,147,26,.14); color:var(--orange); }
+  .no { background:rgba(247,100,122,.14); color:var(--red); }
+  .grp { font-size:11px; color:var(--orange); text-transform:uppercase; letter-spacing:.06em; font-weight:700; padding:14px 10px 4px; }
+  .note { font-size:11.5px; color:var(--dim); line-height:1.6; margin-top:18px; border-top:1px dashed var(--border); padding-top:12px; }
+  .note b { color:var(--text); }
+  .depth { color:var(--text); font-weight:600; }
+  a { color:var(--orange); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🔎 Diagnóstico de histórico — Bybit v5</h1>
+  <p class="sub">Mede, a partir do <b>teu browser</b>, quão fundo vai o histórico de cada endpoint de derivados da Bybit — o que <b>é</b> e o que <b>não é</b> backtestável para o CryptoScan. Lê a Bybit pública (sem chaves). Recua por páginas até a Bybit deixar de devolver dados ou até um limite de sondagem.</p>
+  <div class="ctrl">
+    <input id="sym" value="BTCUSDT" spellcheck="false" aria-label="símbolo">
+    <button id="run" onclick="runAll()">Sondar</button>
+    <span class="prog" id="prog"></span>
+  </div>
+  <table id="out"><tbody id="rows"><tr><td colspan="5" style="color:var(--faint)">Escolhe um par e carrega em Sondar.</td></tr></tbody></table>
+  <div class="note" id="note"></div>
+</div>
+<script>
+const BYBIT = 'https://api.bybit.com';
+const MAX_PAGES = 25;              // limite de sondagem por endpoint (evita martelar)
+const GAP = 90;                    // ms entre pedidos (respeita rate limits)
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const fmtDate = ts => new Date(ts).toISOString().slice(0,10) + ' ' + new Date(ts).toISOString().slice(11,16);
+const days = ms => (ms/86400000);
+let prog = document.getElementById('prog');
+
+async function jget(url) {
+  const r = await fetch(url);
+  const d = await r.json();
+  if (d.retCode !== 0 && d.retCode !== undefined) throw new Error('retCode ' + d.retCode + ' ' + (d.retMsg||''));
+  return d.result || {};
+}
+
+// Recua no tempo por páginas, extraindo timestamps com getTs, até vazio, timestamps
+// pararem de recuar, ou MAX_PAGES. Devolve {count, earliest, hitWall, pages}.
+async function probe(label, buildUrl, getList, getTs) {
+  let end = Date.now(), earliest = null, count = 0, pages = 0, hitWall = false;
+  for (; pages < MAX_PAGES; pages++) {
+    let res; try { res = await jget(buildUrl(end)); } catch (e) { hitWall = true; break; }
+    const list = getList(res) || [];
+    if (!list.length) { hitWall = true; break; }
+    const tss = list.map(getTs).filter(x => isFinite(x));
+    if (!tss.length) { hitWall = true; break; }
+    count += list.length;
+    const minTs = Math.min(...tss);
+    if (earliest !== null && minTs >= earliest) { break; }   // deixou de recuar
+    earliest = minTs;
+    end = minTs - 1;
+    prog.textContent = `${label}: ${count} pts · até ${fmtDate(earliest)}`;
+    await sleep(GAP);
+    if (list.length < 50) { hitWall = true; break; }          // página curta = perto do fim
+  }
+  return { count, earliest, hitWall, pages };
+}
+
+function verdict(r, goodDays, partDays) {
+  if (!r || r.earliest == null || r.count === 0) return ['no', 'sem dados'];
+  const d = days(Date.now() - r.earliest);
+  const depth = d >= 400 ? `≥ ${Math.round(d)} d` : `${Math.round(d)} d`;
+  const wall = r.hitWall ? 'fim real' : 'parou no limite de sondagem';
+  if (d >= goodDays) return ['ok', `${depth} · ${wall}`];
+  if (d >= partDays) return ['part', `${depth} · ${wall}`];
+  return ['no', `${depth} · ${wall}`];
+}
+
+function row(name, gran, r, vd) {
+  const [cls, txt] = vd;
+  const earliest = r && r.earliest != null ? fmtDate(r.earliest) : '—';
+  const cnt = r ? r.count : 0;
+  return `<tr><td>${name}</td><td class="mono">${gran}</td><td class="mono">${cnt}</td><td class="mono">${earliest}</td><td><span class="tag ${cls}">${txt}</span></td></tr>`;
+}
+
+async function runAll() {
+  const sym = (document.getElementById('sym').value || 'BTCUSDT').trim().toUpperCase();
+  const btn = document.getElementById('run'); btn.disabled = true;
+  const rows = document.getElementById('rows'); rows.innerHTML = '';
+  document.getElementById('note').innerHTML = '';
+  const add = html => { rows.insertAdjacentHTML('beforeend', html); };
+  const grp = t => add(`<tr><td class="grp" colspan="5">${t}</td></tr>`);
+
+  try {
+    // ── Funding rate history (8h) ──
+    grp('Funding rate — /v5/market/funding/history');
+    const fund = await probe('funding',
+      end => `${BYBIT}/v5/market/funding/history?category=linear&symbol=${sym}&endTime=${end}&limit=200`,
+      res => res.list, x => +x.fundingRateTimestamp);
+    add(row('Funding rate', '8h', fund, verdict(fund, 90, 20)));
+
+    // ── Open interest (vários intervalos) ──
+    grp('Open interest — /v5/market/open-interest');
+    for (const it of ['5min','15min','1h','4h','1d']) {
+      const r = await probe('OI ' + it,
+        end => `${BYBIT}/v5/market/open-interest?category=linear&symbol=${sym}&intervalTime=${it}&endTime=${end}&limit=200`,
+        res => res.list, x => +x.timestamp);
+      add(row('Open interest', it, r, verdict(r, 30, 7)));
+    }
+
+    // ── Long/short account ratio ──
+    grp('Long/Short account ratio — /v5/market/account-ratio');
+    for (const p of ['15min','1h']) {
+      const r = await probe('LSR ' + p,
+        end => `${BYBIT}/v5/market/account-ratio?category=linear&symbol=${sym}&period=${p}&endTime=${end}&limit=500`,
+        res => res.list, x => +x.timestamp);
+      add(row('L/S ratio', p, r, verdict(r, 30, 7)));
+    }
+
+    // ── Recent trades (sem histórico) ──
+    grp('Trades & liquidações');
+    let tradesCnt = 0;
+    try { const t = await jget(`${BYBIT}/v5/market/recent-trade?category=linear&symbol=${sym}&limit=1000`); tradesCnt = (t.list||[]).length; } catch (e) {}
+    add(row('Recent trades (p/ CVD)', 'tick', { count: tradesCnt, earliest: null, hitWall: true }, ['no', 'só os ~1000 últimos · sem histórico']));
+    add(`<tr><td>Liquidações (cascata)</td><td class="mono">—</td><td class="mono">0</td><td class="mono">—</td><td><span class="tag no">sem REST · só websocket ao vivo</span></td></tr>`);
+
+    document.getElementById('note').innerHTML =
+      `<b>Como ler:</b> a coluna final diz até quando recuou e se atingiu o <b>fim real</b> (a Bybit devolveu vazio = parede de retenção) ou o <b>limite de sondagem</b> (${MAX_PAGES} páginas — o histórico pode ir mais fundo). ` +
+      `<span class="tag ok">verde</span> = fundo que chega para backtest; <span class="tag part">laranja</span> = só recente; <span class="tag no">vermelho</span> = não serve para histórico. ` +
+      `<br><br><b>Leitura esperada:</b> funding fundo (backtestável), OI/ratio só recentes (backtest só de janela curta), trades sem histórico e liquidações inexistentes em REST — estes dois (cascata + CVD) só via loop backend ao vivo ou agregador de terceiros.`;
+  } catch (e) {
+    document.getElementById('note').innerHTML = `<span class="tag no">Erro</span> ${e.message}. Se for CORS/bloqueio, corre a partir do mesmo domínio da app.`;
+  } finally {
+    btn.disabled = false; prog.textContent = 'concluído';
+  }
+}
+</script>
+</body>
+</html>
