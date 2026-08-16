@@ -1373,11 +1373,11 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
         <summary class="cs-refbox-h">Como funciona — hipóteses de edge + funil</summary>
         <div class="cs-refbox-b">
           <p class="cs-refbox-note" style="margin:0 0 12px">O edge vem de <b>posicionamento</b> (funding, open interest, cascatas de liquidação, long/short ratio), filtrado por regime e passado por um <b>risk engine</b>. O motor é determinístico: mesmo input → mesmo score.</p>
-          <div class="cs-hyp"><span class="cs-hyp-tag">H1</span><div><b>Funding squeeze.</b> Funding com z-score ≥ |2| (≈100 períodos) = um lado sobrelotado a pagar. Se o preço não confirma, o unwind é violento na direção oposta. z ≥ +2 com preço 24h ≤ +0,5% → <span class="sh">SHORT</span>; z ≤ −2 com preço 24h ≥ −0,5% → <span class="lo">LONG</span>.</div></div>
-          <div class="cs-hyp"><span class="cs-hyp-tag">H2</span><div><b>OI divergence.</b> OI +5% em 6h com preço a variar &lt;0,4% = combustível bidirecional (direção neutra). OI −6% em 6h = flush/exaustão → fade do movimento recente.</div></div>
-          <div class="cs-hyp"><span class="cs-hyp-tag">H3</span><div><b>Cascade fade.</b> Vela (TF15) com range &gt;2,5×ATR(14), volume &gt;3× média(20) e OI −2% em 2h = proxy de cascata → mean-reversion contra a vela. <em>Proxy REST; adapter pronto para o websocket de liquidações.</em></div></div>
+          <div class="cs-hyp"><span class="cs-hyp-tag">H1</span><div><b>Funding squeeze.</b> Funding com z-score esticado (≈100 períodos) = um lado sobrelotado a pagar. Se o preço não confirma, o unwind é violento na direção oposta. Contribui de forma <b>contínua</b> a partir de |z|≈1,3 e satura em 3,5. z &gt; 0 com preço 24h ≤ +1% → <span class="sh">SHORT</span>; z &lt; 0 com preço 24h ≥ −1% → <span class="lo">LONG</span>.</div></div>
+          <div class="cs-hyp"><span class="cs-hyp-tag">H2</span><div><b>OI divergence.</b> OI a subir (a partir de +3% em 6h) com preço quase parado (&lt;0,6%) = combustível bidirecional (direção neutra). OI a cair (a partir de −3% em 6h) = flush/exaustão → fade do movimento recente. Score em rampa até ±12%.</div></div>
+          <div class="cs-hyp"><span class="cs-hyp-tag">H3</span><div><b>Cascade fade.</b> Vela (TF15) com range &gt;1,8×ATR(14), volume &gt;2,2× média(20) e OI a cair em 2h = proxy de cascata → mean-reversion contra a vela. Score em rampa pela extensão da vela e pelo pico de volume. <em>Proxy REST; adapter pronto para o websocket de liquidações.</em></div></div>
           <div class="cs-hyp"><span class="cs-hyp-tag">H4</span><div><b>Filtro de regime (1h).</b> ADX(14) ≥ 25 → trending; largura de Bollinger no percentil &lt;15% → squeeze (penaliza tudo exceto breakout); resto → ranging. Mean-reversion só pontua bem em ranging.</div></div>
-          <div class="cs-hyp"><span class="cs-hyp-tag alt">+</span><div><b>Estrutura.</b> Posição do preço no range de 24h: ≤12% favorece LONG, ≥88% favorece SHORT. Peso baixo, melhora o R:R de entrada.</div></div>
+          <div class="cs-hyp"><span class="cs-hyp-tag alt">+</span><div><b>Estrutura.</b> Posição do preço no range de 24h: ≤20% favorece LONG, ≥80% favorece SHORT (score cresce quanto mais perto do extremo). Peso baixo, melhora o R:R de entrada.</div></div>
           <div class="cs-funnel" style="margin-top:14px">
             <div class="cs-funnel-step"><span class="cs-fn-n">1</span><div><b>Universo (~60)</b><p>USDT-perps com turnover ≥ 30M; enriquecem os top-45.</p></div></div>
             <div class="cs-funnel-step"><span class="cs-fn-n">2</span><div><b>Scoring determinístico</b><p>H1–H4 + estrutura → score composto. Mesmo input → mesmo score.</p></div></div>
@@ -3280,7 +3280,15 @@ const CS_CFG = {
   sensitivity: 'balanced',     // 'strict' | 'balanced' | 'loose'
   shortlistMax: 12,
   radarMax: 10,              // candidatos mostrados no radar quando ficam abaixo da fasquia
-  fundingZ: 2,                 // |z| para H1
+  // ── Rampas dos sinais (contínuas, sem penhascos binários) ──
+  // Cada sinal começa a contribuir em ...On e satura (~100) em ...Full.
+  fundingZ: 2,                 // (legado) referência de |z|
+  fundingZOn: 1.3, fundingZFull: 3.5,       // H1 — funding squeeze
+  fundingChgGate: 1.0,         // H1 — |variação 24h| máx para o fade ainda valer (%)
+  oiOn: 3, oiFull: 12,         // H2 — |ΔOI 6h| (%)
+  oiPxGate: 0.6,               // H2 — |Δpreço 6h| máx p/ acumulação bidirecional (%)
+  cascadeRangeOn: 1.8, cascadeVolOn: 2.2, cascadeOiDrop: -1,  // H3 — cascata
+  structOn: 20,                // Estrutura — dist. ao extremo do range 24h (%)
   adxTrend: 25,
   bbSqueezePct: 15,            // percentil de largura BB → squeeze
   costPerSide: 0.055 + 0.030,  // % (fee taker + slippage) por lado
@@ -3396,15 +3404,18 @@ async function csFetchLSR(sym) {
 }
 
 // ── Sinais (cada um: { score 0-100, dir -1|0|+1, ev, on }) ──
-// H1 — Funding squeeze: funding extremo (|z|≥2) sem confirmação de preço → fade.
+// Rampa linear: mapeia x∈[on,full] → [15,100]; abaixo de `on` devolve 0.
+const csRamp = (x, on, full) => x < on ? 0 : Math.min(100, 15 + (Math.min(x, full) - on) / (full - on) * 85);
+// H1 — Funding squeeze: funding esticado (|z|) sem confirmação de preço → fade.
+// Contínuo: começa a contar em |z|≈1,3 e satura em 3,5 (antes era um degrau em 2).
 function csH1(fund, chg24) {
   if (!fund || fund.length < 20) return { score: 0, dir: 0, ev: 'Sem histórico de funding.', on: false };
   const cur = fund[fund.length - 1], hist = fund.slice(0, -1), m = csMean(hist), sd = csStd(hist);
-  const z = sd > 0 ? (cur - m) / sd : 0;
+  const z = sd > 0 ? (cur - m) / sd : 0, g = CS_CFG.fundingChgGate;
   let dir = 0, on = false;
-  if (z >= CS_CFG.fundingZ && chg24 <= 0.5) { dir = -1; on = true; }        // crowd long vulnerável → SHORT
-  else if (z <= -CS_CFG.fundingZ && chg24 >= -0.5) { dir = 1; on = true; }  // crowd short vulnerável → LONG
-  const score = on ? Math.max(45, Math.min(100, 45 + (Math.abs(z) - CS_CFG.fundingZ) * 20)) : 0;
+  if (z >= CS_CFG.fundingZOn && chg24 <= g) { dir = -1; on = true; }        // crowd long vulnerável → SHORT
+  else if (z <= -CS_CFG.fundingZOn && chg24 >= -g) { dir = 1; on = true; }  // crowd short vulnerável → LONG
+  const score = on ? csRamp(Math.abs(z), CS_CFG.fundingZOn, CS_CFG.fundingZFull) : 0;
   const ev = `Funding ${cur.toFixed(4)}%/8h · z=${z.toFixed(2)} (${cur >= 0 ? 'longs' : 'shorts'} pagam) · preço 24h ${chg24 >= 0 ? '+' : ''}${chg24.toFixed(2)}%. ` +
     (on ? (dir < 0 ? 'Crowd long sobrelotado sem confirmação → fade SHORT.' : 'Crowd short sobrelotado sem confirmação → fade LONG.') : 'Sem squeeze qualificado.');
   return { score, dir, ev, on };
@@ -3415,11 +3426,11 @@ function csH2(oi, closes15) {
   const oiNow = oi[oi.length - 1], oi6 = oi[oi.length - 25], oiChg = (oiNow - oi6) / oi6 * 100;
   const pxNow = closes15[closes15.length - 1], px6 = closes15[closes15.length - 25], pxChg = (pxNow - px6) / px6 * 100;
   let dir = 0, on = false, score = 0, ev;
-  if (oiChg > 5 && Math.abs(pxChg) < 0.4) {
-    on = true; dir = 0; score = Math.min(100, 55 + (oiChg - 5) * 3);
+  if (oiChg > CS_CFG.oiOn && Math.abs(pxChg) < CS_CFG.oiPxGate) {
+    on = true; dir = 0; score = csRamp(oiChg, CS_CFG.oiOn, CS_CFG.oiFull);
     ev = `OI +${oiChg.toFixed(1)}% em 6h com preço ${pxChg >= 0 ? '+' : ''}${pxChg.toFixed(2)}% (plano) → combustível bidirecional; direção resolvida pelos outros sinais.`;
-  } else if (oiChg < -6) {
-    on = true; dir = pxChg > 0 ? -1 : 1; score = Math.min(100, 55 + (Math.abs(oiChg) - 6) * 3);
+  } else if (oiChg < -CS_CFG.oiOn) {
+    on = true; dir = pxChg > 0 ? -1 : 1; score = csRamp(Math.abs(oiChg), CS_CFG.oiOn, CS_CFG.oiFull);
     ev = `OI ${oiChg.toFixed(1)}% em 6h = flush/exaustão. Movimento recente ${pxChg >= 0 ? '+' : ''}${pxChg.toFixed(2)}% → fade ${dir < 0 ? 'SHORT' : 'LONG'}.`;
   } else {
     ev = `OI ${oiChg >= 0 ? '+' : ''}${oiChg.toFixed(1)}% em 6h · preço ${pxChg >= 0 ? '+' : ''}${pxChg.toFixed(2)}%. Sem divergência qualificada.`;
@@ -3435,9 +3446,15 @@ function csH3(k, oi) {
   const volMult = volAvg > 0 ? vols[i] / volAvg : 0;
   let oi2h = null;
   if (oi && oi.length >= 9) { const a = oi[oi.length - 1], b = oi[oi.length - 9]; oi2h = (a - b) / b * 100; }
-  const on = atr > 0 && range > 2.5 * atr && volMult > 3 && oi2h != null && oi2h < -2;
+  const rangeAtr = atr > 0 ? range / atr : 0;
+  const on = rangeAtr > CS_CFG.cascadeRangeOn && volMult > CS_CFG.cascadeVolOn && oi2h != null && oi2h < CS_CFG.cascadeOiDrop;
   let dir = 0, score = 0;
-  if (on) { dir = closes[i] < opens[i] ? 1 : -1; score = Math.min(100, 60 + (volMult - 3) * 6); }
+  if (on) {
+    dir = closes[i] < opens[i] ? 1 : -1;
+    // Score = a força mais convincente entre a extensão da vela e o pico de volume.
+    score = Math.max(csRamp(rangeAtr, CS_CFG.cascadeRangeOn, CS_CFG.cascadeRangeOn + 2.4),
+                     csRamp(volMult, CS_CFG.cascadeVolOn, CS_CFG.cascadeVolOn + 3));
+  }
   const ev = `Range ${atr > 0 ? (range / atr).toFixed(1) : '—'}×ATR · vol ${volMult.toFixed(1)}× · OI 2h ${oi2h == null ? '—' : (oi2h >= 0 ? '+' : '') + oi2h.toFixed(1) + '%'}. ` +
     (on ? `Proxy de cascata → mean-reversion ${dir > 0 ? 'LONG' : 'SHORT'}.` : 'Sem cascata qualificada.');
   return { score, dir, ev, on };
@@ -3447,9 +3464,10 @@ function csStructure(closes15) {
   if (closes15.length < 96) return { score: 0, dir: 0, ev: 'Sem range 24h.', on: false };
   const w = closes15.slice(-96), hi = Math.max(...w), lo = Math.min(...w), px = closes15[closes15.length - 1];
   const pos = hi > lo ? (px - lo) / (hi - lo) * 100 : 50;
+  const k = CS_CFG.structOn;   // largura das zonas de extremo (ex.: 20% de cada lado)
   let dir = 0, on = false, score = 0;
-  if (pos <= 12) { dir = 1; on = true; score = 100 - pos * 3; }
-  else if (pos >= 88) { dir = -1; on = true; score = 60 + (pos - 88) * 3; }
+  if (pos <= k) { dir = 1; on = true; score = 20 + (k - pos) / k * 80; }        // perto do fundo → LONG
+  else if (pos >= 100 - k) { dir = -1; on = true; score = 20 + (pos - (100 - k)) / k * 80; }  // perto do topo → SHORT
   score = Math.max(0, Math.min(100, score));
   const ev = `Preço a ${pos.toFixed(0)}% do range 24h. ` + (on ? (dir > 0 ? 'Perto do fundo → favorece LONG.' : 'Perto do topo → favorece SHORT.') : 'Meio do range.');
   return { score, dir, ev, on };
