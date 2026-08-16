@@ -1378,9 +1378,12 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
           <div class="cs-hyp"><span class="cs-hyp-tag">H3</span><div><b>Cascade fade.</b> Vela (TF15) com range &gt;1,8×ATR(14), volume &gt;2,2× média(20) e OI a cair em 2h = proxy de cascata → mean-reversion contra a vela. Score em rampa pela extensão da vela e pelo pico de volume. <em>Proxy REST; adapter pronto para o websocket de liquidações.</em></div></div>
           <div class="cs-hyp"><span class="cs-hyp-tag">H4</span><div><b>Filtro de regime (1h).</b> ADX(14) ≥ 25 → trending; largura de Bollinger no percentil &lt;15% → squeeze (penaliza tudo exceto breakout); resto → ranging. Mean-reversion só pontua bem em ranging.</div></div>
           <div class="cs-hyp"><span class="cs-hyp-tag alt">+</span><div><b>Estrutura.</b> Posição do preço no range de 24h: ≤20% favorece LONG, ≥80% favorece SHORT (score cresce quanto mais perto do extremo). Peso baixo, melhora o R:R de entrada.</div></div>
+          <div class="cs-hyp"><span class="cs-hyp-tag">V</span><div><b>VWAP (reversão).</b> Desvio do preço face ao VWAP das últimas 24h, medido em ATRs. Esticado acima (≥1,5 ATR) → <span class="sh">reversão SHORT</span>; esticado abaixo → <span class="lo">reversão LONG</span>. Clássico de day trade.</div></div>
+          <div class="cs-hyp"><span class="cs-hyp-tag">T</span><div><b>Thrust (momentum).</b> Vela de impulso com volume &gt;1,8× a média e momentum de 3 velas na mesma direção = arranque de movimento. Sinal de <b>continuação</b> (acompanha, não faz fade).</div></div>
+          <div class="cs-hyp"><span class="cs-hyp-tag">B</span><div><b>Breakout (range).</b> Rompimento do máx/mín das últimas 48 velas (12h), medido em ATRs além do range. Gatilho intradiário de continuação.</div></div>
           <div class="cs-funnel" style="margin-top:14px">
             <div class="cs-funnel-step"><span class="cs-fn-n">1</span><div><b>Universo (~60)</b><p>USDT-perps com turnover ≥ 30M; enriquecem os top-45.</p></div></div>
-            <div class="cs-funnel-step"><span class="cs-fn-n">2</span><div><b>Scoring determinístico</b><p>H1–H4 + estrutura → score composto. Mesmo input → mesmo score.</p></div></div>
+            <div class="cs-funnel-step"><span class="cs-fn-n">2</span><div><b>Scoring determinístico</b><p>Posicionamento (H1–H3) + intradiários (VWAP, thrust, breakout) + estrutura, filtrados pelo regime → score composto. Mesmo input → mesmo score.</p></div></div>
             <div class="cs-funnel-step"><span class="cs-fn-n">3</span><div><b>Risk engine</b><p>Stop técnico+risco, TP1/2/3, sizing USDT+unidades, cap 1,8×, rejeição por custos/R:R.</p></div></div>
             <div class="cs-funnel-step"><span class="cs-fn-n">4</span><div><b>Sugestão + confiança</b><p>Sentimento de posicionamento, confluências a favor/contra, score X/10, urgência e validade.</p></div></div>
           </div>
@@ -1413,11 +1416,14 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
             <span class="cs-wchip">R:R mín <b>1,8</b></span>
             <span class="cs-wsep"></span>
             <span class="cs-wlbl">Pesos:</span>
-            <span class="cs-wchip">Funding <b>30</b></span>
-            <span class="cs-wchip">OI <b>25</b></span>
-            <span class="cs-wchip">Cascata <b>20</b></span>
+            <span class="cs-wchip">Funding <b>20</b></span>
+            <span class="cs-wchip">OI <b>15</b></span>
+            <span class="cs-wchip">Cascata <b>12</b></span>
+            <span class="cs-wchip">VWAP <b>12</b></span>
+            <span class="cs-wchip">Thrust <b>10</b></span>
+            <span class="cs-wchip">Breakout <b>10</b></span>
             <span class="cs-wchip">Regime <b>15</b></span>
-            <span class="cs-wchip">Estrutura <b>10</b></span>
+            <span class="cs-wchip">Estrutura <b>6</b></span>
           </div>
         </div>
       </details>
@@ -3274,7 +3280,7 @@ async function fetchLiquidations() {
 const CS_CFG = {
   minTurnover: 30e6,           // filtro de universo (USD)
   universeTop: 45,             // símbolos enriquecidos por turnover (perf browser)
-  weights: { funding: 30, oi: 25, cascade: 20, regime: 15, structure: 10 },
+  weights: { funding: 20, oi: 15, cascade: 12, vwap: 12, thrust: 10, breakout: 10, regime: 15, structure: 6 },
   scoreThreshold: 30,          // fasquia de score (sobreposta pela sensibilidade)
   minConfidence: 4,            // confiança mínima /10 (sobreposta pela sensibilidade)
   sensitivity: 'balanced',     // 'strict' | 'balanced' | 'loose'
@@ -3289,6 +3295,10 @@ const CS_CFG = {
   oiPxGate: 0.6,               // H2 — |Δpreço 6h| máx p/ acumulação bidirecional (%)
   cascadeRangeOn: 1.8, cascadeVolOn: 2.2, cascadeOiDrop: -1,  // H3 — cascata
   structOn: 20,                // Estrutura — dist. ao extremo do range 24h (%)
+  // ── Sinais intradiários adicionais (só velas de 15m, sem chamadas novas) ──
+  vwapDevOn: 1.5, vwapDevFull: 4,           // VWAP — desvio face ao VWAP 24h, em ATRs
+  thrustVolOn: 1.8, thrustMomOn: 1.0,       // Thrust — volume× e momentum de 3 velas (%)
+  breakoutBars: 48, breakoutOn: 0.1, breakoutFull: 1.5,  // Breakout — range de N velas; extensão em ATR
   adxTrend: 25,
   bbSqueezePct: 15,            // percentil de largura BB → squeeze
   costPerSide: 0.055 + 0.030,  // % (fee taker + slippage) por lado
@@ -3472,6 +3482,57 @@ function csStructure(closes15) {
   const ev = `Preço a ${pos.toFixed(0)}% do range 24h. ` + (on ? (dir > 0 ? 'Perto do fundo → favorece LONG.' : 'Perto do topo → favorece SHORT.') : 'Meio do range.');
   return { score, dir, ev, on };
 }
+// VWAP — desvio ao VWAP das últimas 24h (96 velas TF15), medido em ATRs.
+// Esticado acima → reversão SHORT; esticado abaixo → reversão LONG (mean-reversion).
+function csVWAP(k) {
+  const { highs, lows, closes, vols } = k, n = closes.length;
+  if (n < 24) return { score: 0, dir: 0, ev: 'Sem dados p/ VWAP.', on: false };
+  const w = Math.min(96, n);
+  let pv = 0, vv = 0;
+  for (let i = n - w; i < n; i++) { const tp = (highs[i] + lows[i] + closes[i]) / 3; pv += tp * vols[i]; vv += vols[i]; }
+  const px = closes[n - 1], vwap = vv > 0 ? pv / vv : px;
+  const atr = csATR(highs, lows, closes, 14) || px * 0.005;
+  const devAtr = atr > 0 ? (px - vwap) / atr : 0;
+  let dir = 0, on = false;
+  if (devAtr >= CS_CFG.vwapDevOn) { dir = -1; on = true; }
+  else if (devAtr <= -CS_CFG.vwapDevOn) { dir = 1; on = true; }
+  const score = on ? csRamp(Math.abs(devAtr), CS_CFG.vwapDevOn, CS_CFG.vwapDevFull) : 0;
+  const ev = `Preço ${devAtr >= 0 ? '+' : ''}${devAtr.toFixed(2)} ATR do VWAP(24h). ` +
+    (on ? (dir < 0 ? 'Esticado acima → reversão SHORT.' : 'Esticado abaixo → reversão LONG.') : 'Perto do VWAP.');
+  return { score, dir, ev, on };
+}
+// Thrust — vela de impulso (corpo + volume acima da média) alinhada com o momentum
+// de 3 velas (~45 min). Sinal de continuação: acompanha o arranque do movimento.
+function csThrust(k) {
+  const { opens, highs, lows, closes, vols } = k, n = closes.length;
+  if (n < 25) return { score: 0, dir: 0, ev: 'Sem dados p/ thrust.', on: false };
+  const i = n - 1, volAvg = csMean(vols.slice(-21, -1)), volMult = volAvg > 0 ? vols[i] / volAvg : 0;
+  const body = closes[i] - opens[i], mom3 = closes[i - 3] ? (closes[i] - closes[i - 3]) / closes[i - 3] * 100 : 0;
+  const up = body > 0 && mom3 > 0, dn = body < 0 && mom3 < 0;
+  let dir = 0, on = false;
+  if ((up || dn) && volMult > CS_CFG.thrustVolOn) { dir = up ? 1 : -1; on = true; }
+  const score = on ? Math.max(csRamp(volMult, CS_CFG.thrustVolOn, CS_CFG.thrustVolOn + 3),
+                              csRamp(Math.abs(mom3), CS_CFG.thrustMomOn, CS_CFG.thrustMomOn + 3)) : 0;
+  const ev = `Vela ${body >= 0 ? 'verde' : 'vermelha'} · vol ${volMult.toFixed(1)}× · momentum 3v ${mom3 >= 0 ? '+' : ''}${mom3.toFixed(2)}%. ` +
+    (on ? `Impulso ${dir > 0 ? 'LONG' : 'SHORT'} com volume.` : 'Sem impulso qualificado.');
+  return { score, dir, ev, on };
+}
+// Breakout — rompimento do máx/mín das últimas N velas (exclui a vela atual),
+// medido em ATRs além do range. Sinal de continuação intradiário clássico.
+function csBreakout(k) {
+  const { highs, lows, closes } = k, n = closes.length, N = CS_CFG.breakoutBars;
+  if (n < N + 2) return { score: 0, dir: 0, ev: 'Sem range p/ breakout.', on: false };
+  const px = closes[n - 1];
+  const priorHi = Math.max(...highs.slice(n - N - 1, n - 1)), priorLo = Math.min(...lows.slice(n - N - 1, n - 1));
+  const atr = csATR(highs, lows, closes, 14) || px * 0.005;
+  let dir = 0, on = false, mag = 0;
+  if (px > priorHi) { dir = 1; on = true; mag = atr > 0 ? (px - priorHi) / atr : 0; }
+  else if (px < priorLo) { dir = -1; on = true; mag = atr > 0 ? (priorLo - px) / atr : 0; }
+  const score = on ? csRamp(mag, CS_CFG.breakoutOn, CS_CFG.breakoutFull) : 0;
+  const ev = `Range ${N}v: máx ${fmtPx(priorHi)} / mín ${fmtPx(priorLo)}. ` +
+    (on ? `Rompimento ${dir > 0 ? 'LONG' : 'SHORT'} (${mag.toFixed(2)} ATR além).` : 'Dentro do range.');
+  return { score, dir, ev, on };
+}
 // H4 — Regime (TF 1h): trending / ranging / squeeze.
 function csRegime(k60) {
   const { highs, lows, closes } = k60;
@@ -3502,6 +3563,9 @@ function csComposite(sigs, regime) {
     { k: 'funding',   ...sigs.h1, w: W.funding },
     { k: 'oi',        ...sigs.h2, w: W.oi },
     { k: 'cascade',   ...sigs.h3, w: W.cascade },
+    { k: 'vwap',      ...sigs.vwap, w: W.vwap },
+    { k: 'thrust',    ...sigs.thrust, w: W.thrust },
+    { k: 'breakout',  ...sigs.brk, w: W.breakout },
     { k: 'structure', ...sigs.st, w: W.structure },
   ];
   let vote = 0;
@@ -3514,7 +3578,8 @@ function csComposite(sigs, regime) {
     else if (p.dir === finalDir) score += contrib;     // alinhado
     else score -= contrib * 0.7;                       // contraditório subtrai 70%
   }
-  const mrOn = sigs.h3.dir !== 0 || sigs.st.dir !== 0;
+  // Mean-reversion ativa (cascata, estrutura ou VWAP esticado) favorece regime ranging.
+  const mrOn = sigs.h3.dir !== 0 || sigs.st.dir !== 0 || (sigs.vwap && sigs.vwap.dir !== 0);
   const fit = csRegimeFit(regime, finalDir, mrOn);
   score += fit * W.regime / 100;
   return { finalDir, score: Math.max(0, score), fit };
@@ -3615,8 +3680,11 @@ function csConfidence(score, plan, sentiment, nConfl) {
 function csSetupType(c) {
   const s = c.sigs;
   if (s.h3.on) return 'Cascade Fade · Reversal';
+  if (s.brk && s.brk.on) return 'Breakout · Continuation';
+  if (s.thrust && s.thrust.on) return 'Volume Thrust · Momentum';
   if (s.h1.on) return 'Funding Squeeze · Reversal';
   if (s.h2.on && s.h2.dir !== 0) return 'OI Flush · Fade';
+  if (s.vwap && s.vwap.on) return 'VWAP Reversion';
   const reg = s.regime.type;
   if (reg === 'squeeze') return 'Squeeze · pré-breakout';
   if ((reg === 'trend_up' && c.dir > 0) || (reg === 'trend_down' && c.dir < 0)) return 'Trend Continuation';
@@ -3636,6 +3704,9 @@ function csConfluences(c, sentiment) {
   add(s.h1, 'H1 Funding squeeze');
   add(s.h2, 'H2 OI divergence');
   add(s.h3, 'H3 Cascata → mean-reversion');
+  add(s.vwap, 'VWAP esticado → reversão');
+  add(s.thrust, 'Thrust de volume + momentum');
+  add(s.brk, 'Breakout do range');
   add(s.st, 'Estrutura — extremo do range 24h');
   const reg = CS_REG_LABEL[s.regime.type] || s.regime.type;
   if (c.fit >= 70) pro.push(`Regime ${reg} favorece (fit ${c.fit.toFixed(0)})`);
@@ -3655,13 +3726,15 @@ function csConfluences(c, sentiment) {
 // Nível de urgência e janela de validade da sugestão.
 function csUrgency(c) {
   const s = c.sigs;
-  if (s.h3.on) return 'Alta';
+  if (s.h3.on || (s.brk && s.brk.on) || (s.thrust && s.thrust.on)) return 'Alta';  // gatilhos rápidos
   if (c.score >= 65 && (s.h1.on || s.h2.on)) return 'Alta';
   if (c.score >= 50) return 'Média';
   return 'Baixa';
 }
 function csValidity(c) {
-  if (c.sigs.h3.on) return 'próximas 2–6h';
+  const s = c.sigs;
+  if (s.h3.on || (s.thrust && s.thrust.on)) return 'próximas 2–6h';
+  if (s.brk && s.brk.on) return 'próximas 3–8h';
   const reg = c.sigs.regime.type;
   if (reg === 'trend_up' || reg === 'trend_down') return 'próximas 12–24h';
   return 'próximas 4–12h';
@@ -3707,7 +3780,8 @@ async function scanCs(force) {
         ]);
         c.atr = csATR(k15.highs, k15.lows, k15.closes, 14);
         c.k15 = { closes: k15.closes, highs: k15.highs, lows: k15.lows };   // guardado p/ recomputar o plano ao mudar config
-        const sigs = { h1: csH1(fund, c.chg24), h2: csH2(oi, k15.closes), h3: csH3(k15, oi), st: csStructure(k15.closes) };
+        const sigs = { h1: csH1(fund, c.chg24), h2: csH2(oi, k15.closes), h3: csH3(k15, oi), st: csStructure(k15.closes),
+                       vwap: csVWAP(k15), thrust: csThrust(k15), brk: csBreakout(k15) };
         const regime = csRegime(k60);
         const comp = csComposite(sigs, regime);
         c.sigs = { ...sigs, regime }; c.dir = comp.finalDir; c.score = comp.score; c.fit = comp.fit;
@@ -3742,7 +3816,7 @@ function csRender() {
   const listEl = document.getElementById('cs-list'); if (!listEl) return;
   const all = csData.candidates || [];
   all.forEach(c => {
-    c.nConfl = [c.sigs.h1, c.sigs.h2, c.sigs.h3, c.sigs.st].filter(x => x.on).length;
+    c.nConfl = [c.sigs.h1, c.sigs.h2, c.sigs.h3, c.sigs.vwap, c.sigs.thrust, c.sigs.brk, c.sigs.st].filter(x => x.on).length;
     c.confidence = csConfidence(c.score, c.plan, c.sentiment, c.nConfl);
   });
   const isSug = c => c.score >= CS_CFG.scoreThreshold && c.plan && !c.plan.rejected && c.confidence >= CS_CFG.minConfidence;
@@ -3847,6 +3921,9 @@ function csRenderEvidence(c) {
       ${card('H1', 'Funding squeeze', s.h1)}
       ${card('H2', 'OI divergence', s.h2)}
       ${card('H3', 'Cascade fade', s.h3)}
+      ${card('V', 'VWAP · reversão', s.vwap)}
+      ${card('T', 'Thrust · momentum', s.thrust)}
+      ${card('B', 'Breakout · range', s.brk)}
       ${card('+', 'Estrutura', s.st)}
       ${regCard}
     </div>
@@ -3869,6 +3946,9 @@ function csRadarHtml(radar, openByDefault) {
     if (c.sigs.h1.on) tags.push('Funding');
     if (c.sigs.h2.on) tags.push('OI');
     if (c.sigs.h3.on) tags.push('Cascata');
+    if (c.sigs.vwap && c.sigs.vwap.on) tags.push('VWAP');
+    if (c.sigs.thrust && c.sigs.thrust.on) tags.push('Thrust');
+    if (c.sigs.brk && c.sigs.brk.on) tags.push('Breakout');
     if (c.sigs.st.on) tags.push('Estrutura');
     const tagStr = tags.length ? tags.join(' · ') : CS_REG_LABEL[c.sigs.regime.type] || '—';
     return `<div class="cs-desc-row"><span class="cs-desc-sym">${c.coin}</span><span class="cs-desc-side ${c.dir > 0 ? 'long' : c.dir < 0 ? 'short' : ''}">${side}</span><span class="cs-desc-score">${tagStr}</span><span class="cs-desc-reason">${reason}</span></div>`;
@@ -4268,7 +4348,7 @@ function buildAgentContext() {
     });
     const cand = csData.candidates.slice();
     cand.forEach(c => {
-      const nConfl = [c.sigs.h1, c.sigs.h2, c.sigs.h3, c.sigs.st].filter(x => x && x.on).length;
+      const nConfl = [c.sigs.h1, c.sigs.h2, c.sigs.h3, c.sigs.vwap, c.sigs.thrust, c.sigs.brk, c.sigs.st].filter(x => x && x.on).length;
       c._nConfl = nConfl;
       c._conf = (typeof c.confidence === 'number')
         ? c.confidence : csConfidence(c.score, c.plan, c.sentiment, nConfl);
@@ -4326,7 +4406,7 @@ function renderAgentCtxStrip() {
     let best = null;
     csData.candidates.forEach(c => {
       const conf = (typeof c.confidence === 'number') ? c.confidence
-        : csConfidence(c.score, c.plan, c.sentiment, [c.sigs.h1, c.sigs.h2, c.sigs.h3, c.sigs.st].filter(x => x && x.on).length);
+        : csConfidence(c.score, c.plan, c.sentiment, [c.sigs.h1, c.sigs.h2, c.sigs.h3, c.sigs.vwap, c.sigs.thrust, c.sigs.brk, c.sigs.st].filter(x => x && x.on).length);
       if (c.plan && !c.plan.rejected && c.score >= CS_CFG.scoreThreshold && conf >= CS_CFG.minConfidence && (!best || conf > best.conf)) {
         best = { conf, dir: c.dir, coin: c.coin };
       }
