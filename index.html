@@ -1444,6 +1444,36 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
 
     </div>
 
+    <!-- Backtest do funil (ponto 2) — mede a expectância da versão viva sobre histórico -->
+    <details class="cs-valbox">
+      <summary style="cursor:pointer;list-style:none;font-size:12.5px;font-weight:700;color:var(--text);padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--s1);margin-bottom:12px;display:flex;align-items:center;gap:8px">📊 Backtest do funil — expectância líquida + curva de calibração por score</summary>
+      <div class="cs-valbox-body">
+        <div class="val-card">
+          <div class="val-head">
+            <div>
+              <div class="val-title"><span class="val-dot"></span>Backtest do funil ao vivo — sinais de preço</div>
+              <div class="val-sub">Reproduz o <b>mesmo funil</b> (score composto + risk engine + confiança) vela a vela sobre 1000 velas históricas e mede a <b>expectância líquida de custos</b>, com split in-sample/out-of-sample e uma <b>curva de calibração por escalão de score</b>. Só sinais de preço (VWAP, thrust, breakout, estrutura, regime); funding/OI entram neutros — precisam de histórico backend.</div>
+            </div>
+            <div class="val-ctrl">
+              <input id="bt-symbol" value="BTCUSDT" spellcheck="false" aria-label="símbolo">
+              <select id="bt-tf" aria-label="timeframe">
+                <option value="15">15m</option>
+                <option value="5">5m</option>
+                <option value="60">1h</option>
+              </select>
+              <button class="val-run" id="bt-run" onclick="csRunBacktest()">
+                <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M1 13V1M1 13h12M3 10l3-4 2 2 4-5" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span>Correr backtest</span>
+              </button>
+            </div>
+          </div>
+          <div class="val-body" id="bt-body">
+            <div class="val-empty">Escolhe par e timeframe e corre o backtest. Puxa 1000 velas e reproduz o funil em cada uma — demora alguns segundos.</div>
+          </div>
+        </div>
+      </div>
+    </details>
+
     <!-- Validação honesta — movida do antigo separador Trade, colapsada por omissão -->
     <details class="cs-valbox">
       <summary style="cursor:pointer;list-style:none;font-size:12.5px;font-weight:700;color:var(--text);padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--s1);margin-bottom:12px;display:flex;align-items:center;gap:8px">🔬 Validação honesta (backtest OOS) — testar se um sinal tem vantagem real depois de custos</summary>
@@ -4001,6 +4031,100 @@ function renderCsTab() {
   const sn = document.getElementById('cs-sens'); if (sn) sn.value = CS_CFG.sensitivity;
   csUpdateCfgNote();
   scanCs(false);
+}
+
+// ── Backtest do funil (ponto 2) ──────────────────────────────────────────────
+// Reproduz o MESMO funil vivo (csComposite + csTradePlan + csConfidence) vela a
+// vela sobre histórico. Mede a expectância líquida de custos e uma curva de
+// calibração por escalão de score — para afinar limiares com dados, não intuição.
+// Só usa sinais de PREÇO (VWAP, thrust, breakout, estrutura, regime): o funding/OI
+// a 15m não têm histórico exposto ao browser, por isso entram como neutros.
+const CS_BT_OFF = { score: 0, dir: 0, on: false, ev: '' };
+function csBacktestRun(k, cfg) {
+  cfg = cfg || {};
+  const scoreMin = cfg.scoreThreshold != null ? cfg.scoreThreshold : CS_CFG.scoreThreshold;
+  const maxHold = cfg.maxHold != null ? cfg.maxHold : 96;
+  const warmup = 130, n = k.closes.length, trades = [];
+  const tail = (end, len) => {
+    const s = Math.max(0, end - len);
+    return { opens: k.opens.slice(s, end), highs: k.highs.slice(s, end), lows: k.lows.slice(s, end), closes: k.closes.slice(s, end), vols: k.vols.slice(s, end) };
+  };
+  for (let i = warmup; i < n - 1; i++) {
+    const wSig = tail(i + 1, 200), wReg = tail(i + 1, 120);
+    const price = k.closes[i], atr = csATR(wSig.highs, wSig.lows, wSig.closes, 14);
+    if (!atr) continue;
+    const sigs = { h1: CS_BT_OFF, h2: CS_BT_OFF, h3: CS_BT_OFF, vwap: csVWAP(wSig), thrust: csThrust(wSig), brk: csBreakout(wSig), st: csStructure(wSig.closes) };
+    const regime = csRegime(wReg), comp = csComposite(sigs, regime);
+    if (!comp.finalDir || comp.score < scoreMin) continue;
+    const plan = csTradePlan(price, atr, comp.finalDir, CS_CFG.capital, wSig, CS_CFG.riskPct, regime.type);
+    if (!plan || plan.rejected) continue;
+    // Gate só por score + plano válido (núcleo determinístico). A confiança é
+    // calibrada para o funil COMPLETO (inclui funding/OI, ausentes aqui), por isso
+    // seria injusto filtrar por ela — regista-se apenas para referência.
+    const nConfl = [sigs.vwap, sigs.thrust, sigs.brk, sigs.st].filter(x => x.on).length;
+    const conf = csConfidence(comp.score, plan, null, nConfl);
+    const dir = comp.finalDir, entry = k.opens[i + 1], stop = plan.stop, tp1 = plan.tps[0].price;
+    const stopFrac = Math.abs(entry - stop) / entry || 1e-9, costR = (CS_COST_RT / 100) / stopFrac;
+    let R = null; const end = Math.min(n - 1, i + 1 + maxHold);
+    for (let j = i + 1; j <= end; j++) {          // 1.ª toque: stop verificado antes do TP1 (conservador)
+      const hi = k.highs[j], lo = k.lows[j];
+      if (dir > 0) { if (lo <= stop) { R = -1; break; } if (hi >= tp1) { R = plan.tps[0].r; break; } }
+      else { if (hi >= stop) { R = -1; break; } if (lo <= tp1) { R = plan.tps[0].r; break; } }
+    }
+    if (R === null) { const exit = k.closes[end]; R = dir > 0 ? (exit - entry) / (entry - stop) : (entry - exit) / (stop - entry); }
+    trades.push({ dir, score: comp.score, conf, R: R - costR });
+  }
+  return csBacktestStats(trades);
+}
+function csBacktestAgg(ts) {
+  if (!ts.length) return { n: 0, win: null, exp: null, pf: null };
+  const gross = ts.filter(t => t.R > 0).reduce((s, t) => s + t.R, 0);
+  const loss = -ts.filter(t => t.R < 0).reduce((s, t) => s + t.R, 0);
+  return { n: ts.length, win: ts.filter(t => t.R > 0).length / ts.length, exp: ts.reduce((s, t) => s + t.R, 0) / ts.length, pf: loss > 0 ? gross / loss : Infinity };
+}
+function csBacktestStats(trades) {
+  const cut = Math.floor(trades.length * 0.6);
+  const bDefs = [[0, 25], [25, 30], [30, 40], [40, 55], [55, 999]];
+  const buckets = bDefs.map(([lo, hi]) => ({ lo, hi, ...csBacktestAgg(trades.filter(t => t.score >= lo && t.score < hi)) }));
+  return { all: csBacktestAgg(trades), is: csBacktestAgg(trades.slice(0, cut)), oos: csBacktestAgg(trades.slice(cut)), total: trades.length, buckets };
+}
+let csBtRunning = false;
+async function csRunBacktest() {
+  if (csBtRunning) return;
+  const body = document.getElementById('bt-body'), btn = document.getElementById('bt-run');
+  const symbol = (document.getElementById('bt-symbol').value || 'BTCUSDT').trim().toUpperCase();
+  const tf = document.getElementById('bt-tf').value;
+  csBtRunning = true; if (btn) btn.disabled = true;
+  body.innerHTML = `<div class="val-empty">A puxar 1000 velas de <b>${symbol} · ${VAL_TF_LABEL[tf] || tf}</b> e a reproduzir o funil vela a vela…</div>`;
+  try {
+    const k = await csFetchKline(symbol, tf, 1000);
+    if (!k.closes || k.closes.length < 200) { body.innerHTML = `<div class="val-empty">Histórico insuficiente para ${symbol}.</div>`; return; }
+    body.innerHTML = csRenderBacktest(csBacktestRun(k), symbol, tf, k.closes.length);
+  } catch (e) {
+    body.innerHTML = `<div class="val-empty">Erro ao correr o backtest: ${e.message}.</div>`;
+  } finally { csBtRunning = false; if (btn) btn.disabled = false; }
+}
+function csRenderBacktest(r, symbol, tf, bars) {
+  if (!r.total) return `<div class="val-empty">O funil não emitiu nenhum trade em ${bars} velas de ${symbol} com a sensibilidade atual (score ≥ ${CS_CFG.scoreThreshold}). Baixa a Sensibilidade e volta a correr.</div>`;
+  const o = r.oos, exp = o.exp, enough = o.n >= 30;
+  let vClass, vText;
+  if (exp > 0 && enough) { vClass = 'good'; vText = '✓ Edge positivo (OOS) — estudar mais'; }
+  else if (exp > 0 && !enough) { vClass = 'warn'; vText = '≈ Positivo mas amostra pequena'; }
+  else { vClass = 'bad'; vText = '✕ Sem edge nesta amostra'; }
+  const pct = x => x == null ? '—' : (x * 100).toFixed(1) + '%';
+  const rr = x => x == null ? '—' : (x >= 0 ? '+' : '') + x.toFixed(3) + ' R';
+  const pf = x => x == null ? '—' : (x === Infinity ? '∞' : x.toFixed(2));
+  const cls = x => x == null ? '' : (x > 0 ? 'pos' : x < 0 ? 'neg' : '');
+  const row = (lbl, s, oos) => !s || !s.n ? '' : `<tr class="${oos ? 'oos' : ''}"><td>${lbl}</td><td>${s.n}</td><td>${pct(s.win)}</td><td class="${cls(s.exp)}">${rr(s.exp)}</td><td>${pf(s.pf)}</td></tr>`;
+  const bRow = b => !b.n ? '' : `<tr><td>${b.lo}${b.hi >= 999 ? '+' : '–' + b.hi}</td><td>${b.n}</td><td>${pct(b.win)}</td><td class="${cls(b.exp)}">${rr(b.exp)}</td><td>${pf(b.pf)}</td></tr>`;
+  return `
+    <div class="val-verdict ${vClass}">${vText}</div>
+    <div class="val-meta">${symbol} · ${VAL_TF_LABEL[tf] || tf} · ${bars} velas · <b>${r.total}</b> trades do funil · saída modelada: 1.º toque stop vs TP1, líquido de custos (${CS_COST_RT.toFixed(2)}%/round-trip). Amostra OOS ${r.oos.n >= 30 ? 'suficiente (n≥30)' : '<b>pequena (n<30)</b>'}.</div>
+    <table class="val-tbl"><thead><tr><th>Split</th><th>n</th><th>win%</th><th>expectância</th><th>PF</th></tr></thead>
+      <tbody>${row('In-sample (60%)', r.is, false)}${row('Out-of-sample (40%)', r.oos, true)}${row('Amostra completa', r.all, false)}</tbody></table>
+    <div class="val-note" style="margin-top:14px"><b>Curva de calibração</b> — expectância por escalão de score. Ajuda a decidir onde pôr a fasquia: procura o degrau a partir do qual a expectância fica positiva e estável.</div>
+    <table class="val-tbl"><thead><tr><th>Score</th><th>n</th><th>win%</th><th>expectância</th><th>PF</th></tr></thead><tbody>${r.buckets.map(bRow).join('')}</tbody></table>
+    <div class="val-note"><b>Como ler:</b> a métrica-rei é a <b>expectância em R por trade, líquida de custos</b> (&gt;0 = há edge). Modelo conservador: só TP1 vs stop (ignora TP2/3, por isso subestima a escada real) e assume o stop tocado antes do TP na mesma vela. Filtra por <b>score + plano válido</b> (a confiança é calibrada para o funil completo, com funding/OI, ausentes aqui). <b>Só sinais de preço</b> — funding/OI/cascata entram como neutros (precisam de histórico backend). Não é garantia de resultados futuros.</div>`;
 }
 
 // ── HEATMAP DE LIQUIDAÇÕES (estimativa a partir do OI + escalões) ─────────────
