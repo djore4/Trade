@@ -1510,6 +1510,15 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
       </div>
     </details>
 
+    <!-- Desempenho real — loop de registo (backend) -->
+    <details class="cs-refbox" id="cs-perf" open>
+      <summary class="cs-refbox-h">Desempenho real das sugestões <span class="cs-flag">loop de registo</span></summary>
+      <div class="cs-refbox-b">
+        <p class="cs-refbox-note" style="margin:0 0 12px">Cada sugestão emitida é <b>gravada</b> e seguida até TP1 ou stop (líquido de custos), automaticamente a cada 15 min. Isto é a expectância <b>real</b> — a métrica que diz se o funil tem edge de verdade, não intuição nem backtest.</p>
+        <div class="val-body" id="cs-perf-body"><div class="val-empty">A carregar o desempenho registado…</div></div>
+      </div>
+    </details>
+
     <div class="cs-disclaimer">Ferramenta de apoio à decisão — <b>nunca execução automática nem aconselhamento financeiro</b>. Sugestões calculadas a partir de dados públicos da Bybit v5 (tickers, kline TF15/TF60, funding history, open interest, long/short ratio). Proxy de liquidações via REST. Aprovação humana obrigatória antes de qualquer ordem.</div>
 
   </div>
@@ -1708,6 +1717,9 @@ const STOCK_URL     = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/get
 const NEWS_URL      = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/get-news';
 const AGENT_URL     = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/trade-advisor';
 const VALIDATE_URL  = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/validate-signal'; // harness de validação OOS
+const CS_LOG_URL    = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/cs-log';    // regista sugestões emitidas
+const CS_SETTLE_URL = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/cs-settle'; // pontua o desfecho real
+const CS_STATS_URL  = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/cs-stats';  // desempenho agregado
 const SUPABASE_REST = 'https://yifxgiwmibjaornighvt.supabase.co/rest/v1'; // alvos de saída (transversal)
 
 // Feeds RSS por fonte (com fallbacks). Passam pelo proxy get-news (server-side).
@@ -3827,6 +3839,7 @@ function csRender() {
   });
   const isSug = c => c.score >= CS_CFG.scoreThreshold && c.plan && !c.plan.rejected && c.confidence >= CS_CFG.minConfidence;
   const sug = all.filter(isSug).sort((a, b) => b.confidence - a.confidence).slice(0, CS_CFG.shortlistMax);
+  if (sug.length) csLogSuggestions(sug);   // regista no loop de feedback (dedup por hora)
   const sugSet = new Set(sug.map(c => c.symbol));
   const radar = all.filter(c => !sugSet.has(c.symbol)).slice(0, CS_CFG.radarMax);
   set('cs-x-short', sug.length);
@@ -4005,7 +4018,76 @@ function renderCsTab() {
   const lv = document.getElementById('cs-lev'); if (lv && !lv.value) lv.value = CS_CFG.leverage;
   const sn = document.getElementById('cs-sens'); if (sn) sn.value = CS_CFG.sensitivity;
   csUpdateCfgNote();
+  csSettleTrigger();     // pontua sugestões pendentes (também há cron de 15 min no backend)
+  csFetchStats();        // desempenho real acumulado
   scanCs(false);
+}
+
+// ── Loop de registo (backend Supabase) ───────────────────────────────────────
+// Cada sugestão emitida é gravada (cs-log); um cron pontua o desfecho real
+// (cs-settle); a app mostra a expectância acumulada (cs-stats). Fecha o ciclo:
+// edge medido, não intuído. Falhas de rede são silenciosas (não perturbam o scan).
+const csLoggedKeys = new Set();
+const csSupaHdr = () => ({ 'Content-Type': 'application/json', apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` });
+
+function csLogSuggestions(sug) {
+  try {
+    const d = new Date();
+    const hb = '' + d.getUTCFullYear() + String(d.getUTCMonth() + 1).padStart(2, '0') + String(d.getUTCDate()).padStart(2, '0') + String(d.getUTCHours()).padStart(2, '0');
+    const ts = d.toISOString(), payload = [];
+    for (const c of sug) {
+      const p = c.plan; if (!p) continue;
+      const side = c.dir > 0 ? 'long' : 'short';
+      const key = `${c.symbol}_${side}_${hb}`;          // dedup: 1 por moeda/lado/hora
+      if (csLoggedKeys.has(key)) continue;
+      csLoggedKeys.add(key);
+      payload.push({
+        sig_key: key, entry_ts: ts, symbol: c.symbol, coin: c.coin, side,
+        entry: p.entry, stop: p.stop, tp1: p.tps[0].price, tp1_r: p.tps[0].r,
+        stop_pct: p.stopPct, blended_rr: p.blendedRR, score: c.score, confidence: c.confidence,
+        sensitivity: CS_CFG.sensitivity, regime: c.sigs.regime.type, setup: csSetupType(c),
+        signals: { funding: c.sigs.h1.on, oi: c.sigs.h2.on, cascade: c.sigs.h3.on, thrust: c.sigs.thrust.on, breakout: c.sigs.brk.on, structure: c.sigs.st.on },
+        turnover: c.turnover, low_liq: !!c.lowLiq, leverage: p.lev,
+      });
+    }
+    if (!payload.length) return;
+    fetch(CS_LOG_URL, { method: 'POST', headers: csSupaHdr(), body: JSON.stringify({ suggestions: payload }) })
+      .then(() => setTimeout(csFetchStats, 900)).catch(() => {});
+  } catch (_e) {}
+}
+function csSettleTrigger() {
+  fetch(CS_SETTLE_URL, { method: 'POST', headers: csSupaHdr(), body: '{}' })
+    .then(() => setTimeout(csFetchStats, 1500)).catch(() => {});
+}
+function csFetchStats() {
+  const el = document.getElementById('cs-perf-body'); if (!el) return;
+  fetch(CS_STATS_URL, { headers: csSupaHdr() })
+    .then(r => r.json()).then(s => { el.innerHTML = csRenderPerf(s); })
+    .catch(() => { el.innerHTML = '<div class="val-empty">Sem ligação ao registo de desempenho.</div>'; });
+}
+function csRenderPerf(s) {
+  if (!s || s.error) return `<div class="val-empty">Registo indisponível${s && s.error ? ': ' + s.error : ''}.</div>`;
+  const o = s.overall || { n: 0 };
+  const head = `<div class="val-meta">Registadas <b>${s.total || 0}</b> sugestões · <b>${s.open || 0}</b> a aguardar desfecho · <b>${o.n || 0}</b> pontuadas.</div>`;
+  if (!o.n) return head + `<div class="val-empty" style="margin-top:10px">Ainda sem trades pontuados. O desfecho (TP1 vs stop, líquido de custos) é calculado automaticamente a cada 15 min. Volta daqui a umas horas.</div>`;
+  const pct = x => x == null ? '—' : (x * 100).toFixed(0) + '%';
+  const rr = x => x == null ? '—' : (x >= 0 ? '+' : '') + x.toFixed(3) + ' R';
+  const pf = x => x == null ? '—' : x.toFixed(2);
+  const cls = x => x == null ? '' : (x > 0 ? 'pos' : x < 0 ? 'neg' : '');
+  const exp = o.exp, enough = o.n >= 30;
+  const vClass = exp > 0 && enough ? 'good' : exp > 0 ? 'warn' : 'bad';
+  const vText = exp > 0 && enough ? '✓ Edge real positivo' : exp > 0 ? '≈ Positivo — amostra pequena' : '✕ Sem edge (ainda)';
+  const brow = (lbl, g) => !g || !g.n ? '' : `<tr><td>${lbl}</td><td>${g.n}</td><td>${pct(g.win)}</td><td class="${cls(g.exp)}">${rr(g.exp)}</td><td>${pf(g.pf)}</td></tr>`;
+  const bk = b => brow(`${b.lo}${b.hi >= 999 ? '+' : '–' + b.hi}`, b);
+  const sensLbl = { strict: 'Rigoroso', balanced: 'Equilibrado', loose: 'Permissivo' };
+  return head + `
+    <div class="val-verdict ${vClass}" style="margin-top:10px">${vText}</div>
+    <div class="val-meta">Expectância líquida <b>${rr(exp)}</b>/trade · win ${pct(o.win)} · PF ${pf(o.pf)} · n=${o.n}${enough ? '' : ' (n&lt;30 — indicativo)'}</div>
+    <div class="val-note" style="margin-top:12px"><b>Por escalão de score</b> — onde está o edge real:</div>
+    <table class="val-tbl"><thead><tr><th>Score</th><th>n</th><th>win</th><th>expectância</th><th>PF</th></tr></thead><tbody>${s.buckets.map(bk).join('')}</tbody></table>
+    <div class="val-note" style="margin-top:10px"><b>Por sensibilidade</b>:</div>
+    <table class="val-tbl"><thead><tr><th>Funil</th><th>n</th><th>win</th><th>expectância</th><th>PF</th></tr></thead><tbody>${s.bySens.map(x => brow(sensLbl[x.k] || x.k, x)).join('')}</tbody></table>
+    <div class="val-note"><b>Como ler:</b> isto é o desempenho <b>real</b> das sugestões emitidas (não um backtest histórico) — cada uma seguida até TP1 ou stop, líquido de custos. É a métrica que decide se o funil tem edge de verdade. Baixa liquidez separada: normal ${rr((s.byLiq && s.byLiq.normal || {}).exp)} · baixa ${rr((s.byLiq && s.byLiq.low || {}).exp)}.</div>`;
 }
 
 // ── Backtest do funil (ponto 2) ──────────────────────────────────────────────
