@@ -1081,22 +1081,47 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
 .ps-sub { font-family: 'JetBrains Mono', monospace; color: var(--faint); font-size: 10.5px; }
 .ps-sep { width: 1px; height: 14px; background: var(--border); }
 
-/* Resumo do portefólio: painel de indicadores compacto (stat tiles em 2 linhas) */
-.pos-summary { border: 1px solid var(--border); border-radius: 11px; overflow: hidden; background: var(--border); }
-.pos-sum-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 1px; }
-.pst { background: var(--s1); padding: 8px 11px; display: flex; flex-direction: column; gap: 3px; position: relative; min-width: 0; }
-.pst.pst-accent { padding-left: 13px; }
-.pst.pst-accent::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent-c, var(--border2)); }
-.pst-lbl { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pst-sym { opacity: .7; }
-.pst-tag { font-size: 7.5px; font-weight: 700; letter-spacing: .04em; color: var(--orange); border: 1px solid var(--orange); border-radius: 3px; padding: 0 2px; opacity: .85; margin-left: 3px; }
-.pst-line { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; min-width: 0; }
-.pst-val { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 14.5px; line-height: 1.15; letter-spacing: -.01em; }
-.pst-sub { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--dim); }
-.pst-sub-em { font-weight: 700; }
-.pst-meter { flex: 1; min-width: 24px; max-width: 60px; align-self: center; height: 4px; border-radius: 3px; background: var(--border); overflow: hidden; }
-.pst-meter-fill { height: 100%; border-radius: 3px; transition: width .3s, background .3s; }
-@media (max-width: 460px) { .pos-sum-grid { grid-template-columns: repeat(3, 1fr); } }
+/* Resumo do portefólio: painel com hierarquia (herói PnL + Saída + chips) */
+.pos-summary { border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: var(--s1); }
+.ps-wrap { display: flex; flex-direction: column; }
+
+/* Linha superior — os dois números de dinheiro: PnL (herói) + Saída projetada */
+.ps-hero-row { display: grid; grid-template-columns: 1.25fr 1fr; }
+.ps-hero { padding: 13px 15px 14px; position: relative; overflow: hidden;
+  background: radial-gradient(130% 130% at 100% 0%, color-mix(in srgb, var(--pnl-c, var(--border2)) 15%, transparent), transparent 58%); }
+.ps-hero::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--pnl-c, var(--border2)); }
+.ps-exit { padding: 13px 15px 14px; border-left: 1px solid var(--border); position: relative; overflow: hidden;
+  background: radial-gradient(130% 130% at 100% 0%, color-mix(in srgb, var(--exit-c, var(--border2)) 10%, transparent), transparent 58%); }
+
+.ps-hero-lbl, .ps-exit-lbl { font-size: 9.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); display: flex; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ps-hero-val { font-weight: 800; font-size: 27px; line-height: 1.05; letter-spacing: -.02em; margin-top: 6px; }
+.ps-exit-val { font-weight: 800; font-size: 19px; line-height: 1.1; letter-spacing: -.02em; margin-top: 6px; }
+.ps-hero-foot { display: flex; align-items: center; gap: 8px; margin-top: 9px; flex-wrap: wrap; }
+.ps-pill { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid; line-height: 1.4; background: color-mix(in srgb, var(--pnl-c, var(--border2)) 13%, transparent); }
+.ps-hero-note { font-size: 11px; color: var(--dim); }
+.ps-exit-foot { font-size: 11px; color: var(--dim); margin-top: 8px; }
+.ps-exit-foot > b { font-weight: 700; }
+
+/* Linha inferior — chips compactos de contexto */
+.ps-stat-row { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--border); }
+.ps-chip { padding: 10px 14px; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.ps-chip + .ps-chip { border-left: 1px solid var(--border); }
+.ps-chip-lbl { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ps-chip-val { font-weight: 700; font-size: 15px; line-height: 1.1; letter-spacing: -.01em; }
+.ps-chip-sub { font-size: 10px; color: var(--dim); }
+.ps-chip-meter { height: 4px; border-radius: 3px; background: var(--border); overflow: hidden; margin-top: 6px; }
+.ps-chip-meter > span { display: block; height: 100%; border-radius: 3px; transition: width .35s ease, background .3s; }
+
+/* Numéricos em mono (e alvo do modo privado via .pst-val/.pst-sub) */
+.ps-hero-val, .ps-exit-val, .ps-chip-val, .pst-val, .pst-sub { font-family: 'JetBrains Mono', monospace; }
+.pst-sym { opacity: .65; font-weight: 600; }
+.pst-tag { font-size: 8px; font-weight: 800; letter-spacing: .05em; color: var(--orange); border: 1px solid var(--orange); border-radius: 4px; padding: 0 3px; margin-left: 5px; opacity: .9; }
+
+@media (max-width: 430px) {
+  .ps-hero-val { font-size: 24px; }
+  .ps-exit-val { font-size: 17px; }
+  .ps-chip { padding: 9px 11px; }
+}
 
 /* Cabeçalho da lista de trades + ordenação */
 .pos-list-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
@@ -2578,32 +2603,43 @@ function renderPosSummary() {
 
   const symShort = minSym.replace(/USDT?$/, '');
   el.innerHTML = `
-    <div class="pos-sum-grid">
-      <div class="pst">
-        <div class="pst-lbl">Trades</div>
-        <div class="pst-line"><span class="pst-val">${positions.length}</span><span class="pst-sub"><span style="color:var(--green)">${nLong}L</span> · <span style="color:var(--red)">${nShort}S</span></span></div>
+    <div class="ps-wrap">
+      <div class="ps-hero-row">
+        <div class="ps-hero" style="--pnl-c:${pnlC}" title="PnL não realizado agregado (ROE sobre a margem)">
+          <div class="ps-hero-lbl">PnL não realizado</div>
+          <div class="ps-hero-val pst-val" style="color:${pnlC}">${sg(pnlUsd)}${fmtUsd(pnlUsd, 2)}</div>
+          <div class="ps-hero-foot">
+            <span class="ps-pill pst-sub" style="color:${pnlC};border-color:${pnlC}">${sg(roe)}${fmt(roe, 1)}% ROE</span>
+            <span class="ps-hero-note pst-sub">${positions.length} trades · <span style="color:var(--green)">${nLong}L</span> <span style="color:var(--red)">${nShort}S</span></span>
+          </div>
+        </div>
+        <div class="ps-exit" style="--exit-c:${exC}" title="Cenário de saída — lucro projetado se atingir os alvos definidos">
+          <div class="ps-exit-lbl">Saída projetada <span class="pst-tag">TP</span></div>
+          ${ex.n > 0
+            ? `<div class="ps-exit-val pst-val" style="color:${exC}">${sg(ex.usd)}${fmtUsd(ex.usd, 2)}</div>
+               <div class="ps-exit-foot pst-sub"><b style="color:${exC}">${sg(ex.roe)}${fmt(ex.roe, 1)}%</b> · ${ex.n}/${positions.length} alvos</div>`
+            : `<div class="ps-exit-val pst-val" style="color:var(--faint)">—</div>
+               <div class="ps-exit-foot pst-sub" style="color:var(--faint)">sem alvos definidos</div>`}
+        </div>
       </div>
-      <div class="pst pst-accent" style="--accent-c:${pnlC}" title="PnL não realizado (ROE)">
-        <div class="pst-lbl">PnL</div>
-        <div class="pst-line"><span class="pst-val" style="color:${pnlC}">${sg(pnlUsd)}${fmtUsd(pnlUsd, 2)}</span><span class="pst-sub"><span class="pst-sub-em" style="color:${pnlC}">${sg(roe)}${fmt(roe, 1)}%</span></span></div>
-      </div>
-      <div class="pst pst-accent" style="--accent-c:${exC}" title="Cenário de saída — lucro projetado se atingir os alvos definidos">
-        <div class="pst-lbl">Saída <span class="pst-tag">TP</span></div>
-        ${ex.n > 0
-          ? `<div class="pst-line"><span class="pst-val" style="color:${exC}">${sg(ex.usd)}${fmtUsd(ex.usd, 2)}</span><span class="pst-sub"><span class="pst-sub-em" style="color:${exC}">${sg(ex.roe)}${fmt(ex.roe, 1)}%</span> · ${ex.n}/${positions.length}</span></div>`
-          : `<div class="pst-line"><span class="pst-val" style="color:var(--faint)">—</span><span class="pst-sub" style="color:var(--faint)">sem alvos</span></div>`}
-      </div>
-      <div class="pst" title="Nocional · alavancagem média">
-        <div class="pst-lbl">Exposição</div>
-        <div class="pst-line"><span class="pst-val">${fmtUsd(exp, 0)}</span><span class="pst-sub">${fmt(avgLev, 1)}×</span></div>
-      </div>
-      <div class="pst" title="Margem — capital alocado">
-        <div class="pst-lbl">Margem</div>
-        <div class="pst-line"><span class="pst-val">${fmtUsd(marg, 0)}</span></div>
-      </div>
-      <div class="pst" title="Distância à liquidação da posição mais próxima">
-        <div class="pst-lbl">Dist. liq.${hasDist ? ` <span class="pst-sym">${symShort}</span>` : ''}</div>
-        <div class="pst-line"><span class="pst-val" style="color:${distC}">${hasDist ? fmt(minDist, 1) + '%' : '—'}</span>${hasDist ? `<span class="pst-meter"><span class="pst-meter-fill" style="width:${meterW}%;background:${distC}"></span></span>` : ''}</div>
+      <div class="ps-stat-row">
+        <div class="ps-chip" title="Nocional total · alavancagem média">
+          <div class="ps-chip-lbl">Exposição</div>
+          <div class="ps-chip-val pst-val">${fmtUsd(exp, 0)}</div>
+          <div class="ps-chip-sub pst-sub">${fmt(avgLev, 1)}× aval.</div>
+        </div>
+        <div class="ps-chip" title="Margem — capital alocado">
+          <div class="ps-chip-lbl">Margem</div>
+          <div class="ps-chip-val pst-val">${fmtUsd(marg, 0)}</div>
+          <div class="ps-chip-sub pst-sub">capital</div>
+        </div>
+        <div class="ps-chip" title="Distância à liquidação da posição mais próxima">
+          <div class="ps-chip-lbl">Dist. liq.${hasDist ? ` <span class="pst-sym">${symShort}</span>` : ''}</div>
+          <div class="ps-chip-val pst-val" style="color:${distC}">${hasDist ? fmt(minDist, 1) + '%' : '—'}</div>
+          ${hasDist
+            ? `<div class="ps-chip-meter"><span style="width:${meterW}%;background:${distC}"></span></div>`
+            : `<div class="ps-chip-sub pst-sub">—</div>`}
+        </div>
       </div>
     </div>`;
 }
