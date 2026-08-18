@@ -1316,7 +1316,7 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
             <span class="db-sort-lbl">Ordenar</span>
             <button class="db-sort-btn active" data-sort="pnl" onclick="setDbAssetSort('pnl',this)">PnL</button>
             <button class="db-sort-btn" data-sort="price" onclick="setDbAssetSort('price',this)">Preço</button>
-            <button class="db-sort-btn" data-sort="name" onclick="setDbAssetSort('name',this)">Ativo</button>
+            <button class="db-sort-btn" data-sort="value" onclick="setDbAssetSort('value',this)">Valor</button>
           </div>
         </div>
         <div class="db-asset-header">
@@ -5644,7 +5644,7 @@ function t212HasRealData() { return t212Holdings.some(h => (parseFloat(h.usd) ||
 
 // ── VISTA DE PnL DOS ATIVOS: real (não realizado) vs diário (24h) ─────────────
 let dbAssetView = 'real';   // 'real' | 'daily'
-let dbSortKey = 'pnl';      // 'pnl' (real) | 'price' | 'name'
+let dbSortKey = 'pnl';      // 'pnl' (real) | 'price' | 'value' (USD)
 let dbSource = 'all';       // 'all' | 'bybit' | 't212' — filtro de fonte (lista + gráfico)
 let spot24h = {};           // COIN -> price24hPcnt (fração) da Bybit spot
 function srcHasBybit() { return dbSource !== 't212'; }
@@ -5784,7 +5784,7 @@ function dbAssetItems() {
   const cmp = {
     pnl:   (a, b) => b.realPnl - a.realPnl,
     price: (a, b) => b.price - a.price,
-    name:  (a, b) => a.sym.localeCompare(b.sym),
+    value: (a, b) => b.usdVal - a.usdVal,
   }[dbSortKey] || ((a, b) => b.usdVal - a.usdVal);
   return items.sort(cmp);
 }
