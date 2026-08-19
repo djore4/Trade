@@ -4022,16 +4022,22 @@ function csFmtQty(q) {
 }
 
 function csToggle(sym) { csExpanded = csExpanded === sym ? null : sym; csRender(); }
-// Abrir o par na Bybit. No telemóvel navega no mesmo separador para o link
-// https://www.bybit.com/trade/usdt/<sym>: como é um Universal Link (iOS) / App
-// Link (Android) da Bybit, o SO entrega-o à APP se instalada (ecrã de trade do
-// par) e, caso contrário, abre o site. O target="_blank" original abria sempre
-// um separador novo do browser, o que suprime esse handoff para a app.
+// Abrir o par na Bybit. No telemóvel tenta primeiro o esquema da APP
+// (bybitapp://) — mais fiável que o Universal Link, que depende de o SO ter o
+// "abrir links suportados" ligado para a Bybit. Se a app abrir, o separador
+// fica oculto e cancelamos o fallback; se nada acontecer em ~1,2s (app não
+// instalada), abre o site. Desktop mantém o link normal (site em novo separador).
 function csOpenBybit(sym, ev) {
-  const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent || '');
-  if (!isMobile) return; // desktop: deixa o link normal abrir o site em novo separador
+  const ua = navigator.userAgent || '';
+  if (!/android|iphone|ipad|ipod/i.test(ua)) return; // desktop
   if (ev) ev.preventDefault();
-  window.location.href = 'https://www.bybit.com/trade/usdt/' + sym;
+  const webUrl = 'https://www.bybit.com/trade/usdt/' + sym;
+  const appUrl = 'bybitapp://open/route?targetUrl=' + encodeURIComponent(webUrl);
+  let done = false;
+  const fallback = setTimeout(() => { if (!done) window.location.href = webUrl; }, 1200);
+  const onHide = () => { if (document.hidden) { done = true; clearTimeout(fallback); } };
+  document.addEventListener('visibilitychange', onHide, { once: true });
+  window.location.href = appUrl; // dispara a app se instalada
 }
 // snap=true (no blur do campo) faz o valor do input refletir o clamp 0,5–1%.
 function csCfgChange(snap) {
