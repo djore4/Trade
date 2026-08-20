@@ -2554,6 +2554,7 @@ function refreshPosTab() {
   const mk = document.getElementById('pd-mark');
   if (mk) mk.textContent = fmtPx(parseFloat(p.markPrice));
   addPosPriceLines(p);
+  refreshPosCandles(p, posReqId);   // velas ao vivo (atualiza a vela em curso / adiciona novas)
 }
 
 // Lucro projetado em USD ao preço-alvo de uma posição (mesma fórmula do cenário de saída)
@@ -2995,6 +2996,30 @@ async function loadPosChart(p) {
   } catch (e) { console.error('kline error', e); }
   addPosPriceLines(p);
   if (posChart) posChart.timeScale().fitContent();
+}
+
+// Atualização ao vivo das velas: busca as últimas klines e atualiza/adiciona a
+// vela em curso, sem reconstruir o gráfico (preserva zoom, scroll e a régua).
+// Chamado no ciclo de refresh (10s) enquanto o gráfico está aberto.
+async function refreshPosCandles(p, reqId) {
+  if (!posSeries || !posBars.length || typeof LightweightCharts === 'undefined') return;
+  const cat = posCat(p.symbol);
+  try {
+    const r = await fetch(`${BYBIT}/v5/market/kline?category=${cat}&symbol=${p.symbol}&interval=${posInterval}&limit=2`);
+    const d = await r.json();
+    if (reqId !== posReqId || !posSeries) return; // seleção/timeframe mudou entretanto
+    const latest = (d?.result?.list || [])
+      .map(k => ({ time: Math.floor(parseInt(k[0]) / 1000), open: +k[1], high: +k[2], low: +k[3], close: +k[4] }))
+      .sort((a, b) => a.time - b.time);
+    if (!latest.length) return;
+    const lastKnown = posBars[posBars.length - 1].time;
+    for (const bar of latest) {
+      if (bar.time < lastKnown) continue;
+      posSeries.update(bar);                                   // atualiza a vela atual ou adiciona a nova
+      if (bar.time === lastKnown) posBars[posBars.length - 1] = bar;
+      else posBars.push(bar);
+    }
+  } catch (e) { /* silencioso — tenta de novo no próximo ciclo */ }
 }
 
 // Carrega mais passado e prepende, preservando a posição visível (sem saltos)
