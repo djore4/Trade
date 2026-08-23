@@ -49,7 +49,8 @@ Deno.serve(async (req) => {
 
     // ── Guarda-costas (revalidados aqui) ──
     const keys = bybitKeysFromEnv();
-    if (!keys.apiKey || !keys.apiSecret) return json({ error: 'Credenciais Bybit da subconta não configuradas.' }, 500);
+    if (!keys.apiKey || (!keys.apiSecret && !keys.privateKeyPem))
+      return json({ error: 'Credenciais Bybit da subconta não configuradas (falta API key + secret HMAC ou chave privada RSA).' }, 500);
 
     // nº posições abertas reais na subconta
     const pos = await bybitGet('/v5/position/list', 'category=linear&settleCoin=USDT', keys);

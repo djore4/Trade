@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
     // Slots livres = teto − posições reais abertas na subconta.
     let freeSlots = st.max_open_positions;
     const keys = bybitKeysFromEnv();
-    if (keys.apiKey && keys.apiSecret) {
+    if (keys.apiKey && (keys.apiSecret || keys.privateKeyPem)) {
       const pos = await bybitGet('/v5/position/list', 'category=linear&settleCoin=USDT', keys);
       const openPos = (pos?.result?.list || []).filter((p: any) => Math.abs(+p.size) > 0).length;
       freeSlots = Math.max(0, st.max_open_positions - openPos);
