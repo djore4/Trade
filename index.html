@@ -1369,7 +1369,7 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
     <div class="cs-head">
       <div>
         <div class="cs-title">CryptoScan <span class="cs-badge">Sugestões v2</span></div>
-        <div class="cs-sub">Poucas sugestões de trade de <b>alta convicção</b> em perpétuos da Bybit — <b>long ou short</b>, o que tiver maior potencial líquido. Cada ideia sai completa: entrada, stop, TP1/2/3, sizing e score de confiança. Nunca é execução automática.</div>
+        <div class="cs-sub">Screener de <b>alta convicção</b> em perpétuos da Bybit. Em cima, o <b>bot de execução</b> propõe trades que confirmas antes de irem para a subconta. Em baixo, o <b>explorador manual</b> deixa-te varrer o mercado à mão — sem colocar ordens.</div>
       </div>
       <button class="cs-scan-btn" id="cs-scan-btn" onclick="scanCs(true)">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.2" stroke="currentColor" stroke-width="1.4"/><line x1="9" y1="9" x2="12.5" y2="12.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
@@ -1384,6 +1384,83 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
       <div class="cs-ctx-item"><div class="cs-ctx-lbl">BTC 24h</div><div class="cs-ctx-val" id="cs-x-btc">—</div><div class="cs-ctx-sub">contexto direcional</div></div>
       <div class="cs-ctx-item"><div class="cs-ctx-lbl">Funding médio</div><div class="cs-ctx-val" id="cs-x-fund">—</div><div class="cs-ctx-sub">do universo /8h</div></div>
     </div>
+
+    <!-- ═══ Bot de execução (primário, subconta Bybit) ═══ -->
+    <style>
+      .cs-botcard{border:1px solid rgba(247,147,26,.35);background:linear-gradient(180deg,rgba(247,147,26,.06),transparent 60%),var(--s2,#151515);border-radius:16px;padding:18px 18px 20px;margin:6px 0 22px}
+      .cs-botcard-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+      .cs-botcard-title{font-size:15px;font-weight:800;color:var(--text)}
+      .cs-botcard-tag{font-size:10px;font-weight:600;color:var(--faint);margin-left:6px}
+      .cs-bot-badges{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+      .cs-howtest{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:var(--dim);line-height:1.5}
+      .cs-howtest ol{margin:8px 0 0;padding-left:20px} .cs-howtest li{margin:3px 0}
+      .cs-bot-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+      .cs-bot-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+      .cs-bot-actions .cs-bybit-btn{cursor:pointer}
+      .cs-bot-kill{color:var(--red)!important;border-color:rgba(255,80,80,.4)!important}
+      .cs-bot-msg{font-size:11px;color:var(--faint)}
+      .cs-bot-secret{max-width:340px;margin-bottom:16px}
+      .cs-bot-sec-h{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);margin-bottom:8px}
+      .cs-bot-perf{margin-top:14px;border-top:1px dashed var(--border);padding-top:10px}
+      .cs-bot-perf>summary{cursor:pointer;font-size:12px;font-weight:600;color:var(--dim)}
+      .cs-manual-h{font-size:13px;font-weight:700;color:var(--text);margin:4px 0 2px;display:flex;align-items:center;gap:8px}
+      .cs-manual-sub{font-size:11.5px;color:var(--faint);margin-bottom:12px}
+      /* estilos da tabela de desempenho real (usados por csFetchStats) */
+      .val-body{margin-top:6px}
+      .val-empty{font-size:12px;color:var(--faint)}
+      .val-tbl{width:100%;border-collapse:collapse;margin-top:12px;font-size:12px;overflow-x:auto;display:block}
+      .val-tbl th,.val-tbl td{text-align:right;padding:7px 10px;border-bottom:1px solid var(--border);white-space:nowrap}
+      .val-tbl th:first-child,.val-tbl td:first-child{text-align:left}
+      .val-tbl th{color:var(--faint);font-weight:600;text-transform:uppercase;font-size:9.5px;letter-spacing:.06em}
+      .val-tbl td{font-family:'JetBrains Mono',monospace;color:var(--text)}
+      .val-tbl tr.oos td{font-weight:700}
+      .val-tbl td.neg{color:var(--red)} .val-tbl td.pos{color:var(--green)}
+      .val-note{font-size:10.5px;color:var(--faint);line-height:1.6;margin-top:12px;border-top:1px dashed var(--border);padding-top:10px}
+      .val-meta{font-size:11px;color:var(--faint);margin-top:8px}
+    </style>
+    <div class="cs-botcard" id="cs-bot-panel">
+      <div class="cs-botcard-head">
+        <div class="cs-botcard-title">🤖 Bot de execução<span class="cs-botcard-tag">subconta Bybit · semi-auto</span></div>
+        <span id="cs-bot-badges" class="cs-bot-badges"></span>
+      </div>
+
+      <div class="cs-howtest">
+        <b>Como testar — sem risco:</b>
+        <ol>
+          <li>Deixa <b>Dry-run = Sim</b> (o card em cima deve dizer <span style="color:var(--orange)">DRY-RUN</span>). Nada vai para a Bybit.</li>
+          <li>Clica <b>▶ Correr o bot agora</b>. Se aparecer 0 propostas, muda <b>Sensibilidade</b> para <i>Permissivo</i> e corre de novo.</li>
+          <li>Cada <b>proposta</b> aparece em baixo com entrada/stop/TP/risco. Clica <b>✅ Confirmar</b> — em dry-run apenas simula (não coloca).</li>
+          <li>Quando confiares: põe <b>Dry-run = Não</b> e financia a subconta. A próxima confirmação coloca a ordem <b>real</b>.</li>
+        </ol>
+      </div>
+
+      <div id="cs-bot-controls" class="cs-bot-grid">
+        <div class="db-empty" style="grid-column:1/-1">A carregar estado do bot…</div>
+      </div>
+
+      <div class="cs-bot-actions">
+        <button class="cs-bybit-btn" onclick="csBotRunNow(this)">▶ Correr o bot agora</button>
+        <button class="cs-bybit-btn" onclick="csBotRefresh()">↻ Atualizar</button>
+        <button class="cs-bybit-btn cs-bot-kill" onclick="csBotKill()">⛔ Kill-switch</button>
+        <span id="cs-bot-msg" class="cs-bot-msg"></span>
+      </div>
+
+      <label class="cs-field cs-bot-secret"><span>Segredo do bot (opcional) <i class="cs-help" tabindex="0" title="Se definiste a env CS_BOT_SECRET no Supabase, escreve-a aqui. É enviada em cada confirmação/alteração e fica guardada só neste browser.">?</i></span>
+        <input type="password" id="cs-bot-secret" placeholder="só se configuraste CS_BOT_SECRET" oninput="csBotSaveSecret()"></label>
+
+      <div class="cs-bot-sec-h">Propostas pendentes</div>
+      <div id="cs-bot-pending"><div class="db-empty">Sem propostas. Clica “Correr o bot agora”.</div></div>
+
+      <details class="cs-bot-perf">
+        <summary>Desempenho real das sugestões</summary>
+        <p class="cs-refbox-note" style="margin:8px 0">Cada sugestão emitida é seguida até TP1 ou stop, líquido de custos. É a expectância <b>real</b> — a métrica que diz se o funil tem edge.</p>
+        <div class="val-body" id="cs-perf-body"><div class="val-empty">A carregar o desempenho registado…</div></div>
+      </details>
+    </div>
+
+    <!-- ═══ Explorador manual (não coloca ordens) ═══ -->
+    <div class="cs-manual-h">🔍 Explorador manual</div>
+    <div class="cs-manual-sub">Varre o mercado à mão e vê as ideias com todo o raciocínio. Só leitura — <b>nunca coloca ordens</b>.</div>
 
     <!-- Configuração editável -->
     <div class="cs-cfg">
@@ -1437,148 +1514,7 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
     <!-- Sugestões (injetadas por JS) -->
     <div id="cs-list" class="cs-list"><div class="db-empty">Corre um scan para gerar sugestões de trade…</div></div>
 
-    <!-- Painéis de referência (colapsados para reduzir ruído) -->
-    <div class="cs-refs">
-
-      <details class="cs-refbox" id="cs-how">
-        <summary class="cs-refbox-h">Como funciona — hipóteses de edge + funil</summary>
-        <div class="cs-refbox-b">
-          <p class="cs-refbox-note" style="margin:0 0 12px">O edge vem de <b>posicionamento</b> (funding, open interest, cascatas de liquidação, long/short ratio), filtrado por regime e passado por um <b>risk engine</b>. O motor é determinístico: mesmo input → mesmo score.</p>
-          <div class="cs-hyp"><span class="cs-hyp-tag">H1</span><div><b>Funding squeeze.</b> Funding com z-score esticado (≈100 períodos) = um lado sobrelotado a pagar. Se o preço não confirma, o unwind é violento na direção oposta. Contribui de forma <b>contínua</b> a partir de |z|≈1,3 e satura em 3,5. z &gt; 0 com preço 24h ≤ +1% → <span class="sh">SHORT</span>; z &lt; 0 com preço 24h ≥ −1% → <span class="lo">LONG</span>.</div></div>
-          <div class="cs-hyp"><span class="cs-hyp-tag">H2</span><div><b>OI divergence.</b> OI a subir (a partir de +3% em 6h) com preço quase parado (&lt;0,6%) = combustível bidirecional (direção neutra). OI a cair (a partir de −3% em 6h) = flush/exaustão → fade do movimento recente. Score em rampa até ±12%.</div></div>
-          <div class="cs-hyp"><span class="cs-hyp-tag">H3</span><div><b>Cascade fade.</b> Vela (TF15) com range &gt;1,8×ATR(14), volume &gt;2,2× média(20) e OI a cair em 2h = proxy de cascata → mean-reversion contra a vela. Score em rampa pela extensão da vela e pelo pico de volume. <em>Proxy REST; adapter pronto para o websocket de liquidações.</em></div></div>
-          <div class="cs-hyp"><span class="cs-hyp-tag">H4</span><div><b>Filtro de regime (1h).</b> ADX(14) ≥ 25 → trending; largura de Bollinger no percentil &lt;15% → squeeze (penaliza tudo exceto breakout); resto → ranging. Mean-reversion só pontua bem em ranging.</div></div>
-          <div class="cs-hyp"><span class="cs-hyp-tag alt">+</span><div><b>Estrutura.</b> Posição do preço no range de 24h: ≤20% favorece LONG, ≥80% favorece SHORT (score cresce quanto mais perto do extremo). Peso baixo, melhora o R:R de entrada.</div></div>
-          <div class="cs-hyp"><span class="cs-hyp-tag">T</span><div><b>Thrust (momentum).</b> Vela de impulso com volume &gt;1,8× a média e momentum de 3 velas na mesma direção = arranque de movimento. Sinal de <b>continuação</b> (acompanha, não faz fade).</div></div>
-          <div class="cs-hyp"><span class="cs-hyp-tag">B</span><div><b>Breakout (range).</b> Rompimento do máx/mín das últimas 48 velas (12h), medido em ATRs além do range. Gatilho intradiário de continuação.</div></div>
-          <div class="cs-funnel" style="margin-top:14px">
-            <div class="cs-funnel-step"><span class="cs-fn-n">1</span><div><b>Universo</b><p>Todos os USDT-perps (só se excluem pares mortos). Baixa liquidez é <b>sinalizada, não excluída</b>. O browser enriquece os top-70 por turnover; o long tail além disso precisa de backend.</p></div></div>
-            <div class="cs-funnel-step"><span class="cs-fn-n">2</span><div><b>Scoring determinístico</b><p>Posicionamento (H1–H3) + intradiários (thrust, breakout) + estrutura, filtrados pelo regime → score composto. Mesmo input → mesmo score.</p></div></div>
-            <div class="cs-funnel-step"><span class="cs-fn-n">3</span><div><b>Risk engine</b><p>Stop técnico+risco, TP1/2/3, sizing USDT+unidades, cap 1,8×, rejeição por custos/R:R.</p></div></div>
-            <div class="cs-funnel-step"><span class="cs-fn-n">4</span><div><b>Sugestão + confiança</b><p>Sentimento de posicionamento, confluências a favor/contra, score X/10, urgência e validade.</p></div></div>
-          </div>
-        </div>
-      </details>
-
-      <details class="cs-refbox">
-        <summary class="cs-refbox-h">Custos, R:R e breakeven</summary>
-        <div class="cs-refbox-b">
-          <div class="cs-ev">
-            <div class="cs-ev-row"><span>Taker fee (por lado)</span><b>0,055%</b></div>
-            <div class="cs-ev-row"><span>Slippage estimado (por lado)</span><b>0,030%</b></div>
-            <div class="cs-ev-row tot"><span>Custo round-trip</span><b class="o">≈ 0,17%</b></div>
-          </div>
-          <div class="cs-refbox-note">Nenhuma sugestão sai com <b>TP1 a pagar &lt;2× os custos</b> ou <b>R:R combinado &lt; 1,8</b>. O R:R combinado pondera TP1/TP2/TP3 pelos <b>partial closes</b> (40%/35%/25%) e clampa os alvos ao extremo do range de 24h — setups a meio do range são rejeitados por não terem espaço. Cada sugestão mostra <b>p_win_breakeven</b> = (1 + custos_em_R)/(1 + R:R): a taxa de acerto mínima para empatar. Win rate isolado não é métrica; o que importa é a expectância líquida.</div>
-        </div>
-      </details>
-
-      <details class="cs-refbox">
-        <summary class="cs-refbox-h">Regras de risco e pesos do motor <span class="cs-flag">fixos</span></summary>
-        <div class="cs-refbox-b">
-          <p class="cs-refbox-note" style="margin:0 0 12px">O <b>sizing é por alavancagem</b> que escolhes em cima (1–25×): posição = alavancagem × capital. O <b>risco real por trade</b> não é fixo — resulta da alavancagem × distância ao stop, e vem em cada cartão a laranja/vermelho. Só o <b>R:R mínimo</b> e o teto de alavancagem são limites duros do motor. Os <b>pesos</b> mostram quanto cada sinal conta no score (0–100).</p>
-          <div class="cs-weights">
-            <span class="cs-wlbl">Limites:</span>
-            <span class="cs-wchip">Alavancagem <b>1–25×</b></span>
-            <span class="cs-wchip">R:R mín <b>1,8</b></span>
-            <span class="cs-wchip">TP1 ≥ <b>2× custos</b></span>
-            <span class="cs-wsep"></span>
-            <span class="cs-wlbl">Pesos:</span>
-            <span class="cs-wchip">Funding <b>22</b></span>
-            <span class="cs-wchip">OI <b>18</b></span>
-            <span class="cs-wchip">Cascata <b>14</b></span>
-            <span class="cs-wchip">Thrust <b>14</b></span>
-            <span class="cs-wchip">Breakout <b>12</b></span>
-            <span class="cs-wchip">Regime <b>15</b></span>
-            <span class="cs-wchip">Estrutura <b>5</b></span>
-          </div>
-        </div>
-      </details>
-
-      <details class="cs-refbox">
-        <summary class="cs-refbox-h">Sentimento &amp; camadas backend <span class="cs-flag">fora do browser</span></summary>
-        <div class="cs-refbox-b">
-          <div class="cs-refbox-note"><b>Ativo aqui, ao vivo:</b> sentimento de <b>posicionamento</b> derivado da Bybit v5 — long/short account ratio, funding e OI. Para perps é frequentemente mais acionável que o sentimento social.</div>
-          <div class="cs-refbox-note" style="margin-top:9px">As camadas com estado ou chaves secretas pertencem a um serviço Python e <b>não correm no browser</b>:</div>
-          <ul class="cs-list-ul">
-            <li><b>Sentimento social</b>: Grok/X, LunarCrush, Santiment e notícias (CoinDesk, The Block) — precisam de chaves de API.</li>
-            <li><b>On-chain</b>: Glassnode / Nansen / CryptoQuant — fluxos de exchange, cohorts, stablecoins.</li>
-            <li><b>LLM analyst</b>: veto qualitativo cético sobre a shortlist, coluna separada que não altera o score determinístico.</li>
-            <li><b>Paper trader &amp; walk-forward</b>: loop de 15 min com fees/slippage/funding, kill-switch diário −3%; go-live só após ≥60 dias de paper com expectância positiva.</li>
-          </ul>
-        </div>
-      </details>
-
-    </div>
-
-    <!-- Estilos partilhados do painel de medição (backtest) -->
-    <style>
-      .val-card{border:1px solid var(--border);background:var(--s2);border-radius:14px;padding:16px 18px}
-      .val-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:space-between}
-      .val-title{font-size:14px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px}
-      .val-title .val-dot{width:7px;height:7px;border-radius:50%;background:var(--orange)}
-      .val-sub{font-size:11px;color:var(--faint);line-height:1.5;margin-top:6px;max-width:720px}
-      .val-ctrl{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
-      .val-ctrl input,.val-ctrl select{background:var(--s3,#1a1a1a);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 9px;font-size:12px;font-family:inherit}
-      .val-ctrl input{width:104px;text-transform:uppercase}
-      .val-run{display:inline-flex;align-items:center;gap:6px;background:var(--orange);color:#111;border:none;border-radius:8px;padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer}
-      .val-run:disabled{opacity:.55;cursor:default}
-      .val-body{margin-top:14px}
-      .val-verdict{display:inline-flex;align-items:center;gap:8px;font-weight:800;font-size:13px;letter-spacing:.03em;padding:7px 13px;border-radius:9px;text-transform:uppercase}
-      .val-verdict.bad{background:rgba(220,60,60,.14);color:var(--red);border:1px solid rgba(220,60,60,.35)}
-      .val-verdict.warn{background:rgba(230,150,40,.14);color:var(--orange);border:1px solid rgba(230,150,40,.35)}
-      .val-verdict.good{background:rgba(50,180,110,.14);color:var(--green);border:1px solid rgba(50,180,110,.35)}
-      .val-meta{font-size:11px;color:var(--faint);margin-top:8px}
-      .val-tbl{width:100%;border-collapse:collapse;margin-top:12px;font-size:12px;overflow-x:auto;display:block}
-      .val-tbl th,.val-tbl td{text-align:right;padding:7px 10px;border-bottom:1px solid var(--border);white-space:nowrap}
-      .val-tbl th:first-child,.val-tbl td:first-child{text-align:left}
-      .val-tbl th{color:var(--faint);font-weight:600;text-transform:uppercase;font-size:9.5px;letter-spacing:.06em}
-      .val-tbl td{font-family:'JetBrains Mono',monospace;color:var(--text)}
-      .val-tbl tr.oos td{font-weight:700}
-      .val-tbl td.neg{color:var(--red)} .val-tbl td.pos{color:var(--green)}
-      .val-note{font-size:10.5px;color:var(--faint);line-height:1.6;margin-top:12px;border-top:1px dashed var(--border);padding-top:10px}
-      .val-empty{font-size:12px;color:var(--faint)}
-    </style>
-
-    <!-- Backtest do funil — mede a expectância da versão viva sobre histórico -->
-    <details class="cs-refbox" id="cs-bt">
-      <summary class="cs-refbox-h">Backtest do funil — expectância + curva de calibração <span class="cs-flag">sinais de preço</span></summary>
-      <div class="cs-refbox-b">
-        <div class="val-card" style="margin-bottom:0">
-          <div class="val-head">
-            <div>
-              <div class="val-title"><span class="val-dot"></span>Backtest do funil ao vivo</div>
-              <div class="val-sub">Reproduz o <b>mesmo funil</b> (score composto + risk engine + confiança) vela a vela sobre 1000 velas históricas e mede a <b>expectância líquida de custos</b>, com split in-sample/out-of-sample e uma <b>curva de calibração por escalão de score</b>. Só sinais de preço (thrust, breakout, estrutura, regime); funding/OI entram neutros — precisam de histórico backend.</div>
-            </div>
-            <div class="val-ctrl">
-              <input id="bt-symbol" value="BTCUSDT" spellcheck="false" aria-label="símbolo">
-              <select id="bt-tf" aria-label="timeframe">
-                <option value="15">15m</option>
-                <option value="5">5m</option>
-                <option value="60">1h</option>
-              </select>
-              <button class="val-run" id="bt-run" onclick="csRunBacktest()">
-                <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M1 13V1M1 13h12M3 10l3-4 2 2 4-5" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <span>Correr backtest</span>
-              </button>
-            </div>
-          </div>
-          <div class="val-body" id="bt-body">
-            <div class="val-empty">Escolhe par e timeframe e corre o backtest. Puxa 1000 velas e reproduz o funil em cada uma — demora alguns segundos.</div>
-          </div>
-        </div>
-      </div>
-    </details>
-
-    <!-- Desempenho real — loop de registo (backend) -->
-    <details class="cs-refbox" id="cs-perf" open>
-      <summary class="cs-refbox-h">Desempenho real das sugestões <span class="cs-flag">loop de registo</span></summary>
-      <div class="cs-refbox-b">
-        <p class="cs-refbox-note" style="margin:0 0 12px">Cada sugestão emitida é <b>gravada</b> e seguida até TP1 ou stop (líquido de custos), automaticamente a cada 15 min. Isto é a expectância <b>real</b> — a métrica que diz se o funil tem edge de verdade, não intuição nem backtest.</p>
-        <div class="val-body" id="cs-perf-body"><div class="val-empty">A carregar o desempenho registado…</div></div>
-      </div>
-    </details>
-
-    <div class="cs-disclaimer">Ferramenta de apoio à decisão — <b>nunca execução automática nem aconselhamento financeiro</b>. Sugestões calculadas a partir de dados públicos da Bybit v5 (tickers, kline TF15/TF60, funding history, open interest, long/short ratio). Proxy de liquidações via REST. Aprovação humana obrigatória antes de qualquer ordem.</div>
+    <div class="cs-disclaimer">Apoio à decisão, não aconselhamento financeiro. O bot só coloca ordens que <b>confirmas</b>; tu és responsável pelo risco. Dados públicos da Bybit v5.</div>
 
   </div>
 </div>
@@ -4119,6 +4055,7 @@ function renderCsTab() {
   csUpdateCfgNote();
   csSettleTrigger();     // pontua sugestões pendentes (também há cron de 15 min no backend)
   csFetchStats();        // desempenho real acumulado
+  csBotInited = false; csBotInit();   // painel do bot: estado + propostas pendentes
   scanCs(false);
 }
 
