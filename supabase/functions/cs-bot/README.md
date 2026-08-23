@@ -29,7 +29,15 @@ cs-bot (cron)          cs-confirm (humano)         cs-order                 cs-s
    **Trade** (de preferência restrita por IP). **Contas em modo one-way**
    (o `cs-order` usa `positionIdx: 0`).
 2. **Secrets do Supabase** (Dashboard → Edge Functions → Secrets):
-   - `BYBIT_SUB_API_KEY`, `BYBIT_SUB_API_SECRET` — chaves da subconta.
+   - `BYBIT_SUB_API_KEY` — a API key da subconta (sempre).
+   - **Autenticação — escolhe UMA:**
+     - **RSA (recomendado):** `BYBIT_SUB_API_PRIVATE_KEY` = chave privada PEM
+       (PKCS#8). Ao criar a API key na Bybit escolhes tipo **RSA** e colas a
+       chave *pública*. O `_shared/bybit.ts` deteta a privada e assina com
+       RSASSA-PKCS1-v1_5/SHA-256 (`X-BAPI-SIGN-TYPE: 2`). O segredo nunca sai
+       do Supabase.
+     - **HMAC (alternativa):** `BYBIT_SUB_API_SECRET` = o secret gerado pela
+       Bybit. Usado se não houver chave privada RSA.
    - `BYBIT_BASE` — opcional (default `https://api.bybit.com`).
    - `CS_BOT_SECRET` — opcional; se definido, `cs-confirm` exige-o no header
      `x-cs-secret` (protege a confirmação de quem tenha só a anon key).

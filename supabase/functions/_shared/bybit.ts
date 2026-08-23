@@ -6,13 +6,40 @@
  * POST: sign = timestamp + apiKey + recvWindow + rawJsonBody
  */
 
-export interface BybitKeys { apiKey: string; apiSecret: string; base: string; }
+// Autenticação Bybit v5: suporta RSA (X-BAPI-SIGN-TYPE: 2) e HMAC (tipo 1).
+// Se houver chave privada RSA no ambiente, usa RSA (mais seguro — o segredo
+// nunca sai daqui); caso contrário cai no HMAC com o apiSecret partilhado.
+export interface BybitKeys { apiKey: string; apiSecret: string; privateKeyPem: string; base: string; }
 
 export function bybitKeysFromEnv(): BybitKeys {
   const apiKey = Deno.env.get('BYBIT_SUB_API_KEY') ?? Deno.env.get('BYBIT_API_KEY') ?? '';
   const apiSecret = Deno.env.get('BYBIT_SUB_API_SECRET') ?? Deno.env.get('BYBIT_API_SECRET') ?? '';
+  const privateKeyPem = Deno.env.get('BYBIT_SUB_API_PRIVATE_KEY') ?? Deno.env.get('BYBIT_API_PRIVATE_KEY') ?? '';
   const base = Deno.env.get('BYBIT_BASE') ?? 'https://api.bybit.com';
-  return { apiKey, apiSecret, base };
+  return { apiKey, apiSecret, privateKeyPem, base };
+}
+
+const RECV = '5000';
+
+const b64 = (buf: ArrayBuffer) => btoa(String.fromCharCode(...new Uint8Array(buf)));
+
+// PEM (PKCS#8) → ArrayBuffer DER.
+function pemToDer(pem: string): ArrayBuffer {
+  const body = pem.replace(/-----BEGIN [^-]+-----/g, '').replace(/-----END [^-]+-----/g, '').replace(/\s+/g, '');
+  const bin = atob(body);
+  const buf = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+  return buf.buffer;
+}
+
+let rsaKeyCache: CryptoKey | null = null;
+async function importRsa(pem: string): Promise<CryptoKey> {
+  if (rsaKeyCache) return rsaKeyCache;
+  rsaKeyCache = await crypto.subtle.importKey(
+    'pkcs8', pemToDer(pem),
+    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign'],
+  );
+  return rsaKeyCache;
 }
 
 async function hmacSign(message: string, secret: string): Promise<string> {
@@ -24,14 +51,22 @@ async function hmacSign(message: string, secret: string): Promise<string> {
   return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-const RECV = '5000';
+// Assina o param_str e devolve {sign, signType}. RSA → base64 + tipo 2.
+async function signParam(paramStr: string, k: BybitKeys): Promise<{ sign: string; signType: string }> {
+  if (k.privateKeyPem) {
+    const key = await importRsa(k.privateKeyPem);
+    const sig = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, new TextEncoder().encode(paramStr));
+    return { sign: b64(sig), signType: '2' };
+  }
+  return { sign: await hmacSign(paramStr, k.apiSecret), signType: '1' };
+}
 
 export async function bybitGet(path: string, query: string, k: BybitKeys): Promise<any> {
   const ts = Date.now().toString();
-  const sign = await hmacSign(`${ts}${k.apiKey}${RECV}${query}`, k.apiSecret);
+  const { sign, signType } = await signParam(`${ts}${k.apiKey}${RECV}${query}`, k);
   const r = await fetch(`${k.base}${path}?${query}`, {
     headers: {
-      'X-BAPI-API-KEY': k.apiKey, 'X-BAPI-SIGN': sign,
+      'X-BAPI-API-KEY': k.apiKey, 'X-BAPI-SIGN': sign, 'X-BAPI-SIGN-TYPE': signType,
       'X-BAPI-TIMESTAMP': ts, 'X-BAPI-RECV-WINDOW': RECV,
     },
   });
@@ -41,11 +76,11 @@ export async function bybitGet(path: string, query: string, k: BybitKeys): Promi
 export async function bybitPost(path: string, body: Record<string, unknown>, k: BybitKeys): Promise<any> {
   const ts = Date.now().toString();
   const raw = JSON.stringify(body);
-  const sign = await hmacSign(`${ts}${k.apiKey}${RECV}${raw}`, k.apiSecret);
+  const { sign, signType } = await signParam(`${ts}${k.apiKey}${RECV}${raw}`, k);
   const r = await fetch(`${k.base}${path}`, {
     method: 'POST',
     headers: {
-      'X-BAPI-API-KEY': k.apiKey, 'X-BAPI-SIGN': sign,
+      'X-BAPI-API-KEY': k.apiKey, 'X-BAPI-SIGN': sign, 'X-BAPI-SIGN-TYPE': signType,
       'X-BAPI-TIMESTAMP': ts, 'X-BAPI-RECV-WINDOW': RECV,
       'Content-Type': 'application/json',
     },
