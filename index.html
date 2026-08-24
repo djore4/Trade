@@ -1369,7 +1369,7 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
     <div class="cs-head">
       <div>
         <div class="cs-title">CryptoScan <span class="cs-badge">Sugestões v2</span></div>
-        <div class="cs-sub">Screener de <b>alta convicção</b> em perpétuos da Bybit. Em cima, o <b>bot de execução</b> propõe trades que confirmas antes de irem para a subconta. Em baixo, o <b>explorador manual</b> deixa-te varrer o mercado à mão — sem colocar ordens.</div>
+        <div class="cs-sub">Um só fluxo: <b>1)</b> defines capital, alavancagem e sensibilidade · <b>2)</b> corres o scan · <b>3)</b> cada oportunidade traz plano completo (entrada, stop, TP, risco) e um botão <b>Executar</b> que a coloca na subconta Bybit. Em <b>Simulação</b> nada é colocado — só quando mudas para <b>Real</b>.</div>
       </div>
       <button class="cs-scan-btn" id="cs-scan-btn" onclick="scanCs(true)">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.2" stroke="currentColor" stroke-width="1.4"/><line x1="9" y1="9" x2="12.5" y2="12.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
@@ -1385,82 +1385,58 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
       <div class="cs-ctx-item"><div class="cs-ctx-lbl">Funding médio</div><div class="cs-ctx-val" id="cs-x-fund">—</div><div class="cs-ctx-sub">do universo /8h</div></div>
     </div>
 
-    <!-- ═══ Bot de execução (primário, subconta Bybit) ═══ -->
+    <!-- ═══ Barra de execução (subconta Bybit) ═══ -->
     <style>
-      .cs-botcard{border:1px solid rgba(247,147,26,.35);background:linear-gradient(180deg,rgba(247,147,26,.06),transparent 60%),var(--s2,#151515);border-radius:16px;padding:18px 18px 20px;margin:6px 0 22px}
-      .cs-botcard-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
-      .cs-botcard-title{font-size:15px;font-weight:800;color:var(--text)}
-      .cs-botcard-tag{font-size:10px;font-weight:600;color:var(--faint);margin-left:6px}
-      .cs-bot-badges{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
-      .cs-howtest{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:var(--dim);line-height:1.5}
-      .cs-howtest ol{margin:8px 0 0;padding-left:20px} .cs-howtest li{margin:3px 0}
-      .cs-bot-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
-      .cs-bot-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
-      .cs-bot-actions .cs-bybit-btn{cursor:pointer}
-      .cs-bot-kill{color:var(--red)!important;border-color:rgba(255,80,80,.4)!important}
-      .cs-bot-msg{font-size:11px;color:var(--faint)}
-      .cs-bot-secret{max-width:340px;margin-bottom:16px}
-      .cs-bot-sec-h{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);margin-bottom:8px}
-      .cs-bot-perf{margin-top:14px;border-top:1px dashed var(--border);padding-top:10px}
-      .cs-bot-perf>summary{cursor:pointer;font-size:12px;font-weight:600;color:var(--dim)}
-      .cs-manual-h{font-size:13px;font-weight:700;color:var(--text);margin:4px 0 2px;display:flex;align-items:center;gap:8px}
-      .cs-manual-sub{font-size:11.5px;color:var(--faint);margin-bottom:12px}
-      /* estilos da tabela de desempenho real (usados por csFetchStats) */
-      .val-body{margin-top:6px}
-      .val-empty{font-size:12px;color:var(--faint)}
+      .cs-exec{border:1px solid var(--border);background:var(--s2,#151515);border-radius:12px;padding:10px 14px;margin:8px 0 4px}
+      .cs-exec-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+      .cs-exec-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--faint)}
+      .cs-exec-mode{font-size:11px;font-weight:800;padding:4px 11px;border-radius:7px;cursor:pointer;border:1px solid;letter-spacing:.03em}
+      .cs-exec-mode.sim{color:var(--orange);border-color:rgba(247,147,26,.5);background:rgba(247,147,26,.1)}
+      .cs-exec-mode.real{color:#fff;border-color:var(--red);background:rgba(220,50,50,.85)}
+      .cs-exec-mode.kill{color:#fff;background:var(--red);border-color:var(--red)}
+      .cs-exec-btn{font-size:11px;font-weight:600;padding:4px 10px;border-radius:7px;cursor:pointer;background:transparent;color:var(--dim);border:1px solid var(--border)}
+      .cs-exec-btn.kill{color:var(--red);border-color:rgba(255,80,80,.4)}
+      .cs-exec-msg{font-size:11px;color:var(--faint);margin-left:auto;text-align:right}
+      .cs-exec-settings{margin-top:12px;border-top:1px dashed var(--border);padding-top:12px}
+      .cs-exec-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+      .cs-exec-perf{margin-top:12px} .cs-exec-perf>summary{cursor:pointer;font-size:12px;font-weight:600;color:var(--dim)}
+      .cs-manual-h{font-size:13px;font-weight:700;color:var(--text);margin:16px 0 2px}
+      .cs-manual-h small{font-weight:500;color:var(--faint);font-size:11px}
+      /* botão Executar no cartão */
+      .cs-exec-go{font-size:12px;font-weight:700;padding:7px 14px;border-radius:8px;cursor:pointer;border:1px solid;color:#111;background:var(--orange);border-color:var(--orange)}
+      .cs-exec-go:disabled{opacity:.55;cursor:default}
+      /* val-* (tabela de desempenho real, usada por csFetchStats) */
+      .val-body{margin-top:6px} .val-empty{font-size:12px;color:var(--faint)}
       .val-tbl{width:100%;border-collapse:collapse;margin-top:12px;font-size:12px;overflow-x:auto;display:block}
       .val-tbl th,.val-tbl td{text-align:right;padding:7px 10px;border-bottom:1px solid var(--border);white-space:nowrap}
       .val-tbl th:first-child,.val-tbl td:first-child{text-align:left}
       .val-tbl th{color:var(--faint);font-weight:600;text-transform:uppercase;font-size:9.5px;letter-spacing:.06em}
       .val-tbl td{font-family:'JetBrains Mono',monospace;color:var(--text)}
-      .val-tbl tr.oos td{font-weight:700}
-      .val-tbl td.neg{color:var(--red)} .val-tbl td.pos{color:var(--green)}
+      .val-tbl tr.oos td{font-weight:700} .val-tbl td.neg{color:var(--red)} .val-tbl td.pos{color:var(--green)}
       .val-note{font-size:10.5px;color:var(--faint);line-height:1.6;margin-top:12px;border-top:1px dashed var(--border);padding-top:10px}
       .val-meta{font-size:11px;color:var(--faint);margin-top:8px}
     </style>
-    <div class="cs-botcard" id="cs-bot-panel">
-      <div class="cs-botcard-head">
-        <div class="cs-botcard-title">🤖 Bot de execução<span class="cs-botcard-tag">subconta Bybit · semi-auto</span></div>
-        <span id="cs-bot-badges" class="cs-bot-badges"></span>
+    <div class="cs-exec" id="cs-exec-bar">
+      <div class="cs-exec-row">
+        <span class="cs-exec-lbl">Execução</span>
+        <span id="cs-exec-mode" class="cs-exec-mode sim" title="Clica para alternar Simulação ↔ Real" onclick="csExecToggleMode()">…</span>
+        <button class="cs-exec-btn" onclick="csExecToggleSettings()">⚙ Limites</button>
+        <button class="cs-exec-btn kill" onclick="csExecKill()">⛔ Parar tudo</button>
+        <span id="cs-exec-msg" class="cs-exec-msg"></span>
       </div>
-
-      <div class="cs-howtest">
-        <b>Como testar — sem risco:</b>
-        <ol>
-          <li>Deixa <b>Dry-run = Sim</b> (o card em cima deve dizer <span style="color:var(--orange)">DRY-RUN</span>). Nada vai para a Bybit.</li>
-          <li>Clica <b>▶ Correr o bot agora</b>. Se aparecer 0 propostas, muda <b>Sensibilidade</b> para <i>Permissivo</i> e corre de novo.</li>
-          <li>Cada <b>proposta</b> aparece em baixo com entrada/stop/TP/risco. Clica <b>✅ Confirmar</b> — em dry-run apenas simula (não coloca).</li>
-          <li>Quando confiares: põe <b>Dry-run = Não</b> e financia a subconta. A próxima confirmação coloca a ordem <b>real</b>.</li>
-        </ol>
+      <div class="cs-exec-settings" id="cs-exec-settings" style="display:none">
+        <div id="cs-exec-controls" class="cs-exec-grid"><div class="db-empty" style="grid-column:1/-1">A carregar…</div></div>
+        <label class="cs-field" style="max-width:340px;margin-top:10px"><span>Segredo do bot (opcional) <i class="cs-help" tabindex="0" title="Se definiste a env CS_BOT_SECRET no Supabase, escreve-a aqui. Enviada em cada execução/alteração; guardada só neste browser.">?</i></span>
+          <input type="password" id="cs-bot-secret" placeholder="só se configuraste CS_BOT_SECRET" oninput="csBotSaveSecret()"></label>
+        <details class="cs-exec-perf">
+          <summary>Desempenho real das ordens</summary>
+          <p class="cs-refbox-note" style="margin:8px 0">Cada ordem é seguida até TP1 ou stop, líquido de custos. É a expectância <b>real</b> — diz se o funil tem edge.</p>
+          <div class="val-body" id="cs-perf-body"><div class="val-empty">A carregar…</div></div>
+        </details>
       </div>
-
-      <div id="cs-bot-controls" class="cs-bot-grid">
-        <div class="db-empty" style="grid-column:1/-1">A carregar estado do bot…</div>
-      </div>
-
-      <div class="cs-bot-actions">
-        <button class="cs-bybit-btn" onclick="csBotRunNow(this)">▶ Correr o bot agora</button>
-        <button class="cs-bybit-btn" onclick="csBotRefresh()">↻ Atualizar</button>
-        <button class="cs-bybit-btn cs-bot-kill" onclick="csBotKill()">⛔ Kill-switch</button>
-        <span id="cs-bot-msg" class="cs-bot-msg"></span>
-      </div>
-
-      <label class="cs-field cs-bot-secret"><span>Segredo do bot (opcional) <i class="cs-help" tabindex="0" title="Se definiste a env CS_BOT_SECRET no Supabase, escreve-a aqui. É enviada em cada confirmação/alteração e fica guardada só neste browser.">?</i></span>
-        <input type="password" id="cs-bot-secret" placeholder="só se configuraste CS_BOT_SECRET" oninput="csBotSaveSecret()"></label>
-
-      <div class="cs-bot-sec-h">Propostas pendentes</div>
-      <div id="cs-bot-pending"><div class="db-empty">Sem propostas. Clica “Correr o bot agora”.</div></div>
-
-      <details class="cs-bot-perf">
-        <summary>Desempenho real das sugestões</summary>
-        <p class="cs-refbox-note" style="margin:8px 0">Cada sugestão emitida é seguida até TP1 ou stop, líquido de custos. É a expectância <b>real</b> — a métrica que diz se o funil tem edge.</p>
-        <div class="val-body" id="cs-perf-body"><div class="val-empty">A carregar o desempenho registado…</div></div>
-      </details>
     </div>
 
-    <!-- ═══ Explorador manual (não coloca ordens) ═══ -->
-    <div class="cs-manual-h">🔍 Explorador manual</div>
-    <div class="cs-manual-sub">Varre o mercado à mão e vê as ideias com todo o raciocínio. Só leitura — <b>nunca coloca ordens</b>.</div>
+    <div class="cs-manual-h">As minhas definições <small>— controlam o scan e o tamanho de cada ordem</small></div>
 
     <!-- Configuração editável -->
     <div class="cs-cfg">
@@ -1478,38 +1454,6 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
 
     <!-- Estado da ligação de dados (Bybit v5) -->
     <div class="cs-source" id="cs-source"><span class="cs-src-dot off"></span><span>Fonte de dados: <b>Bybit v5</b> — ainda sem scan</span></div>
-
-    <!-- ─── Bot de execução (semi-automático, subconta Bybit) ─── -->
-    <details class="cs-refbox" id="cs-bot-panel" style="margin:14px 0;border-color:rgba(247,147,26,.28)" ontoggle="if(this.open)csBotInit()">
-      <summary class="cs-refbox-h" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <span>🤖 Bot de execução <span style="font-size:10px;font-weight:600;color:var(--faint)">— subconta Bybit, semi-auto</span></span>
-        <span id="cs-bot-badges" style="display:flex;gap:6px;flex-wrap:wrap;margin-left:auto"></span>
-      </summary>
-      <div class="cs-refbox-b">
-        <div class="cs-refbox-note" style="margin:0 0 12px">As propostas do bot aparecem <b>aqui</b> (não na Bybit). Confirmas ou rejeitas cada uma; só depois é colocada na subconta. Em <b>dry-run</b> nada é colocado — serve para veres o funil.</div>
-
-        <!-- Interruptores + limites -->
-        <div id="cs-bot-controls" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px">
-          <div class="db-empty" style="grid-column:1/-1">A carregar estado do bot…</div>
-        </div>
-
-        <!-- Barra de ações -->
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
-          <button class="cs-bybit-btn" style="cursor:pointer" onclick="csBotRunNow(this)">▶ Correr o bot agora</button>
-          <button class="cs-bybit-btn" style="cursor:pointer" onclick="csBotRefresh()">↻ Atualizar propostas</button>
-          <button class="cs-bybit-btn" style="cursor:pointer;color:var(--red);border-color:rgba(255,80,80,.4)" onclick="csBotKill()">⛔ Kill-switch</button>
-          <span id="cs-bot-msg" style="font-size:11px;color:var(--faint)"></span>
-        </div>
-
-        <!-- Segredo opcional (protege confirmações) -->
-        <label class="cs-field" style="margin-bottom:14px;max-width:340px"><span>Segredo do bot (opcional) <i class="cs-help" tabindex="0" title="Se definiste a env CS_BOT_SECRET no Supabase, escreve-a aqui. É enviada em cada confirmação/alteração e fica guardada só neste browser.">?</i></span>
-          <input type="password" id="cs-bot-secret" placeholder="só se configuraste CS_BOT_SECRET" oninput="csBotSaveSecret()"></label>
-
-        <!-- Propostas pendentes -->
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);margin-bottom:8px">Propostas pendentes</div>
-        <div id="cs-bot-pending"><div class="db-empty">—</div></div>
-      </div>
-    </details>
 
     <!-- Sugestões (injetadas por JS) -->
     <div id="cs-list" class="cs-list"><div class="db-empty">Corre um scan para gerar sugestões de trade…</div></div>
@@ -1718,6 +1662,7 @@ const CS_STATS_URL  = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/cs-
 const CS_BOT_URL     = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/cs-bot';    // loop: corre o motor e enfileira propostas
 const CS_CONFIRM_URL = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/cs-confirm'; // gate humano: lista/confirma/rejeita
 const CS_STATE_URL   = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/cs-state';  // interruptores + limites do bot
+const CS_EXEC_URL    = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/cs-exec';   // coloca a ordem de um cartão do scan
 const SUPABASE_REST = 'https://yifxgiwmibjaornighvt.supabase.co/rest/v1'; // alvos de saída (transversal)
 
 // Feeds RSS por fonte (com fallbacks). Passam pelo proxy get-news (server-side).
@@ -3954,6 +3899,7 @@ function csRenderCard(c, id) {
     <div class="cs-sug-just"><b>Justificação:</b> ${csJustify(c, c.sentiment)}</div>
 
     <div class="cs-sug-foot">
+      <button class="cs-exec-go" onclick="csExec('${c.symbol}',this)" title="Coloca esta ordem na subconta Bybit (ou simula, se estiveres em Simulação)">⚡ Executar</button>
       <button class="cs-ev-btn" onclick="csToggle('${c.symbol}')">${open ? 'Ocultar' : 'Ver'} evidência dos sinais<svg class="cs-chev ${open ? 'up' : ''}" width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3 1.5 6.5 5 3 8.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       <a class="cs-ev-btn cs-bybit-btn" href="https://www.bybit.com/trade/usdt/${c.symbol}" target="_blank" rel="noopener noreferrer" title="Abrir o gráfico de ${c.coin} na Bybit (perpétuo USDT)">Gráfico na Bybit<svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M4.5 2.5H2.5v7h7v-2M7 2.5h2.5V5M9.3 2.7 5.2 6.8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
     </div>
@@ -4055,7 +4001,7 @@ function renderCsTab() {
   csUpdateCfgNote();
   csSettleTrigger();     // pontua sugestões pendentes (também há cron de 15 min no backend)
   csFetchStats();        // desempenho real acumulado
-  csBotInited = false; csBotInit();   // painel do bot: estado + propostas pendentes
+  csExecInited = false; csExecInit();   // barra de execução: estado + limites
   scanCs(false);
 }
 
@@ -4067,113 +4013,93 @@ const csLoggedKeys = new Set();
 const csSupaHdr = () => ({ 'Content-Type': 'application/json', apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` });
 
 // ─────────────────────────────────────────────────────────────────────────
-//  Bot de execução (semi-auto) — painel: estado, propostas, confirmação.
-//  As propostas vêm de cs_bot_orders (via cs-confirm); os interruptores de
-//  cs_bot_state (via cs-state). Confirmar → cs-order coloca na subconta.
+//  Execução (fluxo único) — barra de estado + botão Executar de cada cartão.
+//  Estado/limites em cs_bot_state (via cs-state). Executar → cs-exec coloca a
+//  ordem do cartão na subconta (ou simula, se em Simulação/dry_run).
 // ─────────────────────────────────────────────────────────────────────────
-let csBotState = null, csBotInited = false;
+let csExecState = null, csExecInited = false;
 const csBotGetSecret = () => { try { return localStorage.getItem('csBotSecret') || ''; } catch (e) { return ''; } };
 function csBotSaveSecret() { const el = document.getElementById('cs-bot-secret'); try { localStorage.setItem('csBotSecret', el ? el.value : ''); } catch (e) {} }
 function csBotHdr() { const h = { 'Content-Type': 'application/json', apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }; const s = csBotGetSecret(); if (s) h['x-cs-secret'] = s; return h; }
-function csBotMsg(t, err) { const el = document.getElementById('cs-bot-msg'); if (el) { el.textContent = t || ''; el.style.color = err ? 'var(--red)' : 'var(--faint)'; } }
+function csExecMsg(t, err) { const el = document.getElementById('cs-exec-msg'); if (el) { el.textContent = t || ''; el.style.color = err ? 'var(--red)' : 'var(--faint)'; } }
 
-async function csBotInit() {
-  if (csBotInited) return; csBotInited = true;
+async function csExecInit() {
+  if (csExecInited) return; csExecInited = true;
   const sec = document.getElementById('cs-bot-secret'); if (sec) sec.value = csBotGetSecret();
-  await csBotLoadState(); await csBotLoadPending();
+  await csExecLoadState();
 }
-async function csBotLoadState() {
+async function csExecLoadState() {
   try {
     const r = await fetch(CS_STATE_URL, { headers: csBotHdr() });
-    const d = await r.json(); csBotState = d.state; csBotRenderControls(); csBotBadges();
-  } catch (e) { csBotMsg('Falha a ler estado do bot', true); }
+    const d = await r.json(); csExecState = d.state; csExecRenderMode(); csExecRenderControls();
+  } catch (e) { csExecMsg('Falha a ler estado da execução', true); }
 }
-function csBotBadges() {
-  const el = document.getElementById('cs-bot-badges'); if (!el || !csBotState) return; const s = csBotState;
-  const chip = (t, c) => `<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:5px;border:1px solid ${c};color:${c}">${t}</span>`;
-  let h = s.killswitch ? chip('KILL', 'var(--red)') : (s.enabled ? chip('ATIVO', 'var(--green)') : chip('PARADO', 'var(--faint)'));
-  h += s.dry_run ? chip('DRY-RUN', 'var(--orange)') : chip('REAL', 'var(--red)');
-  h += chip(s.auto_confirm ? 'AUTO' : 'SEMI', 'var(--faint)');
-  el.innerHTML = h;
+function csExecRenderMode() {
+  const el = document.getElementById('cs-exec-mode'); if (!el || !csExecState) return; const s = csExecState;
+  if (s.killswitch) { el.className = 'cs-exec-mode kill'; el.textContent = '⛔ PARADO (kill-switch)'; }
+  else if (s.dry_run) { el.className = 'cs-exec-mode sim'; el.textContent = '🧪 SIMULAÇÃO — não coloca ordens'; }
+  else { el.className = 'cs-exec-mode real'; el.textContent = '🔴 REAL — coloca ordens na Bybit'; }
 }
-const csBotFld = (label, ctrl) => `<label class="cs-field"><span>${label}</span>${ctrl}</label>`;
-function csBotRenderControls() {
-  const el = document.getElementById('cs-bot-controls'); if (!el) return; const s = csBotState;
-  if (!s) { el.innerHTML = '<div class="db-empty" style="grid-column:1/-1">Sem estado do bot.</div>'; return; }
-  const tgl = (k, lbl) => csBotFld(lbl, `<select onchange="csBotSet('${k}', this.value==='1')"><option value="1" ${s[k] ? 'selected' : ''}>Sim</option><option value="0" ${!s[k] ? 'selected' : ''}>Não</option></select>`);
-  const num = (k, lbl, step) => csBotFld(lbl, `<input type="number" step="${step || 1}" value="${s[k]}" onchange="csBotSet('${k}', +this.value)">`);
+const csExecFld = (label, ctrl) => `<label class="cs-field"><span>${label}</span>${ctrl}</label>`;
+function csExecRenderControls() {
+  const el = document.getElementById('cs-exec-controls'); if (!el) return; const s = csExecState;
+  if (!s) { el.innerHTML = '<div class="db-empty" style="grid-column:1/-1">Sem estado.</div>'; return; }
+  const num = (k, lbl, step) => csExecFld(lbl, `<input type="number" step="${step || 1}" value="${s[k]}" onchange="csExecSet('${k}', +this.value)">`);
   el.innerHTML =
-    tgl('enabled', 'Ativo (loop corre)') + tgl('dry_run', 'Dry-run (não coloca)') + tgl('auto_confirm', 'Auto-confirmar') +
-    csBotFld('Sensibilidade', `<select onchange="csBotSet('sensitivity', this.value)"><option value="strict" ${s.sensitivity === 'strict' ? 'selected' : ''}>Rigoroso</option><option value="balanced" ${s.sensitivity === 'balanced' ? 'selected' : ''}>Equilibrado</option><option value="loose" ${s.sensitivity === 'loose' ? 'selected' : ''}>Permissivo</option></select>`) +
-    num('capital', 'Capital (USD)', 10) + num('leverage', 'Alavancagem', 1) + num('max_open_positions', 'Máx posições', 1) +
-    num('max_daily_orders', 'Máx ordens/dia', 1) + num('max_daily_risk_usd', 'Risco máx/dia (USD)', 1) + num('max_notional_usd', 'Notional máx (USD)', 50);
+    num('max_open_positions', 'Máx posições simultâneas', 1) +
+    num('max_daily_orders', 'Máx ordens por dia', 1) +
+    num('max_daily_risk_usd', 'Risco máx por dia (USD)', 1) +
+    num('max_notional_usd', 'Notional máx por ordem (USD)', 50);
 }
-async function csBotSet(k, v) {
+async function csExecSet(k, v) {
   try {
     const r = await fetch(CS_STATE_URL, { method: 'POST', headers: csBotHdr(), body: JSON.stringify({ patch: { [k]: v } }) });
     const d = await r.json();
-    if (d.error) { csBotMsg('Erro: ' + d.error, true); return; }
-    csBotState = d.state; csBotBadges(); csBotMsg('Guardado: ' + k);
-  } catch (e) { csBotMsg('Falha a guardar', true); }
+    if (d.error) { csExecMsg('Erro: ' + d.error, true); return; }
+    csExecState = d.state; csExecRenderMode(); csExecMsg('Guardado');
+  } catch (e) { csExecMsg('Falha a guardar', true); }
 }
-async function csBotLoadPending() {
-  const box = document.getElementById('cs-bot-pending'); if (!box) return;
-  try {
-    const r = await fetch(CS_CONFIRM_URL, { headers: csBotHdr() });
-    const d = await r.json(); const list = d.pending || [];
-    box.innerHTML = list.length ? list.map(csBotCard).join('') : '<div class="db-empty">Sem propostas pendentes.</div>';
-  } catch (e) { box.innerHTML = '<div class="db-empty">Falha a ler propostas.</div>'; }
+function csExecToggleSettings() { const el = document.getElementById('cs-exec-settings'); if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none'; }
+async function csExecToggleMode() {
+  if (!csExecState) return;
+  const goingReal = csExecState.dry_run;   // dry_run=true → passar a real
+  if (goingReal && !confirm('Passar para modo REAL?\n\nA partir de agora, clicar Executar num cartão coloca a ordem na Bybit com dinheiro real.')) return;
+  await csExecSet('dry_run', !csExecState.dry_run);
 }
-function csBotCard(o) {
-  const side = o.side === 'long' ? '<span class="lo">LONG</span>' : '<span class="sh">SHORT</span>';
-  const risk = o.risk_usd != null ? `$${(+o.risk_usd).toFixed(2)}` : '—';
-  return `<div style="border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;background:var(--s1)">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
-      <div style="font-weight:700">${o.coin} ${side} <span style="font-size:10px;color:var(--faint)">${o.setup || ''}</span></div>
-      <div style="font-size:10px;color:var(--faint)">score ${(+o.score || 0).toFixed(0)} · conf ${(+o.confidence || 0).toFixed(1)}/10</div>
-    </div>
-    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--dim);margin:8px 0;display:flex;gap:14px;flex-wrap:wrap">
-      <span>Entrada ${o.entry}</span><span>Stop ${o.stop}</span><span>TP1 ${o.tp1}</span><span>Qty ${o.qty}</span><span>Lev ${o.leverage}x</span><span>Risco ${risk}</span>
-    </div>
-    <div style="display:flex;gap:8px">
-      <button class="cs-bybit-btn" style="cursor:pointer;color:var(--green);border-color:rgba(80,255,120,.35)" onclick="csBotConfirm(${o.id},this)">✅ Confirmar</button>
-      <button class="cs-bybit-btn" style="cursor:pointer;color:var(--red);border-color:rgba(255,80,80,.35)" onclick="csBotReject(${o.id},this)">❌ Rejeitar</button>
-    </div></div>`;
+async function csExecKill() {
+  if (!confirm('Parar tudo (kill-switch)? Nenhuma ordem será colocada até reativares.')) return;
+  await csExecSet('killswitch', true); await csExecLoadState();
 }
-async function csBotConfirm(id, btn) {
-  const real = csBotState && !csBotState.dry_run;
-  if (!confirm(real ? 'Confirmar? Em modo REAL será colocada na Bybit já.' : 'Confirmar? (dry-run: não coloca nada)')) return;
+// Executar o cartão do scan: envia o plano exato que estás a ver para o cs-exec.
+async function csExec(symbol, btn) {
+  if (!csData) return;
+  const c = (csData.candidates || []).find(x => x.symbol === symbol);
+  if (!c || !c.plan) { csExecMsg('Sem plano para ' + symbol, true); return; }
+  if (csExecState && csExecState.killswitch) { csExecMsg('Kill-switch ativo — reativa em ⚙ Limites', true); return; }
+  const real = csExecState && !csExecState.dry_run;
+  const side = c.dir > 0 ? 'LONG' : 'SHORT';
+  const head = real ? '🔴 MODO REAL — vai colocar na Bybit AGORA.\n\n' : '🧪 Simulação (não coloca nada).\n\n';
+  if (!confirm(`${head}${c.coin} ${side}\nEntrada ${fmtPx(c.plan.entry)} · Stop ${fmtPx(c.plan.stop)} · TP1 ${fmtPx(c.plan.tps[0].price)}\nSize ${fmtUsd(c.plan.notional)} (${c.plan.lev}×) · Risco ${fmtUsd(c.plan.riskUsd)}\n\nContinuar?`)) return;
   if (btn) btn.disabled = true;
+  const p = c.plan, s = c.sigs;
+  const plan = {
+    symbol: c.symbol, coin: c.coin, side: c.dir > 0 ? 'long' : 'short',
+    entry: p.entry, stop: p.stop, tp1: p.tps[0].price, tp2: p.tps[1] ? p.tps[1].price : null, tp3: p.tps[2] ? p.tps[2].price : null,
+    tp1_r: p.tps[0].r, stop_pct: p.stopPct, blended_rr: p.blendedRR, qty: p.qty, notional: p.notional, leverage: p.lev, risk_usd: p.riskUsd,
+    score: c.score, confidence: c.confidence, sensitivity: CS_CFG.sensitivity, regime: s.regime.type, setup: csSetupType(c),
+    signals: { funding: s.h1.on, oi: s.h2.on, cascade: s.h3.on, thrust: s.thrust.on, breakout: s.brk.on, structure: s.st.on },
+    turnover: c.turnover, low_liq: !!c.lowLiq,
+  };
+  csExecMsg(`A ${real ? 'colocar' : 'simular'} ${c.coin}…`);
   try {
-    const r = await fetch(CS_CONFIRM_URL, { method: 'POST', headers: csBotHdr(), body: JSON.stringify({ order_id: id, action: 'confirm' }) });
+    const r = await fetch(CS_EXEC_URL, { method: 'POST', headers: csBotHdr(), body: JSON.stringify({ plan }) });
     const d = await r.json();
-    if (d.error) { csBotMsg('Erro: ' + d.error, true); if (btn) btn.disabled = false; return; }
-    const or = d.order_result || {};
-    csBotMsg(or.placed ? `Colocada ✔ ${or.bybit_order_id || ''}` : (or.dry_run ? 'Dry-run: não colocada' : (or.blocked ? 'Bloqueada: ' + or.blocked : 'Confirmada')));
-    csBotLoadPending();
-  } catch (e) { csBotMsg('Falha a confirmar', true); if (btn) btn.disabled = false; }
-}
-async function csBotReject(id, btn) {
-  if (btn) btn.disabled = true;
-  try { await fetch(CS_CONFIRM_URL, { method: 'POST', headers: csBotHdr(), body: JSON.stringify({ order_id: id, action: 'reject' }) }); csBotMsg('Rejeitada'); csBotLoadPending(); }
-  catch (e) { csBotMsg('Falha a rejeitar', true); if (btn) btn.disabled = false; }
-}
-async function csBotRunNow(btn) {
-  csBotMsg('A correr o bot…'); if (btn) btn.disabled = true;
-  try {
-    const r = await fetch(CS_BOT_URL, { method: 'POST', headers: csBotHdr(), body: '{}' });
-    const d = await r.json();
-    if (d.error) csBotMsg('Erro: ' + d.error, true);
-    else if (d.skipped) csBotMsg('Ignorado: ' + d.skipped + ' (ativa o bot no painel)');
-    else csBotMsg(`Analisou ${d.scanned} · ${d.candidates} candidato(s) · ${d.enqueued} nova(s) proposta(s)`);
-    csBotLoadPending();
-  } catch (e) { csBotMsg('Falha a correr o bot', true); }
+    if (d.placed) csExecMsg(`✅ ${c.coin} ${side} COLOCADA na Bybit · qty ${csFmtQty(d.qty)}${d.bybit_order_id ? ' · ' + d.bybit_order_id : ''}`);
+    else if (d.dry_run) csExecMsg(`🧪 Simulação OK: ${c.coin} ${side} qty ${csFmtQty(d.would_place.qty)} — não colocada. Muda para REAL para executar.`);
+    else if (d.blocked) csExecMsg('Bloqueada: ' + d.blocked + ' (ajusta em ⚙ Limites)', true);
+    else csExecMsg('Erro: ' + (d.error || 'desconhecido'), true);
+  } catch (e) { csExecMsg('Falha a executar', true); }
   finally { if (btn) btn.disabled = false; }
-}
-function csBotRefresh() { csBotLoadState(); csBotLoadPending(); }
-async function csBotKill() {
-  if (!confirm('Ativar o kill-switch? Pára o bot imediatamente.')) return;
-  await csBotSet('killswitch', true); await csBotLoadState();
 }
 
 function csLogSuggestions(sug) {
