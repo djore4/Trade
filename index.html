@@ -1369,12 +1369,21 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
     <div class="cs-head">
       <div>
         <div class="cs-title">CryptoScan <span class="cs-badge">Sugestões v2</span></div>
-        <div class="cs-sub">Um só fluxo: <b>1)</b> defines capital, alavancagem e sensibilidade · <b>2)</b> corres o scan · <b>3)</b> cada oportunidade traz plano completo (entrada, stop, TP, risco) e um botão <b>Executar</b> que a coloca na subconta Bybit. Em <b>Simulação</b> nada é colocado — só quando mudas para <b>Real</b>.</div>
+        <div class="cs-sub">Corres o scan → cada oportunidade traz plano completo (entrada, stop, TP) com o <b>lucro/prejuízo estimado</b> na tua margem, e um botão <b>Executar</b> que a coloca na subconta Bybit. A <b>Sensibilidade</b> (ao lado) decide quão exigente é a busca; <b>capital e alavancagem</b> (em baixo) só dimensionam as estimativas.</div>
       </div>
-      <button class="cs-scan-btn" id="cs-scan-btn" onclick="scanCs(true)">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.2" stroke="currentColor" stroke-width="1.4"/><line x1="9" y1="9" x2="12.5" y2="12.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
-        <span>Correr scan</span>
-      </button>
+      <div style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap">
+        <label class="cs-field" style="min-width:150px"><span>Sensibilidade <i class="cs-help" tabindex="0" title="Quão exigente é a busca. Rigoroso = só ideias muito fortes (pode não haver nenhuma). Permissivo = mostra mais candidatos, de menor convicção. Muda o que o scan encontra.">?</i></span>
+          <select id="cs-sens" onchange="csSensChange()">
+            <option value="strict">Rigoroso</option>
+            <option value="balanced">Equilibrado</option>
+            <option value="loose">Permissivo</option>
+          </select>
+        </label>
+        <button class="cs-scan-btn" id="cs-scan-btn" onclick="scanCs(true)">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.2" stroke="currentColor" stroke-width="1.4"/><line x1="9" y1="9" x2="12.5" y2="12.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          <span>Correr scan</span>
+        </button>
+      </div>
     </div>
 
     <!-- Contexto de mercado (só leitura) -->
@@ -1436,19 +1445,12 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
       </div>
     </div>
 
-    <div class="cs-manual-h">As minhas definições <small>— controlam o scan e o tamanho de cada ordem</small></div>
+    <div class="cs-manual-h">Margem &amp; alavancagem <small>— não mudam a busca; só dimensionam o lucro/prejuízo estimado em cada cartão</small></div>
 
-    <!-- Configuração editável -->
+    <!-- Sizing (afeta só as estimativas dos cartões, ao vivo) -->
     <div class="cs-cfg">
-      <label class="cs-field"><span>Capital (USD) <i class="cs-help" tabindex="0" title="O teu capital de referência. Serve só para calcular o tamanho da posição de cada sugestão.">?</i></span><input type="number" id="cs-capital" min="100" step="100" oninput="csCfgChange()"></label>
-      <label class="cs-field"><span>Alavancagem <i class="cs-help" tabindex="0" title="Alavancagem-alvo da posição. Posição = alavancagem × capital. O risco real por trade (perda se bater o stop) resulta daí e é mostrado em cada cartão — alavancagem alta = risco alto. 1–25×.">?</i></span><input type="number" id="cs-lev" min="1" max="25" step="1" oninput="csCfgChange()" onchange="csCfgChange(true)"></label>
-      <label class="cs-field"><span>Sensibilidade <i class="cs-help" tabindex="0" title="Quão exigente é o funil. Rigoroso = só ideias muito fortes (pode não haver nenhuma). Permissivo = mostra mais candidatos, de menor convicção. Não inventa edge — apenas baixa a fasquia da fasquia de score/confiança.">?</i></span>
-        <select id="cs-sens" onchange="csSensChange()">
-          <option value="strict">Rigoroso</option>
-          <option value="balanced">Equilibrado</option>
-          <option value="loose">Permissivo</option>
-        </select>
-      </label>
+      <label class="cs-field"><span>Margem por trade (USD) <i class="cs-help" tabindex="0" title="Quanto pões de margem em cada trade. Posição = margem × alavancagem. Define o tamanho e, com o stop, o prejuízo estimado. É por-trade, não é repartido por várias posições.">?</i></span><input type="number" id="cs-capital" min="10" step="10" oninput="csCfgChange()"></label>
+      <label class="cs-field"><span>Alavancagem <i class="cs-help" tabindex="0" title="Posição = margem × alavancagem. Não muda quais trades aparecem — só o tamanho e, logo, o lucro nos TP e o prejuízo no stop, mostrados em cada cartão. 1–25×.">?</i></span><input type="number" id="cs-lev" min="1" max="25" step="1" oninput="csCfgChange()" onchange="csCfgChange(true)"></label>
       <div class="cs-cfg-note" id="cs-cfg-note"></div>
     </div>
 
@@ -3840,20 +3842,26 @@ function csRenderCard(c, id) {
   const urgCls = urg === 'Alta' ? 'hi' : urg === 'Média' ? 'md' : 'lo';
   const { pro, con } = csConfluences(c, c.sentiment);
   const tfLbl = '15m · filtro 1h';
-  // Escada de saída (TP1/2/3 + stop)
+  // Estimativas em $ a partir da margem × alavancagem (ao vivo).
+  const q = p.qty;
+  const costUsd = (CS_COST_RT / 100) * p.notional;               // round-trip ~0,17% sobre a posição
+  const tpUsd = p.tps.map(t => t.close * q * Math.abs(t.price - p.entry)); // lucro do fecho parcial em cada TP
+  const netProfit = tpUsd.reduce((a, b) => a + b, 0) - costUsd;  // se cumprir TP1+TP2+TP3
+  const netLoss = p.riskUsd + costUsd;                            // se bater o stop
+  // Escada de saída (TP1/2/3 + stop) — com o $ de cada nível
   const tpRows = p.tps.map((t, i) => `<div class="cs-lvl tp">
       <span class="cs-lvl-k">TP${i + 1}${t.clamped ? ' <em>(range)</em>' : ''}</span>
       <span class="cs-lvl-px g">${fmtPx(t.price)}</span>
       <span class="cs-lvl-pct">+${t.pct.toFixed(2)}%</span>
       <span class="cs-lvl-r">${t.r.toFixed(1)}R</span>
-      <span class="cs-lvl-close">fecha ${(t.close * 100).toFixed(0)}%</span>
+      <span class="cs-lvl-close">fecha ${(t.close * 100).toFixed(0)}% · <b style="color:var(--green)">+${fmtUsd(tpUsd[i])}</b></span>
     </div>`).join('');
   const stopRow = `<div class="cs-lvl stop">
       <span class="cs-lvl-k">Stop</span>
       <span class="cs-lvl-px r">${fmtPx(p.stop)}</span>
       <span class="cs-lvl-pct">−${p.stopPct.toFixed(2)}%</span>
       <span class="cs-lvl-r">1R</span>
-      <span class="cs-lvl-close">técnico + 1,2×ATR</span>
+      <span class="cs-lvl-close"><b style="color:var(--red)">−${fmtUsd(p.riskUsd)}</b> · técnico+1,2×ATR</span>
     </div>`;
   const proHtml = pro.length ? pro.map(x => `<li class="pro">${x}</li>`).join('') : '<li class="muted">—</li>';
   const conHtml = con.length ? con.map(x => `<li class="con">${x}</li>`).join('') : '<li class="muted">Sem riscos relevantes assinalados.</li>';
@@ -3885,6 +3893,13 @@ function csRenderCard(c, id) {
     </div>
 
     <div class="cs-lvls">${tpRows}${stopRow}</div>
+
+    <div style="display:flex;gap:8px 16px;flex-wrap:wrap;align-items:center;padding:11px 16px;background:var(--s1);border-top:1px solid var(--border);font-size:12.5px">
+      <span style="color:var(--green);font-weight:800">Se cumprir o plano: +${fmtUsd(netProfit)}</span>
+      <span style="color:var(--faint)">·</span>
+      <span style="color:var(--red);font-weight:800">Se bater o stop: −${fmtUsd(netLoss)}</span>
+      <span style="color:var(--faint);margin-left:auto;font-size:10.5px;text-align:right">${String(CS_CFG.leverage).replace('.', ',')}× em ${fmtUsd(CS_CFG.capital)} de margem · líquido de ~${CS_COST_RT.toFixed(2).replace('.', ',')}% custos</span>
+    </div>
 
     <div class="cs-sug-cols">
       <div class="cs-sug-col"><div class="cs-col-h up">Confluências a favor</div><ul class="cs-col-list">${proHtml}</ul></div>
