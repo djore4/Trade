@@ -1372,13 +1372,14 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
         <div class="cs-sub">Corres o scan → cada oportunidade traz plano completo (entrada, stop, TP) com o <b>lucro/prejuízo estimado</b> na tua margem, e um botão <b>Executar</b> que a coloca na subconta Bybit. A <b>Sensibilidade</b> (ao lado) decide quão exigente é a busca; <b>capital e alavancagem</b> (em baixo) só dimensionam as estimativas.</div>
       </div>
       <div style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap">
-        <label class="cs-field" style="min-width:150px"><span>Sensibilidade <i class="cs-help" tabindex="0" title="Quão exigente é a busca. Rigoroso = só ideias muito fortes (pode não haver nenhuma). Permissivo = mostra mais candidatos, de menor convicção. Muda o que o scan encontra.">?</i></span>
-          <select id="cs-sens" onchange="csSensChange()">
-            <option value="strict">Rigoroso</option>
-            <option value="balanced">Equilibrado</option>
-            <option value="loose">Permissivo</option>
-          </select>
-        </label>
+        <div class="cs-seg-wrap">
+          <span class="cs-seg-lbl">Sensibilidade <i class="cs-help" tabindex="0" title="Quão exigente é a busca. Rigoroso = só ideias muito fortes. Permissivo = mostra mais candidatos, de menor convicção. Muda o que o scan encontra.">?</i></span>
+          <div class="cs-seg" id="cs-seg-sens" role="group" aria-label="Sensibilidade">
+            <button type="button" data-v="strict" onclick="csSetSens('strict')">Rigoroso</button>
+            <button type="button" data-v="balanced" onclick="csSetSens('balanced')">Equilibrado</button>
+            <button type="button" data-v="loose" onclick="csSetSens('loose')">Permissivo</button>
+          </div>
+        </div>
         <button class="cs-scan-btn" id="cs-scan-btn" onclick="scanCs(true)">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.2" stroke="currentColor" stroke-width="1.4"/><line x1="9" y1="9" x2="12.5" y2="12.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
           <span>Correr scan</span>
@@ -1386,16 +1387,15 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
       </div>
     </div>
 
-    <!-- Contexto de mercado (só leitura) -->
-    <div class="cs-ctx">
-      <div class="cs-ctx-item"><div class="cs-ctx-lbl">Universo</div><div class="cs-ctx-val" id="cs-x-universe">—</div><div class="cs-ctx-sub">todos os perps · baixa liq. sinalizada</div></div>
-      <div class="cs-ctx-item"><div class="cs-ctx-lbl">Sugestões</div><div class="cs-ctx-val" id="cs-x-short">—</div><div class="cs-ctx-sub">passam o funil</div></div>
-      <div class="cs-ctx-item"><div class="cs-ctx-lbl">BTC 24h</div><div class="cs-ctx-val" id="cs-x-btc">—</div><div class="cs-ctx-sub">contexto direcional</div></div>
-      <div class="cs-ctx-item"><div class="cs-ctx-lbl">Funding médio</div><div class="cs-ctx-val" id="cs-x-fund">—</div><div class="cs-ctx-sub">do universo /8h</div></div>
-    </div>
-
     <!-- ═══ Barra de execução (subconta Bybit) ═══ -->
     <style>
+      .cs-seg-wrap{display:flex;flex-direction:column;gap:5px}
+      .cs-seg-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--faint)}
+      .cs-seg{display:inline-flex;background:var(--s2,#151515);border:1px solid var(--border);border-radius:11px;padding:3px;gap:2px}
+      .cs-seg button{appearance:none;border:none;background:transparent;color:var(--dim);font:inherit;font-size:12px;font-weight:600;padding:7px 13px;border-radius:8px;cursor:pointer;transition:background .15s,color .15s;white-space:nowrap}
+      .cs-seg button:hover{color:var(--text)}
+      .cs-seg button.on{background:var(--orange);color:#111;box-shadow:0 1px 4px rgba(247,147,26,.35)}
+      @media(max-width:768px){.cs-seg{width:100%} .cs-seg button{flex:1;padding:8px 6px;font-size:11px}}
       .cs-exec{border:1px solid var(--border);background:var(--s2,#151515);border-radius:12px;padding:10px 14px;margin:8px 0 4px}
       .cs-exec-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
       .cs-exec-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--faint)}
@@ -3821,17 +3821,14 @@ function csRender() {
   const isSug = c => c.score >= CS_CFG.scoreThreshold && c.plan && !c.plan.rejected && c.confidence >= CS_CFG.minConfidence;
   const sug = all.filter(isSug).sort((a, b) => b.confidence - a.confidence).slice(0, CS_CFG.shortlistMax);
   if (sug.length) csLogSuggestions(sug);   // regista no loop de feedback (dedup por hora)
-  const sugSet = new Set(sug.map(c => c.symbol));
-  const radar = all.filter(c => !sugSet.has(c.symbol)).slice(0, CS_CFG.radarMax);
   set('cs-x-short', sug.length);
   let html = '';
   if (!sug.length) {
     html += `<div class="cs-nosetup"><div class="cs-nosetup-h">Sem setup de alta probabilidade neste momento</div>` +
-      `<div class="cs-nosetup-b">O universo foi avaliado mas nenhum candidato reuniu confluência suficiente (score ≥ ${CS_CFG.scoreThreshold}), R:R ≥ ${CS_CFG.minRR} e confiança ≥ ${CS_CFG.minConfidence.toFixed(1)}/10 em simultâneo. A ausência de setup é um resultado válido — preferimos qualidade a quantidade. Se quiseres ver mais candidatos, baixa a <b>Sensibilidade</b> no topo. Em baixo, o radar mostra o que o mercado tinha de mais próximo e o que lhe faltou.</div></div>`;
+      `<div class="cs-nosetup-b">O universo foi avaliado mas nenhum candidato reuniu confluência suficiente (score ≥ ${CS_CFG.scoreThreshold}), R:R ≥ ${CS_CFG.minRR} e confiança ≥ ${CS_CFG.minConfidence.toFixed(1)}/10 em simultâneo. A ausência de setup é um resultado válido — preferimos qualidade a quantidade. Se quiseres ver mais candidatos, baixa a <b>Sensibilidade</b> ao lado do botão de scan.</div></div>`;
   } else {
     html += sug.map((c, i) => csRenderCard(c, i + 1)).join('');
   }
-  html += csRadarHtml(radar, !sug.length);
   listEl.innerHTML = html;
 }
 
@@ -3888,6 +3885,7 @@ function csRenderCard(c, id) {
       <div class="cs-kv"><div class="cs-kv-l">Risco real · se bater o stop</div><div class="cs-kv-v ${p.riskPct > 25 ? 'r' : p.riskPct > 10 ? 'o' : 'g'}">${fmtUsd(p.riskUsd)} · ${p.riskPct.toFixed(0)}% da conta</div></div>
       <div class="cs-kv"><div class="cs-kv-l">Position size</div><div class="cs-kv-v">${fmtUsd(p.notional)} · ${csFmtQty(p.qty)} ${c.coin}</div></div>
       <div class="cs-kv"><div class="cs-kv-l">Alavancagem</div><div class="cs-kv-v ${p.capped ? 'o' : ''}">${p.lev.toFixed(0)}×${p.capped ? ' · cap ' + CS_CFG.maxLev + '×' : ''}</div></div>
+      <div class="cs-kv"><div class="cs-kv-l">Funding /8h</div><div class="cs-kv-v ${isFinite(c.fr) && c.fr > 0.01 ? 'o' : isFinite(c.fr) && c.fr < -0.01 ? 'g' : ''}" title="Taxa de funding do perpétuo. Positivo = longs pagam shorts (multidão comprada); negativo = shorts pagam longs.">${isFinite(c.fr) ? (c.fr >= 0 ? '+' : '') + c.fr.toFixed(4) + '%' : '—'}</div></div>
       <div class="cs-kv"><div class="cs-kv-l">p_win breakeven</div><div class="cs-kv-v">${(p.pWinBE * 100).toFixed(0)}%</div></div>
       <div class="cs-kv"><div class="cs-kv-l">Validade</div><div class="cs-kv-v sm">${csValidity(c)}</div></div>
     </div>
@@ -3944,30 +3942,6 @@ function csRenderEvidence(c) {
   </div>`;
 }
 
-// Radar de mercado: candidatos mais próximos que não chegaram a Sugestão, com
-// o motivo do corte. Dá transparência (sobretudo quando não há sugestões).
-function csRadarHtml(radar, openByDefault) {
-  if (!radar.length) return '';
-  const rows = radar.map(c => {
-    const side = c.dir > 0 ? 'Long' : c.dir < 0 ? 'Short' : '—';
-    let reason;
-    if (c.score < CS_CFG.scoreThreshold) reason = `confluência fraca · score ${c.score.toFixed(0)}/${CS_CFG.scoreThreshold}`;
-    else if (!c.plan) reason = 'sem plano de trade';
-    else if (c.plan.rejectedRR) reason = `R:R ${c.plan.blendedRR.toFixed(2)} < ${CS_CFG.minRR} — sem espaço no range`;
-    else if (c.plan.rejectedCost) reason = 'alvo não paga 2× os custos';
-    else reason = `confiança ${(c.confidence || 0).toFixed(1)}/10 < ${CS_CFG.minConfidence.toFixed(1)}`;
-    const tags = [];
-    if (c.sigs.h1.on) tags.push('Funding');
-    if (c.sigs.h2.on) tags.push('OI');
-    if (c.sigs.h3.on) tags.push('Cascata');
-    if (c.sigs.thrust && c.sigs.thrust.on) tags.push('Thrust');
-    if (c.sigs.brk && c.sigs.brk.on) tags.push('Breakout');
-    if (c.sigs.st.on) tags.push('Estrutura');
-    const tagStr = tags.length ? tags.join(' · ') : CS_REG_LABEL[c.sigs.regime.type] || '—';
-    return `<div class="cs-desc-row"><span class="cs-desc-sym">${c.coin}${c.lowLiq ? ' <span title="baixa liquidez" style="color:var(--red)">⚠</span>' : ''}</span><span class="cs-desc-side ${c.dir > 0 ? 'long' : c.dir < 0 ? 'short' : ''}">${side}</span><span class="cs-desc-score">${tagStr}</span><span class="cs-desc-reason">${reason}</span></div>`;
-  }).join('');
-  return `<details class="cs-desc"${openByDefault ? ' open' : ''}><summary class="cs-desc-h">Radar de mercado (${radar.length}) — candidatos mais próximos e o que lhes faltou</summary><div class="cs-desc-body">${rows}</div></details>`;
-}
 
 // Quantidade do ativo com resolução adaptada à magnitude.
 function csFmtQty(q) {
@@ -3992,9 +3966,13 @@ function csCfgChange(snap) {
   if (csData) { (csData.candidates || []).forEach(c => { c.plan = csTradePlan(c.price, c.atr, c.dir, CS_CFG.capital, c.k15, CS_CFG.leverage, c.sigs.regime.type); }); csRender(); }
 }
 // Muda a exigência do funil. Não refaz o scan — o gate é aplicado no render.
-function csSensChange() {
-  const el = document.getElementById('cs-sens');
-  csApplySensitivity(el ? el.value : 'balanced');
+function csSegSyncSens() {
+  const g = document.getElementById('cs-seg-sens'); if (!g) return;
+  g.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === CS_CFG.sensitivity));
+}
+function csSetSens(key) {
+  csApplySensitivity(key);
+  csSegSyncSens();
   csSaveCfg();
   csUpdateCfgNote();
   if (csData) csRender();
@@ -4012,7 +3990,7 @@ function csUpdateCfgNote() {
 function renderCsTab() {
   const cap = document.getElementById('cs-capital'); if (cap && !cap.value) cap.value = CS_CFG.capital;
   const lv = document.getElementById('cs-lev'); if (lv && !lv.value) lv.value = CS_CFG.leverage;
-  const sn = document.getElementById('cs-sens'); if (sn) sn.value = CS_CFG.sensitivity;
+  csSegSyncSens();
   csUpdateCfgNote();
   csSettleTrigger();     // pontua sugestões pendentes (também há cron de 15 min no backend)
   csFetchStats();        // desempenho real acumulado
