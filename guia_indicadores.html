@@ -6,22 +6,22 @@
 <title>Ler indicadores sem vibe check · CryptoScan</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#0B0E11;
-  --panel:#14181F;
-  --panel-2:#0F1318;
-  --border:#232830;
-  --text:#EAECEF;
-  --text-dim:#848E9C;
-  --text-dimmer:#5E6673;
-  --green:#0ECB81;
-  --red:#F6465D;
-  --amber:#F0B90B;
-  --green-soft:rgba(14,203,129,.10);
-  --red-soft:rgba(246,70,93,.10);
-  --amber-soft:rgba(240,185,11,.09);
+  --bg:#080810;
+  --panel:#16162a;
+  --panel-2:#10101c;
+  --border:#23233a;
+  --text:#dde1f0;
+  --text-dim:#7b7fa0;
+  --text-dimmer:#6b7099;
+  --green:#2dd4a0;
+  --red:#f7647a;
+  --amber:#f7931a;
+  --green-soft:rgba(45,212,160,.10);
+  --red-soft:rgba(247,100,122,.10);
+  --amber-soft:rgba(247,147,26,.09);
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
@@ -29,18 +29,18 @@ body{
   margin:0;
   background:var(--bg);
   color:var(--text);
-  font-family:'IBM Plex Sans',system-ui,sans-serif;
+  font-family:'Inter',system-ui,sans-serif;
   font-size:15px;
   line-height:1.6;
   -webkit-font-smoothing:antialiased;
 }
-.mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
 .wrap{max-width:920px;margin:0 auto;padding:0 18px 90px}
 
 /* ─── HEADER ─────────────────────────────── */
 header.top{padding:44px 0 26px}
 .eyebrow{
-  font-family:'IBM Plex Mono',monospace;
+  font-family:'JetBrains Mono',monospace;
   font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;
   color:var(--amber);margin:0 0 14px;font-weight:500;
 }
@@ -67,7 +67,7 @@ nav.ticker{
 nav.ticker::-webkit-scrollbar{display:none}
 nav.ticker a{
   flex:0 0 auto;
-  font-family:'IBM Plex Mono',monospace;
+  font-family:'JetBrains Mono',monospace;
   font-size:12px;font-weight:600;letter-spacing:.04em;
   color:var(--text-dim);text-decoration:none;
   padding:6px 11px;border-radius:6px;
@@ -77,7 +77,7 @@ nav.ticker a{
   white-space:nowrap;
 }
 nav.ticker a:hover{color:var(--text);border-color:var(--text-dimmer)}
-nav.ticker a.x{color:var(--amber);border-color:rgba(240,185,11,.35)}
+nav.ticker a.x{color:var(--amber);border-color:rgba(247,147,26,.35)}
 
 /* ─── PANELS ─────────────────────────────── */
 section.ind{
@@ -90,7 +90,7 @@ section.ind{
 }
 .ind-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px}
 .chip{
-  font-family:'IBM Plex Mono',monospace;
+  font-family:'JetBrains Mono',monospace;
   font-size:12px;font-weight:600;letter-spacing:.05em;
   color:var(--bg);background:var(--text-dim);
   padding:3px 8px;border-radius:5px;
@@ -101,7 +101,7 @@ section.ind{
 }
 .mede b{color:var(--text);font-weight:600}
 .mede .lbl{
-  font-family:'IBM Plex Mono',monospace;color:var(--text-dimmer);
+  font-family:'JetBrains Mono',monospace;color:var(--text-dimmer);
   font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-right:6px;
 }
 
@@ -114,7 +114,7 @@ section.ind{
 }
 .diagram svg{display:block;width:100%;height:auto}
 .dg-cap{
-  font-family:'IBM Plex Mono',monospace;font-size:10.5px;
+  font-family:'JetBrains Mono',monospace;font-size:10.5px;
   color:var(--text-dimmer);letter-spacing:.05em;
   margin-top:8px;text-transform:uppercase;
 }
@@ -125,17 +125,17 @@ section.ind{
   border-radius:7px;padding:14px 15px;
   border:1px solid var(--border);
 }
-.case.down{background:var(--red-soft);border-color:rgba(246,70,93,.25)}
-.case.up{background:var(--green-soft);border-color:rgba(14,203,129,.25)}
+.case.down{background:var(--red-soft);border-color:rgba(247,100,122,.25)}
+.case.up{background:var(--green-soft);border-color:rgba(45,212,160,.25)}
 .case-lbl{
-  font-family:'IBM Plex Mono',monospace;
+  font-family:'JetBrains Mono',monospace;
   font-size:12px;font-weight:600;letter-spacing:.04em;
   margin:0 0 9px;
 }
 .case.down .case-lbl{color:var(--red)}
 .case.up .case-lbl{color:var(--green)}
 .case-num{
-  font-family:'IBM Plex Mono',monospace;
+  font-family:'JetBrains Mono',monospace;
   font-size:12.5px;line-height:1.7;color:var(--text);
   background:rgba(0,0,0,.25);
   border-radius:5px;padding:9px 11px;margin:0 0 10px;
@@ -152,12 +152,12 @@ section.ind{
 }
 .callout:last-child{margin-bottom:0}
 .callout .tag{
-  font-family:'IBM Plex Mono',monospace;
+  font-family:'JetBrains Mono',monospace;
   font-size:11px;font-weight:600;letter-spacing:.09em;
   padding:2px 7px;border-radius:4px;margin-right:9px;
   display:inline-block;
 }
-.callout.erro{background:var(--amber-soft);border-color:rgba(240,185,11,.3)}
+.callout.erro{background:var(--amber-soft);border-color:rgba(247,147,26,.3)}
 .callout.erro .tag{color:var(--bg);background:var(--amber)}
 .callout.rigor{background:var(--panel-2)}
 .callout.rigor .tag{color:var(--text-dim);background:var(--border)}
@@ -166,7 +166,7 @@ section.ind{
 
 /* ─── SECTION LABEL ──────────────────────── */
 .sec-label{
-  font-family:'IBM Plex Mono',monospace;
+  font-family:'JetBrains Mono',monospace;
   font-size:12px;letter-spacing:.12em;text-transform:uppercase;
   color:var(--text-dimmer);font-weight:600;
   margin:38px 0 16px;padding-bottom:8px;
@@ -177,10 +177,10 @@ section.ind{
 
 /* EXTRA tag linking to hypothesis */
 .hyp-tag{
-  font-family:'IBM Plex Mono',monospace;
+  font-family:'JetBrains Mono',monospace;
   font-size:11px;font-weight:600;letter-spacing:.05em;
   color:var(--amber);background:var(--amber-soft);
-  border:1px solid rgba(240,185,11,.3);
+  border:1px solid rgba(247,147,26,.3);
   padding:4px 9px;border-radius:5px;
   display:inline-flex;align-items:center;gap:6px;margin-top:14px;
 }
@@ -207,7 +207,7 @@ ol.rigor-list li::before{
   position:absolute;left:0;top:13px;
   width:28px;height:28px;border-radius:6px;
   background:var(--panel-2);border:1px solid var(--border);
-  color:var(--amber);font-family:'IBM Plex Mono',monospace;
+  color:var(--amber);font-family:'JetBrains Mono',monospace;
   font-weight:600;font-size:13px;
   display:flex;align-items:center;justify-content:center;
 }
@@ -217,7 +217,7 @@ ol.rigor-list li span{color:var(--text-dim);font-size:13.5px}
 footer.foot{
   margin-top:40px;padding-top:20px;border-top:1px solid var(--border);
   color:var(--text-dimmer);font-size:12px;
-  font-family:'IBM Plex Mono',monospace;letter-spacing:.03em;
+  font-family:'JetBrains Mono',monospace;letter-spacing:.03em;
 }
 
 /* ─── RESPONSIVE ─────────────────────────── */
@@ -262,22 +262,22 @@ footer.foot{
 
   <div class="diagram">
     <svg viewBox="0 0 560 120" role="img" aria-label="Barras de funding a comprimir">
-      <line x1="0" y1="60" x2="560" y2="60" stroke="#232830" stroke-width="1"/>
+      <line x1="0" y1="60" x2="560" y2="60" stroke="#23233a" stroke-width="1"/>
       <!-- barras positivas a decrescer (compressão) -->
-      <rect x="20"  y="18" width="26" height="42" fill="#0ECB81" opacity=".85"/>
-      <rect x="66"  y="26" width="26" height="34" fill="#0ECB81" opacity=".8"/>
-      <rect x="112" y="34" width="26" height="26" fill="#0ECB81" opacity=".7"/>
-      <rect x="158" y="42" width="26" height="18" fill="#0ECB81" opacity=".6"/>
-      <rect x="204" y="50" width="26" height="10" fill="#0ECB81" opacity=".5"/>
-      <rect x="250" y="55" width="26" height="5"  fill="#0ECB81" opacity=".4"/>
+      <rect x="20"  y="18" width="26" height="42" fill="#2dd4a0" opacity=".85"/>
+      <rect x="66"  y="26" width="26" height="34" fill="#2dd4a0" opacity=".8"/>
+      <rect x="112" y="34" width="26" height="26" fill="#2dd4a0" opacity=".7"/>
+      <rect x="158" y="42" width="26" height="18" fill="#2dd4a0" opacity=".6"/>
+      <rect x="204" y="50" width="26" height="10" fill="#2dd4a0" opacity=".5"/>
+      <rect x="250" y="55" width="26" height="5"  fill="#2dd4a0" opacity=".4"/>
       <!-- viragem negativa -->
-      <rect x="296" y="60" width="26" height="8"  fill="#F6465D" opacity=".5"/>
-      <rect x="342" y="60" width="26" height="18" fill="#F6465D" opacity=".6"/>
-      <rect x="388" y="60" width="26" height="30" fill="#F6465D" opacity=".75"/>
-      <rect x="434" y="60" width="26" height="24" fill="#F6465D" opacity=".65"/>
-      <rect x="480" y="60" width="26" height="14" fill="#F6465D" opacity=".55"/>
-      <text x="20" y="112" fill="#5E6673" font-family="IBM Plex Mono" font-size="11">funding esticado (+)</text>
-      <text x="392" y="112" fill="#5E6673" font-family="IBM Plex Mono" font-size="11">viragem (−)</text>
+      <rect x="296" y="60" width="26" height="8"  fill="#f7647a" opacity=".5"/>
+      <rect x="342" y="60" width="26" height="18" fill="#f7647a" opacity=".6"/>
+      <rect x="388" y="60" width="26" height="30" fill="#f7647a" opacity=".75"/>
+      <rect x="434" y="60" width="26" height="24" fill="#f7647a" opacity=".65"/>
+      <rect x="480" y="60" width="26" height="14" fill="#f7647a" opacity=".55"/>
+      <text x="20" y="112" fill="#6b7099" font-family="JetBrains Mono" font-size="11">funding esticado (+)</text>
+      <text x="392" y="112" fill="#6b7099" font-family="JetBrains Mono" font-size="11">viragem (−)</text>
     </svg>
     <div class="dg-cap">Funding extremo comprime → reversão para o outro lado</div>
   </div>
@@ -321,17 +321,17 @@ OI: estável</div>
 
   <div class="diagram">
     <svg viewBox="0 0 560 140" role="img" aria-label="Cruzamento preço e open interest">
-      <line x1="0" y1="130" x2="560" y2="130" stroke="#232830" stroke-width="1"/>
+      <line x1="0" y1="130" x2="560" y2="130" stroke="#23233a" stroke-width="1"/>
       <!-- preço a subir -->
-      <polyline points="20,100 120,80 220,58 320,42 420,30 540,20" fill="none" stroke="#EAECEF" stroke-width="2.2"/>
+      <polyline points="20,100 120,80 220,58 320,42 420,30 540,20" fill="none" stroke="#dde1f0" stroke-width="2.2"/>
       <!-- OI a subir junto (confirmação) então a divergir -->
-      <polyline points="20,115 120,102 220,88 320,80 420,86 540,98" fill="none" stroke="#F0B90B" stroke-width="2.2" stroke-dasharray="1"/>
-      <circle cx="320" cy="42" r="4" fill="#EAECEF"/>
-      <circle cx="320" cy="80" r="4" fill="#F0B90B"/>
-      <line x1="320" y1="42" x2="320" y2="80" stroke="#5E6673" stroke-width="1" stroke-dasharray="3 3"/>
-      <text x="30" y="35" fill="#EAECEF" font-family="IBM Plex Mono" font-size="11">preço ▲</text>
-      <text x="30" y="128" fill="#F0B90B" font-family="IBM Plex Mono" font-size="11">OI ▲ → depois cai</text>
-      <text x="336" y="66" fill="#5E6673" font-family="IBM Plex Mono" font-size="10">divergência</text>
+      <polyline points="20,115 120,102 220,88 320,80 420,86 540,98" fill="none" stroke="#f7931a" stroke-width="2.2" stroke-dasharray="1"/>
+      <circle cx="320" cy="42" r="4" fill="#dde1f0"/>
+      <circle cx="320" cy="80" r="4" fill="#f7931a"/>
+      <line x1="320" y1="42" x2="320" y2="80" stroke="#6b7099" stroke-width="1" stroke-dasharray="3 3"/>
+      <text x="30" y="35" fill="#dde1f0" font-family="JetBrains Mono" font-size="11">preço ▲</text>
+      <text x="30" y="128" fill="#f7931a" font-family="JetBrains Mono" font-size="11">OI ▲ → depois cai</text>
+      <text x="336" y="66" fill="#6b7099" font-family="JetBrains Mono" font-size="10">divergência</text>
     </svg>
     <div class="dg-cap">Preço sobe + OI cai = subida sem convicção (short covering)</div>
   </div>
@@ -373,15 +373,15 @@ Funding: neutro</div>
 
   <div class="diagram">
     <svg viewBox="0 0 560 140" role="img" aria-label="Divergência entre preço e CVD">
-      <line x1="0" y1="130" x2="560" y2="130" stroke="#232830" stroke-width="1"/>
+      <line x1="0" y1="130" x2="560" y2="130" stroke="#23233a" stroke-width="1"/>
       <!-- preço faz topo mais alto -->
-      <polyline points="20,90 140,60 260,75 380,40 540,55" fill="none" stroke="#EAECEF" stroke-width="2.2"/>
+      <polyline points="20,90 140,60 260,75 380,40 540,55" fill="none" stroke="#dde1f0" stroke-width="2.2"/>
       <!-- CVD faz topo mais baixo (divergência bearish) -->
-      <polyline points="20,105 140,80 260,90 380,95 540,110" fill="none" stroke="#F6465D" stroke-width="2.2"/>
-      <circle cx="380" cy="40" r="4" fill="#EAECEF"/>
-      <circle cx="380" cy="95" r="4" fill="#F6465D"/>
-      <text x="30" y="30" fill="#EAECEF" font-family="IBM Plex Mono" font-size="11">preço: topo + alto</text>
-      <text x="300" y="128" fill="#F6465D" font-family="IBM Plex Mono" font-size="11">CVD: topo + baixo →</text>
+      <polyline points="20,105 140,80 260,90 380,95 540,110" fill="none" stroke="#f7647a" stroke-width="2.2"/>
+      <circle cx="380" cy="40" r="4" fill="#dde1f0"/>
+      <circle cx="380" cy="95" r="4" fill="#f7647a"/>
+      <text x="30" y="30" fill="#dde1f0" font-family="JetBrains Mono" font-size="11">preço: topo + alto</text>
+      <text x="300" y="128" fill="#f7647a" font-family="JetBrains Mono" font-size="11">CVD: topo + baixo →</text>
     </svg>
     <div class="dg-cap">Preço faz máximo mais alto, CVD não → compradores a esgotar</div>
   </div>
@@ -423,20 +423,20 @@ CVD: fundo mais alto
 
   <div class="diagram">
     <svg viewBox="0 0 560 120" role="img" aria-label="Rácio taker buy sell em torno de 1">
-      <line x1="0" y1="60" x2="560" y2="60" stroke="#5E6673" stroke-width="1" stroke-dasharray="4 4"/>
-      <text x="8" y="56" fill="#5E6673" font-family="IBM Plex Mono" font-size="10">1.0</text>
-      <rect x="30"  y="40" width="30" height="20" fill="#0ECB81" opacity=".7"/>
-      <rect x="74"  y="30" width="30" height="30" fill="#0ECB81" opacity=".8"/>
-      <rect x="118" y="60" width="30" height="16" fill="#F6465D" opacity=".7"/>
-      <rect x="162" y="22" width="30" height="38" fill="#0ECB81" opacity=".9"/>
-      <rect x="206" y="60" width="30" height="10" fill="#F6465D" opacity=".6"/>
-      <rect x="250" y="14" width="30" height="46" fill="#0ECB81" opacity=".95"/>
-      <rect x="294" y="60" width="30" height="34" fill="#F6465D" opacity=".85"/>
-      <rect x="338" y="60" width="30" height="44" fill="#F6465D" opacity=".9"/>
-      <rect x="382" y="60" width="30" height="24" fill="#F6465D" opacity=".75"/>
-      <rect x="426" y="48" width="30" height="12" fill="#0ECB81" opacity=".6"/>
-      <rect x="470" y="60" width="30" height="20" fill="#F6465D" opacity=".7"/>
-      <rect x="514" y="60" width="30" height="30" fill="#F6465D" opacity=".8"/>
+      <line x1="0" y1="60" x2="560" y2="60" stroke="#6b7099" stroke-width="1" stroke-dasharray="4 4"/>
+      <text x="8" y="56" fill="#6b7099" font-family="JetBrains Mono" font-size="10">1.0</text>
+      <rect x="30"  y="40" width="30" height="20" fill="#2dd4a0" opacity=".7"/>
+      <rect x="74"  y="30" width="30" height="30" fill="#2dd4a0" opacity=".8"/>
+      <rect x="118" y="60" width="30" height="16" fill="#f7647a" opacity=".7"/>
+      <rect x="162" y="22" width="30" height="38" fill="#2dd4a0" opacity=".9"/>
+      <rect x="206" y="60" width="30" height="10" fill="#f7647a" opacity=".6"/>
+      <rect x="250" y="14" width="30" height="46" fill="#2dd4a0" opacity=".95"/>
+      <rect x="294" y="60" width="30" height="34" fill="#f7647a" opacity=".85"/>
+      <rect x="338" y="60" width="30" height="44" fill="#f7647a" opacity=".9"/>
+      <rect x="382" y="60" width="30" height="24" fill="#f7647a" opacity=".75"/>
+      <rect x="426" y="48" width="30" height="12" fill="#2dd4a0" opacity=".6"/>
+      <rect x="470" y="60" width="30" height="20" fill="#f7647a" opacity=".7"/>
+      <rect x="514" y="60" width="30" height="30" fill="#f7647a" opacity=".8"/>
     </svg>
     <div class="dg-cap">Barras acima da linha = takers a comprar; abaixo = a vender</div>
   </div>
@@ -478,15 +478,15 @@ Volume: acima da média</div>
 
   <div class="diagram">
     <svg viewBox="0 0 560 120" role="img" aria-label="Barras opostas de longs e shorts">
-      <text x="8" y="34" fill="#0ECB81" font-family="IBM Plex Mono" font-size="11">LONG</text>
-      <text x="8" y="86" fill="#F6465D" font-family="IBM Plex Mono" font-size="11">SHORT</text>
-      <line x1="280" y1="10" x2="280" y2="110" stroke="#232830" stroke-width="1"/>
+      <text x="8" y="34" fill="#2dd4a0" font-family="JetBrains Mono" font-size="11">LONG</text>
+      <text x="8" y="86" fill="#f7647a" font-family="JetBrains Mono" font-size="11">SHORT</text>
+      <line x1="280" y1="10" x2="280" y2="110" stroke="#23233a" stroke-width="1"/>
       <!-- long bar (72%) para a direita -->
-      <rect x="70" y="20" width="410" height="26" fill="#0ECB81" opacity=".8"/>
-      <text x="486" y="38" fill="#0ECB81" font-family="IBM Plex Mono" font-size="12">72%</text>
+      <rect x="70" y="20" width="410" height="26" fill="#2dd4a0" opacity=".8"/>
+      <text x="486" y="38" fill="#2dd4a0" font-family="JetBrains Mono" font-size="12">72%</text>
       <!-- short bar (28%) -->
-      <rect x="70" y="72" width="159" height="26" fill="#F6465D" opacity=".8"/>
-      <text x="236" y="90" fill="#F6465D" font-family="IBM Plex Mono" font-size="12">28%</text>
+      <rect x="70" y="72" width="159" height="26" fill="#f7647a" opacity=".8"/>
+      <text x="236" y="90" fill="#f7647a" font-family="JetBrains Mono" font-size="12">28%</text>
     </svg>
     <div class="dg-cap">Retalho maioritariamente long → alvo de liquidação por baixo</div>
   </div>
@@ -528,23 +528,23 @@ Preço: perto de mínimos</div>
 
   <div class="diagram">
     <svg viewBox="0 0 560 120" role="img" aria-label="Mini histograma de liquidações">
-      <line x1="0" y1="60" x2="560" y2="60" stroke="#232830" stroke-width="1"/>
+      <line x1="0" y1="60" x2="560" y2="60" stroke="#23233a" stroke-width="1"/>
       <!-- liquidações longs (para baixo, vermelho) com um pico -->
-      <rect x="20"  y="60" width="18" height="8"  fill="#F6465D" opacity=".5"/>
-      <rect x="52"  y="60" width="18" height="14" fill="#F6465D" opacity=".55"/>
-      <rect x="84"  y="60" width="18" height="10" fill="#F6465D" opacity=".5"/>
-      <rect x="116" y="60" width="18" height="26" fill="#F6465D" opacity=".65"/>
-      <rect x="148" y="60" width="18" height="52" fill="#F6465D" opacity=".95"/>
-      <rect x="180" y="60" width="18" height="30" fill="#F6465D" opacity=".7"/>
-      <rect x="212" y="60" width="18" height="12" fill="#F6465D" opacity=".5"/>
+      <rect x="20"  y="60" width="18" height="8"  fill="#f7647a" opacity=".5"/>
+      <rect x="52"  y="60" width="18" height="14" fill="#f7647a" opacity=".55"/>
+      <rect x="84"  y="60" width="18" height="10" fill="#f7647a" opacity=".5"/>
+      <rect x="116" y="60" width="18" height="26" fill="#f7647a" opacity=".65"/>
+      <rect x="148" y="60" width="18" height="52" fill="#f7647a" opacity=".95"/>
+      <rect x="180" y="60" width="18" height="30" fill="#f7647a" opacity=".7"/>
+      <rect x="212" y="60" width="18" height="12" fill="#f7647a" opacity=".5"/>
       <!-- liquidações shorts (para cima, verde) -->
-      <rect x="340" y="48" width="18" height="12" fill="#0ECB81" opacity=".5"/>
-      <rect x="372" y="34" width="18" height="26" fill="#0ECB81" opacity=".65"/>
-      <rect x="404" y="10" width="18" height="50" fill="#0ECB81" opacity=".95"/>
-      <rect x="436" y="40" width="18" height="20" fill="#0ECB81" opacity=".6"/>
-      <rect x="468" y="50" width="18" height="10" fill="#0ECB81" opacity=".5"/>
-      <text x="120" y="112" fill="#F6465D" font-family="IBM Plex Mono" font-size="10">cascata longs</text>
-      <text x="360" y="112" fill="#0ECB81" font-family="IBM Plex Mono" font-size="10">squeeze shorts</text>
+      <rect x="340" y="48" width="18" height="12" fill="#2dd4a0" opacity=".5"/>
+      <rect x="372" y="34" width="18" height="26" fill="#2dd4a0" opacity=".65"/>
+      <rect x="404" y="10" width="18" height="50" fill="#2dd4a0" opacity=".95"/>
+      <rect x="436" y="40" width="18" height="20" fill="#2dd4a0" opacity=".6"/>
+      <rect x="468" y="50" width="18" height="10" fill="#2dd4a0" opacity=".5"/>
+      <text x="120" y="112" fill="#f7647a" font-family="JetBrains Mono" font-size="10">cascata longs</text>
+      <text x="360" y="112" fill="#2dd4a0" font-family="JetBrains Mono" font-size="10">squeeze shorts</text>
     </svg>
     <div class="dg-cap">Pico único de liquidação = clímax, não continuação</div>
   </div>
@@ -586,20 +586,20 @@ OI: a cair a par</div>
 
   <div class="diagram">
     <svg viewBox="0 0 560 150" role="img" aria-label="Divergência de RSI com zonas de sobrecompra">
-      <rect x="0" y="14" width="560" height="24" fill="#F6465D" opacity=".07"/>
-      <rect x="0" y="112" width="560" height="24" fill="#0ECB81" opacity=".07"/>
-      <line x1="0" y1="26"  x2="560" y2="26"  stroke="#F6465D" stroke-width="1" stroke-dasharray="3 3" opacity=".5"/>
-      <line x1="0" y1="124" x2="560" y2="124" stroke="#0ECB81" stroke-width="1" stroke-dasharray="3 3" opacity=".5"/>
-      <text x="8" y="22" fill="#F6465D" font-family="IBM Plex Mono" font-size="10">70</text>
-      <text x="8" y="136" fill="#0ECB81" font-family="IBM Plex Mono" font-size="10">30</text>
+      <rect x="0" y="14" width="560" height="24" fill="#f7647a" opacity=".07"/>
+      <rect x="0" y="112" width="560" height="24" fill="#2dd4a0" opacity=".07"/>
+      <line x1="0" y1="26"  x2="560" y2="26"  stroke="#f7647a" stroke-width="1" stroke-dasharray="3 3" opacity=".5"/>
+      <line x1="0" y1="124" x2="560" y2="124" stroke="#2dd4a0" stroke-width="1" stroke-dasharray="3 3" opacity=".5"/>
+      <text x="8" y="22" fill="#f7647a" font-family="JetBrains Mono" font-size="10">70</text>
+      <text x="8" y="136" fill="#2dd4a0" font-family="JetBrains Mono" font-size="10">30</text>
       <!-- preço (branco) topos mais altos -->
-      <polyline points="20,90 160,50 300,60 440,30 540,45" fill="none" stroke="#EAECEF" stroke-width="2"/>
+      <polyline points="20,90 160,50 300,60 440,30 540,45" fill="none" stroke="#dde1f0" stroke-width="2"/>
       <!-- RSI (âmbar) topos mais baixos → divergência -->
-      <polyline points="20,60 160,20 300,40 440,55 540,70" fill="none" stroke="#F0B90B" stroke-width="2"/>
-      <circle cx="440" cy="30" r="3.5" fill="#EAECEF"/>
-      <circle cx="440" cy="55" r="3.5" fill="#F0B90B"/>
-      <text x="30" y="112" fill="#EAECEF" font-family="IBM Plex Mono" font-size="10">preço ▲</text>
-      <text x="30" y="128" fill="#F0B90B" font-family="IBM Plex Mono" font-size="10">RSI ▼ divergência</text>
+      <polyline points="20,60 160,20 300,40 440,55 540,70" fill="none" stroke="#f7931a" stroke-width="2"/>
+      <circle cx="440" cy="30" r="3.5" fill="#dde1f0"/>
+      <circle cx="440" cy="55" r="3.5" fill="#f7931a"/>
+      <text x="30" y="112" fill="#dde1f0" font-family="JetBrains Mono" font-size="10">preço ▲</text>
+      <text x="30" y="128" fill="#f7931a" font-family="JetBrains Mono" font-size="10">RSI ▼ divergência</text>
     </svg>
     <div class="dg-cap">Preço faz topo mais alto, RSI mais baixo → momentum a enfraquecer</div>
   </div>
@@ -643,22 +643,22 @@ RSI 1d: 44
 
   <div class="diagram">
     <svg viewBox="0 0 560 130" role="img" aria-label="Blocos de profundidade do livro de ordens">
-      <line x1="280" y1="8" x2="280" y2="122" stroke="#F0B90B" stroke-width="1.5"/>
-      <text x="256" y="120" fill="#F0B90B" font-family="IBM Plex Mono" font-size="10">mid</text>
+      <line x1="280" y1="8" x2="280" y2="122" stroke="#f7931a" stroke-width="1.5"/>
+      <text x="256" y="120" fill="#f7931a" font-family="JetBrains Mono" font-size="10">mid</text>
       <!-- bids (verde) à esquerda, blocos -->
-      <rect x="180" y="20" width="96"  height="14" fill="#0ECB81" opacity=".8"/>
-      <rect x="120" y="40" width="156" height="14" fill="#0ECB81" opacity=".7"/>
-      <rect x="200" y="60" width="76"  height="14" fill="#0ECB81" opacity=".6"/>
-      <rect x="60"  y="80" width="216" height="14" fill="#0ECB81" opacity=".9"/>
-      <rect x="210" y="100" width="66" height="14" fill="#0ECB81" opacity=".5"/>
-      <text x="66" y="76" fill="#0ECB81" font-family="IBM Plex Mono" font-size="10">parede de bids</text>
+      <rect x="180" y="20" width="96"  height="14" fill="#2dd4a0" opacity=".8"/>
+      <rect x="120" y="40" width="156" height="14" fill="#2dd4a0" opacity=".7"/>
+      <rect x="200" y="60" width="76"  height="14" fill="#2dd4a0" opacity=".6"/>
+      <rect x="60"  y="80" width="216" height="14" fill="#2dd4a0" opacity=".9"/>
+      <rect x="210" y="100" width="66" height="14" fill="#2dd4a0" opacity=".5"/>
+      <text x="66" y="76" fill="#2dd4a0" font-family="JetBrains Mono" font-size="10">parede de bids</text>
       <!-- asks (vermelho) à direita -->
-      <rect x="284" y="20"  width="70"  height="14" fill="#F6465D" opacity=".6"/>
-      <rect x="284" y="40"  width="120" height="14" fill="#F6465D" opacity=".7"/>
-      <rect x="284" y="60"  width="200" height="14" fill="#F6465D" opacity=".9"/>
-      <rect x="284" y="80"  width="90"  height="14" fill="#F6465D" opacity=".6"/>
-      <rect x="284" y="100" width="140" height="14" fill="#F6465D" opacity=".75"/>
-      <text x="360" y="56" fill="#F6465D" font-family="IBM Plex Mono" font-size="10">parede de asks</text>
+      <rect x="284" y="20"  width="70"  height="14" fill="#f7647a" opacity=".6"/>
+      <rect x="284" y="40"  width="120" height="14" fill="#f7647a" opacity=".7"/>
+      <rect x="284" y="60"  width="200" height="14" fill="#f7647a" opacity=".9"/>
+      <rect x="284" y="80"  width="90"  height="14" fill="#f7647a" opacity=".6"/>
+      <rect x="284" y="100" width="140" height="14" fill="#f7647a" opacity=".75"/>
+      <text x="360" y="56" fill="#f7647a" font-family="JetBrains Mono" font-size="10">parede de asks</text>
     </svg>
     <div class="dg-cap">Paredes grandes: liquidez real ou isco? Só o comportamento no toque confirma</div>
   </div>
@@ -702,12 +702,12 @@ Ordens a mercado a bater</div>
 
   <div class="diagram">
     <svg viewBox="0 0 560 130" role="img" aria-label="Mapa de calor de liquidações por nível">
-      <polyline points="20,70 120,55 220,72 320,50 420,66 540,58" fill="none" stroke="#EAECEF" stroke-width="2"/>
+      <polyline points="20,70 120,55 220,72 320,50 420,66 540,58" fill="none" stroke="#dde1f0" stroke-width="2"/>
       <!-- bandas de calor -->
-      <rect x="0" y="24" width="560" height="10" fill="#F0B90B" opacity=".55"/>
-      <text x="8" y="20" fill="#F0B90B" font-family="IBM Plex Mono" font-size="10">zona quente ↑ (shorts)</text>
-      <rect x="0" y="98" width="560" height="10" fill="#F6465D" opacity=".45"/>
-      <text x="8" y="122" fill="#F6465D" font-family="IBM Plex Mono" font-size="10">zona quente ↓ (longs)</text>
+      <rect x="0" y="24" width="560" height="10" fill="#f7931a" opacity=".55"/>
+      <text x="8" y="20" fill="#f7931a" font-family="JetBrains Mono" font-size="10">zona quente ↑ (shorts)</text>
+      <rect x="0" y="98" width="560" height="10" fill="#f7647a" opacity=".45"/>
+      <text x="8" y="122" fill="#f7647a" font-family="JetBrains Mono" font-size="10">zona quente ↓ (longs)</text>
     </svg>
     <div class="dg-cap">Preço tende a ser puxado para os clusters de liquidação</div>
   </div>
@@ -734,13 +734,13 @@ Funding: levemente positivo</div>
   <div class="diagram">
     <svg viewBox="0 0 560 130" role="img" aria-label="Convergência de basis entre perp e spot">
       <!-- spot (branco) -->
-      <polyline points="20,80 140,72 260,74 380,68 540,66" fill="none" stroke="#EAECEF" stroke-width="2"/>
+      <polyline points="20,80 140,72 260,74 380,68 540,66" fill="none" stroke="#dde1f0" stroke-width="2"/>
       <!-- perp (verde) acima, a convergir -->
-      <polyline points="20,40 140,48 260,56 380,62 540,66" fill="none" stroke="#0ECB81" stroke-width="2"/>
-      <line x1="20" y1="40" x2="20" y2="80" stroke="#5E6673" stroke-width="1" stroke-dasharray="3 3"/>
-      <text x="26" y="34" fill="#0ECB81" font-family="IBM Plex Mono" font-size="10">perp (prémio)</text>
-      <text x="400" y="82" fill="#EAECEF" font-family="IBM Plex Mono" font-size="10">spot</text>
-      <text x="26" y="102" fill="#5E6673" font-family="IBM Plex Mono" font-size="10">basis a comprimir →</text>
+      <polyline points="20,40 140,48 260,56 380,62 540,66" fill="none" stroke="#2dd4a0" stroke-width="2"/>
+      <line x1="20" y1="40" x2="20" y2="80" stroke="#6b7099" stroke-width="1" stroke-dasharray="3 3"/>
+      <text x="26" y="34" fill="#2dd4a0" font-family="JetBrains Mono" font-size="10">perp (prémio)</text>
+      <text x="400" y="82" fill="#dde1f0" font-family="JetBrains Mono" font-size="10">spot</text>
+      <text x="26" y="102" fill="#6b7099" font-family="JetBrains Mono" font-size="10">basis a comprimir →</text>
     </svg>
     <div class="dg-cap">Prémio elevado a comprimir = desalavancagem em curso</div>
   </div>

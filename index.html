@@ -1368,17 +1368,15 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
     <!-- Cabeçalho -->
     <div class="cs-head">
       <div>
-        <div class="cs-title">CryptoScan <span class="cs-badge">Sugestões v2</span></div>
+        <div class="cs-title">CryptoScan</div>
         <div class="cs-sub">Corres o scan → cada oportunidade traz plano completo (entrada, stop, TP) com o <b>lucro/prejuízo estimado</b> na tua margem, e um botão <b>Executar</b> que a coloca na subconta Bybit. A <b>Sensibilidade</b> (ao lado) decide quão exigente é a busca; <b>capital e alavancagem</b> (em baixo) só dimensionam as estimativas.</div>
       </div>
-      <div style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap">
-        <div class="cs-seg-wrap">
-          <span class="cs-seg-lbl">Sensibilidade <i class="cs-help" tabindex="0" title="Quão exigente é a busca. Rigoroso = só ideias muito fortes. Permissivo = mostra mais candidatos, de menor convicção. Muda o que o scan encontra.">?</i></span>
-          <div class="cs-seg" id="cs-seg-sens" role="group" aria-label="Sensibilidade">
-            <button type="button" data-v="strict" onclick="csSetSens('strict')">Rigoroso</button>
-            <button type="button" data-v="balanced" onclick="csSetSens('balanced')">Equilibrado</button>
-            <button type="button" data-v="loose" onclick="csSetSens('loose')">Permissivo</button>
-          </div>
+      <div class="cs-scanbar">
+        <span class="cs-seg-lbl cs-seg-inline">Sensibilidade <i class="cs-help" tabindex="0" title="Quão exigente é a busca. Rigoroso = só ideias muito fortes. Permissivo = mostra mais candidatos, de menor convicção. Muda o que o scan encontra.">?</i></span>
+        <div class="cs-seg" id="cs-seg-sens" role="group" aria-label="Sensibilidade">
+          <button type="button" data-v="strict" onclick="csSetSens('strict')">Rigoroso</button>
+          <button type="button" data-v="balanced" onclick="csSetSens('balanced')">Equilibrado</button>
+          <button type="button" data-v="loose" onclick="csSetSens('loose')">Permissivo</button>
         </div>
         <button class="cs-scan-btn" id="cs-scan-btn" onclick="scanCs(true)">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.2" stroke="currentColor" stroke-width="1.4"/><line x1="9" y1="9" x2="12.5" y2="12.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
@@ -1389,8 +1387,10 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
 
     <!-- ═══ Barra de execução (subconta Bybit) ═══ -->
     <style>
-      .cs-seg-wrap{display:flex;flex-direction:column;gap:5px}
+      .cs-scanbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex-shrink:0}
+      .cs-seg-inline{margin:0;white-space:nowrap}
       .cs-seg-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--faint)}
+      @media(max-width:768px){ .cs-scanbar{width:100%} .cs-scanbar .cs-seg{flex:1 1 100%} .cs-scanbar .cs-scan-btn{flex:1 1 100%;justify-content:center} }
       .cs-seg{display:inline-flex;background:var(--s2,#151515);border:1px solid var(--border);border-radius:11px;padding:3px;gap:2px}
       .cs-seg button{appearance:none;border:none;background:transparent;color:var(--dim);font:inherit;font-size:12px;font-weight:600;padding:7px 13px;border-radius:8px;cursor:pointer;transition:background .15s,color .15s;white-space:nowrap}
       .cs-seg button:hover{color:var(--text)}
