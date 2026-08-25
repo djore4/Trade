@@ -5702,6 +5702,7 @@ let dbAssetView = 'real';   // 'real' | 'daily'
 let dbSortKey = 'pnl';      // 'pnl' (real) | 'price' | 'value' (USD)
 let dbSource = 'all';       // 'all' | 'bybit' | 't212' — filtro de fonte (lista + gráfico)
 let spot24h = {};           // COIN -> price24hPcnt (fração) da Bybit spot
+let perp24h = {};           // COIN -> price24hPcnt (fração) do perp linear (fallback p/ moedas sem spot, ex.: HYPE)
 function srcHasBybit() { return dbSource !== 't212'; }
 function srcHasT212()  { return dbSource !== 'bybit'; }
 
@@ -5732,18 +5733,31 @@ function setDbAssetView(v, btn) {
   renderDbAssets();
 }
 
-// Variação 24h de todas as moedas spot (uma chamada), para a vista diária.
+// Variação 24h de todas as moedas para a vista diária. Spot (preferido) +
+// perp linear como fallback — moedas sem par spot na Bybit (ex.: HYPE) ainda
+// têm perp, por isso a variação nunca fica em branco só por não ter spot.
 async function fetchSpotTickers24h() {
-  try {
-    const r = await fetch(`${BYBIT}/v5/market/tickers?category=spot`);
-    const d = await r.json();
+  const [spot, perp] = await Promise.allSettled([
+    fetch(`${BYBIT}/v5/market/tickers?category=spot`).then(r => r.json()),
+    fetch(`${BYBIT}/v5/market/tickers?category=linear`).then(r => r.json()),
+  ]);
+  if (spot.status === 'fulfilled') {
     const m = {};
-    (d?.result?.list || []).forEach(t => {
+    (spot.value?.result?.list || []).forEach(t => {
       const s = t.symbol || '';
       if (s.endsWith('USDT')) { const p = parseFloat(t.price24hPcnt); if (isFinite(p)) m[s.slice(0, -4)] = p; }
     });
     spot24h = m;
-  } catch (e) { /* mantém o anterior */ }
+  }
+  if (perp.status === 'fulfilled') {
+    const m = {};
+    (perp.value?.result?.list || []).forEach(t => {
+      const s = t.symbol || '';
+      const coin = s.endsWith('USDT') ? s.slice(0, -4) : s.endsWith('PERP') ? s.slice(0, -4) : null;
+      if (coin) { const p = parseFloat(t.price24hPcnt); if (isFinite(p) && m[coin] == null) m[coin] = p; }
+    });
+    perp24h = m;
+  }
 }
 
 // Variação 24h das ações T212 (último fecho vs anterior), guardada em cada holding.
@@ -5886,7 +5900,7 @@ function coinRowHtml(it) {
   const pnlPct = (usdVal - it.realPnl) > 0 ? (it.realPnl / (usdVal - it.realPnl)) * 100 : 0;
   let pAmt, pPct, hasP;
   if (dbAssetView === 'daily') {
-    const pcnt = spot24h[c.coin];
+    const pcnt = spot24h[c.coin] != null ? spot24h[c.coin] : perp24h[c.coin];
     hasP = pcnt != null && isFinite(pcnt);
     pPct = hasP ? pcnt * 100 : 0;
     pAmt = hasP ? usdVal * (pcnt / (1 + pcnt)) : 0;
