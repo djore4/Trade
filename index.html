@@ -1410,6 +1410,15 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
       /* botão Executar no cartão */
       .cs-exec-go{font-size:12px;font-weight:700;padding:7px 14px;border-radius:8px;cursor:pointer;border:1px solid;color:#111;background:var(--orange);border-color:var(--orange)}
       .cs-exec-go:disabled{opacity:.55;cursor:default}
+      /* confirmação in-app (substitui o confirm() nativo, suprimido em PWA/webview mobile) */
+      .cs-confirm-body{font-size:13px;color:var(--dim);line-height:1.5}
+      .cs-confirm-lines{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px 14px;margin-top:4px}
+      .cs-confirm-lines>div{font-size:12.5px;color:var(--faint)} .cs-confirm-lines b{color:var(--text);font-weight:700}
+      .cs-confirm-actions{display:flex;gap:10px;margin-top:18px}
+      .cs-confirm-actions button{flex:1;font-size:13px;font-weight:700;padding:11px 14px;border-radius:10px;cursor:pointer;border:1px solid var(--border)}
+      .cs-confirm-cancel{background:var(--s2,#151515);color:var(--dim)}
+      .cs-confirm-go{background:var(--orange);border-color:var(--orange);color:#111}
+      .cs-confirm-go.danger{background:var(--red);border-color:var(--red);color:#fff}
       /* val-* (tabela de desempenho real, usada por csFetchStats) */
       .val-body{margin-top:6px} .val-empty{font-size:12px;color:var(--faint)}
       .val-tbl{width:100%;border-collapse:collapse;margin-top:12px;font-size:12px;overflow-x:auto;display:block}
@@ -4045,6 +4054,41 @@ function csBotSaveSecret() { const el = document.getElementById('cs-bot-secret')
 function csBotHdr() { const h = { 'Content-Type': 'application/json', apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }; const s = csBotGetSecret(); if (s) h['x-cs-secret'] = s; return h; }
 function csExecMsg(t, err) { const el = document.getElementById('cs-exec-msg'); if (el) { el.textContent = t || ''; el.style.color = err ? 'var(--red)' : 'var(--faint)'; } }
 
+// Confirmação in-app (bottom-sheet). O confirm() nativo é suprimido em muitos
+// webviews/PWA em standalone no telemóvel — devolvia false sem mostrar diálogo,
+// o que fazia o botão Executar "não fazer nada". Isto usa o mesmo padrão .sheet
+// do resto da app e devolve Promise<boolean>.
+function csConfirm({ title, message, confirmLabel = 'Confirmar', cancelLabel = 'Cancelar', danger = false }) {
+  return new Promise(resolve => {
+    const prev = document.getElementById('cs-confirm-ov'); if (prev) prev.remove();
+    const ov = document.createElement('div');
+    ov.id = 'cs-confirm-ov'; ov.className = 'sheet-ov';
+    let settled = false;
+    const done = v => { if (settled) return; settled = true; ov.classList.remove('open'); setTimeout(() => ov.remove(), 280); resolve(v); };
+    ov.addEventListener('click', e => { if (e.target === ov) done(false); });
+    ov.innerHTML =
+      `<div class="sheet">
+         <div class="sheet-grab"></div>
+         <div class="sheet-head">
+           <div class="sheet-title">${title}</div>
+           <button class="sheet-x" type="button" aria-label="Fechar">&#10005;</button>
+         </div>
+         <div class="cs-confirm-body">${message}</div>
+         <div class="cs-confirm-actions">
+           <button class="cs-confirm-cancel" type="button">${cancelLabel}</button>
+           <button class="cs-confirm-go${danger ? ' danger' : ''}" type="button">${confirmLabel}</button>
+         </div>
+       </div>`;
+    document.body.appendChild(ov);
+    ov.querySelector('.sheet-x').addEventListener('click', () => done(false));
+    ov.querySelector('.cs-confirm-cancel').addEventListener('click', () => done(false));
+    ov.querySelector('.cs-confirm-go').addEventListener('click', () => done(true));
+    const onKey = e => { if (e.key === 'Escape') { done(false); document.removeEventListener('keydown', onKey); } };
+    document.addEventListener('keydown', onKey);
+    requestAnimationFrame(() => ov.classList.add('open'));
+  });
+}
+
 async function csExecInit() {
   if (csExecInited) return; csExecInited = true;
   const sec = document.getElementById('cs-bot-secret'); if (sec) sec.value = csBotGetSecret();
@@ -4083,27 +4127,52 @@ async function csExecSet(k, v) {
 }
 function csExecToggleSettings() { const el = document.getElementById('cs-exec-settings'); if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none'; }
 async function csExecToggleMode() {
-  if (!csExecState) return;
+  if (!csExecState) { await csExecLoadState(); if (!csExecState) { csExecMsg('Sem estado da execução — tenta de novo.', true); return; } }
   const goingReal = csExecState.dry_run;   // dry_run=true → passar a real
-  if (goingReal && !confirm('Passar para modo REAL?\n\nA partir de agora, clicar Executar num cartão coloca a ordem na Bybit com dinheiro real.')) return;
+  if (goingReal && !await csConfirm({
+    title: 'Passar para modo REAL?',
+    message: 'A partir de agora, clicar <b>Executar</b> num cartão coloca a ordem na Bybit com <b style="color:var(--red)">dinheiro real</b>.',
+    confirmLabel: '🔴 Ativar modo real', danger: true,
+  })) return;
   await csExecSet('dry_run', !csExecState.dry_run);
 }
 async function csExecKill() {
-  if (!confirm('Parar tudo (kill-switch)? Nenhuma ordem será colocada até reativares.')) return;
+  if (!await csConfirm({
+    title: 'Parar tudo (kill-switch)?',
+    message: 'Nenhuma ordem será colocada até reativares o modo de execução.',
+    confirmLabel: '⛔ Parar tudo', danger: true,
+  })) return;
   await csExecSet('killswitch', true); await csExecLoadState();
 }
 // Executar o cartão do scan: envia o plano exato que estás a ver para o cs-exec.
 async function csExec(symbol, btn) {
-  if (!csData) return;
+  if (!csData) { csExecMsg('Corre um scan primeiro para gerar o plano.', true); return; }
   const c = (csData.candidates || []).find(x => x.symbol === symbol);
   if (!c || !c.plan) { csExecMsg('Sem plano para ' + symbol, true); return; }
+  if (!csExecState) await csExecLoadState();   // garante que o modo REAL/SIM mostrado é o real
   if (csExecState && csExecState.killswitch) { csExecMsg('Kill-switch ativo — reativa em ⚙ Limites', true); return; }
   const real = csExecState && !csExecState.dry_run;
   const side = c.dir > 0 ? 'LONG' : 'SHORT';
-  const head = real ? '🔴 MODO REAL — vai colocar na Bybit AGORA.\n\n' : '🧪 Simulação (não coloca nada).\n\n';
-  if (!confirm(`${head}${c.coin} ${side}\nEntrada ${fmtPx(c.plan.entry)} · Stop ${fmtPx(c.plan.stop)} · TP1 ${fmtPx(c.plan.tps[0].price)}\nSize ${fmtUsd(c.plan.notional)} (${c.plan.lev}×) · Risco ${fmtUsd(c.plan.riskUsd)}\n\nContinuar?`)) return;
+  const p = c.plan;
+  const head = real
+    ? '<b style="color:var(--red)">🔴 MODO REAL</b> — vai colocar na Bybit agora.'
+    : '<b style="color:var(--orange)">🧪 Simulação</b> — não coloca nada na Bybit.';
+  const ok = await csConfirm({
+    title: `Executar ${c.coin} ${side}`,
+    message: `<p style="margin:0 0 10px">${head}</p>
+      <div class="cs-confirm-lines">
+        <div>Entrada <b>${fmtPx(p.entry)}</b></div>
+        <div>Stop <b>${fmtPx(p.stop)}</b></div>
+        <div>TP1 <b>${fmtPx(p.tps[0].price)}</b></div>
+        <div>Size <b>${fmtUsd(p.notional)}</b> (${p.lev}×)</div>
+        <div>Risco <b>${fmtUsd(p.riskUsd)}</b></div>
+      </div>`,
+    confirmLabel: real ? '🔴 Colocar ordem real' : '🧪 Simular',
+    danger: real,
+  });
+  if (!ok) return;
   if (btn) btn.disabled = true;
-  const p = c.plan, s = c.sigs;
+  const s = c.sigs;
   const plan = {
     symbol: c.symbol, coin: c.coin, side: c.dir > 0 ? 'long' : 'short',
     entry: p.entry, stop: p.stop, tp1: p.tps[0].price, tp2: p.tps[1] ? p.tps[1].price : null, tp3: p.tps[2] ? p.tps[2].price : null,
