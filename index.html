@@ -175,6 +175,12 @@ html.light .theme-btn .icon-sun  { display: block; }
 html.hide-values .privacy-btn .icon-eye     { display: none; }
 html.hide-values .privacy-btn .icon-eye-off { display: flex; }
 html.hide-values .privacy-btn { color: var(--orange); }
+/* Botão de moeda (mostrar valores em USD ou EUR) — mesmo padrão do olho/tema */
+.currency-btn { font-weight: 700; font-size: 15px; line-height: 16px; }
+.currency-btn .cur-eur-g { display: none; }
+html.cur-eur .currency-btn .cur-usd   { display: none; }
+html.cur-eur .currency-btn .cur-eur-g { display: inline; }
+html.cur-eur .currency-btn { color: var(--orange); }
 /* Modo privado: os dígitos dos valores são trocados por '*' via JS (ver pv* no script),
    mantendo font, tamanho, cor e todo o layout iguais à versão visível. */
 @media (max-width: 600px) { .hdr-hide-sm { display: none; } }
@@ -1188,6 +1194,11 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
       <svg class="icon-eye-off" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6.3 3.7A6.8 6.8 0 0 1 8 3.5c4.5 0 7 4.5 7 4.5a12.7 12.7 0 0 1-2.2 2.7M3.3 4.9A12.6 12.6 0 0 0 1 8s2.5 4.5 7 4.5a6.7 6.7 0 0 0 2.6-.5M6.6 6.6a2.1 2.1 0 0 0 2.8 2.8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
     </button>
     <div class="hdr-sep"></div>
+    <button class="theme-btn currency-btn" id="currency-btn" onclick="toggleCurrency()" title="Alternar moeda (USD / EUR)">
+      <span class="cur-glyph cur-usd">$</span>
+      <span class="cur-glyph cur-eur-g">€</span>
+    </button>
+    <div class="hdr-sep"></div>
     <button class="theme-btn" onclick="toggleTheme()" title="Alternar tema">
       <svg class="icon-moon" width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M12.5 9A5.5 5.5 0 0 1 6 2.5a5.5 5.5 0 1 0 6.5 6.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" fill="none"/></svg>
       <svg class="icon-sun"  width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="2.8" stroke="currentColor" stroke-width="1.3" fill="none"/><g stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><line x1="7.5" y1="0.5" x2="7.5" y2="2.5"/><line x1="7.5" y1="12.5" x2="7.5" y2="14.5"/><line x1="0.5" y1="7.5" x2="2.5" y2="7.5"/><line x1="12.5" y1="7.5" x2="14.5" y2="7.5"/><line x1="2.6" y1="2.6" x2="4" y2="4"/><line x1="11" y1="11" x2="12.4" y2="12.4"/><line x1="11" y1="4" x2="12.4" y2="2.6"/><line x1="2.6" y1="12.4" x2="4" y2="11"/></g></svg>
@@ -1670,6 +1681,7 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
 <script>
 (function() { if (localStorage.getItem('theme') === 'light') document.documentElement.classList.add('light'); })();
 (function() { if (localStorage.getItem('hideValues') === '1') document.documentElement.classList.add('hide-values'); })();
+(function() { if (localStorage.getItem('currency') === 'eur') document.documentElement.classList.add('cur-eur'); })();
 // ── CONFIG ────────────────────────────────────────────────────────────────────
 const POSITIONS_URL = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/get-bybit-positions';
 const SUPABASE_KEY  = 'sb_publishable_xHjsFJbSuAhO6r6BUylTCw_tDE-nFXT';
@@ -6366,68 +6378,106 @@ function toggleTheme() {
   localStorage.setItem('theme', isLight ? 'light' : 'dark');
 }
 
-// Modo privado: oculta (desfoca) todos os valores do portefólio/ativos em todos os tabs.
-// Modo privado: troca cada dígito dos valores por '*', mantendo font, tamanho,
-// cor e todo o layout (só se altera o texto dos nós, nunca a estrutura/estilos).
-// Um MutationObserver reaplica a máscara após cada re-render.
-const PV_SEL = '#db-total-value, #db-pnl-usd, #db-pnl-pct, #db-roi-usd, #db-roi-pct,' +
+// ── Overlays sobre os valores: moeda (€/$) e modo privado ────────────────────
+// Dois overlays partilham o MESMO conjunto de nós de valor e são reaplicados
+// após cada re-render por um único MutationObserver. Cada nó guarda o seu texto
+// pristino (versão em $) em __ovOrig; o texto mostrado é sempre recalculado a
+// partir dele: 1) conversão de moeda ($→€ à taxa atual), 2) máscara de privado
+// (dígitos→'*'). Só se altera o TEXTO dos nós, nunca a estrutura/estilos.
+const VAL_SEL = '#db-total-value, #db-pnl-usd, #db-pnl-pct, #db-roi-usd, #db-roi-pct,' +
   ' #hdr-spot, #hdr-inv-pnl, #perpd-val, #perpd-chip, .db-asset-usd, .db-asset-qty, .db-asset-pnl, .dist-val, .dist-d-val,' +
   ' .exit-summary-val, .exit-result-usd, .exit-result-pct, .ps-val,' +
   ' .pst-val, .pst-sub, .pos-row-pnl-usd, .pos-row-pnl-roe, .prg-val,' +
   ' .pos-exit-cell-val, .agent-chip.sens b';
-let pvOn = false, pvObserver = null, pvScheduled = false;
 
-function pvMaskEl(el) {
-  const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
-  let t;
-  while ((t = w.nextNode())) {
-    if (t.__pvMasked) continue;              // já mascarado (nó existente)
-    if (/\d/.test(t.nodeValue)) {
-      t.__pvReal = t.nodeValue;              // guarda o original para restaurar
-      t.nodeValue = t.nodeValue.replace(/\d/g, '*');
-      t.__pvMasked = true;
-    }
+let pvOn = false;        // modo privado (ocultar valores)
+let cyEur = false;       // moeda em euros (default: dólares)
+let cyRate = null;       // EUR por 1 USD (ex.: ~0,86)
+let ovObserver = null, ovScheduled = false;
+
+// Converte tokens monetários "$…" / "+$…" / "-$…" para euros, mantendo sinal,
+// sufixo (K/M/B) e nº de casas decimais — só multiplica o valor visível pela
+// taxa. Locale pt-PT: milhares por ponto/espaço, decimais por vírgula.
+const CY_TOKEN = /([+-]?)\$\s?(\d(?:[\d.\s]*\d)?(?:,\d+)?)([KMB]?)/g;
+function cyStr(s) {
+  if (cyRate == null) return s;
+  return s.replace(CY_TOKEN, (m, sign, num, suf) => {
+    const decimals = (num.split(',')[1] || '').length;
+    const n = parseFloat(num.replace(/[.\s]/g, '').replace(',', '.'));
+    if (!isFinite(n)) return m;
+    const eur = (n * cyRate).toLocaleString('pt-PT', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    return sign + '€' + eur + suf;
+  });
+}
+
+// Taxa EUR/USD via proxy (Yahoo, EURUSD=X). last = USD por 1 EUR -> cyRate = 1/last.
+async function cyFetchRate() {
+  try {
+    const d = await fetchStockHist('EURUSD=X', '5d', '1d');
+    const pts = Array.isArray(d?.points) ? d.points : [];
+    const last = pts.length ? parseFloat(pts[pts.length - 1].c) : NaN;
+    if (isFinite(last) && last > 0) cyRate = 1 / last;
+  } catch (e) { /* mantém a taxa anterior (ou null) */ }
+  return cyRate;
+}
+
+// Recalcula o texto mostrado de um nó a partir do seu original pristino.
+function ovNode(t) {
+  if (t.__ovOrig == null) {
+    if (!/[\d$]/.test(t.nodeValue)) return;   // nó sem valor: ignora
+    t.__ovOrig = t.nodeValue;                 // guarda a versão pristina (em $)
   }
+  let out = (cyEur && cyRate != null) ? cyStr(t.__ovOrig) : t.__ovOrig;
+  if (pvOn) out = out.replace(/\d/g, '*');
+  if (out !== t.nodeValue) t.nodeValue = out;
+  if (!cyEur && !pvOn && t.nodeValue === t.__ovOrig) t.__ovOrig = null;  // liberta a marca
 }
 
-function pvUnmaskEl(el) {
-  const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
-  let t;
-  while ((t = w.nextNode())) {
-    if (t.__pvMasked) { t.nodeValue = t.__pvReal; t.__pvMasked = false; t.__pvReal = null; }
+function ovApplyAll() {
+  document.querySelectorAll(VAL_SEL).forEach(el => {
+    const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    let t; while ((t = w.nextNode())) ovNode(t);
+  });
+}
+
+function ovActive() { return cyEur || pvOn; }
+
+function ovScheduleApply() {
+  if (ovScheduled) return;
+  ovScheduled = true;
+  requestAnimationFrame(() => { ovScheduled = false; if (ovActive()) ovApplyAll(); });
+}
+
+function ovRefresh() {
+  ovApplyAll();
+  if (ovActive()) {
+    if (!ovObserver) ovObserver = new MutationObserver(() => { if (ovActive()) ovScheduleApply(); });
+    ovObserver.observe(document.body, { subtree: true, childList: true, characterData: true });
+  } else if (ovObserver) {
+    ovObserver.disconnect();
   }
-}
-
-function pvApply()   { document.querySelectorAll(PV_SEL).forEach(pvMaskEl); }
-function pvUnmask()  { document.querySelectorAll(PV_SEL).forEach(pvUnmaskEl); }
-
-function pvScheduleApply() {
-  if (pvScheduled) return;
-  pvScheduled = true;
-  requestAnimationFrame(() => { pvScheduled = false; if (pvOn) pvApply(); });
-}
-
-function pvEnable() {
-  pvOn = true;
-  pvApply();
-  if (!pvObserver) pvObserver = new MutationObserver(() => { if (pvOn) pvScheduleApply(); });
-  pvObserver.observe(document.body, { subtree: true, childList: true, characterData: true });
-}
-
-function pvDisable() {
-  pvOn = false;
-  if (pvObserver) pvObserver.disconnect();
-  pvUnmask();
 }
 
 function togglePrivacy() {
-  const hidden = document.documentElement.classList.toggle('hide-values');
-  localStorage.setItem('hideValues', hidden ? '1' : '0');
-  if (hidden) pvEnable(); else pvDisable();
+  pvOn = document.documentElement.classList.toggle('hide-values');
+  localStorage.setItem('hideValues', pvOn ? '1' : '0');
+  ovRefresh();
 }
 
-// Arranque: se o modo privado estava ativo, aplica a máscara assim que o DOM existe.
-function pvInit() { if (document.documentElement.classList.contains('hide-values')) pvEnable(); }
+function toggleCurrency() {
+  cyEur = document.documentElement.classList.toggle('cur-eur');
+  localStorage.setItem('currency', cyEur ? 'eur' : 'usd');
+  if (cyEur && cyRate == null) cyFetchRate().then(ovRefresh);
+  ovRefresh();
+}
+
+// Arranque: reaplica os overlays (moeda / privado) que estejam ativos.
+function pvInit() {
+  pvOn  = document.documentElement.classList.contains('hide-values');
+  cyEur = document.documentElement.classList.contains('cur-eur');
+  if (cyEur) cyFetchRate().then(ovRefresh);
+  ovRefresh();
+}
 
 function switchDbTab(tab, btn) {
   dbCurrentSubTab = tab;
