@@ -658,6 +658,22 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
 .cs-sug { background: var(--s1); border: 1px solid var(--border); border-radius: 13px; padding: 0; overflow: hidden; border-left: 3px solid var(--border2); }
 .cs-sug.long  { border-left-color: var(--green); }
 .cs-sug.short { border-left-color: var(--red); }
+.cs-sug.vol   { border-left-color: var(--orange); }
+/* ── Alerta de volatilidade ── */
+.cs-conf-num.hi { color: var(--red); } .cs-conf-num.md { color: var(--orange); } .cs-conf-num.lo { color: var(--dim); }
+.cs-tilt { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; border-radius: 6px; padding: 3px 8px; border: 1px solid var(--border); color: var(--dim); background: var(--s2); }
+.cs-tilt.long { color: var(--green); background: rgba(45,212,160,.12); border-color: rgba(45,212,160,.3); }
+.cs-tilt.short { color: var(--red); background: rgba(247,100,122,.12); border-color: rgba(247,100,122,.3); }
+.cs-sug-note { font-size: 11px; color: var(--dim); line-height: 1.55; padding: 11px 16px; border-bottom: 1px solid var(--border); } .cs-sug-note b { color: var(--text); font-family: 'JetBrains Mono', monospace; }
+.cs-vol-grid { grid-template-columns: repeat(4, 1fr) !important; }
+.cs-sims { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); }
+.cs-sim { background: var(--s1); padding: 12px 14px; }
+.cs-sim.long { box-shadow: inset 3px 0 0 rgba(45,212,160,.5); } .cs-sim.short { box-shadow: inset 3px 0 0 rgba(247,100,122,.5); }
+.cs-sim.fav { background: var(--s2); }
+.cs-sim-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.cs-sim-fav { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--orange); background: rgba(247,147,26,.12); border-radius: 5px; padding: 2px 7px; }
+.cs-sim-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 10px; }
+@media (max-width: 640px) { .cs-sims { grid-template-columns: 1fr; } .cs-vol-grid { grid-template-columns: repeat(2, 1fr) !important; } }
 .cs-sug-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; padding: 14px 16px 12px; border-bottom: 1px solid var(--border); }
 .cs-sug-idwrap { min-width: 0; display: flex; flex-direction: column; gap: 8px; }
 .cs-sug-id { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--faint); }
@@ -1368,8 +1384,8 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
     <!-- Cabeçalho -->
     <div class="cs-head">
       <div>
-        <div class="cs-title">CryptoScan <span class="cs-badge">Sugestões v2</span></div>
-        <div class="cs-sub">Poucas sugestões de trade de <b>alta convicção</b> em perpétuos da Bybit — <b>long ou short</b>, o que tiver maior potencial líquido. Cada ideia sai completa: entrada, stop, TP1/2/3, sizing e score de confiança. Nunca é execução automática.</div>
+        <div class="cs-title">CryptoScan <span class="cs-badge">Volatilidade v3</span></div>
+        <div class="cs-sub">Antecipa <b>expansão de volatilidade</b> em perpétuos da Bybit — que pares estão comprimidos e prestes a <b>mexer muito</b> (para qualquer lado). Para cada alerta, simulamos <b>long e short</b> por rutura do range como apoio à decisão. A ferramenta assinala a tempestade; o lado é decisão tua. Nunca é execução automática.</div>
       </div>
       <button class="cs-scan-btn" id="cs-scan-btn" onclick="scanCs(true)">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.2" stroke="currentColor" stroke-width="1.4"/><line x1="9" y1="9" x2="12.5" y2="12.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
@@ -1380,7 +1396,7 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
     <!-- Contexto de mercado (só leitura) -->
     <div class="cs-ctx">
       <div class="cs-ctx-item"><div class="cs-ctx-lbl">Universo</div><div class="cs-ctx-val" id="cs-x-universe">—</div><div class="cs-ctx-sub">todos os perps · baixa liq. sinalizada</div></div>
-      <div class="cs-ctx-item"><div class="cs-ctx-lbl">Sugestões</div><div class="cs-ctx-val" id="cs-x-short">—</div><div class="cs-ctx-sub">passam o funil</div></div>
+      <div class="cs-ctx-item"><div class="cs-ctx-lbl">Alertas</div><div class="cs-ctx-val" id="cs-x-short">—</div><div class="cs-ctx-sub">expansão iminente</div></div>
       <div class="cs-ctx-item"><div class="cs-ctx-lbl">BTC 24h</div><div class="cs-ctx-val" id="cs-x-btc">—</div><div class="cs-ctx-sub">contexto direcional</div></div>
       <div class="cs-ctx-item"><div class="cs-ctx-lbl">Funding médio</div><div class="cs-ctx-val" id="cs-x-fund">—</div><div class="cs-ctx-sub">do universo /8h</div></div>
     </div>
@@ -1403,7 +1419,7 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
     <div class="cs-source" id="cs-source"><span class="cs-src-dot off"></span><span>Fonte de dados: <b>Bybit v5</b> — ainda sem scan</span></div>
 
     <!-- Sugestões (injetadas por JS) -->
-    <div id="cs-list" class="cs-list"><div class="db-empty">Corre um scan para gerar sugestões de trade…</div></div>
+    <div id="cs-list" class="cs-list"><div class="db-empty">Corre um scan para detetar pares prestes a expandir volatilidade…</div></div>
 
     <!-- Painéis de referência (colapsados para reduzir ruído) -->
     <div class="cs-refs">
@@ -3340,6 +3356,7 @@ const CS_CFG = {
   universeTop: 70,             // símbolos enriquecidos por turnover (perf browser — o resto do long tail precisa de backend)
   weights: { funding: 22, oi: 18, cascade: 14, thrust: 14, breakout: 12, regime: 15, structure: 5 },
   scoreThreshold: 30,          // fasquia de score (sobreposta pela sensibilidade)
+  volThreshold: 45,            // fasquia do score de EXPANSÃO de volatilidade (sobreposta pela sensibilidade)
   minConfidence: 4,            // confiança mínima /10 (sobreposta pela sensibilidade)
   sensitivity: 'balanced',     // 'strict' | 'balanced' | 'loose'
   shortlistMax: 12,
@@ -3379,15 +3396,16 @@ const CS_CFG = {
 // Presets de sensibilidade do funil: baixam/sobem a fasquia de score e confiança.
 // NÃO alteram os sinais nem inventam edge — só decidem quantos candidatos passam.
 const CS_SENS = {
-  strict:   { scoreThreshold: 30, minConfidence: 4.0, label: 'Rigoroso' },
-  balanced: { scoreThreshold: 22, minConfidence: 3.5, label: 'Equilibrado' },
-  loose:    { scoreThreshold: 16, minConfidence: 3.0, label: 'Permissivo' },
+  strict:   { scoreThreshold: 30, minConfidence: 4.0, volThreshold: 55, label: 'Rigoroso' },
+  balanced: { scoreThreshold: 22, minConfidence: 3.5, volThreshold: 45, label: 'Equilibrado' },
+  loose:    { scoreThreshold: 16, minConfidence: 3.0, volThreshold: 35, label: 'Permissivo' },
 };
 function csApplySensitivity(key) {
   CS_CFG.sensitivity = CS_SENS[key] ? key : 'balanced';
   const s = CS_SENS[CS_CFG.sensitivity];
   CS_CFG.scoreThreshold = s.scoreThreshold;
   CS_CFG.minConfidence = s.minConfidence;
+  CS_CFG.volThreshold = s.volThreshold;
 }
 try {
   const s = JSON.parse(localStorage.getItem('csCfg') || '{}');
@@ -3444,6 +3462,101 @@ function csBBWidthPct(closes, p = 20) {
   }
   const cur = widths[widths.length - 1], sorted = widths.slice().sort((a, b) => a - b);
   return { cur, pct: sorted.filter(x => x <= cur).length / sorted.length * 100 };
+}
+
+// ── Volatilidade: preditores de EXPANSÃO (não de direção) ─────────────────
+// Percentil do ATR% (ATR/preço) — vol comprimida = percentil baixo → expansão
+// provável (mean-reversion da volatilidade). Devolve {cur, pct}.
+function csAtrPctile(highs, lows, closes, p = 14) {
+  const n = closes.length; if (n < p + 40) return null;
+  const trp = [];
+  for (let i = 1; i < n; i++) {
+    const tr = Math.max(highs[i] - lows[i], Math.abs(highs[i] - closes[i - 1]), Math.abs(lows[i] - closes[i - 1]));
+    trp.push(closes[i] ? tr / closes[i] : 0);
+  }
+  const atrp = [];
+  for (let i = p; i <= trp.length; i++) atrp.push(csMean(trp.slice(i - p, i)));
+  const cur = atrp[atrp.length - 1], sorted = atrp.slice().sort((a, b) => a - b);
+  return { cur, pct: sorted.filter(x => x <= cur).length / sorted.length * 100 };
+}
+// NR7 = a última vela tem o range mais estreito das últimas 7 (compressão aguda).
+function csNR7(highs, lows) {
+  const n = highs.length; if (n < 7) return false;
+  const rng = i => highs[i] - lows[i], last = rng(n - 1);
+  for (let i = n - 7; i < n - 1; i++) if (rng(i) <= last) return false;
+  return true;
+}
+// Inside bar = a última vela cabe dentro da anterior (indecisão → rutura próxima).
+function csInsideBar(highs, lows) {
+  const n = highs.length; if (n < 2) return false;
+  return highs[n - 1] < highs[n - 2] && lows[n - 1] > lows[n - 2];
+}
+// Score de EXPANSÃO de volatilidade 0–100 (alto = provável mexer muito nas
+// próximas horas). 70% compressão (BB + ATR + ADX baixos), + padrões (NR7/inside),
+// + combustível de posicionamento (OI a mover, funding esticado, L/S extremo).
+function csVolScore(x) {
+  const bbComp = x.bbH1 == null ? 50 : (100 - x.bbH1);
+  const atrComp = x.atr15 == null ? 50 : (100 - x.atr15);
+  const adxComp = x.adx == null ? 50 : Math.max(0, Math.min(100, (30 - x.adx) / 30 * 100));
+  let comp = (0.45 * bbComp + 0.35 * atrComp + 0.20 * adxComp) * 0.70;   // 0..70
+  let patt = 0; if (x.nr7) patt += 8; if (x.inside) patt += 5;            // 0..13
+  let fuel = 0;                                                           // 0..17
+  if (x.oiChg6h != null) fuel += Math.min(8, Math.abs(x.oiChg6h) / 12 * 8);
+  if (x.funding != null) fuel += Math.min(5, Math.abs(x.funding) / 0.05 * 5);
+  if (x.lsLongPct != null) fuel += Math.min(4, Math.abs(x.lsLongPct - 50) / 20 * 4);
+  return Math.max(0, Math.min(100, comp + patt + fuel));
+}
+// Amplitude TÍPICA de 24h (% mediano do range high-low em janelas de 24×1h). É a
+// dimensão para a qual a vol tende a reverter quando expande — o "movimento esperado".
+function csExpMove24(k60) {
+  const { highs, lows, closes } = k60, n = closes.length; if (n < 30) return null;
+  const ranges = [];
+  for (let i = 24; i < n; i++) {
+    const h = Math.max(...highs.slice(i - 24, i)), l = Math.min(...lows.slice(i - 24, i)), c = closes[i - 1];
+    if (c) ranges.push((h - l) / c * 100);
+  }
+  if (!ranges.length) return null;
+  const sorted = ranges.slice().sort((a, b) => a - b);
+  return sorted[Math.floor(sorted.length / 2)];
+}
+// Tilt de posicionamento (fade do crowd) — pista LEVE de lado, não uma direção.
+function csTilt(funding, lsLongPct, oiChg6h) {
+  let sig = 0; const reasons = [];
+  if (lsLongPct != null) {
+    if (lsLongPct >= 60) { sig -= 1; reasons.push(`crowd ${lsLongPct.toFixed(0)}% long`); }
+    else if (lsLongPct <= 40) { sig += 1; reasons.push(`crowd ${(100 - lsLongPct).toFixed(0)}% short`); }
+  }
+  if (funding != null) {
+    if (funding >= 0.03) { sig -= 1; reasons.push(`funding +${funding.toFixed(3)}%`); }
+    else if (funding <= -0.03) { sig += 1; reasons.push(`funding ${funding.toFixed(3)}%`); }
+  }
+  return { side: sig > 0 ? 'long' : sig < 0 ? 'short' : 'neutral', reasons };
+}
+// Simulação de rutura (breakout) para um lado. Long entra ao romper o topo da
+// zona de compressão; short ao romper o fundo. Stop = lado oposto do range (com
+// colchão em ATR, limitado a 0,5–3×ATR). Alvos TP1/2/3 em múltiplos de R; sizing
+// pela alavancagem-alvo, expondo o risco real em $ e % da conta.
+function csVolBracket(dir, price, atr, rangeHi, rangeLo, capital, leverage) {
+  if (!atr || !price || !(rangeHi > rangeLo)) return null;
+  const buf = 0.0005;
+  const entry = dir > 0 ? rangeHi * (1 + buf) : rangeLo * (1 - buf);
+  const stopRaw = dir > 0 ? rangeLo : rangeHi;
+  let stopDist = Math.abs(entry - stopRaw) + 0.15 * atr;
+  stopDist = Math.min(3 * atr, Math.max(0.5 * atr, stopDist));
+  const stop = dir > 0 ? entry - stopDist : entry + stopDist;
+  const stopPct = stopDist / entry * 100;
+  const tps = CS_CFG.tp.map(t => {
+    const px = dir > 0 ? entry + t.r * stopDist : entry - t.r * stopDist;
+    return { price: px, r: t.r, close: t.close, pct: Math.abs(px - entry) / entry * 100 };
+  });
+  const wSum = tps.reduce((s, t) => s + t.close, 0) || 1;
+  const blendedRR = tps.reduce((s, t) => s + t.r * t.close, 0) / wSum;
+  const lev = Math.max(1, Math.min(CS_CFG.maxLev, leverage || 1));
+  const capped = (leverage || 0) > CS_CFG.maxLev;
+  const notional = lev * capital, qty = notional / entry;
+  const riskUsd = qty * stopDist, riskPct = capital > 0 ? riskUsd / capital * 100 : 0;
+  const costsInR = CS_COST_RT / stopPct, pWinBE = (1 + costsInR) / (1 + blendedRR);
+  return { dir, entry, stop, stopDist, stopPct, tps, blendedRR, riskUsd, riskPct, notional, qty, lev, capped, pWinBE };
 }
 
 // ── Fetchers Bybit v5 (cronológico: mais antigo → mais recente) ──
@@ -3836,11 +3949,24 @@ async function scanCs(force) {
         c.oiChg6h = (oi && oi.length >= 25) ? (oi[oi.length - 1] - oi[oi.length - 25]) / oi[oi.length - 25] * 100 : null;
         c.plan = csTradePlan(c.price, c.atr, c.dir, CS_CFG.capital, c.k15, CS_CFG.leverage, regime.type);
         c.sentiment = csSentiment(lsr, c.fr, c.oiChg6h, c.dir);
+        // ── Volatilidade: score de expansão + simulações de rutura long/short ──
+        const atrP = csAtrPctile(k15.highs, k15.lows, k15.closes, 14);
+        const lsLongPct = (c.sentiment && c.sentiment.longPct != null) ? c.sentiment.longPct : null;
+        const nr7 = csNR7(k15.highs, k15.lows), inside = csInsideBar(k15.highs, k15.lows);
+        const wk = 24;   // zona de compressão = últimas 24 velas de 15m (≈6h)
+        const rangeHi = Math.max(...k15.highs.slice(-wk)), rangeLo = Math.min(...k15.lows.slice(-wk));
+        c.vol = {
+          score: csVolScore({ bbH1: regime.bbPct, atr15: atrP ? atrP.pct : null, adx: regime.adx, nr7, inside, oiChg6h: c.oiChg6h, funding: c.fr, lsLongPct }),
+          bbH1: regime.bbPct, atrPct: atrP ? atrP.pct : null, adx: regime.adx, nr7, inside,
+          expMove: csExpMove24(k60), tilt: csTilt(c.fr, lsLongPct, c.oiChg6h), rangeHi, rangeLo, wk,
+        };
+        c.longSim = csVolBracket(1, c.price, c.atr, rangeHi, rangeLo, CS_CFG.capital, CS_CFG.leverage);
+        c.shortSim = csVolBracket(-1, c.price, c.atr, rangeHi, rangeLo, CS_CFG.capital, CS_CFG.leverage);
       } catch (e) { c.err = true; }
     }, CS_CFG.concurrency);
-    // Guarda todos os candidatos com direção resolvida (ordenados por score). O
-    // render decide quais viram Sugestão e quais ficam no Radar de mercado.
-    const scored = enrich.filter(c => !c.err && c.dir !== 0).sort((a, b) => b.score - a.score);
+    // Guarda todos os candidatos com volatilidade avaliada, ordenados pelo score
+    // de EXPANSÃO. O render decide quais viram alerta e quais ficam no radar.
+    const scored = enrich.filter(c => !c.err && c.vol && c.longSim && c.shortSim).sort((a, b) => b.vol.score - a.vol.score);
     csData = { candidates: scored, universeSize, enriched: enrich.length, btc24, avgFund, ts: Date.now() };
     csLastScan = Date.now();
     csRender();
@@ -3875,16 +4001,20 @@ function csRender() {
     c.nConfl = [c.sigs.h1, c.sigs.h2, c.sigs.h3, c.sigs.thrust, c.sigs.brk, c.sigs.st].filter(x => x.on).length;
     c.confidence = csConfidence(c.score, c.plan, c.sentiment, c.nConfl);
   });
-  const isSug = c => c.score >= CS_CFG.scoreThreshold && c.plan && !c.plan.rejected && c.confidence >= CS_CFG.minConfidence;
-  const sug = all.filter(isSug).sort((a, b) => b.confidence - a.confidence).slice(0, CS_CFG.shortlistMax);
-  if (sug.length) csLogSuggestions(sug);   // regista no loop de feedback (dedup por hora)
+  const isSug = c => c.vol && c.vol.score >= CS_CFG.volThreshold && c.longSim && c.shortSim;
+  const sug = all.filter(isSug).sort((a, b) => b.vol.score - a.vol.score).slice(0, CS_CFG.shortlistMax);
+  // Auto-registo DESLIGADO para os alertas de volatilidade: o cs-settle atual
+  // modela entrada imediata ao preço `entry` e não a RUTURA (só entra se o preço
+  // atingir o nível). Registar aqui daria estatísticas mal modeladas. Reativar
+  // quando o backend souber modelar o gatilho de rutura + expansão realizada.
+  // if (sug.length) csLogSuggestions(sug);
   const sugSet = new Set(sug.map(c => c.symbol));
   const radar = all.filter(c => !sugSet.has(c.symbol)).slice(0, CS_CFG.radarMax);
   set('cs-x-short', sug.length);
   let html = '';
   if (!sug.length) {
-    html += `<div class="cs-nosetup"><div class="cs-nosetup-h">Sem setup de alta probabilidade neste momento</div>` +
-      `<div class="cs-nosetup-b">O universo foi avaliado mas nenhum candidato reuniu confluência suficiente (score ≥ ${CS_CFG.scoreThreshold}), R:R ≥ ${CS_CFG.minRR} e confiança ≥ ${CS_CFG.minConfidence.toFixed(1)}/10 em simultâneo. A ausência de setup é um resultado válido — preferimos qualidade a quantidade. Se quiseres ver mais candidatos, baixa a <b>Sensibilidade</b> no topo. Em baixo, o radar mostra o que o mercado tinha de mais próximo e o que lhe faltou.</div></div>`;
+    html += `<div class="cs-nosetup"><div class="cs-nosetup-h">Mercado calmo — sem expansão de volatilidade iminente</div>` +
+      `<div class="cs-nosetup-b">O universo foi avaliado mas nenhum par atingiu o score de expansão ≥ ${CS_CFG.volThreshold}/100. Nada prestes a mexer é um resultado válido — evita entradas forçadas em mercado sem movimento. Para ver mais candidatos, baixa a <b>Sensibilidade</b> no topo. Em baixo, o radar mostra os pares mais próximos de comprimir.</div></div>`;
   } else {
     html += sug.map((c, i) => csRenderCard(c, i + 1)).join('');
   }
@@ -3892,70 +4022,64 @@ function csRender() {
   listEl.innerHTML = html;
 }
 
+// Painel de uma simulação de rutura (long ou short) — apoio à decisão.
+function csSimPanel(sim, coin, favored) {
+  if (!sim) return '';
+  const isLong = sim.dir > 0, cls = isLong ? 'long' : 'short', lbl = isLong ? 'LONG · rutura ↑' : 'SHORT · rutura ↓';
+  const tpRows = sim.tps.map((t, i) => `<div class="cs-lvl tp">
+      <span class="cs-lvl-k">TP${i + 1}</span><span class="cs-lvl-px g">${fmtPx(t.price)}</span>
+      <span class="cs-lvl-pct">${isLong ? '+' : '−'}${t.pct.toFixed(2)}%</span><span class="cs-lvl-r">${t.r.toFixed(1)}R</span>
+      <span class="cs-lvl-close">fecha ${(t.close * 100).toFixed(0)}%</span></div>`).join('');
+  return `<div class="cs-sim ${cls}${favored ? ' fav' : ''}">
+    <div class="cs-sim-h"><span class="cs-side ${cls}">${lbl}</span>${favored ? '<span class="cs-sim-fav">tilt favorece</span>' : ''}</div>
+    <div class="cs-sim-grid">
+      <div class="cs-kv"><div class="cs-kv-l">Entrada (rutura)</div><div class="cs-kv-v">${fmtPx(sim.entry)}</div></div>
+      <div class="cs-kv"><div class="cs-kv-l">Stop</div><div class="cs-kv-v r">${fmtPx(sim.stop)} · ${sim.stopPct.toFixed(2)}%</div></div>
+      <div class="cs-kv"><div class="cs-kv-l">R:R combinado</div><div class="cs-kv-v o">${sim.blendedRR.toFixed(2)} : 1</div></div>
+      <div class="cs-kv"><div class="cs-kv-l">Risco · se bater o stop</div><div class="cs-kv-v ${sim.riskPct > 25 ? 'r' : sim.riskPct > 10 ? 'o' : 'g'}">${fmtUsd(sim.riskUsd)} · ${sim.riskPct.toFixed(0)}%</div></div>
+      <div class="cs-kv"><div class="cs-kv-l">Size · ${sim.lev.toFixed(0)}×</div><div class="cs-kv-v">${fmtUsd(sim.notional)} · ${csFmtQty(sim.qty)} ${coin}</div></div>
+      <div class="cs-kv"><div class="cs-kv-l">p_win breakeven</div><div class="cs-kv-v">${(sim.pWinBE * 100).toFixed(0)}%</div></div>
+    </div>
+    <div class="cs-lvls">${tpRows}</div>
+  </div>`;
+}
+
 function csRenderCard(c, id) {
-  const p = c.plan, s = c.sigs;
-  const sideCls = c.dir > 0 ? 'long' : 'short', sideLbl = c.dir > 0 ? 'LONG' : 'SHORT';
-  const conf = c.confidence, urg = csUrgency(c), setup = csSetupType(c);
-  const urgCls = urg === 'Alta' ? 'hi' : urg === 'Média' ? 'md' : 'lo';
-  const { pro, con } = csConfluences(c, c.sentiment);
-  const tfLbl = '15m · filtro 1h';
-  // Escada de saída (TP1/2/3 + stop)
-  const tpRows = p.tps.map((t, i) => `<div class="cs-lvl tp">
-      <span class="cs-lvl-k">TP${i + 1}${t.clamped ? ' <em>(range)</em>' : ''}</span>
-      <span class="cs-lvl-px g">${fmtPx(t.price)}</span>
-      <span class="cs-lvl-pct">+${t.pct.toFixed(2)}%</span>
-      <span class="cs-lvl-r">${t.r.toFixed(1)}R</span>
-      <span class="cs-lvl-close">fecha ${(t.close * 100).toFixed(0)}%</span>
-    </div>`).join('');
-  const stopRow = `<div class="cs-lvl stop">
-      <span class="cs-lvl-k">Stop</span>
-      <span class="cs-lvl-px r">${fmtPx(p.stop)}</span>
-      <span class="cs-lvl-pct">−${p.stopPct.toFixed(2)}%</span>
-      <span class="cs-lvl-r">1R</span>
-      <span class="cs-lvl-close">técnico + 1,2×ATR</span>
-    </div>`;
-  const proHtml = pro.length ? pro.map(x => `<li class="pro">${x}</li>`).join('') : '<li class="muted">—</li>';
-  const conHtml = con.length ? con.map(x => `<li class="con">${x}</li>`).join('') : '<li class="muted">Sem riscos relevantes assinalados.</li>';
-  const sentDot = c.sentiment.tone === 'crowded-long' ? 'r' : c.sentiment.tone === 'crowded-short' ? 'g' : '';
+  const v = c.vol;
+  const comp = Math.round(100 - csMean([v.bbH1 == null ? 50 : v.bbH1, v.atrPct == null ? 50 : v.atrPct]));
+  const tilt = v.tilt || { side: 'neutral', reasons: [] };
+  const tiltLbl = tilt.side === 'long' ? 'favorece LONG' : tilt.side === 'short' ? 'favorece SHORT' : 'neutro';
+  const tiltCls = tilt.side === 'long' ? 'long' : tilt.side === 'short' ? 'short' : 'flat';
+  const patts = []; if (v.nr7) patts.push('NR7'); if (v.inside) patts.push('inside bar');
+  const scoreCls = v.score >= 65 ? 'hi' : v.score >= 50 ? 'md' : 'lo';
   const open = csExpanded === c.symbol;
-  return `<div class="cs-sug ${sideCls}">
+  return `<div class="cs-sug vol">
     <div class="cs-sug-top">
       <div class="cs-sug-idwrap">
-        <div class="cs-sug-id">SUGESTÃO #${id}</div>
-        <div class="cs-sug-pair"><span class="cs-side ${sideCls}">${sideLbl}</span><span class="cs-sug-coin">${c.coin}<small>${fmtPx(c.price)}</small></span></div>
-        <div class="cs-sug-meta"><span class="cs-sug-setup">${setup}</span><span class="cs-sug-tf">${tfLbl}</span><span class="cs-urg ${urgCls}">Urgência ${urg}</span>${c.lowLiq ? `<span class="cs-liq-warn" title="Turnover 24h ${fmtUsd(c.turnover)} — abaixo do saudável (${fmtUsd(CS_CFG.healthyTurnover)}). Spread largo, mais slippage e risco de manipulação. Reduz o size.">⚠ baixa liquidez · ${fmtUsd(c.turnover)}/24h</span>` : ''}</div>
+        <div class="cs-sug-id">ALERTA DE VOLATILIDADE #${id}</div>
+        <div class="cs-sug-pair"><span class="cs-sug-coin">${c.coin}<small>${fmtPx(c.price)}</small></span><span class="cs-tilt ${tiltCls}"${tilt.reasons.length ? ` title="${tilt.reasons.join(' · ')}"` : ''}>${tiltLbl}</span></div>
+        <div class="cs-sug-meta"><span class="cs-sug-setup">Movimento esperado 24h ~${v.expMove != null ? v.expMove.toFixed(1) + '%' : '—'}</span><span class="cs-sug-tf">compressão ${comp}/100</span>${patts.length ? `<span class="cs-urg md">${patts.join(' · ')}</span>` : ''}${c.lowLiq ? `<span class="cs-liq-warn" title="Turnover 24h ${fmtUsd(c.turnover)} — abaixo do saudável (${fmtUsd(CS_CFG.healthyTurnover)}). Spread largo, mais slippage e risco de manipulação. Reduz o size.">⚠ baixa liquidez · ${fmtUsd(c.turnover)}/24h</span>` : ''}</div>
       </div>
       <div class="cs-sug-conf">
-        <div class="cs-conf-num">${conf.toFixed(1)}<small>/10</small></div>
-        <div class="cs-conf-bar"><div class="cs-conf-fill" style="width:${conf * 10}%"></div></div>
-        <div class="cs-conf-lbl">Confiança</div>
+        <div class="cs-conf-num ${scoreCls}">${v.score.toFixed(0)}<small>/100</small></div>
+        <div class="cs-conf-bar"><div class="cs-conf-fill" style="width:${v.score}%"></div></div>
+        <div class="cs-conf-lbl">Score de expansão</div>
       </div>
     </div>
 
-    <div class="cs-sug-grid">
-      <div class="cs-kv"><div class="cs-kv-l">Entrada ideal</div><div class="cs-kv-v">${fmtPx(p.entry)}</div></div>
-      <div class="cs-kv"><div class="cs-kv-l">Zona de entrada</div><div class="cs-kv-v">${fmtPx(p.zLo)} – ${fmtPx(p.zHi)}</div></div>
-      <div class="cs-kv"><div class="cs-kv-l">R:R combinado</div><div class="cs-kv-v o">${p.blendedRR.toFixed(2)} : 1</div></div>
-      <div class="cs-kv"><div class="cs-kv-l">Risco real · se bater o stop</div><div class="cs-kv-v ${p.riskPct > 25 ? 'r' : p.riskPct > 10 ? 'o' : 'g'}">${fmtUsd(p.riskUsd)} · ${p.riskPct.toFixed(0)}% da conta</div></div>
-      <div class="cs-kv"><div class="cs-kv-l">Position size</div><div class="cs-kv-v">${fmtUsd(p.notional)} · ${csFmtQty(p.qty)} ${c.coin}</div></div>
-      <div class="cs-kv"><div class="cs-kv-l">Alavancagem</div><div class="cs-kv-v ${p.capped ? 'o' : ''}">${p.lev.toFixed(0)}×${p.capped ? ' · cap ' + CS_CFG.maxLev + '×' : ''}</div></div>
-      <div class="cs-kv"><div class="cs-kv-l">p_win breakeven</div><div class="cs-kv-v">${(p.pWinBE * 100).toFixed(0)}%</div></div>
-      <div class="cs-kv"><div class="cs-kv-l">Validade</div><div class="cs-kv-v sm">${csValidity(c)}</div></div>
+    <div class="cs-sug-grid cs-vol-grid">
+      <div class="cs-kv"><div class="cs-kv-l">BB width (1h)</div><div class="cs-kv-v">p${v.bbH1 == null ? '—' : Math.round(v.bbH1)}</div></div>
+      <div class="cs-kv"><div class="cs-kv-l">ATR% (15m)</div><div class="cs-kv-v">p${v.atrPct == null ? '—' : Math.round(v.atrPct)}</div></div>
+      <div class="cs-kv"><div class="cs-kv-l">ADX (1h)</div><div class="cs-kv-v">${v.adx == null ? '—' : v.adx.toFixed(0)}</div></div>
+      <div class="cs-kv"><div class="cs-kv-l">Zona de compressão (6h)</div><div class="cs-kv-v sm">${fmtPx(v.rangeLo)} – ${fmtPx(v.rangeHi)}</div></div>
     </div>
 
-    <div class="cs-lvls">${tpRows}${stopRow}</div>
+    <div class="cs-sug-note">Rutura acima de <b>${fmtPx(v.rangeHi)}</b> → cenário long · abaixo de <b>${fmtPx(v.rangeLo)}</b> → cenário short. A ferramenta assinala a <b>tempestade</b>; o lado é decisão tua.</div>
 
-    <div class="cs-sug-cols">
-      <div class="cs-sug-col"><div class="cs-col-h up">Confluências a favor</div><ul class="cs-col-list">${proHtml}</ul></div>
-      <div class="cs-sug-col"><div class="cs-col-h dn">Confluências contra / riscos</div><ul class="cs-col-list">${conHtml}</ul></div>
+    <div class="cs-sims">
+      ${csSimPanel(c.longSim, c.coin, tilt.side === 'long')}
+      ${csSimPanel(c.shortSim, c.coin, tilt.side === 'short')}
     </div>
-
-    <div class="cs-sug-sent">
-      <div class="cs-sent-line"><span class="cs-sent-tag">Sentimento · posicionamento (Bybit)</span><span class="cs-sent-dot ${sentDot}"></span><span class="cs-sent-txt">${c.sentiment.text}</span></div>
-      <div class="cs-sent-line na"><span class="cs-sent-tag">Sentimento · X + notícias</span><span class="cs-sent-txt">N/D — requer serviço backend com chaves (Grok/X, LunarCrush, notícias). Ver painel “Pipeline backend”.</span></div>
-    </div>
-
-    <div class="cs-sug-just"><b>Justificação:</b> ${csJustify(c, c.sentiment)}</div>
 
     <div class="cs-sug-foot">
       <button class="cs-ev-btn" onclick="csToggle('${c.symbol}')">${open ? 'Ocultar' : 'Ver'} evidência dos sinais<svg class="cs-chev ${open ? 'up' : ''}" width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3 1.5 6.5 5 3 8.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
@@ -3992,24 +4116,19 @@ function csRenderEvidence(c) {
 function csRadarHtml(radar, openByDefault) {
   if (!radar.length) return '';
   const rows = radar.map(c => {
-    const side = c.dir > 0 ? 'Long' : c.dir < 0 ? 'Short' : '—';
-    let reason;
-    if (c.score < CS_CFG.scoreThreshold) reason = `confluência fraca · score ${c.score.toFixed(0)}/${CS_CFG.scoreThreshold}`;
-    else if (!c.plan) reason = 'sem plano de trade';
-    else if (c.plan.rejectedRR) reason = `R:R ${c.plan.blendedRR.toFixed(2)} < ${CS_CFG.minRR} — sem espaço no range`;
-    else if (c.plan.rejectedCost) reason = 'alvo não paga 2× os custos';
-    else reason = `confiança ${(c.confidence || 0).toFixed(1)}/10 < ${CS_CFG.minConfidence.toFixed(1)}`;
+    const v = c.vol || {};
+    const sc = v.score != null ? v.score : 0;
+    const tiltLbl = v.tilt && v.tilt.side === 'long' ? 'tilt long' : v.tilt && v.tilt.side === 'short' ? 'tilt short' : '—';
+    const reason = `score de expansão ${sc.toFixed(0)}/${CS_CFG.volThreshold}`;
     const tags = [];
-    if (c.sigs.h1.on) tags.push('Funding');
-    if (c.sigs.h2.on) tags.push('OI');
-    if (c.sigs.h3.on) tags.push('Cascata');
-    if (c.sigs.thrust && c.sigs.thrust.on) tags.push('Thrust');
-    if (c.sigs.brk && c.sigs.brk.on) tags.push('Breakout');
-    if (c.sigs.st.on) tags.push('Estrutura');
-    const tagStr = tags.length ? tags.join(' · ') : CS_REG_LABEL[c.sigs.regime.type] || '—';
-    return `<div class="cs-desc-row"><span class="cs-desc-sym">${c.coin}${c.lowLiq ? ' <span title="baixa liquidez" style="color:var(--red)">⚠</span>' : ''}</span><span class="cs-desc-side ${c.dir > 0 ? 'long' : c.dir < 0 ? 'short' : ''}">${side}</span><span class="cs-desc-score">${tagStr}</span><span class="cs-desc-reason">${reason}</span></div>`;
+    if (v.nr7) tags.push('NR7');
+    if (v.inside) tags.push('inside');
+    if (v.bbH1 != null) tags.push('BB p' + Math.round(v.bbH1));
+    if (v.expMove != null) tags.push('~' + v.expMove.toFixed(1) + '% 24h');
+    const tagStr = tags.length ? tags.join(' · ') : (CS_REG_LABEL[c.sigs.regime.type] || '—');
+    return `<div class="cs-desc-row"><span class="cs-desc-sym">${c.coin}${c.lowLiq ? ' <span title="baixa liquidez" style="color:var(--red)">⚠</span>' : ''}</span><span class="cs-desc-side ${v.tilt && v.tilt.side === 'long' ? 'long' : v.tilt && v.tilt.side === 'short' ? 'short' : ''}">${tiltLbl}</span><span class="cs-desc-score">${tagStr}</span><span class="cs-desc-reason">${reason}</span></div>`;
   }).join('');
-  return `<details class="cs-desc"${openByDefault ? ' open' : ''}><summary class="cs-desc-h">Radar de mercado (${radar.length}) — candidatos mais próximos e o que lhes faltou</summary><div class="cs-desc-body">${rows}</div></details>`;
+  return `<details class="cs-desc"${openByDefault ? ' open' : ''}><summary class="cs-desc-h">Radar de volatilidade (${radar.length}) — pares mais próximos de comprimir</summary><div class="cs-desc-body">${rows}</div></details>`;
 }
 
 // Quantidade do ativo com resolução adaptada à magnitude.
@@ -4092,17 +4211,21 @@ function csLogSuggestions(sug) {
     const hb = '' + d.getUTCFullYear() + String(d.getUTCMonth() + 1).padStart(2, '0') + String(d.getUTCDate()).padStart(2, '0') + String(d.getUTCHours()).padStart(2, '0');
     const ts = d.toISOString(), payload = [];
     for (const c of sug) {
-      const p = c.plan; if (!p) continue;
-      const side = c.dir > 0 ? 'long' : 'short';
+      const v = c.vol; if (!v) continue;
+      // Regista a rutura do lado que o tilt de posicionamento favorece (fade do
+      // crowd). Tilt neutro → sem chamada direcional a validar, não regista.
+      const side = v.tilt && v.tilt.side !== 'neutral' ? v.tilt.side : null;
+      if (!side) continue;
+      const p = side === 'long' ? c.longSim : c.shortSim; if (!p) continue;
       const key = `${c.symbol}_${side}_${hb}`;          // dedup: 1 por moeda/lado/hora
       if (csLoggedKeys.has(key)) continue;
       csLoggedKeys.add(key);
       payload.push({
         sig_key: key, entry_ts: ts, symbol: c.symbol, coin: c.coin, side,
         entry: p.entry, stop: p.stop, tp1: p.tps[0].price, tp1_r: p.tps[0].r,
-        stop_pct: p.stopPct, blended_rr: p.blendedRR, score: c.score, confidence: c.confidence,
-        sensitivity: CS_CFG.sensitivity, regime: c.sigs.regime.type, setup: csSetupType(c),
-        signals: { funding: c.sigs.h1.on, oi: c.sigs.h2.on, cascade: c.sigs.h3.on, thrust: c.sigs.thrust.on, breakout: c.sigs.brk.on, structure: c.sigs.st.on },
+        stop_pct: p.stopPct, blended_rr: p.blendedRR, score: v.score, confidence: c.confidence,
+        sensitivity: CS_CFG.sensitivity, regime: c.sigs.regime.type, setup: 'Vol breakout · ' + side,
+        signals: { nr7: v.nr7, inside: v.inside, bbH1: v.bbH1, atrPct: v.atrPct, adx: v.adx, expMove: v.expMove, tilt: v.tilt.side },
         turnover: c.turnover, low_liq: !!c.lowLiq, leverage: p.lev,
       });
     }
