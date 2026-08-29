@@ -1173,6 +1173,61 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
 .pos-exit-cell { flex: 1; background: var(--s1); padding: 7px 11px; text-align: center; }
 .pos-exit-cell-lbl { font-size: 8.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--faint); margin-bottom: 3px; }
 .pos-exit-cell-val { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 700; }
+
+/* ── Home: toggle Bybit (live) / Real (depósitos manuais) ──────────────────── */
+.db-mode-toggle { display: inline-flex; gap: 2px; background: var(--s1); border: 1px solid var(--border); border-radius: 9px; padding: 3px; margin-bottom: 12px; }
+.db-mode-btn { font-family: inherit; font-size: 11px; font-weight: 700; letter-spacing: .02em; color: var(--dim); background: transparent; border: none; border-radius: 6px; padding: 5px 11px; cursor: pointer; transition: background .15s, color .15s; }
+.db-mode-btn.active { background: var(--s3); color: var(--text); }
+.db-mode-btn:not(.active):hover { color: var(--text); }
+
+/* Vista Real (livro de depósitos) */
+#db-real-view { margin-top: 14px; }
+.md-note { font-size: 11px; color: var(--faint); line-height: 1.5; margin: 2px 2px 12px; }
+.md-note b { color: var(--dim); font-weight: 700; }
+.md-card { background: var(--s1); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 12px; }
+.md-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 11px 14px; border-bottom: 1px solid var(--border); }
+.md-card-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--dim); }
+.md-card-sub { font-size: 10.5px; color: var(--faint); }
+
+/* Resumo por moeda */
+.md-coin-row { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; padding: 11px 14px; border-bottom: 1px solid var(--border); }
+.md-coin-row:last-child { border-bottom: none; }
+.md-coin-main { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.md-coin-sym { font-weight: 800; font-size: 14px; letter-spacing: .02em; }
+.md-coin-qty { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--faint); }
+.md-coin-vals { text-align: right; display: flex; flex-direction: column; gap: 2px; }
+.md-coin-val { font-family: 'JetBrains Mono', monospace; font-size: 13.5px; font-weight: 700; }
+.md-coin-ret { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; }
+.md-coin-meta { grid-column: 1 / -1; font-size: 10.5px; color: var(--faint); display: flex; gap: 12px; flex-wrap: wrap; }
+.md-coin-meta span b { color: var(--dim); font-weight: 700; }
+
+/* Livro de entradas (cada depósito) */
+.md-entry { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 6px 10px; padding: 9px 14px; border-bottom: 1px solid var(--border); }
+.md-entry:last-child { border-bottom: none; }
+.md-entry-info { min-width: 0; }
+.md-entry-line1 { font-size: 12.5px; font-weight: 600; }
+.md-entry-line1 b { font-weight: 800; }
+.md-entry-line2 { font-size: 10.5px; color: var(--faint); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+.md-entry-paid { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; text-align: right; }
+.md-entry-del { background: transparent; border: 1px solid var(--border2); color: var(--faint); border-radius: 7px; width: 28px; height: 28px; font-size: 15px; line-height: 1; cursor: pointer; transition: color .15s, border-color .15s; }
+.md-entry-del:hover { color: var(--red); border-color: var(--red); }
+
+/* Formulário de adição */
+.md-form { display: grid; grid-template-columns: 1.1fr .9fr 1fr .7fr; gap: 8px; padding: 12px 14px; }
+.md-field { display: flex; flex-direction: column; gap: 4px; }
+.md-field.md-field-full { grid-column: 1 / -1; }
+.md-field label { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--faint); }
+.md-input, .md-select { background: var(--bg); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 13px; padding: 8px 9px; outline: none; width: 100%; }
+.md-input:focus, .md-select:focus { border-color: var(--orange); }
+.md-select { font-family: inherit; }
+.md-form-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 8px; margin-top: 2px; }
+.md-btn { font-family: inherit; font-size: 12px; font-weight: 700; border-radius: 8px; padding: 8px 16px; cursor: pointer; border: 1px solid var(--border2); background: var(--s3); color: var(--text); }
+.md-btn-primary { background: var(--orange); border-color: var(--orange); color: #1a1400; }
+.md-btn:disabled { opacity: .5; cursor: not-allowed; }
+.md-form-err { grid-column: 1 / -1; font-size: 11px; color: var(--red); min-height: 0; }
+@media (max-width: 520px) {
+  .md-form { grid-template-columns: 1fr 1fr; }
+}
 </style>
 </head>
 <body>
@@ -1285,6 +1340,10 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
 
     <!-- Hero: total value -->
     <div class="db-hero">
+      <div class="db-mode-toggle" role="tablist" aria-label="Fonte do portefólio">
+        <button id="dbm-bybit" class="db-mode-btn active" onclick="setHomeMode('bybit')" title="Valores ao vivo da Bybit + Trading 212">Bybit · live</button>
+        <button id="dbm-real" class="db-mode-btn" onclick="setHomeMode('real')" title="Return real a partir dos teus depósitos manuais (€/$ → cripto)">Real · depósitos</button>
+      </div>
       <div id="db-hero-lbl" style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--faint);margin-bottom:10px">Portfólio Total · Bybit</div>
       <div id="db-total-value" class="db-total-value">—</div>
       <div class="db-pnl-row">
@@ -1298,6 +1357,8 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
       </div>
     </div>
 
+    <!-- Vista Bybit (live): gráfico + sub-tabs. Escondida no modo Real. -->
+    <div id="db-bybit-view">
     <!-- Sparkline chart -->
     <div id="db-chart-wrap" class="db-chart-wrap">
       <svg id="db-chart-svg" class="db-chart-svg" xmlns="http://www.w3.org/2000/svg"></svg>
@@ -1391,6 +1452,71 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
       </div>
 
     </div><!-- /card -->
+    </div><!-- /db-bybit-view -->
+
+    <!-- Vista Real: return a partir dos depósitos manuais (€/$ → cripto) -->
+    <div id="db-real-view" style="display:none">
+      <div class="md-note">
+        Introduz <b>o que pagaste</b> (€/$) e <b>quanta cripto</b> isso comprou. O preço atual continua a vir do mercado —
+        só o custo é manual. Assim o return reflete o teu dinheiro real, não o custo ~0 que a Bybit assume nas moedas depositadas.
+      </div>
+
+      <!-- Resumo por moeda -->
+      <div class="md-card">
+        <div class="md-card-head">
+          <span class="md-card-title">Por moeda</span>
+          <span class="md-card-sub" id="md-summary-sub">—</span>
+        </div>
+        <div id="md-coin-summary"><div class="db-empty">Sem depósitos registados.</div></div>
+      </div>
+
+      <!-- Livro de entradas -->
+      <div class="md-card">
+        <div class="md-card-head">
+          <span class="md-card-title">Livro de entradas</span>
+          <span class="md-card-sub" id="md-ledger-sub">—</span>
+        </div>
+        <div id="md-ledger"><div class="db-empty">Ainda não há entradas. Adiciona a primeira abaixo.</div></div>
+      </div>
+
+      <!-- Adicionar depósito -->
+      <div class="md-card">
+        <div class="md-card-head"><span class="md-card-title">Adicionar depósito</span></div>
+        <div class="md-form">
+          <div class="md-field">
+            <label for="md-in-coin">Moeda</label>
+            <input id="md-in-coin" class="md-input" type="text" placeholder="ADA" autocomplete="off" spellcheck="false" oninput="this.value=this.value.toUpperCase()">
+          </div>
+          <div class="md-field">
+            <label for="md-in-qty">Quantidade</label>
+            <input id="md-in-qty" class="md-input" type="number" inputmode="decimal" step="any" min="0" placeholder="1200">
+          </div>
+          <div class="md-field">
+            <label for="md-in-paid">Pago</label>
+            <input id="md-in-paid" class="md-input" type="number" inputmode="decimal" step="any" min="0" placeholder="500">
+          </div>
+          <div class="md-field">
+            <label for="md-in-cur">Moeda €/$</label>
+            <select id="md-in-cur" class="md-select">
+              <option value="EUR">€ EUR</option>
+              <option value="USD">$ USD</option>
+            </select>
+          </div>
+          <div class="md-field">
+            <label for="md-in-date">Data</label>
+            <input id="md-in-date" class="md-input" type="date">
+          </div>
+          <div class="md-field md-field-full">
+            <label for="md-in-note">Nota (opcional)</label>
+            <input id="md-in-note" class="md-input" type="text" placeholder="ex.: transferência da Coinbase" autocomplete="off">
+          </div>
+          <div class="md-form-err" id="md-form-err"></div>
+          <div class="md-form-actions">
+            <button class="md-btn md-btn-primary" id="md-add-btn" onclick="mdAddEntry()">Adicionar</button>
+          </div>
+        </div>
+      </div>
+    </div><!-- /db-real-view -->
   </div>
 </div>
 
@@ -1735,6 +1861,9 @@ const SRC_NAME = { ct: 'Cointelegraph', cd: 'CoinDesk', bm: 'Bitcoin Magazine' }
 let positions = [], btcPrev = 0, fundingTimer = null, currentNewsSrc = 'ct';
 let lastNewsItems = [];
 let walletData = null, portfolioHistory = [], dbCurrentSubTab = 'assets';
+// Modo da home: 'bybit' (live) ou 'real' (depósitos manuais). Ver módulo MD.
+let homeMode = 'bybit'; try { if (localStorage.getItem('homeMode') === 'real') homeMode = 'real'; } catch (e) {}
+let manualDeposits = []; try { manualDeposits = JSON.parse(localStorage.getItem('manualDeposits') || '[]'); } catch (e) { manualDeposits = []; }
 let exitTargets = {}; try { exitTargets = JSON.parse(localStorage.getItem('exitTargets') || '{}'); } catch(e) { exitTargets = {}; }
 let exitCoinData = {};
 let posExitTargets = {}; try { posExitTargets = JSON.parse(localStorage.getItem('posExitTargets') || '{}'); } catch(e) { posExitTargets = {}; }
@@ -5136,16 +5265,20 @@ function renderDashboard() {
   const isPos    = totalPnl >= 0;
   const pnlColor = totalPnl !== 0 ? (isPos ? 'var(--green)' : 'var(--red)') : 'var(--dim)';
 
-  const tvEl = document.getElementById('db-total-value');
-  if (tvEl) tvEl.textContent = '$' + fmt(equity, 2);
+  // No modo Real (depósitos manuais) o hero é escrito por renderRealHome() —
+  // não deixar os valores Bybit sobrescrevê-lo.
+  if (homeMode !== 'real') {
+    const tvEl = document.getElementById('db-total-value');
+    if (tvEl) tvEl.textContent = '$' + fmt(equity, 2);
 
-  const puEl = document.getElementById('db-pnl-usd');
-  if (puEl) { puEl.textContent = (totalPnl >= 0 ? '+' : '') + fmtUsd(totalPnl, 2); puEl.style.color = pnlColor; }
-  const ppEl = document.getElementById('db-pnl-pct');
-  if (ppEl) {
-    ppEl.textContent = (isPos ? '▲' : '▼') + ' ' + Math.abs(pctChg).toFixed(2) + '%';
-    ppEl.style.background = isPos ? 'rgba(45,212,160,.12)' : 'rgba(247,100,122,.12)';
-    ppEl.style.color = pnlColor;
+    const puEl = document.getElementById('db-pnl-usd');
+    if (puEl) { puEl.textContent = (totalPnl >= 0 ? '+' : '') + fmtUsd(totalPnl, 2); puEl.style.color = pnlColor; }
+    const ppEl = document.getElementById('db-pnl-pct');
+    if (ppEl) {
+      ppEl.textContent = (isPos ? '▲' : '▼') + ' ' + Math.abs(pctChg).toFixed(2) + '%';
+      ppEl.style.background = isPos ? 'rgba(45,212,160,.12)' : 'rgba(247,100,122,.12)';
+      ppEl.style.color = pnlColor;
+    }
   }
 
   // Update header PnL to include spot PnL (not just derivatives)
@@ -5162,6 +5295,8 @@ function renderDashboard() {
   if (dbCurrentSubTab === 'distribuicao') renderDbDistribution();
   if (dbCurrentSubTab === 'positions')    renderDbPositions();
   if (dbCurrentSubTab === 'exit')         renderDbExitStrategy();
+  // Preços da carteira atualizados -> refresca o valor de mercado no modo Real.
+  if (homeMode === 'real') renderRealHome();
 }
 
 // ── VALOR DO PORTEFÓLIO AO LONGO DO TEMPO ─────────────────────────────────────
@@ -6038,6 +6173,7 @@ function toggleAssetIsolate(coin) {
 
 // Cabeçalho do herói: total do portefólio, ou o valor da moeda isolada.
 function updateDbHero() {
+  if (homeMode === 'real') return;   // hero controlado por renderRealHome()
   const lbl = document.getElementById('db-hero-lbl');
   const tv  = document.getElementById('db-total-value');
   if (pfIsolate) {
@@ -6533,7 +6669,7 @@ function toggleTheme() {
 // pristino (versão em $) em __ovOrig; o texto mostrado é sempre recalculado a
 // partir dele: 1) conversão de moeda ($→€ à taxa atual), 2) máscara de privado
 // (dígitos→'*'). Só se altera o TEXTO dos nós, nunca a estrutura/estilos.
-const VAL_SEL = '#db-total-value, #db-pnl-usd, #db-pnl-pct, #db-roi-usd, #db-roi-pct,' +
+const VAL_SEL = '#db-total-value, #db-pnl-usd, #db-pnl-pct, #db-roi-usd, #db-roi-pct, .md-val,' +
   ' #hdr-spot, #hdr-inv-pnl, #perpd-val, #perpd-chip, .db-asset-usd, .db-asset-qty, .db-asset-pnl, .dist-val, .dist-d-val,' +
   ' .exit-summary-val, .exit-result-usd, .exit-result-pct, .ps-val,' +
   ' .pst-val, .pst-sub, .pos-row-pnl-usd, .pos-row-pnl-roe, .prg-val,' +
@@ -6898,6 +7034,240 @@ function drawPerpChart(arr) {
   svg.innerHTML = g;
 }
 
+// ═══ DEPÓSITOS MANUAIS — "return real" do portefólio ═════════════════════════
+// Problema: o return da home vem do histórico de ordens spot (computeAvgPrices).
+// Moedas que ENTRARAM POR DEPÓSITO não têm ordem -> sem base de custo -> return
+// fantasma. Aqui o utilizador regista o capital REAL (€/$) e a qtd que comprou;
+// o preço atual continua a vir do mercado. return = (valor − investido)/investido.
+const MD_REST = `${SUPABASE_REST}/manual_deposits`;
+let mdPxCache = {};   // { COIN: {px, t} } — preço USD (fallback a ticker público)
+
+function mdSaveLocal() { try { localStorage.setItem('manualDeposits', JSON.stringify(manualDeposits)); } catch (e) {} }
+function mdEsc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+// ── Persistência Supabase (cache local + fonte transversal, à imagem de exit_targets) ──
+async function loadManualDepositsRemote() {
+  try {
+    const r = await fetch(`${MD_REST}?select=id,coin,qty,paid,currency,ts,note&order=ts.asc`, { headers: sbHeaders() });
+    if (r.ok) {
+      const rows = await r.json();
+      if (Array.isArray(rows)) {
+        manualDeposits = rows.map(x => ({
+          id: x.id, coin: (x.coin || '').toUpperCase(),
+          qty: parseFloat(x.qty) || 0, paid: parseFloat(x.paid) || 0,
+          currency: x.currency === 'USD' ? 'USD' : 'EUR',
+          ts: x.ts || new Date().toISOString(), note: x.note || '',
+        })).filter(e => e.coin && e.qty > 0);
+        mdSaveLocal();
+      }
+    }
+  } catch (e) { /* offline -> mantém o cache do localStorage */ }
+  // Precisa da taxa EUR/USD para converter depósitos em euros ao valor de mercado.
+  if (manualDeposits.some(e => e.currency === 'EUR') && cyRate == null) { try { await cyFetchRate(); } catch (e) {} }
+  if (homeMode === 'real') renderRealHome();
+}
+
+async function syncManualDepositRemote(entry) {
+  try {
+    await fetch(MD_REST, {
+      method: 'POST',
+      headers: sbHeaders({ 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' }),
+      body: JSON.stringify([{ id: entry.id, coin: entry.coin, qty: entry.qty, paid: entry.paid, currency: entry.currency, ts: entry.ts, note: entry.note || null, updated_at: new Date().toISOString() }]),
+    });
+  } catch (e) { /* offline -> localStorage já guardou; sincroniza mais tarde */ }
+}
+
+async function deleteManualDepositRemote(id) {
+  try { await fetch(`${MD_REST}?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE', headers: sbHeaders({ Prefer: 'return=minimal' }) }); }
+  catch (e) {}
+}
+
+// ── Preço atual (USD) de uma moeda: 1.º da carteira Bybit, depois ticker público ──
+function mdWalletPx(coin) {
+  const c = (walletData?.coin || []).find(x => (x.coin || '').toUpperCase() === coin);
+  if (!c) return 0;
+  const q = parseFloat(c.walletBalance || 0), v = parseFloat(c.usdValue || 0);
+  return (q > 0 && v > 0) ? v / q : 0;
+}
+function mdPriceUsd(coin) {
+  const w = mdWalletPx(coin);
+  if (w > 0) return w;
+  const hit = mdPxCache[coin];
+  return hit ? hit.px : 0;
+}
+async function mdEnsurePrices(coins) {
+  const need = [...new Set(coins)].filter(c => {
+    if (mdWalletPx(c) > 0) return false;
+    const hit = mdPxCache[c];
+    return !(hit && (Date.now() - hit.t) < 300000);   // cache 5 min
+  });
+  if (!need.length) return;
+  await trdPool(need, async (coin) => {
+    try {
+      const r = await fetch(`${BYBIT}/v5/market/tickers?category=spot&symbol=${coin}USDT`);
+      const d = await r.json();
+      const px = parseFloat(d?.result?.list?.[0]?.lastPrice || 0);
+      if (px > 0) mdPxCache[coin] = { px, t: Date.now() };
+    } catch (e) {}
+  }, 5);
+}
+
+// Capital investido de uma entrada, em USD (canónico interno). EUR -> USD à taxa
+// atual (cyRate = EUR por 1 USD); o overlay reconverte para € no display se ativo.
+function mdInvestedUsd(e) {
+  if (e.currency === 'USD') return e.paid;
+  if (cyRate && cyRate > 0) return e.paid / cyRate;
+  return e.paid;   // sem taxa disponível: assume paridade (melhor do que 0)
+}
+
+// Agrega o livro por moeda (custo médio real ao longo dos vários depósitos).
+function mdByCoin() {
+  const m = {};
+  manualDeposits.forEach(e => {
+    if (!m[e.coin]) m[e.coin] = { coin: e.coin, qty: 0, investedUsd: 0, n: 0 };
+    m[e.coin].qty += e.qty;
+    m[e.coin].investedUsd += mdInvestedUsd(e);
+    m[e.coin].n++;
+  });
+  return Object.values(m).sort((a, b) => b.investedUsd - a.investedUsd);
+}
+
+async function renderRealHome() {
+  const coins = mdByCoin();
+  await mdEnsurePrices(coins.map(c => c.coin));
+  let totInv = 0, totCur = 0;
+  coins.forEach(c => { c.px = mdPriceUsd(c.coin); c.curUsd = c.qty * c.px; totInv += c.investedUsd; totCur += c.curUsd; });
+
+  const ret = totCur - totInv;
+  const pct = totInv > 0 ? (ret / totInv) * 100 : 0;
+  const pos = ret >= 0;
+  const col = ret === 0 ? 'var(--dim)' : (pos ? 'var(--green)' : 'var(--red)');
+
+  const lbl = document.getElementById('db-hero-lbl');
+  if (lbl) lbl.textContent = 'Portfólio Real · Depósitos';
+  const tv = document.getElementById('db-total-value');
+  if (tv) tv.textContent = '$' + fmt(totCur, 2);
+  const pu = document.getElementById('db-pnl-usd');
+  if (pu) { pu.textContent = (ret >= 0 ? '+' : '') + fmtUsd(ret, 2); pu.style.color = col; }
+  const pp = document.getElementById('db-pnl-pct');
+  if (pp) {
+    pp.textContent = manualDeposits.length ? ((pos ? '▲' : '▼') + ' ' + Math.abs(pct).toFixed(2) + '%') : '—';
+    pp.style.background = pos ? 'rgba(45,212,160,.12)' : 'rgba(247,100,122,.12)';
+    pp.style.color = col;
+  }
+
+  renderMdSummary(coins, totInv, totCur);
+  renderMdLedger();
+  if (typeof ovActive === 'function' && ovActive()) ovRefresh();
+}
+
+function renderMdSummary(coins, totInv, totCur) {
+  const sub = document.getElementById('md-summary-sub');
+  if (sub) sub.innerHTML = manualDeposits.length
+    ? `Investido <b class="md-val">$${fmt(totInv, 2)}</b> · Valor <b class="md-val">$${fmt(totCur, 2)}</b>`
+    : '—';
+  const el = document.getElementById('md-coin-summary');
+  if (!el) return;
+  if (!coins.length) { el.innerHTML = '<div class="db-empty">Sem depósitos registados.</div>'; return; }
+  el.innerHTML = coins.map(c => {
+    const ret = c.curUsd - c.investedUsd;
+    const pct = c.investedUsd > 0 ? (ret / c.investedUsd) * 100 : 0;
+    const col = ret === 0 ? 'var(--dim)' : (ret > 0 ? 'var(--green)' : 'var(--red)');
+    const avg = c.qty > 0 ? c.investedUsd / c.qty : 0;
+    return `<div class="md-coin-row">
+      <div class="md-coin-main">
+        <span class="md-coin-sym">${mdEsc(c.coin)}</span>
+        <span class="md-coin-qty">${fmt(c.qty, c.qty >= 1 ? 4 : 8)}</span>
+      </div>
+      <div class="md-coin-vals">
+        <span class="md-coin-val md-val">$${fmt(c.curUsd, 2)}</span>
+        <span class="md-coin-ret md-val" style="color:${col}">${ret >= 0 ? '+' : ''}${fmtUsd(ret, 2)} · ${ret >= 0 ? '+' : ''}${pct.toFixed(1)}%</span>
+      </div>
+      <div class="md-coin-meta">
+        <span>Investido <b class="md-val">$${fmt(c.investedUsd, 2)}</b></span>
+        <span>Custo médio <b class="md-val">$${fmtPx(avg)}</b></span>
+        <span>Preço atual <b class="md-val">$${c.px > 0 ? fmtPx(c.px) : '—'}</b></span>
+        <span>${c.n} ${c.n === 1 ? 'entrada' : 'entradas'}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderMdLedger() {
+  const sub = document.getElementById('md-ledger-sub');
+  if (sub) sub.textContent = manualDeposits.length + (manualDeposits.length === 1 ? ' entrada' : ' entradas');
+  const el = document.getElementById('md-ledger');
+  if (!el) return;
+  if (!manualDeposits.length) { el.innerHTML = '<div class="db-empty">Ainda não há entradas. Adiciona a primeira abaixo.</div>'; return; }
+  const sorted = [...manualDeposits].sort((a, b) => new Date(b.ts) - new Date(a.ts));
+  el.innerHTML = sorted.map(e => {
+    const sym = e.currency === 'USD' ? '$' : '€';
+    const d = new Date(e.ts);
+    const ds = isNaN(d.getTime()) ? '' : d.toLocaleDateString('pt-PT');
+    const note = e.note ? ` · ${mdEsc(e.note)}` : '';
+    return `<div class="md-entry">
+      <div class="md-entry-info">
+        <div class="md-entry-line1"><b>${fmt(e.qty, e.qty >= 1 ? 4 : 8)}</b> ${mdEsc(e.coin)}</div>
+        <div class="md-entry-line2">${ds}${note}</div>
+      </div>
+      <div class="md-entry-paid">${sym}${fmt(e.paid, 2)}</div>
+      <button class="md-entry-del" title="Remover" onclick="mdRemoveEntry('${mdEsc(e.id)}')">×</button>
+    </div>`;
+  }).join('');
+}
+
+function mdAddEntry() {
+  const g = id => document.getElementById(id);
+  const coin = (g('md-in-coin').value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const qty  = parseFloat(g('md-in-qty').value);
+  const paid = parseFloat(g('md-in-paid').value);
+  const currency = g('md-in-cur').value === 'USD' ? 'USD' : 'EUR';
+  const dateV = g('md-in-date').value;
+  const note  = (g('md-in-note').value || '').trim().slice(0, 200);
+  const err = g('md-form-err');
+  const fail = m => { if (err) err.textContent = m; };
+  if (!coin) return fail('Indica a moeda (ex.: ADA).');
+  if (!(qty > 0)) return fail('Quantidade tem de ser maior que 0.');
+  if (!(paid >= 0)) return fail('Valor pago inválido.');
+  fail('');
+  const ts = dateV ? new Date(dateV + 'T12:00:00').toISOString() : new Date().toISOString();
+  const id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ('md-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8));
+  const entry = { id, coin, qty, paid, currency, ts, note };
+  manualDeposits.push(entry);
+  mdSaveLocal();
+  syncManualDepositRemote(entry);
+  ['md-in-coin', 'md-in-qty', 'md-in-paid', 'md-in-note'].forEach(i => { const el = g(i); if (el) el.value = ''; });
+  if (currency === 'EUR' && cyRate == null) cyFetchRate().then(renderRealHome);
+  renderRealHome();
+}
+
+function mdRemoveEntry(id) {
+  manualDeposits = manualDeposits.filter(e => e.id !== id);
+  mdSaveLocal();
+  deleteManualDepositRemote(id);
+  renderRealHome();
+}
+
+function setHomeMode(mode) {
+  homeMode = mode === 'real' ? 'real' : 'bybit';
+  try { localStorage.setItem('homeMode', homeMode); } catch (e) {}
+  const bBtn = document.getElementById('dbm-bybit'), rBtn = document.getElementById('dbm-real');
+  if (bBtn) bBtn.classList.toggle('active', homeMode === 'bybit');
+  if (rBtn) rBtn.classList.toggle('active', homeMode === 'real');
+  const bv = document.getElementById('db-bybit-view'), rv = document.getElementById('db-real-view');
+  if (bv) bv.style.display = homeMode === 'real' ? 'none' : '';
+  if (rv) rv.style.display = homeMode === 'real' ? '' : 'none';
+  if (homeMode === 'real') {
+    const di = document.getElementById('md-in-date');
+    if (di && !di.value) di.value = new Date().toISOString().slice(0, 10);
+    if (manualDeposits.some(e => e.currency === 'EUR') && cyRate == null) cyFetchRate().then(renderRealHome);
+    renderRealHome();
+  } else {
+    renderDashboard();
+    updateDbHero();
+  }
+}
+
 // ── INIT ──────────────────────────────────────────────────────────────────────
 (async () => {
   await Promise.all([
@@ -6912,7 +7282,8 @@ function drawPerpChart(arr) {
     fetchT212Holdings(),
     fetchSpotTickers24h(),
     loadNews(),
-    loadExitTargetsRemote()
+    loadExitTargetsRemote(),
+    loadManualDepositsRemote()
   ]);
   fetchT212Daily().then(() => { if (dbCurrentSubTab === 'assets') renderDbAssets(); });
   refreshAfterT212(); // total + curva passam a incluir a Trading 212
@@ -6921,6 +7292,7 @@ function drawPerpChart(arr) {
   initPfCrosshair();  // linha vertical de leitura no gráfico principal do portefólio
   fetchTkrQuotes();   // cotações de ações/índices/commodities (BTC já vem do fetchMarket)
   pvInit();           // modo privado: reaplica a máscara de valores se estiver ativo
+  setHomeMode(homeMode);  // aplica o modo guardado da home (Bybit live / Real depósitos)
   setInterval(fetchMarket,        5000);
   setInterval(fetchPositions,    10000);
   setInterval(fetchWalletBalance, 30000);
