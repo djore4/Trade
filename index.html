@@ -149,14 +149,24 @@ body {
 @media (max-width: 430px) {
   .hdr-right { gap: 6px; }
   .hdr-right .hdr-pill-btn svg { display: none; }   /* esconde o ícone de gráfico da pílula PERP */
+  .hdr-right .theme-btn { padding: 3px 2px; }        /* botões olho/€/tema mais estreitos */
+  .currency-btn { font-size: 14px; }
 }
 /* Ecrãs estreitos: condensa o header para "Trade Desk" caber sem scroll lateral. */
 @media (max-width: 400px) {
   #header { padding-left: 10px; padding-right: 10px; }
   .logo { margin-right: 6px; gap: 4px; }
-  .hdr-right { gap: 5px; }
+  .hdr-right { gap: 4px; }
   .hdr-right .hdr-pill { gap: 4px; }
+  .hdr-right .hdr-pill-btn { padding: 3px 3px; margin: -3px -3px; }
   .hdr-right .hdr-val { font-size: 10px; }
+}
+@media (max-width: 360px) {
+  .logo { font-size: 12px; }
+  .hdr-right { gap: 3px; }
+  .hdr-right .hdr-label { font-size: 7px; }
+  .hdr-right .hdr-val { font-size: 9px; }
+  .currency-btn { font-size: 13px; }
 }
 
 .hdr-pill { display: flex; align-items: center; gap: 5px; }
@@ -175,6 +185,12 @@ html.light .theme-btn .icon-sun  { display: block; }
 html.hide-values .privacy-btn .icon-eye     { display: none; }
 html.hide-values .privacy-btn .icon-eye-off { display: flex; }
 html.hide-values .privacy-btn { color: var(--orange); }
+/* Botão de moeda (mostrar valores em USD ou EUR) — mesmo padrão do olho/tema */
+.currency-btn { font-weight: 700; font-size: 15px; line-height: 16px; }
+.currency-btn .cur-eur-g { display: none; }
+html.cur-eur .currency-btn .cur-usd   { display: none; }
+html.cur-eur .currency-btn .cur-eur-g { display: inline; }
+html.cur-eur .currency-btn { color: var(--orange); }
 /* Modo privado: os dígitos dos valores são trocados por '*' via JS (ver pv* no script),
    mantendo font, tamanho, cor e todo o layout iguais à versão visível. */
 @media (max-width: 600px) { .hdr-hide-sm { display: none; } }
@@ -1182,10 +1198,6 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
       <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x=".5" y="1.5" width="10" height="8" rx="1.5" stroke="currentColor" stroke-width="1.4" fill="none"/><line x1="3" y1="4.5" x2="8" y2="4.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><line x1="3" y1="7" x2="6.5" y2="7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
       Notícias
     </button>
-    <button class="tab-btn" data-tab="agente" onclick="switchTab('agente',this)">
-      <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M5.5.8 6.7 4l3.3 1.2L6.7 6.5 5.5 9.7 4.3 6.5 1 5.2 4.3 4z" stroke="currentColor" stroke-width="1.1" fill="none" stroke-linejoin="round"/></svg>
-      Agente
-    </button>
     <button class="tab-btn" data-tab="tutorial" onclick="switchTab('tutorial',this)">
       <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1 2.2A1 1 0 0 1 2 1.2h3.5v7.6H2a1 1 0 0 0-1 1z" stroke="currentColor" stroke-width="1.1" fill="none" stroke-linejoin="round"/><path d="M10 2.2A1 1 0 0 0 9 1.2H5.5v7.6H9a1 1 0 0 1 1 1z" stroke="currentColor" stroke-width="1.1" fill="none" stroke-linejoin="round"/></svg>
       Tutorial
@@ -1206,6 +1218,11 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
     <button class="theme-btn privacy-btn" id="privacy-btn" onclick="togglePrivacy()" title="Ocultar / mostrar valores do portefólio">
       <svg class="icon-eye" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-4.5 7-4.5S15 8 15 8s-2.5 4.5-7 4.5S1 8 1 8Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><circle cx="8" cy="8" r="2.1" stroke="currentColor" stroke-width="1.3"/></svg>
       <svg class="icon-eye-off" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6.3 3.7A6.8 6.8 0 0 1 8 3.5c4.5 0 7 4.5 7 4.5a12.7 12.7 0 0 1-2.2 2.7M3.3 4.9A12.6 12.6 0 0 0 1 8s2.5 4.5 7 4.5a6.7 6.7 0 0 0 2.6-.5M6.6 6.6a2.1 2.1 0 0 0 2.8 2.8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+    </button>
+    <div class="hdr-sep"></div>
+    <button class="theme-btn currency-btn" id="currency-btn" onclick="toggleCurrency()" title="Alternar moeda (USD / EUR)">
+      <span class="cur-glyph cur-usd">$</span>
+      <span class="cur-glyph cur-eur-g">€</span>
     </button>
     <div class="hdr-sep"></div>
     <button class="theme-btn" onclick="toggleTheme()" title="Alternar tema">
@@ -1387,10 +1404,18 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
         <div class="cs-title">CryptoScan <span class="cs-badge">Volatilidade v3</span></div>
         <div class="cs-sub">Antecipa <b>expansão de volatilidade</b> em perpétuos da Bybit — que pares estão comprimidos e prestes a <b>mexer muito</b> (para qualquer lado). Para cada alerta, simulamos <b>long e short</b> por rutura do range como apoio à decisão. A ferramenta assinala a tempestade; o lado é decisão tua. Nunca é execução automática.</div>
       </div>
-      <button class="cs-scan-btn" id="cs-scan-btn" onclick="scanCs(true)">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.2" stroke="currentColor" stroke-width="1.4"/><line x1="9" y1="9" x2="12.5" y2="12.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
-        <span>Correr scan</span>
-      </button>
+      <div class="cs-scanbar">
+        <span class="cs-seg-lbl cs-seg-inline">Sensibilidade <i class="cs-help" tabindex="0" title="Quão exigente é a busca. Rigoroso = só ideias muito fortes. Permissivo = mostra mais candidatos, de menor convicção. Muda o que o scan encontra.">?</i></span>
+        <div class="cs-seg" id="cs-seg-sens" role="group" aria-label="Sensibilidade">
+          <button type="button" data-v="strict" onclick="csSetSens('strict')">Rigoroso</button>
+          <button type="button" data-v="balanced" onclick="csSetSens('balanced')">Equilibrado</button>
+          <button type="button" data-v="loose" onclick="csSetSens('loose')">Permissivo</button>
+        </div>
+        <button class="cs-scan-btn" id="cs-scan-btn" onclick="scanCs(true)">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.2" stroke="currentColor" stroke-width="1.4"/><line x1="9" y1="9" x2="12.5" y2="12.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          <span>Correr scan</span>
+        </button>
+      </div>
     </div>
 
     <!-- Contexto de mercado (só leitura) -->
@@ -1400,18 +1425,61 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
       <div class="cs-ctx-item"><div class="cs-ctx-lbl">BTC 24h</div><div class="cs-ctx-val" id="cs-x-btc">—</div><div class="cs-ctx-sub">contexto direcional</div></div>
       <div class="cs-ctx-item"><div class="cs-ctx-lbl">Funding médio</div><div class="cs-ctx-val" id="cs-x-fund">—</div><div class="cs-ctx-sub">do universo /8h</div></div>
     </div>
+    <style>
+      .cs-scanbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex-shrink:0}
+      .cs-seg-inline{margin:0;white-space:nowrap}
+      .cs-seg-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--faint)}
+      @media(max-width:768px){ .cs-scanbar{width:100%} .cs-scanbar .cs-seg{flex:1 1 100%} .cs-scanbar .cs-scan-btn{flex:1 1 100%;justify-content:center} }
+      .cs-seg{display:inline-flex;background:var(--s2,#151515);border:1px solid var(--border);border-radius:11px;padding:3px;gap:2px}
+      .cs-seg button{appearance:none;border:none;background:transparent;color:var(--dim);font:inherit;font-size:12px;font-weight:600;padding:7px 13px;border-radius:8px;cursor:pointer;transition:background .15s,color .15s;white-space:nowrap}
+      .cs-seg button:hover{color:var(--text)}
+      .cs-seg button.on{background:var(--orange);color:#111;box-shadow:0 1px 4px rgba(247,147,26,.35)}
+      @media(max-width:768px){.cs-seg{width:100%} .cs-seg button{flex:1;padding:8px 6px;font-size:11px}}
+      .cs-exec{border:1px solid var(--border);background:var(--s2,#151515);border-radius:12px;padding:10px 14px;margin:8px 0 4px}
+      .cs-exec-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+      .cs-exec-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--faint)}
+      .cs-exec-mode{font-size:11px;font-weight:800;padding:4px 11px;border-radius:7px;cursor:pointer;border:1px solid;letter-spacing:.03em}
+      .cs-exec-mode.sim{color:var(--orange);border-color:rgba(247,147,26,.5);background:rgba(247,147,26,.1)}
+      .cs-exec-mode.real{color:#fff;border-color:var(--red);background:rgba(220,50,50,.85)}
+      .cs-exec-mode.kill{color:#fff;background:var(--red);border-color:var(--red)}
+      .cs-exec-btn{font-size:11px;font-weight:600;padding:4px 10px;border-radius:7px;cursor:pointer;background:transparent;color:var(--dim);border:1px solid var(--border)}
+      .cs-exec-btn.kill{color:var(--red);border-color:rgba(255,80,80,.4)}
+      .cs-exec-msg{font-size:11px;color:var(--faint);margin-left:auto;text-align:right}
+      .cs-exec-settings{margin-top:12px;border-top:1px dashed var(--border);padding-top:12px}
+      .cs-exec-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+      .cs-exec-perf{margin-top:12px} .cs-exec-perf>summary{cursor:pointer;font-size:12px;font-weight:600;color:var(--dim)}
+      .cs-manual-h{font-size:13px;font-weight:700;color:var(--text);margin:16px 0 2px}
+      .cs-manual-h small{font-weight:500;color:var(--faint);font-size:11px}
+      /* botão Executar no cartão */
+      .cs-exec-go{font-size:12px;font-weight:700;padding:7px 14px;border-radius:8px;cursor:pointer;border:1px solid;color:#111;background:var(--orange);border-color:var(--orange)}
+      .cs-exec-go:disabled{opacity:.55;cursor:default}
+      /* confirmação in-app (substitui o confirm() nativo, suprimido em PWA/webview mobile) */
+      .cs-confirm-body{font-size:13px;color:var(--dim);line-height:1.5}
+      .cs-confirm-lines{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px 14px;margin-top:4px}
+      .cs-confirm-lines>div{font-size:12.5px;color:var(--faint)} .cs-confirm-lines b{color:var(--text);font-weight:700}
+      .cs-confirm-actions{display:flex;gap:10px;margin-top:18px}
+      .cs-confirm-actions button{flex:1;font-size:13px;font-weight:700;padding:11px 14px;border-radius:10px;cursor:pointer;border:1px solid var(--border)}
+      .cs-confirm-cancel{background:var(--s2,#151515);color:var(--dim)}
+      .cs-confirm-go{background:var(--orange);border-color:var(--orange);color:#111}
+      .cs-confirm-go.danger{background:var(--red);border-color:var(--red);color:#fff}
+      /* val-* (tabela de desempenho real, usada por csFetchStats) */
+      .val-body{margin-top:6px} .val-empty{font-size:12px;color:var(--faint)}
+      .val-tbl{width:100%;border-collapse:collapse;margin-top:12px;font-size:12px;overflow-x:auto;display:block}
+      .val-tbl th,.val-tbl td{text-align:right;padding:7px 10px;border-bottom:1px solid var(--border);white-space:nowrap}
+      .val-tbl th:first-child,.val-tbl td:first-child{text-align:left}
+      .val-tbl th{color:var(--faint);font-weight:600;text-transform:uppercase;font-size:9.5px;letter-spacing:.06em}
+      .val-tbl td{font-family:'JetBrains Mono',monospace;color:var(--text)}
+      .val-tbl tr.oos td{font-weight:700} .val-tbl td.neg{color:var(--red)} .val-tbl td.pos{color:var(--green)}
+      .val-note{font-size:10.5px;color:var(--faint);line-height:1.6;margin-top:12px;border-top:1px dashed var(--border);padding-top:10px}
+      .val-meta{font-size:11px;color:var(--faint);margin-top:8px}
+    </style>
 
-    <!-- Configuração editável -->
+    <div class="cs-manual-h">Margem &amp; alavancagem <small>— não mudam a busca; só dimensionam o lucro/prejuízo estimado em cada cartão</small></div>
+
+    <!-- Sizing (afeta só as estimativas dos cartões, ao vivo) -->
     <div class="cs-cfg">
-      <label class="cs-field"><span>Capital (USD) <i class="cs-help" tabindex="0" title="O teu capital de referência. Serve só para calcular o tamanho da posição de cada sugestão.">?</i></span><input type="number" id="cs-capital" min="100" step="100" oninput="csCfgChange()"></label>
-      <label class="cs-field"><span>Alavancagem <i class="cs-help" tabindex="0" title="Alavancagem-alvo da posição. Posição = alavancagem × capital. O risco real por trade (perda se bater o stop) resulta daí e é mostrado em cada cartão — alavancagem alta = risco alto. 1–25×.">?</i></span><input type="number" id="cs-lev" min="1" max="25" step="1" oninput="csCfgChange()" onchange="csCfgChange(true)"></label>
-      <label class="cs-field"><span>Sensibilidade <i class="cs-help" tabindex="0" title="Quão exigente é o funil. Rigoroso = só ideias muito fortes (pode não haver nenhuma). Permissivo = mostra mais candidatos, de menor convicção. Não inventa edge — apenas baixa a fasquia da fasquia de score/confiança.">?</i></span>
-        <select id="cs-sens" onchange="csSensChange()">
-          <option value="strict">Rigoroso</option>
-          <option value="balanced">Equilibrado</option>
-          <option value="loose">Permissivo</option>
-        </select>
-      </label>
+      <label class="cs-field"><span>Margem por trade (USD) <i class="cs-help" tabindex="0" title="Quanto pões de margem em cada trade. Posição = margem × alavancagem. Define o tamanho e, com o stop, o prejuízo estimado. É por-trade, não é repartido por várias posições.">?</i></span><input type="number" id="cs-capital" min="10" step="10" oninput="csCfgChange()"></label>
+      <label class="cs-field"><span>Alavancagem <i class="cs-help" tabindex="0" title="Posição = margem × alavancagem. Não muda quais trades aparecem — só o tamanho e, logo, o lucro nos TP e o prejuízo no stop, mostrados em cada cartão. 1–25×.">?</i></span><input type="number" id="cs-lev" min="1" max="25" step="1" oninput="csCfgChange()" onchange="csCfgChange(true)"></label>
       <div class="cs-cfg-note" id="cs-cfg-note"></div>
     </div>
 
@@ -1421,148 +1489,7 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
     <!-- Sugestões (injetadas por JS) -->
     <div id="cs-list" class="cs-list"><div class="db-empty">Corre um scan para detetar pares prestes a expandir volatilidade…</div></div>
 
-    <!-- Painéis de referência (colapsados para reduzir ruído) -->
-    <div class="cs-refs">
-
-      <details class="cs-refbox" id="cs-how">
-        <summary class="cs-refbox-h">Como funciona — hipóteses de edge + funil</summary>
-        <div class="cs-refbox-b">
-          <p class="cs-refbox-note" style="margin:0 0 12px">O edge vem de <b>posicionamento</b> (funding, open interest, cascatas de liquidação, long/short ratio), filtrado por regime e passado por um <b>risk engine</b>. O motor é determinístico: mesmo input → mesmo score.</p>
-          <div class="cs-hyp"><span class="cs-hyp-tag">H1</span><div><b>Funding squeeze.</b> Funding com z-score esticado (≈100 períodos) = um lado sobrelotado a pagar. Se o preço não confirma, o unwind é violento na direção oposta. Contribui de forma <b>contínua</b> a partir de |z|≈1,3 e satura em 3,5. z &gt; 0 com preço 24h ≤ +1% → <span class="sh">SHORT</span>; z &lt; 0 com preço 24h ≥ −1% → <span class="lo">LONG</span>.</div></div>
-          <div class="cs-hyp"><span class="cs-hyp-tag">H2</span><div><b>OI divergence.</b> OI a subir (a partir de +3% em 6h) com preço quase parado (&lt;0,6%) = combustível bidirecional (direção neutra). OI a cair (a partir de −3% em 6h) = flush/exaustão → fade do movimento recente. Score em rampa até ±12%.</div></div>
-          <div class="cs-hyp"><span class="cs-hyp-tag">H3</span><div><b>Cascade fade.</b> Vela (TF15) com range &gt;1,8×ATR(14), volume &gt;2,2× média(20) e OI a cair em 2h = proxy de cascata → mean-reversion contra a vela. Score em rampa pela extensão da vela e pelo pico de volume. <em>Proxy REST; adapter pronto para o websocket de liquidações.</em></div></div>
-          <div class="cs-hyp"><span class="cs-hyp-tag">H4</span><div><b>Filtro de regime (1h).</b> ADX(14) ≥ 25 → trending; largura de Bollinger no percentil &lt;15% → squeeze (penaliza tudo exceto breakout); resto → ranging. Mean-reversion só pontua bem em ranging.</div></div>
-          <div class="cs-hyp"><span class="cs-hyp-tag alt">+</span><div><b>Estrutura.</b> Posição do preço no range de 24h: ≤20% favorece LONG, ≥80% favorece SHORT (score cresce quanto mais perto do extremo). Peso baixo, melhora o R:R de entrada.</div></div>
-          <div class="cs-hyp"><span class="cs-hyp-tag">T</span><div><b>Thrust (momentum).</b> Vela de impulso com volume &gt;1,8× a média e momentum de 3 velas na mesma direção = arranque de movimento. Sinal de <b>continuação</b> (acompanha, não faz fade).</div></div>
-          <div class="cs-hyp"><span class="cs-hyp-tag">B</span><div><b>Breakout (range).</b> Rompimento do máx/mín das últimas 48 velas (12h), medido em ATRs além do range. Gatilho intradiário de continuação.</div></div>
-          <div class="cs-funnel" style="margin-top:14px">
-            <div class="cs-funnel-step"><span class="cs-fn-n">1</span><div><b>Universo</b><p>Todos os USDT-perps (só se excluem pares mortos). Baixa liquidez é <b>sinalizada, não excluída</b>. O browser enriquece os top-70 por turnover; o long tail além disso precisa de backend.</p></div></div>
-            <div class="cs-funnel-step"><span class="cs-fn-n">2</span><div><b>Scoring determinístico</b><p>Posicionamento (H1–H3) + intradiários (thrust, breakout) + estrutura, filtrados pelo regime → score composto. Mesmo input → mesmo score.</p></div></div>
-            <div class="cs-funnel-step"><span class="cs-fn-n">3</span><div><b>Risk engine</b><p>Stop técnico+risco, TP1/2/3, sizing USDT+unidades, cap 1,8×, rejeição por custos/R:R.</p></div></div>
-            <div class="cs-funnel-step"><span class="cs-fn-n">4</span><div><b>Sugestão + confiança</b><p>Sentimento de posicionamento, confluências a favor/contra, score X/10, urgência e validade.</p></div></div>
-          </div>
-        </div>
-      </details>
-
-      <details class="cs-refbox">
-        <summary class="cs-refbox-h">Custos, R:R e breakeven</summary>
-        <div class="cs-refbox-b">
-          <div class="cs-ev">
-            <div class="cs-ev-row"><span>Taker fee (por lado)</span><b>0,055%</b></div>
-            <div class="cs-ev-row"><span>Slippage estimado (por lado)</span><b>0,030%</b></div>
-            <div class="cs-ev-row tot"><span>Custo round-trip</span><b class="o">≈ 0,17%</b></div>
-          </div>
-          <div class="cs-refbox-note">Nenhuma sugestão sai com <b>TP1 a pagar &lt;2× os custos</b> ou <b>R:R combinado &lt; 1,8</b>. O R:R combinado pondera TP1/TP2/TP3 pelos <b>partial closes</b> (40%/35%/25%) e clampa os alvos ao extremo do range de 24h — setups a meio do range são rejeitados por não terem espaço. Cada sugestão mostra <b>p_win_breakeven</b> = (1 + custos_em_R)/(1 + R:R): a taxa de acerto mínima para empatar. Win rate isolado não é métrica; o que importa é a expectância líquida.</div>
-        </div>
-      </details>
-
-      <details class="cs-refbox">
-        <summary class="cs-refbox-h">Regras de risco e pesos do motor <span class="cs-flag">fixos</span></summary>
-        <div class="cs-refbox-b">
-          <p class="cs-refbox-note" style="margin:0 0 12px">O <b>sizing é por alavancagem</b> que escolhes em cima (1–25×): posição = alavancagem × capital. O <b>risco real por trade</b> não é fixo — resulta da alavancagem × distância ao stop, e vem em cada cartão a laranja/vermelho. Só o <b>R:R mínimo</b> e o teto de alavancagem são limites duros do motor. Os <b>pesos</b> mostram quanto cada sinal conta no score (0–100).</p>
-          <div class="cs-weights">
-            <span class="cs-wlbl">Limites:</span>
-            <span class="cs-wchip">Alavancagem <b>1–25×</b></span>
-            <span class="cs-wchip">R:R mín <b>1,8</b></span>
-            <span class="cs-wchip">TP1 ≥ <b>2× custos</b></span>
-            <span class="cs-wsep"></span>
-            <span class="cs-wlbl">Pesos:</span>
-            <span class="cs-wchip">Funding <b>22</b></span>
-            <span class="cs-wchip">OI <b>18</b></span>
-            <span class="cs-wchip">Cascata <b>14</b></span>
-            <span class="cs-wchip">Thrust <b>14</b></span>
-            <span class="cs-wchip">Breakout <b>12</b></span>
-            <span class="cs-wchip">Regime <b>15</b></span>
-            <span class="cs-wchip">Estrutura <b>5</b></span>
-          </div>
-        </div>
-      </details>
-
-      <details class="cs-refbox">
-        <summary class="cs-refbox-h">Sentimento &amp; camadas backend <span class="cs-flag">fora do browser</span></summary>
-        <div class="cs-refbox-b">
-          <div class="cs-refbox-note"><b>Ativo aqui, ao vivo:</b> sentimento de <b>posicionamento</b> derivado da Bybit v5 — long/short account ratio, funding e OI. Para perps é frequentemente mais acionável que o sentimento social.</div>
-          <div class="cs-refbox-note" style="margin-top:9px">As camadas com estado ou chaves secretas pertencem a um serviço Python e <b>não correm no browser</b>:</div>
-          <ul class="cs-list-ul">
-            <li><b>Sentimento social</b>: Grok/X, LunarCrush, Santiment e notícias (CoinDesk, The Block) — precisam de chaves de API.</li>
-            <li><b>On-chain</b>: Glassnode / Nansen / CryptoQuant — fluxos de exchange, cohorts, stablecoins.</li>
-            <li><b>LLM analyst</b>: veto qualitativo cético sobre a shortlist, coluna separada que não altera o score determinístico.</li>
-            <li><b>Paper trader &amp; walk-forward</b>: loop de 15 min com fees/slippage/funding, kill-switch diário −3%; go-live só após ≥60 dias de paper com expectância positiva.</li>
-          </ul>
-        </div>
-      </details>
-
-    </div>
-
-    <!-- Estilos partilhados do painel de medição (backtest) -->
-    <style>
-      .val-card{border:1px solid var(--border);background:var(--s2);border-radius:14px;padding:16px 18px}
-      .val-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:space-between}
-      .val-title{font-size:14px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px}
-      .val-title .val-dot{width:7px;height:7px;border-radius:50%;background:var(--orange)}
-      .val-sub{font-size:11px;color:var(--faint);line-height:1.5;margin-top:6px;max-width:720px}
-      .val-ctrl{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
-      .val-ctrl input,.val-ctrl select{background:var(--s3,#1a1a1a);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 9px;font-size:12px;font-family:inherit}
-      .val-ctrl input{width:104px;text-transform:uppercase}
-      .val-run{display:inline-flex;align-items:center;gap:6px;background:var(--orange);color:#111;border:none;border-radius:8px;padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer}
-      .val-run:disabled{opacity:.55;cursor:default}
-      .val-body{margin-top:14px}
-      .val-verdict{display:inline-flex;align-items:center;gap:8px;font-weight:800;font-size:13px;letter-spacing:.03em;padding:7px 13px;border-radius:9px;text-transform:uppercase}
-      .val-verdict.bad{background:rgba(220,60,60,.14);color:var(--red);border:1px solid rgba(220,60,60,.35)}
-      .val-verdict.warn{background:rgba(230,150,40,.14);color:var(--orange);border:1px solid rgba(230,150,40,.35)}
-      .val-verdict.good{background:rgba(50,180,110,.14);color:var(--green);border:1px solid rgba(50,180,110,.35)}
-      .val-meta{font-size:11px;color:var(--faint);margin-top:8px}
-      .val-tbl{width:100%;border-collapse:collapse;margin-top:12px;font-size:12px;overflow-x:auto;display:block}
-      .val-tbl th,.val-tbl td{text-align:right;padding:7px 10px;border-bottom:1px solid var(--border);white-space:nowrap}
-      .val-tbl th:first-child,.val-tbl td:first-child{text-align:left}
-      .val-tbl th{color:var(--faint);font-weight:600;text-transform:uppercase;font-size:9.5px;letter-spacing:.06em}
-      .val-tbl td{font-family:'JetBrains Mono',monospace;color:var(--text)}
-      .val-tbl tr.oos td{font-weight:700}
-      .val-tbl td.neg{color:var(--red)} .val-tbl td.pos{color:var(--green)}
-      .val-note{font-size:10.5px;color:var(--faint);line-height:1.6;margin-top:12px;border-top:1px dashed var(--border);padding-top:10px}
-      .val-empty{font-size:12px;color:var(--faint)}
-    </style>
-
-    <!-- Backtest do funil — mede a expectância da versão viva sobre histórico -->
-    <details class="cs-refbox" id="cs-bt">
-      <summary class="cs-refbox-h">Backtest do funil — expectância + curva de calibração <span class="cs-flag">sinais de preço</span></summary>
-      <div class="cs-refbox-b">
-        <div class="val-card" style="margin-bottom:0">
-          <div class="val-head">
-            <div>
-              <div class="val-title"><span class="val-dot"></span>Backtest do funil ao vivo</div>
-              <div class="val-sub">Reproduz o <b>mesmo funil</b> (score composto + risk engine + confiança) vela a vela sobre 1000 velas históricas e mede a <b>expectância líquida de custos</b>, com split in-sample/out-of-sample e uma <b>curva de calibração por escalão de score</b>. Só sinais de preço (thrust, breakout, estrutura, regime); funding/OI entram neutros — precisam de histórico backend.</div>
-            </div>
-            <div class="val-ctrl">
-              <input id="bt-symbol" value="BTCUSDT" spellcheck="false" aria-label="símbolo">
-              <select id="bt-tf" aria-label="timeframe">
-                <option value="15">15m</option>
-                <option value="5">5m</option>
-                <option value="60">1h</option>
-              </select>
-              <button class="val-run" id="bt-run" onclick="csRunBacktest()">
-                <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M1 13V1M1 13h12M3 10l3-4 2 2 4-5" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <span>Correr backtest</span>
-              </button>
-            </div>
-          </div>
-          <div class="val-body" id="bt-body">
-            <div class="val-empty">Escolhe par e timeframe e corre o backtest. Puxa 1000 velas e reproduz o funil em cada uma — demora alguns segundos.</div>
-          </div>
-        </div>
-      </div>
-    </details>
-
-    <!-- Desempenho real — loop de registo (backend) -->
-    <details class="cs-refbox" id="cs-perf" open>
-      <summary class="cs-refbox-h">Desempenho real das sugestões <span class="cs-flag">loop de registo</span></summary>
-      <div class="cs-refbox-b">
-        <p class="cs-refbox-note" style="margin:0 0 12px">Cada sugestão emitida é <b>gravada</b> e seguida até TP1 ou stop (líquido de custos), automaticamente a cada 15 min. Isto é a expectância <b>real</b> — a métrica que diz se o funil tem edge de verdade, não intuição nem backtest.</p>
-        <div class="val-body" id="cs-perf-body"><div class="val-empty">A carregar o desempenho registado…</div></div>
-      </div>
-    </details>
-
-    <div class="cs-disclaimer">Ferramenta de apoio à decisão — <b>nunca execução automática nem aconselhamento financeiro</b>. Sugestões calculadas a partir de dados públicos da Bybit v5 (tickers, kline TF15/TF60, funding history, open interest, long/short ratio). Proxy de liquidações via REST. Aprovação humana obrigatória antes de qualquer ordem.</div>
+    <div class="cs-disclaimer">Apoio à decisão, não aconselhamento financeiro. O bot só coloca ordens que <b>confirmas</b>; tu és responsável pelo risco. Dados públicos da Bybit v5.</div>
 
   </div>
 </div>
@@ -1664,7 +1591,24 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
 </div>
 
 <!-- ─── TAB: AGENTE ───────────────────────────────────── -->
-<div class="tab-pane" id="tab-agente">
+<!-- ─── AGENTE — drawer flutuante, acessível de qualquer tab ─── -->
+<style>
+  #agent-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .25s;z-index:210}
+  #agent-backdrop.open{opacity:1;pointer-events:auto}
+  #agent-drawer{position:fixed;top:0;right:0;height:100%;width:min(440px,100%);background:var(--s1);border-left:1px solid var(--border);box-shadow:-14px 0 44px rgba(0,0,0,.45);transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);z-index:211;display:flex;flex-direction:column;padding:18px 18px calc(16px + env(safe-area-inset-bottom,0px))}
+  #agent-drawer.open{transform:translateX(0)}
+  #agent-drawer .agent-wrap{flex:1;min-height:0;max-width:none;margin:0}
+  #agent-fab{position:fixed;right:20px;bottom:24px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--orange),#e6862a);color:#1a1206;border:none;cursor:pointer;box-shadow:0 6px 22px rgba(247,147,26,.45);display:flex;align-items:center;justify-content:center;z-index:79;transition:transform .15s,filter .15s}
+  #agent-fab:hover{filter:brightness(1.07);transform:translateY(-2px)}
+  #agent-fab.hide{opacity:0;pointer-events:none;transform:scale(.8)}
+  @media(max-width:768px){
+    #agent-drawer{width:100%;height:88%;top:auto;bottom:0;transform:translateY(100%);border-left:none;border-top:1px solid var(--border);border-radius:16px 16px 0 0;box-shadow:0 -14px 44px rgba(0,0,0,.5)}
+    #agent-drawer.open{transform:translateY(0)}
+    #agent-fab{right:16px;bottom:calc(80px + env(safe-area-inset-bottom,0px))}
+  }
+</style>
+<div id="agent-backdrop" onclick="closeAgentDrawer()"></div>
+<aside id="agent-drawer" aria-hidden="true" aria-label="Agente Estratégico">
   <div class="agent-wrap">
     <div class="agent-head">
       <div>
@@ -1674,6 +1618,7 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
       <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
         <button id="agent-brief-btn" class="agent-brief" onclick="agentBriefing()">✦ Analisar agora</button>
         <button class="agent-clear" onclick="clearAgentChat()" title="Limpar conversa">↺</button>
+        <button class="agent-clear" onclick="closeAgentDrawer()" title="Fechar" aria-label="Fechar">✕</button>
       </div>
     </div>
 
@@ -1688,7 +1633,10 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
       </button>
     </div>
   </div>
-</div>
+</aside>
+<button id="agent-fab" onclick="openAgentDrawer()" title="Agente Estratégico" aria-label="Abrir o Agente Estratégico">
+  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 13.6 8.4 19 10l-5.4 1.6L12 17l-1.6-5.4L5 10l5.4-1.6z"/><circle cx="18.5" cy="18.5" r="2.2"/></svg>
+</button>
 
 <!-- ─── TAB: TUTORIAL — Guia de indicadores ──────────── -->
 <div class="tab-pane" id="tab-tutorial" style="padding:0">
@@ -1735,10 +1683,6 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="7" y1="9" x2="17" y2="9"/><line x1="7" y1="13" x2="13" y2="13"/></svg>
     <span class="mnav-lbl">Notícias</span>
   </button>
-  <button class="mnav-btn" data-tab="agente" onclick="switchTab('agente',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 13.9 8l5.5 1.9L13.9 12 12 17.5 10.1 12 4.5 9.9 10.1 8z"/></svg>
-    <span class="mnav-lbl">Agente</span>
-  </button>
   <button class="mnav-btn" data-tab="tutorial" onclick="switchTab('tutorial',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5A1.5 1.5 0 0 1 4.5 3H11v16H4.5A1.5 1.5 0 0 0 3 20.5z"/><path d="M21 4.5A1.5 1.5 0 0 0 19.5 3H13v16h6.5a1.5 1.5 0 0 1 1.5 1.5z"/></svg>
     <span class="mnav-lbl">Tutorial</span>
@@ -1750,6 +1694,7 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
 <script>
 (function() { if (localStorage.getItem('theme') === 'light') document.documentElement.classList.add('light'); })();
 (function() { if (localStorage.getItem('hideValues') === '1') document.documentElement.classList.add('hide-values'); })();
+(function() { if (localStorage.getItem('currency') === 'eur') document.documentElement.classList.add('cur-eur'); })();
 // ── CONFIG ────────────────────────────────────────────────────────────────────
 const POSITIONS_URL = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/get-bybit-positions';
 const SUPABASE_KEY  = 'sb_publishable_xHjsFJbSuAhO6r6BUylTCw_tDE-nFXT';
@@ -1763,6 +1708,10 @@ const VALIDATE_URL  = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/val
 const CS_LOG_URL    = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/cs-log';    // regista sugestões emitidas
 const CS_SETTLE_URL = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/cs-settle'; // pontua o desfecho real
 const CS_STATS_URL  = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/cs-stats';  // desempenho agregado
+const CS_BOT_URL     = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/cs-bot';    // loop: corre o motor e enfileira propostas
+const CS_CONFIRM_URL = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/cs-confirm'; // gate humano: lista/confirma/rejeita
+const CS_STATE_URL   = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/cs-state';  // interruptores + limites do bot
+const CS_EXEC_URL    = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/cs-exec';   // coloca a ordem de um cartão do scan
 const SUPABASE_REST = 'https://yifxgiwmibjaornighvt.supabase.co/rest/v1'; // alvos de saída (transversal)
 
 // Feeds RSS por fonte (com fallbacks). Passam pelo proxy get-news (server-side).
@@ -1834,12 +1783,28 @@ function switchTab(id, btn) {
   if (id === 'dashboard')  { setTimeout(() => loadPortfolioSeries(dbCurrentRange()), 60); renderDbAssets(); }
   if (id === 'posicoes')   renderPosTab();
   if (id === 'cryptoscan') renderCsTab();
-  if (id === 'agente')     renderAgentTab();
   if (id === 'tutorial') {
     const f = document.getElementById('tutorial-frame');
     if (f && !f.src) f.src = 'guia_indicadores.html';
   }
 }
+
+// ── Agente — drawer flutuante (acessível de qualquer tab) ──
+function openAgentDrawer() {
+  const d = document.getElementById('agent-drawer'), b = document.getElementById('agent-backdrop'), f = document.getElementById('agent-fab');
+  if (!d) return;
+  d.classList.add('open'); if (b) b.classList.add('open'); if (f) f.classList.add('hide');
+  d.setAttribute('aria-hidden', 'false');
+  if (typeof renderAgentTab === 'function') { try { renderAgentTab(); } catch (e) {} }   // refresca contexto; mantém a conversa
+  const inp = document.getElementById('agent-input'); if (inp) setTimeout(() => inp.focus(), 260);
+}
+function closeAgentDrawer() {
+  const d = document.getElementById('agent-drawer'), b = document.getElementById('agent-backdrop'), f = document.getElementById('agent-fab');
+  if (!d) return;
+  d.classList.remove('open'); if (b) b.classList.remove('open'); if (f) f.classList.remove('hide');
+  d.setAttribute('aria-hidden', 'true');
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { const d = document.getElementById('agent-drawer'); if (d && d.classList.contains('open')) closeAgentDrawer(); } });
 
 // Secções do tab Mercado: Preço · Estrutura · Sentimento · Heatmap (init lazy).
 let mktSection = 'preco';
@@ -2570,6 +2535,7 @@ function refreshPosTab() {
   const mk = document.getElementById('pd-mark');
   if (mk) mk.textContent = fmtPx(parseFloat(p.markPrice));
   addPosPriceLines(p);
+  refreshPosCandles(p, posReqId);   // velas ao vivo (atualiza a vela em curso / adiciona novas)
 }
 
 // Lucro projetado em USD ao preço-alvo de uma posição (mesma fórmula do cenário de saída)
@@ -3011,6 +2977,30 @@ async function loadPosChart(p) {
   } catch (e) { console.error('kline error', e); }
   addPosPriceLines(p);
   if (posChart) posChart.timeScale().fitContent();
+}
+
+// Atualização ao vivo das velas: busca as últimas klines e atualiza/adiciona a
+// vela em curso, sem reconstruir o gráfico (preserva zoom, scroll e a régua).
+// Chamado no ciclo de refresh (10s) enquanto o gráfico está aberto.
+async function refreshPosCandles(p, reqId) {
+  if (!posSeries || !posBars.length || typeof LightweightCharts === 'undefined') return;
+  const cat = posCat(p.symbol);
+  try {
+    const r = await fetch(`${BYBIT}/v5/market/kline?category=${cat}&symbol=${p.symbol}&interval=${posInterval}&limit=2`);
+    const d = await r.json();
+    if (reqId !== posReqId || !posSeries) return; // seleção/timeframe mudou entretanto
+    const latest = (d?.result?.list || [])
+      .map(k => ({ time: Math.floor(parseInt(k[0]) / 1000), open: +k[1], high: +k[2], low: +k[3], close: +k[4] }))
+      .sort((a, b) => a.time - b.time);
+    if (!latest.length) return;
+    const lastKnown = posBars[posBars.length - 1].time;
+    for (const bar of latest) {
+      if (bar.time < lastKnown) continue;
+      posSeries.update(bar);                                   // atualiza a vela atual ou adiciona a nova
+      if (bar.time === lastKnown) posBars[posBars.length - 1] = bar;
+      else posBars.push(bar);
+    }
+  } catch (e) { /* silencioso — tenta de novo no próximo ciclo */ }
 }
 
 // Carrega mais passado e prepende, preservando a posição visível (sem saltos)
@@ -4018,7 +4008,6 @@ function csRender() {
   } else {
     html += sug.map((c, i) => csRenderCard(c, i + 1)).join('');
   }
-  html += csRadarHtml(radar, !sug.length);
   listEl.innerHTML = html;
 }
 
@@ -4171,9 +4160,13 @@ function csCfgChange(snap) {
   if (csData) { (csData.candidates || []).forEach(c => { c.plan = csTradePlan(c.price, c.atr, c.dir, CS_CFG.capital, c.k15, CS_CFG.leverage, c.sigs.regime.type); }); csRender(); }
 }
 // Muda a exigência do funil. Não refaz o scan — o gate é aplicado no render.
-function csSensChange() {
-  const el = document.getElementById('cs-sens');
-  csApplySensitivity(el ? el.value : 'balanced');
+function csSegSyncSens() {
+  const g = document.getElementById('cs-seg-sens'); if (!g) return;
+  g.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === CS_CFG.sensitivity));
+}
+function csSetSens(key) {
+  csApplySensitivity(key);
+  csSegSyncSens();
   csSaveCfg();
   csUpdateCfgNote();
   if (csData) csRender();
@@ -4191,10 +4184,12 @@ function csUpdateCfgNote() {
 function renderCsTab() {
   const cap = document.getElementById('cs-capital'); if (cap && !cap.value) cap.value = CS_CFG.capital;
   const lv = document.getElementById('cs-lev'); if (lv && !lv.value) lv.value = CS_CFG.leverage;
-  const sn = document.getElementById('cs-sens'); if (sn) sn.value = CS_CFG.sensitivity;
+  csSegSyncSens();
   csUpdateCfgNote();
   csSettleTrigger();     // pontua sugestões pendentes (também há cron de 15 min no backend)
-  csFetchStats();        // desempenho real acumulado
+  csFetchStats();        // desempenho real acumulado (histórico direcional)
+  // Bot de execução DESLIGADO por agora: primeiro confirmar edge do modelo de
+  // volatilidade. As funções csExec* ficam definidas mas não são chamadas.
   scanCs(false);
 }
 
@@ -4204,6 +4199,156 @@ function renderCsTab() {
 // edge medido, não intuído. Falhas de rede são silenciosas (não perturbam o scan).
 const csLoggedKeys = new Set();
 const csSupaHdr = () => ({ 'Content-Type': 'application/json', apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` });
+
+// ─────────────────────────────────────────────────────────────────────────
+//  Execução (fluxo único) — barra de estado + botão Executar de cada cartão.
+//  Estado/limites em cs_bot_state (via cs-state). Executar → cs-exec coloca a
+//  ordem do cartão na subconta (ou simula, se em Simulação/dry_run).
+// ─────────────────────────────────────────────────────────────────────────
+let csExecState = null, csExecInited = false;
+const csBotGetSecret = () => { try { return localStorage.getItem('csBotSecret') || ''; } catch (e) { return ''; } };
+function csBotSaveSecret() { const el = document.getElementById('cs-bot-secret'); try { localStorage.setItem('csBotSecret', el ? el.value : ''); } catch (e) {} }
+function csBotHdr() { const h = { 'Content-Type': 'application/json', apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }; const s = csBotGetSecret(); if (s) h['x-cs-secret'] = s; return h; }
+function csExecMsg(t, err) { const el = document.getElementById('cs-exec-msg'); if (el) { el.textContent = t || ''; el.style.color = err ? 'var(--red)' : 'var(--faint)'; } }
+
+// Confirmação in-app (bottom-sheet). O confirm() nativo é suprimido em muitos
+// webviews/PWA em standalone no telemóvel — devolvia false sem mostrar diálogo,
+// o que fazia o botão Executar "não fazer nada". Isto usa o mesmo padrão .sheet
+// do resto da app e devolve Promise<boolean>.
+function csConfirm({ title, message, confirmLabel = 'Confirmar', cancelLabel = 'Cancelar', danger = false }) {
+  return new Promise(resolve => {
+    const prev = document.getElementById('cs-confirm-ov'); if (prev) prev.remove();
+    const ov = document.createElement('div');
+    ov.id = 'cs-confirm-ov'; ov.className = 'sheet-ov';
+    let settled = false;
+    const done = v => { if (settled) return; settled = true; ov.classList.remove('open'); setTimeout(() => ov.remove(), 280); resolve(v); };
+    ov.addEventListener('click', e => { if (e.target === ov) done(false); });
+    ov.innerHTML =
+      `<div class="sheet">
+         <div class="sheet-grab"></div>
+         <div class="sheet-head">
+           <div class="sheet-title">${title}</div>
+           <button class="sheet-x" type="button" aria-label="Fechar">&#10005;</button>
+         </div>
+         <div class="cs-confirm-body">${message}</div>
+         <div class="cs-confirm-actions">
+           <button class="cs-confirm-cancel" type="button">${cancelLabel}</button>
+           <button class="cs-confirm-go${danger ? ' danger' : ''}" type="button">${confirmLabel}</button>
+         </div>
+       </div>`;
+    document.body.appendChild(ov);
+    ov.querySelector('.sheet-x').addEventListener('click', () => done(false));
+    ov.querySelector('.cs-confirm-cancel').addEventListener('click', () => done(false));
+    ov.querySelector('.cs-confirm-go').addEventListener('click', () => done(true));
+    const onKey = e => { if (e.key === 'Escape') { done(false); document.removeEventListener('keydown', onKey); } };
+    document.addEventListener('keydown', onKey);
+    requestAnimationFrame(() => ov.classList.add('open'));
+  });
+}
+
+async function csExecInit() {
+  if (csExecInited) return; csExecInited = true;
+  const sec = document.getElementById('cs-bot-secret'); if (sec) sec.value = csBotGetSecret();
+  await csExecLoadState();
+}
+async function csExecLoadState() {
+  try {
+    const r = await fetch(CS_STATE_URL, { headers: csBotHdr() });
+    const d = await r.json(); csExecState = d.state; csExecRenderMode(); csExecRenderControls();
+  } catch (e) { csExecMsg('Falha a ler estado da execução', true); }
+}
+function csExecRenderMode() {
+  const el = document.getElementById('cs-exec-mode'); if (!el || !csExecState) return; const s = csExecState;
+  if (s.killswitch) { el.className = 'cs-exec-mode kill'; el.textContent = '⛔ PARADO (kill-switch)'; }
+  else if (s.dry_run) { el.className = 'cs-exec-mode sim'; el.textContent = '🧪 SIMULAÇÃO — não coloca ordens'; }
+  else { el.className = 'cs-exec-mode real'; el.textContent = '🔴 REAL — coloca ordens na Bybit'; }
+}
+const csExecFld = (label, ctrl) => `<label class="cs-field"><span>${label}</span>${ctrl}</label>`;
+function csExecRenderControls() {
+  const el = document.getElementById('cs-exec-controls'); if (!el) return; const s = csExecState;
+  if (!s) { el.innerHTML = '<div class="db-empty" style="grid-column:1/-1">Sem estado.</div>'; return; }
+  const num = (k, lbl, step) => csExecFld(lbl, `<input type="number" step="${step || 1}" value="${s[k]}" onchange="csExecSet('${k}', +this.value)">`);
+  el.innerHTML =
+    num('max_open_positions', 'Máx posições simultâneas', 1) +
+    num('max_daily_orders', 'Máx ordens por dia', 1) +
+    num('max_daily_risk_usd', 'Risco máx por dia (USD)', 1) +
+    num('max_notional_usd', 'Notional máx por ordem (USD)', 50);
+}
+async function csExecSet(k, v) {
+  try {
+    const r = await fetch(CS_STATE_URL, { method: 'POST', headers: csBotHdr(), body: JSON.stringify({ patch: { [k]: v } }) });
+    const d = await r.json();
+    if (d.error) { csExecMsg('Erro: ' + d.error, true); return; }
+    csExecState = d.state; csExecRenderMode(); csExecMsg('Guardado');
+  } catch (e) { csExecMsg('Falha a guardar', true); }
+}
+function csExecToggleSettings() { const el = document.getElementById('cs-exec-settings'); if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none'; }
+async function csExecToggleMode() {
+  if (!csExecState) { await csExecLoadState(); if (!csExecState) { csExecMsg('Sem estado da execução — tenta de novo.', true); return; } }
+  const goingReal = csExecState.dry_run;   // dry_run=true → passar a real
+  if (goingReal && !await csConfirm({
+    title: 'Passar para modo REAL?',
+    message: 'A partir de agora, clicar <b>Executar</b> num cartão coloca a ordem na Bybit com <b style="color:var(--red)">dinheiro real</b>.',
+    confirmLabel: '🔴 Ativar modo real', danger: true,
+  })) return;
+  await csExecSet('dry_run', !csExecState.dry_run);
+}
+async function csExecKill() {
+  if (!await csConfirm({
+    title: 'Parar tudo (kill-switch)?',
+    message: 'Nenhuma ordem será colocada até reativares o modo de execução.',
+    confirmLabel: '⛔ Parar tudo', danger: true,
+  })) return;
+  await csExecSet('killswitch', true); await csExecLoadState();
+}
+// Executar o cartão do scan: envia o plano exato que estás a ver para o cs-exec.
+async function csExec(symbol, btn) {
+  if (!csData) { csExecMsg('Corre um scan primeiro para gerar o plano.', true); return; }
+  const c = (csData.candidates || []).find(x => x.symbol === symbol);
+  if (!c || !c.plan) { csExecMsg('Sem plano para ' + symbol, true); return; }
+  if (!csExecState) await csExecLoadState();   // garante que o modo REAL/SIM mostrado é o real
+  if (csExecState && csExecState.killswitch) { csExecMsg('Kill-switch ativo — reativa em ⚙ Limites', true); return; }
+  const real = csExecState && !csExecState.dry_run;
+  const side = c.dir > 0 ? 'LONG' : 'SHORT';
+  const p = c.plan;
+  const head = real
+    ? '<b style="color:var(--red)">🔴 MODO REAL</b> — vai colocar na Bybit agora.'
+    : '<b style="color:var(--orange)">🧪 Simulação</b> — não coloca nada na Bybit.';
+  const ok = await csConfirm({
+    title: `Executar ${c.coin} ${side}`,
+    message: `<p style="margin:0 0 10px">${head}</p>
+      <div class="cs-confirm-lines">
+        <div>Entrada <b>${fmtPx(p.entry)}</b></div>
+        <div>Stop <b>${fmtPx(p.stop)}</b></div>
+        <div>TP1 <b>${fmtPx(p.tps[0].price)}</b></div>
+        <div>Size <b>${fmtUsd(p.notional)}</b> (${p.lev}×)</div>
+        <div>Risco <b>${fmtUsd(p.riskUsd)}</b></div>
+      </div>`,
+    confirmLabel: real ? '🔴 Colocar ordem real' : '🧪 Simular',
+    danger: real,
+  });
+  if (!ok) return;
+  if (btn) btn.disabled = true;
+  const s = c.sigs;
+  const plan = {
+    symbol: c.symbol, coin: c.coin, side: c.dir > 0 ? 'long' : 'short',
+    entry: p.entry, stop: p.stop, tp1: p.tps[0].price, tp2: p.tps[1] ? p.tps[1].price : null, tp3: p.tps[2] ? p.tps[2].price : null,
+    tp1_r: p.tps[0].r, stop_pct: p.stopPct, blended_rr: p.blendedRR, qty: p.qty, notional: p.notional, leverage: p.lev, risk_usd: p.riskUsd,
+    score: c.score, confidence: c.confidence, sensitivity: CS_CFG.sensitivity, regime: s.regime.type, setup: csSetupType(c),
+    signals: { funding: s.h1.on, oi: s.h2.on, cascade: s.h3.on, thrust: s.thrust.on, breakout: s.brk.on, structure: s.st.on },
+    turnover: c.turnover, low_liq: !!c.lowLiq,
+  };
+  csExecMsg(`A ${real ? 'colocar' : 'simular'} ${c.coin}…`);
+  try {
+    const r = await fetch(CS_EXEC_URL, { method: 'POST', headers: csBotHdr(), body: JSON.stringify({ plan }) });
+    const d = await r.json();
+    if (d.placed) csExecMsg(`✅ ${c.coin} ${side} COLOCADA na Bybit · qty ${csFmtQty(d.qty)}${d.bybit_order_id ? ' · ' + d.bybit_order_id : ''}`);
+    else if (d.dry_run) csExecMsg(`🧪 Simulação OK: ${c.coin} ${side} qty ${csFmtQty(d.would_place.qty)} — não colocada. Muda para REAL para executar.`);
+    else if (d.blocked) csExecMsg('Bloqueada: ' + d.blocked + ' (ajusta em ⚙ Limites)', true);
+    else csExecMsg('Erro: ' + (d.error || 'desconhecido'), true);
+  } catch (e) { csExecMsg('Falha a executar', true); }
+  finally { if (btn) btn.disabled = false; }
+}
 
 function csLogSuggestions(sug) {
   try {
@@ -5534,7 +5679,7 @@ function updatePfRoi(pts, flow) {
 function setHdrSpot(r) {
   const el = document.getElementById('hdr-spot'); if (!el) return;
   if (!r) { el.textContent = '—'; el.style.color = ''; return; }
-  el.textContent = (r.diff !== 0 ? (r.isPos ? '▲' : '▼') + ' ' : '') + (r.isPos ? '+' : '') + fmtUsd(r.diff, 2);
+  el.textContent = (r.diff !== 0 ? (r.isPos ? '▲' : '▼') + ' ' : '') + (r.isPos ? '+' : '') + fmtUsd(r.diff, 0);
   el.style.color = r.col;
 }
 
@@ -5735,7 +5880,7 @@ function updateHeaderInvPnl() {
   if (!positions.length) { el.textContent = '—'; el.style.color = 'var(--text)'; return; }
   const sum = positions.reduce((a, p) => a + posPnlUsd(p), 0);
   const arrow = sum > 0.001 ? '▲ ' : sum < -0.001 ? '▼ ' : '';   // seta de tendência (como no SPOT)
-  el.textContent = arrow + (sum >= 0 ? '+' : '') + fmtUsd(sum, 2);
+  el.textContent = arrow + (sum >= 0 ? '+' : '') + fmtUsd(sum, 0);
   el.style.color = sum > 0.001 ? 'var(--green)' : sum < -0.001 ? 'var(--red)' : 'var(--text)';
 }
 
@@ -5787,6 +5932,7 @@ let dbAssetView = 'real';   // 'real' | 'daily'
 let dbSortKey = 'pnl';      // 'pnl' (real) | 'price' | 'value' (USD)
 let dbSource = 'all';       // 'all' | 'bybit' | 't212' — filtro de fonte (lista + gráfico)
 let spot24h = {};           // COIN -> price24hPcnt (fração) da Bybit spot
+let perp24h = {};           // COIN -> price24hPcnt (fração) do perp linear (fallback p/ moedas sem spot, ex.: HYPE)
 function srcHasBybit() { return dbSource !== 't212'; }
 function srcHasT212()  { return dbSource !== 'bybit'; }
 
@@ -5817,18 +5963,31 @@ function setDbAssetView(v, btn) {
   renderDbAssets();
 }
 
-// Variação 24h de todas as moedas spot (uma chamada), para a vista diária.
+// Variação 24h de todas as moedas para a vista diária. Spot (preferido) +
+// perp linear como fallback — moedas sem par spot na Bybit (ex.: HYPE) ainda
+// têm perp, por isso a variação nunca fica em branco só por não ter spot.
 async function fetchSpotTickers24h() {
-  try {
-    const r = await fetch(`${BYBIT}/v5/market/tickers?category=spot`);
-    const d = await r.json();
+  const [spot, perp] = await Promise.allSettled([
+    fetch(`${BYBIT}/v5/market/tickers?category=spot`).then(r => r.json()),
+    fetch(`${BYBIT}/v5/market/tickers?category=linear`).then(r => r.json()),
+  ]);
+  if (spot.status === 'fulfilled') {
     const m = {};
-    (d?.result?.list || []).forEach(t => {
+    (spot.value?.result?.list || []).forEach(t => {
       const s = t.symbol || '';
       if (s.endsWith('USDT')) { const p = parseFloat(t.price24hPcnt); if (isFinite(p)) m[s.slice(0, -4)] = p; }
     });
     spot24h = m;
-  } catch (e) { /* mantém o anterior */ }
+  }
+  if (perp.status === 'fulfilled') {
+    const m = {};
+    (perp.value?.result?.list || []).forEach(t => {
+      const s = t.symbol || '';
+      const coin = s.endsWith('USDT') ? s.slice(0, -4) : s.endsWith('PERP') ? s.slice(0, -4) : null;
+      if (coin) { const p = parseFloat(t.price24hPcnt); if (isFinite(p) && m[coin] == null) m[coin] = p; }
+    });
+    perp24h = m;
+  }
 }
 
 // Variação 24h das ações T212 (último fecho vs anterior), guardada em cada holding.
@@ -5971,7 +6130,7 @@ function coinRowHtml(it) {
   const pnlPct = (usdVal - it.realPnl) > 0 ? (it.realPnl / (usdVal - it.realPnl)) * 100 : 0;
   let pAmt, pPct, hasP;
   if (dbAssetView === 'daily') {
-    const pcnt = spot24h[c.coin];
+    const pcnt = spot24h[c.coin] != null ? spot24h[c.coin] : perp24h[c.coin];
     hasP = pcnt != null && isFinite(pcnt);
     pPct = hasP ? pcnt * 100 : 0;
     pAmt = hasP ? usdVal * (pcnt / (1 + pcnt)) : 0;
@@ -6368,68 +6527,106 @@ function toggleTheme() {
   localStorage.setItem('theme', isLight ? 'light' : 'dark');
 }
 
-// Modo privado: oculta (desfoca) todos os valores do portefólio/ativos em todos os tabs.
-// Modo privado: troca cada dígito dos valores por '*', mantendo font, tamanho,
-// cor e todo o layout (só se altera o texto dos nós, nunca a estrutura/estilos).
-// Um MutationObserver reaplica a máscara após cada re-render.
-const PV_SEL = '#db-total-value, #db-pnl-usd, #db-pnl-pct, #db-roi-usd, #db-roi-pct,' +
+// ── Overlays sobre os valores: moeda (€/$) e modo privado ────────────────────
+// Dois overlays partilham o MESMO conjunto de nós de valor e são reaplicados
+// após cada re-render por um único MutationObserver. Cada nó guarda o seu texto
+// pristino (versão em $) em __ovOrig; o texto mostrado é sempre recalculado a
+// partir dele: 1) conversão de moeda ($→€ à taxa atual), 2) máscara de privado
+// (dígitos→'*'). Só se altera o TEXTO dos nós, nunca a estrutura/estilos.
+const VAL_SEL = '#db-total-value, #db-pnl-usd, #db-pnl-pct, #db-roi-usd, #db-roi-pct,' +
   ' #hdr-spot, #hdr-inv-pnl, #perpd-val, #perpd-chip, .db-asset-usd, .db-asset-qty, .db-asset-pnl, .dist-val, .dist-d-val,' +
   ' .exit-summary-val, .exit-result-usd, .exit-result-pct, .ps-val,' +
   ' .pst-val, .pst-sub, .pos-row-pnl-usd, .pos-row-pnl-roe, .prg-val,' +
   ' .pos-exit-cell-val, .agent-chip.sens b';
-let pvOn = false, pvObserver = null, pvScheduled = false;
 
-function pvMaskEl(el) {
-  const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
-  let t;
-  while ((t = w.nextNode())) {
-    if (t.__pvMasked) continue;              // já mascarado (nó existente)
-    if (/\d/.test(t.nodeValue)) {
-      t.__pvReal = t.nodeValue;              // guarda o original para restaurar
-      t.nodeValue = t.nodeValue.replace(/\d/g, '*');
-      t.__pvMasked = true;
-    }
+let pvOn = false;        // modo privado (ocultar valores)
+let cyEur = false;       // moeda em euros (default: dólares)
+let cyRate = null;       // EUR por 1 USD (ex.: ~0,86)
+let ovObserver = null, ovScheduled = false;
+
+// Converte tokens monetários "$…" / "+$…" / "-$…" para euros, mantendo sinal,
+// sufixo (K/M/B) e nº de casas decimais — só multiplica o valor visível pela
+// taxa. Locale pt-PT: milhares por ponto/espaço, decimais por vírgula.
+const CY_TOKEN = /([+-]?)\$\s?(\d(?:[\d.\s]*\d)?(?:,\d+)?)([KMB]?)/g;
+function cyStr(s) {
+  if (cyRate == null) return s;
+  return s.replace(CY_TOKEN, (m, sign, num, suf) => {
+    const decimals = (num.split(',')[1] || '').length;
+    const n = parseFloat(num.replace(/[.\s]/g, '').replace(',', '.'));
+    if (!isFinite(n)) return m;
+    const eur = (n * cyRate).toLocaleString('pt-PT', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    return sign + '€' + eur + suf;
+  });
+}
+
+// Taxa EUR/USD via proxy (Yahoo, EURUSD=X). last = USD por 1 EUR -> cyRate = 1/last.
+async function cyFetchRate() {
+  try {
+    const d = await fetchStockHist('EURUSD=X', '5d', '1d');
+    const pts = Array.isArray(d?.points) ? d.points : [];
+    const last = pts.length ? parseFloat(pts[pts.length - 1].c) : NaN;
+    if (isFinite(last) && last > 0) cyRate = 1 / last;
+  } catch (e) { /* mantém a taxa anterior (ou null) */ }
+  return cyRate;
+}
+
+// Recalcula o texto mostrado de um nó a partir do seu original pristino.
+function ovNode(t) {
+  if (t.__ovOrig == null) {
+    if (!/[\d$]/.test(t.nodeValue)) return;   // nó sem valor: ignora
+    t.__ovOrig = t.nodeValue;                 // guarda a versão pristina (em $)
   }
+  let out = (cyEur && cyRate != null) ? cyStr(t.__ovOrig) : t.__ovOrig;
+  if (pvOn) out = out.replace(/\d/g, '*');
+  if (out !== t.nodeValue) t.nodeValue = out;
+  if (!cyEur && !pvOn && t.nodeValue === t.__ovOrig) t.__ovOrig = null;  // liberta a marca
 }
 
-function pvUnmaskEl(el) {
-  const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
-  let t;
-  while ((t = w.nextNode())) {
-    if (t.__pvMasked) { t.nodeValue = t.__pvReal; t.__pvMasked = false; t.__pvReal = null; }
+function ovApplyAll() {
+  document.querySelectorAll(VAL_SEL).forEach(el => {
+    const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    let t; while ((t = w.nextNode())) ovNode(t);
+  });
+}
+
+function ovActive() { return cyEur || pvOn; }
+
+function ovScheduleApply() {
+  if (ovScheduled) return;
+  ovScheduled = true;
+  requestAnimationFrame(() => { ovScheduled = false; if (ovActive()) ovApplyAll(); });
+}
+
+function ovRefresh() {
+  ovApplyAll();
+  if (ovActive()) {
+    if (!ovObserver) ovObserver = new MutationObserver(() => { if (ovActive()) ovScheduleApply(); });
+    ovObserver.observe(document.body, { subtree: true, childList: true, characterData: true });
+  } else if (ovObserver) {
+    ovObserver.disconnect();
   }
-}
-
-function pvApply()   { document.querySelectorAll(PV_SEL).forEach(pvMaskEl); }
-function pvUnmask()  { document.querySelectorAll(PV_SEL).forEach(pvUnmaskEl); }
-
-function pvScheduleApply() {
-  if (pvScheduled) return;
-  pvScheduled = true;
-  requestAnimationFrame(() => { pvScheduled = false; if (pvOn) pvApply(); });
-}
-
-function pvEnable() {
-  pvOn = true;
-  pvApply();
-  if (!pvObserver) pvObserver = new MutationObserver(() => { if (pvOn) pvScheduleApply(); });
-  pvObserver.observe(document.body, { subtree: true, childList: true, characterData: true });
-}
-
-function pvDisable() {
-  pvOn = false;
-  if (pvObserver) pvObserver.disconnect();
-  pvUnmask();
 }
 
 function togglePrivacy() {
-  const hidden = document.documentElement.classList.toggle('hide-values');
-  localStorage.setItem('hideValues', hidden ? '1' : '0');
-  if (hidden) pvEnable(); else pvDisable();
+  pvOn = document.documentElement.classList.toggle('hide-values');
+  localStorage.setItem('hideValues', pvOn ? '1' : '0');
+  ovRefresh();
 }
 
-// Arranque: se o modo privado estava ativo, aplica a máscara assim que o DOM existe.
-function pvInit() { if (document.documentElement.classList.contains('hide-values')) pvEnable(); }
+function toggleCurrency() {
+  cyEur = document.documentElement.classList.toggle('cur-eur');
+  localStorage.setItem('currency', cyEur ? 'eur' : 'usd');
+  if (cyEur && cyRate == null) cyFetchRate().then(ovRefresh);
+  ovRefresh();
+}
+
+// Arranque: reaplica os overlays (moeda / privado) que estejam ativos.
+function pvInit() {
+  pvOn  = document.documentElement.classList.contains('hide-values');
+  cyEur = document.documentElement.classList.contains('cur-eur');
+  if (cyEur) cyFetchRate().then(ovRefresh);
+  ovRefresh();
+}
 
 function switchDbTab(tab, btn) {
   dbCurrentSubTab = tab;
