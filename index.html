@@ -1416,8 +1416,8 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
     <!-- Cabeçalho -->
     <div class="cs-head">
       <div>
-        <div class="cs-title">CryptoScan <span class="cs-badge">Volatilidade v3</span></div>
-        <div class="cs-sub">Antecipa <b>expansão de volatilidade</b> em perpétuos da Bybit — que pares estão comprimidos e prestes a <b>mexer muito</b> (para qualquer lado). Para cada alerta, simulamos <b>long e short</b> por rutura do range como apoio à decisão. A ferramenta assinala a tempestade; o lado é decisão tua. Nunca é execução automática.</div>
+        <div class="cs-title">CryptoScan <span class="cs-badge">Volatilidade v4</span></div>
+        <div class="cs-sub"><b>Previsor de volatilidade</b> em perpétuos da Bybit — que pares estão <b>mais ativos</b> e com maior probabilidade de mexer nas próximas horas (validado nos dados: a volatilidade persiste, corr +0,62). Para cada par, simulamos <b>long e short</b> por rutura do range como apoio à decisão. A ferramenta diz onde há movimento; o lado é decisão tua. Nunca é execução automática.</div>
       </div>
       <div class="cs-scanbar">
         <span class="cs-seg-lbl cs-seg-inline">Sensibilidade <i class="cs-help" tabindex="0" title="Quão exigente é a busca. Rigoroso = só ideias muito fortes. Permissivo = mostra mais candidatos, de menor convicção. Muda o que o scan encontra.">?</i></span>
@@ -1436,7 +1436,7 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
     <!-- Contexto de mercado (só leitura) -->
     <div class="cs-ctx">
       <div class="cs-ctx-item"><div class="cs-ctx-lbl">Universo</div><div class="cs-ctx-val" id="cs-x-universe">—</div><div class="cs-ctx-sub">todos os perps · baixa liq. sinalizada</div></div>
-      <div class="cs-ctx-item"><div class="cs-ctx-lbl">Alertas</div><div class="cs-ctx-val" id="cs-x-short">—</div><div class="cs-ctx-sub">expansão iminente</div></div>
+      <div class="cs-ctx-item"><div class="cs-ctx-lbl">Ativos</div><div class="cs-ctx-val" id="cs-x-short">—</div><div class="cs-ctx-sub">maior prob. de mexer</div></div>
       <div class="cs-ctx-item"><div class="cs-ctx-lbl">BTC 24h</div><div class="cs-ctx-val" id="cs-x-btc">—</div><div class="cs-ctx-sub">contexto direcional</div></div>
       <div class="cs-ctx-item"><div class="cs-ctx-lbl">Funding médio</div><div class="cs-ctx-val" id="cs-x-fund">—</div><div class="cs-ctx-sub">do universo /8h</div></div>
     </div>
@@ -3411,9 +3411,9 @@ const CS_CFG = {
 // Presets de sensibilidade do funil: baixam/sobem a fasquia de score e confiança.
 // NÃO alteram os sinais nem inventam edge — só decidem quantos candidatos passam.
 const CS_SENS = {
-  strict:   { scoreThreshold: 30, minConfidence: 4.0, volThreshold: 55, label: 'Rigoroso' },
-  balanced: { scoreThreshold: 22, minConfidence: 3.5, volThreshold: 45, label: 'Equilibrado' },
-  loose:    { scoreThreshold: 16, minConfidence: 3.0, volThreshold: 35, label: 'Permissivo' },
+  strict:   { scoreThreshold: 30, minConfidence: 4.0, volThreshold: 60, label: 'Rigoroso' },
+  balanced: { scoreThreshold: 22, minConfidence: 3.5, volThreshold: 42, label: 'Equilibrado' },
+  loose:    { scoreThreshold: 16, minConfidence: 3.0, volThreshold: 28, label: 'Permissivo' },
 };
 function csApplySensitivity(key) {
   CS_CFG.sensitivity = CS_SENS[key] ? key : 'balanced';
@@ -3506,20 +3506,16 @@ function csInsideBar(highs, lows) {
   const n = highs.length; if (n < 2) return false;
   return highs[n - 1] < highs[n - 2] && lows[n - 1] > lows[n - 2];
 }
-// Score de EXPANSÃO de volatilidade 0–100 (alto = provável mexer muito nas
-// próximas horas). 70% compressão (BB + ATR + ADX baixos), + padrões (NR7/inside),
-// + combustível de posicionamento (OI a mover, funding esticado, L/S extremo).
+// Previsor de VOLATILIDADE 0–100 (alto = par atualmente ativo → esperado
+// continuar a mexer nas próximas horas). Baseado na PERSISTÊNCIA da volatilidade,
+// validada nos dados reais (corr +0,62 com a excursão realizada a 4h): ATR% e
+// largura de Bollinger em percentil ALTO predizem mais movimento.
+// NOTA: a premissa inversa (compressão → expansão) foi testada e FALHOU a este
+// horizonte (corr −0,55), por isso o score deixou de premiar a compressão.
 function csVolScore(x) {
-  const bbComp = x.bbH1 == null ? 50 : (100 - x.bbH1);
-  const atrComp = x.atr15 == null ? 50 : (100 - x.atr15);
-  const adxComp = x.adx == null ? 50 : Math.max(0, Math.min(100, (30 - x.adx) / 30 * 100));
-  let comp = (0.45 * bbComp + 0.35 * atrComp + 0.20 * adxComp) * 0.70;   // 0..70
-  let patt = 0; if (x.nr7) patt += 8; if (x.inside) patt += 5;            // 0..13
-  let fuel = 0;                                                           // 0..17
-  if (x.oiChg6h != null) fuel += Math.min(8, Math.abs(x.oiChg6h) / 12 * 8);
-  if (x.funding != null) fuel += Math.min(5, Math.abs(x.funding) / 0.05 * 5);
-  if (x.lsLongPct != null) fuel += Math.min(4, Math.abs(x.lsLongPct - 50) / 20 * 4);
-  return Math.max(0, Math.min(100, comp + patt + fuel));
+  const atr = x.atr15 == null ? 50 : x.atr15;   // percentil ATR% (alto = volátil)
+  const bb  = x.bbH1  == null ? 50 : x.bbH1;    // percentil largura BB (alto = volátil)
+  return Math.max(0, Math.min(100, 0.5 * atr + 0.5 * bb));
 }
 // Amplitude TÍPICA de 24h (% mediano do range high-low em janelas de 24×1h). É a
 // dimensão para a qual a vol tende a reverter quando expande — o "movimento esperado".
@@ -4028,8 +4024,8 @@ function csRender() {
   set('cs-x-short', sug.length);
   let html = '';
   if (!sug.length) {
-    html += `<div class="cs-nosetup"><div class="cs-nosetup-h">Mercado calmo — sem expansão de volatilidade iminente</div>` +
-      `<div class="cs-nosetup-b">O universo foi avaliado mas nenhum par atingiu o score de expansão ≥ ${CS_CFG.volThreshold}/100. Nada prestes a mexer é um resultado válido — evita entradas forçadas em mercado sem movimento. Para ver mais candidatos, baixa a <b>Sensibilidade</b> no topo. Em baixo, o radar mostra os pares mais próximos de comprimir.</div></div>`;
+    html += `<div class="cs-nosetup"><div class="cs-nosetup-h">Mercado calmo — poucos pares ativos neste momento</div>` +
+      `<div class="cs-nosetup-b">O universo foi avaliado mas nenhum par atingiu a expectativa de movimento ≥ ${CS_CFG.volThreshold}/100. Mercado sem movimento é um resultado válido — evita entradas forçadas. Para ver mais candidatos, baixa a <b>Sensibilidade</b> no topo. Em baixo, o radar mostra os pares mais próximos.</div></div>`;
   } else {
     html += sug.map((c, i) => csRenderCard(c, i + 1)).join('');
   }
@@ -4060,24 +4056,22 @@ function csSimPanel(sim, coin, favored) {
 
 function csRenderCard(c, id) {
   const v = c.vol;
-  const comp = Math.round(100 - csMean([v.bbH1 == null ? 50 : v.bbH1, v.atrPct == null ? 50 : v.atrPct]));
   const tilt = v.tilt || { side: 'neutral', reasons: [] };
   const tiltLbl = tilt.side === 'long' ? 'favorece LONG' : tilt.side === 'short' ? 'favorece SHORT' : 'neutro';
   const tiltCls = tilt.side === 'long' ? 'long' : tilt.side === 'short' ? 'short' : 'flat';
-  const patts = []; if (v.nr7) patts.push('NR7'); if (v.inside) patts.push('inside bar');
-  const scoreCls = v.score >= 65 ? 'hi' : v.score >= 50 ? 'md' : 'lo';
+  const scoreCls = v.score >= 70 ? 'hi' : v.score >= 50 ? 'md' : 'lo';
   const open = csExpanded === c.symbol;
   return `<div class="cs-sug vol">
     <div class="cs-sug-top">
       <div class="cs-sug-idwrap">
         <div class="cs-sug-id">ALERTA DE VOLATILIDADE #${id}</div>
         <div class="cs-sug-pair"><span class="cs-sug-coin">${c.coin}<small>${fmtPx(c.price)}</small></span><span class="cs-tilt ${tiltCls}"${tilt.reasons.length ? ` title="${tilt.reasons.join(' · ')}"` : ''}>${tiltLbl}</span></div>
-        <div class="cs-sug-meta"><span class="cs-sug-setup">Movimento esperado 24h ~${v.expMove != null ? v.expMove.toFixed(1) + '%' : '—'}</span><span class="cs-sug-tf">compressão ${comp}/100</span>${patts.length ? `<span class="cs-urg md">${patts.join(' · ')}</span>` : ''}${c.lowLiq ? `<span class="cs-liq-warn" title="Turnover 24h ${fmtUsd(c.turnover)} — abaixo do saudável (${fmtUsd(CS_CFG.healthyTurnover)}). Spread largo, mais slippage e risco de manipulação. Reduz o size.">⚠ baixa liquidez · ${fmtUsd(c.turnover)}/24h</span>` : ''}</div>
+        <div class="cs-sug-meta"><span class="cs-sug-setup">Movimento esperado 24h ~${v.expMove != null ? v.expMove.toFixed(1) + '%' : '—'}</span><span class="cs-sug-tf">ATR p${v.atrPct == null ? '—' : Math.round(v.atrPct)} · BB p${v.bbH1 == null ? '—' : Math.round(v.bbH1)}</span>${c.lowLiq ? `<span class="cs-liq-warn" title="Turnover 24h ${fmtUsd(c.turnover)} — abaixo do saudável (${fmtUsd(CS_CFG.healthyTurnover)}). Spread largo, mais slippage e risco de manipulação. Reduz o size.">⚠ baixa liquidez · ${fmtUsd(c.turnover)}/24h</span>` : ''}</div>
       </div>
       <div class="cs-sug-conf">
         <div class="cs-conf-num ${scoreCls}">${v.score.toFixed(0)}<small>/100</small></div>
         <div class="cs-conf-bar"><div class="cs-conf-fill" style="width:${v.score}%"></div></div>
-        <div class="cs-conf-lbl">Score de expansão</div>
+        <div class="cs-conf-lbl">Expectativa de movimento</div>
       </div>
     </div>
 
@@ -4085,10 +4079,10 @@ function csRenderCard(c, id) {
       <div class="cs-kv"><div class="cs-kv-l">BB width (1h)</div><div class="cs-kv-v">p${v.bbH1 == null ? '—' : Math.round(v.bbH1)}</div></div>
       <div class="cs-kv"><div class="cs-kv-l">ATR% (15m)</div><div class="cs-kv-v">p${v.atrPct == null ? '—' : Math.round(v.atrPct)}</div></div>
       <div class="cs-kv"><div class="cs-kv-l">ADX (1h)</div><div class="cs-kv-v">${v.adx == null ? '—' : v.adx.toFixed(0)}</div></div>
-      <div class="cs-kv"><div class="cs-kv-l">Zona de compressão (6h)</div><div class="cs-kv-v sm">${fmtPx(v.rangeLo)} – ${fmtPx(v.rangeHi)}</div></div>
+      <div class="cs-kv"><div class="cs-kv-l">Range 6h (rutura)</div><div class="cs-kv-v sm">${fmtPx(v.rangeLo)} – ${fmtPx(v.rangeHi)}</div></div>
     </div>
 
-    <div class="cs-sug-note">Rutura acima de <b>${fmtPx(v.rangeHi)}</b> → cenário long · abaixo de <b>${fmtPx(v.rangeLo)}</b> → cenário short. A ferramenta assinala a <b>tempestade</b>; o lado é decisão tua.</div>
+    <div class="cs-sug-note">Par <b>ativo</b> — dos com maior probabilidade de mexer nas próximas horas. Rutura acima de <b>${fmtPx(v.rangeHi)}</b> → cenário long · abaixo de <b>${fmtPx(v.rangeLo)}</b> → cenário short. A ferramenta diz <b>onde há movimento</b>; o lado é decisão tua.</div>
 
     <div class="cs-sims">
       ${csSimPanel(c.longSim, c.coin, tilt.side === 'long')}
@@ -4133,16 +4127,15 @@ function csRadarHtml(radar, openByDefault) {
     const v = c.vol || {};
     const sc = v.score != null ? v.score : 0;
     const tiltLbl = v.tilt && v.tilt.side === 'long' ? 'tilt long' : v.tilt && v.tilt.side === 'short' ? 'tilt short' : '—';
-    const reason = `score de expansão ${sc.toFixed(0)}/${CS_CFG.volThreshold}`;
+    const reason = `expectativa de movimento ${sc.toFixed(0)}/${CS_CFG.volThreshold}`;
     const tags = [];
-    if (v.nr7) tags.push('NR7');
-    if (v.inside) tags.push('inside');
+    if (v.atrPct != null) tags.push('ATR p' + Math.round(v.atrPct));
     if (v.bbH1 != null) tags.push('BB p' + Math.round(v.bbH1));
     if (v.expMove != null) tags.push('~' + v.expMove.toFixed(1) + '% 24h');
     const tagStr = tags.length ? tags.join(' · ') : (CS_REG_LABEL[c.sigs.regime.type] || '—');
     return `<div class="cs-desc-row"><span class="cs-desc-sym">${c.coin}${c.lowLiq ? ' <span title="baixa liquidez" style="color:var(--red)">⚠</span>' : ''}</span><span class="cs-desc-side ${v.tilt && v.tilt.side === 'long' ? 'long' : v.tilt && v.tilt.side === 'short' ? 'short' : ''}">${tiltLbl}</span><span class="cs-desc-score">${tagStr}</span><span class="cs-desc-reason">${reason}</span></div>`;
   }).join('');
-  return `<details class="cs-desc"${openByDefault ? ' open' : ''}><summary class="cs-desc-h">Radar de volatilidade (${radar.length}) — pares mais próximos de comprimir</summary><div class="cs-desc-body">${rows}</div></details>`;
+  return `<details class="cs-desc"${openByDefault ? ' open' : ''}><summary class="cs-desc-h">Radar de volatilidade (${radar.length}) — pares mais próximos do corte</summary><div class="cs-desc-body">${rows}</div></details>`;
 }
 
 // Quantidade do ativo com resolução adaptada à magnitude.

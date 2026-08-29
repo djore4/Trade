@@ -124,17 +124,14 @@ function csInsideBar(highs: number[], lows: number[]) {
   const n = highs.length; if (n < 2) return false;
   return highs[n - 1] < highs[n - 2] && lows[n - 1] > lows[n - 2];
 }
-function csVolScore(x: { bbH1: number | null; atr15: number | null; adx: number | null; nr7: boolean; inside: boolean; oiChg6h: number | null; funding: number | null; lsLongPct: number | null }) {
-  const bbComp = x.bbH1 == null ? 50 : (100 - x.bbH1);
-  const atrComp = x.atr15 == null ? 50 : (100 - x.atr15);
-  const adxComp = x.adx == null ? 50 : Math.max(0, Math.min(100, (30 - x.adx) / 30 * 100));
-  let comp = (0.45 * bbComp + 0.35 * atrComp + 0.20 * adxComp) * 0.70;
-  let patt = 0; if (x.nr7) patt += 8; if (x.inside) patt += 5;
-  let fuel = 0;
-  if (x.oiChg6h != null) fuel += Math.min(8, Math.abs(x.oiChg6h) / 12 * 8);
-  if (x.funding != null) fuel += Math.min(5, Math.abs(x.funding) / 0.05 * 5);
-  if (x.lsLongPct != null) fuel += Math.min(4, Math.abs(x.lsLongPct - 50) / 20 * 4);
-  return Math.max(0, Math.min(100, comp + patt + fuel));
+// Previsor de VOLATILIDADE 0–100 (alto = par atualmente ativo → esperado
+// continuar a mexer). Persistência da volatilidade, validada nos dados reais
+// (corr +0,62 com a excursão a 4h). ATR% e largura BB em percentil ALTO = mais
+// movimento. (A premissa inversa compressão→expansão falhou: corr −0,55.)
+function csVolScore(x: { bbH1: number | null; atr15: number | null }) {
+  const atr = x.atr15 == null ? 50 : x.atr15;
+  const bb = x.bbH1 == null ? 50 : x.bbH1;
+  return Math.max(0, Math.min(100, 0.5 * atr + 0.5 * bb));
 }
 function csExpMove24(k60: Kline) {
   const { highs, lows, closes } = k60, n = closes.length; if (n < 30) return null;
@@ -223,7 +220,7 @@ Deno.serve(async (req) => {
         const lsLongPct = lsr.length ? lsr[lsr.length - 1].buy * 100 : null;
         const oiChg6h = (oi && oi.length >= 25) ? (oi[oi.length - 1] - oi[oi.length - 25]) / oi[oi.length - 25] * 100 : null;
         const nr7 = csNR7(k15.highs, k15.lows), inside = csInsideBar(k15.highs, k15.lows);
-        const score = csVolScore({ bbH1: bbPct, atr15: atrP ? atrP.pct : null, adx, nr7, inside, oiChg6h, funding: c.fr, lsLongPct });
+        const score = csVolScore({ bbH1: bbPct, atr15: atrP ? atrP.pct : null });
         const wk = 24;
         const rangeHi = Math.max(...k15.highs.slice(-wk)), rangeLo = Math.min(...k15.lows.slice(-wk));
         cands.push({
@@ -269,8 +266,8 @@ Deno.serve(async (req) => {
       const top = fresh.slice(0, 4);
       const t0 = top[0];
       const title = fresh.length === 1
-        ? `⚡ ${t0.coin} prestes a mexer`
-        : `⚡ ${fresh.length} pares a comprimir`;
+        ? `⚡ ${t0.coin} — atividade elevada`
+        : `⚡ ${fresh.length} pares com movimento previsto`;
       const lines = top.map(c => `${c.coin} ${Math.round(c.score)}/100 · ~${c.expMove != null ? c.expMove.toFixed(1) : '—'}% 24h`);
       const bodyTxt = lines.join('\n') + (fresh.length > top.length ? `\n+${fresh.length - top.length} outros` : '');
       const push = await sendToAll({ title, body: bodyTxt, data: { url: '/', symbol: t0.symbol } });
