@@ -5989,7 +5989,7 @@ function assetAvatarHtml(sym, cc, isT212) {
 function coinRowHtml(it) {
   const c = it.raw, usdVal = it.usdVal, qty = it.qty, price = it.price;
   const pnlPct = (usdVal - it.realPnl) > 0 ? (it.realPnl / (usdVal - it.realPnl)) * 100 : 0;
-  let pAmt, pPct, hasP, fromDaily = false;
+  let pAmt, pPct, hasP;
   if (dbAssetView === 'daily') {
     const pcnt = spot24h[c.coin] != null ? spot24h[c.coin] : perp24h[c.coin];
     hasP = pcnt != null && isFinite(pcnt);
@@ -5997,19 +5997,6 @@ function coinRowHtml(it) {
     pAmt = hasP ? usdVal * (pcnt / (1 + pcnt)) : 0;
   } else {
     pAmt = it.realPnl; pPct = pnlPct; hasP = it.realPnl !== 0;
-    // Fallback: moedas sem custo médio (entradas por depósito/transferência ou
-    // compras fora da janela de histórico de ordens) não têm PnL real. Em vez de
-    // deixar o indicador em branco, mostra-se a variação 24h — etiquetada com o
-    // selo "24h" — para a linha nunca ficar sem indicador. Continua-se a NÃO
-    // inventar lucro de vida (ver coinRealPnl): só se usa o 24h, e assinalado.
-    if (!hasP && !avgPrices[c.coin] && !PF_STABLE.has(c.coin)) {
-      const pcnt = spot24h[c.coin] != null ? spot24h[c.coin] : perp24h[c.coin];
-      if (pcnt != null && isFinite(pcnt)) {
-        pPct = pcnt * 100;
-        pAmt = usdVal * (pcnt / (1 + pcnt));
-        hasP = true; fromDaily = true;
-      }
-    }
   }
   const isP = pAmt > 0.001, isN = pAmt < -0.001;
   const cc  = COIN_COLORS[c.coin] || '#7b7fa0';
@@ -6030,7 +6017,6 @@ function coinRowHtml(it) {
     </div>
     <div class="db-asset-right">
       <div class="db-asset-pnl" style="display:flex;align-items:center;justify-content:flex-end;gap:5px;flex-wrap:nowrap">
-        ${fromDaily ? '<span title="Sem custo médio (entrada por depósito) — a mostrar variação 24h" style="font-size:9px;color:var(--faint);border:1px solid var(--faint);border-radius:4px;padding:0 3px;letter-spacing:.5px">24h</span>' : ''}
         <span style="color:${isP ? 'var(--green)' : isN ? 'var(--red)' : 'var(--faint)'}">
           ${hasP ? (pAmt >= 0 ? '+' : '') + fmtUsd(pAmt, 2) : '—'}
         </span>
@@ -6805,7 +6791,7 @@ function drawPerpChart(arr) {
   setInterval(fetchMacro,      120000);
   setInterval(() => { hrCache = {}; fetchHashrate(); }, 600000);
   setInterval(fetchTkrQuotes, 60000);   // atualiza cotações de ações/índices/commodities
-  setInterval(async () => { await fetchSpotTickers24h(); if (dbCurrentSubTab === 'assets') renderDbAssets(); }, 60000);
+  setInterval(async () => { await fetchSpotTickers24h(); if (dbCurrentSubTab === 'assets' && dbAssetView === 'daily') renderDbAssets(); }, 60000);
   setInterval(async () => { await fetchT212Holdings(); await fetchT212Daily(); refreshAfterT212(); }, 180000);
 })();
 </script>
