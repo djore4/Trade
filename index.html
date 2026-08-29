@@ -5914,16 +5914,23 @@ function updateDbHero() {
 }
 
 // PnL não-realizado (real) de uma moeda spot da Bybit, em USD.
-// Base = custo médio (AVCO) do histórico de ordens spot — a MESMA fonte usada no
-// total do dashboard e no painel de distribuição. NÃO usar o campo unrealisedPnl
-// cru da Bybit: para moedas que entraram por depósito/transferência (inflow) esse
-// campo assume custo ~0 e infla o PnL (ex.: ADA a mostrar +105% em vez de ~+14%).
+// Base preferida = custo médio (AVCO) do histórico de ordens spot — a MESMA fonte
+// usada no total do dashboard e no painel de distribuição.
+// Fallback: quando não há custo médio (compras antigas fora da janela do histórico
+// de ordens, ou entradas por depósito/transferência), usa-se o PnL não-realizado
+// que a própria Bybit reporta para a moeda, para a linha mostrar a mesma
+// informação que as restantes em vez de ficar em branco. Nota: para moedas de
+// inflow puro a Bybit assume custo ~0 e pode inflar a %.
 function coinRealPnl(c) {
   const qty = parseFloat(c.walletBalance || 0), usdVal = parseFloat(c.usdValue || 0);
   const price = qty > 0 ? usdVal / qty : 0;
   const avgP = avgPrices[c.coin];
   if (avgP && qty > 0 && price > 0) return (price - avgP) * qty;
-  return 0; // sem base de custo (só entradas por depósito) -> não inventar lucro
+  if (!PF_STABLE.has(c.coin)) {
+    const upl = parseFloat(c.unrealisedPnl);
+    if (isFinite(upl) && upl !== 0) return upl;
+  }
+  return 0;
 }
 
 // Descritores unificados (Bybit + Trading 212) para poder ordenar tudo em conjunto.
