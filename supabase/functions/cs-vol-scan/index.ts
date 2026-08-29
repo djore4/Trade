@@ -236,6 +236,18 @@ Deno.serve(async (req) => {
 
     const above = cands.filter(c => c.score >= volThreshold).sort((a, b) => b.score - a.score);
 
+    // Log de investigação: TODOS os pares avaliados (grupo de controlo). O
+    // cs-vol-settle mede depois a expansão realizada. É isto que permite testar
+    // se o score prevê a expansão (não só os alertas).
+    if (cands.length) {
+      const nowIso = new Date().toISOString();
+      const obsRows = cands.map(c => ({
+        ts: nowIso, symbol: c.symbol, coin: c.coin, score: c.score, price: c.price,
+        bb_h1: c.bbH1, atr_pct: c.atrPct, exp_move: c.expMove, above_alert: c.score >= volThreshold,
+      }));
+      await supa.from('cs_vol_obs').insert(obsRows);
+    }
+
     // Dedup: não voltar a alertar o mesmo par dentro de dedupHours.
     const sinceIso = new Date(Date.now() - dedupHours * 3600e3).toISOString();
     const { data: recent } = await supa.from('cs_vol_alerts').select('symbol').gte('ts', sinceIso);
