@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover">
 <title>Trade Desk</title>
+<!-- PWA: instalável + Web Push (alertas de volatilidade) -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#f7931a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CryptoScan">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -641,6 +649,13 @@ html.light .mnav-btn.active { color: var(--orange); }
 .cs-cfg-note b { color: var(--text); font-weight: 600; }
 .cs-source { display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--dim); padding: 2px 2px; }
 .cs-source b { color: var(--text); font-weight: 600; }
+.cs-push { display: flex; align-items: center; gap: 12px; margin: 8px 0 2px; padding: 11px 14px; border: 1px solid var(--border); background: var(--s1); border-radius: 11px; }
+.cs-push-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cs-push-txt b { font-size: 12.5px; color: var(--text); } .cs-push-txt span { font-size: 11px; color: var(--dim); line-height: 1.4; }
+.cs-push-btn { flex-shrink: 0; margin-left: auto; font-size: 12px; font-weight: 700; padding: 8px 16px; border-radius: 9px; cursor: pointer; border: 1px solid var(--orange); background: rgba(247,147,26,.1); color: var(--orange); }
+.cs-push-btn:hover { background: rgba(247,147,26,.18); }
+.cs-push-btn.on { border-color: var(--green); color: var(--green); background: rgba(45,212,160,.1); }
+.cs-push-btn:disabled { opacity: .55; cursor: default; }
 .cs-src-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .cs-src-dot.live { background: var(--green); box-shadow: 0 0 0 3px rgba(45,212,160,.16); animation: csPulse 1.6s ease-in-out infinite; }
 .cs-src-dot.off { background: var(--faint); }
@@ -1486,6 +1501,12 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
     <!-- Estado da ligação de dados (Bybit v5) -->
     <div class="cs-source" id="cs-source"><span class="cs-src-dot off"></span><span>Fonte de dados: <b>Bybit v5</b> — ainda sem scan</span></div>
 
+    <!-- Alertas de volatilidade (Web Push) — o backend faz scan a cada 15 min -->
+    <div class="cs-push" id="cs-push-bar">
+      <div class="cs-push-txt"><b>🔔 Alertas de volatilidade</b><span id="cs-push-state">o servidor faz scan a cada 15 min e avisa quando um par estiver prestes a mexer muito</span></div>
+      <button class="cs-push-btn" id="cs-push-btn" onclick="csPushToggle(this)">Ativar</button>
+    </div>
+
     <!-- Sugestões (injetadas por JS) -->
     <div id="cs-list" class="cs-list"><div class="db-empty">Corre um scan para detetar pares prestes a expandir volatilidade…</div></div>
 
@@ -1712,6 +1733,10 @@ const CS_BOT_URL     = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/cs
 const CS_CONFIRM_URL = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/cs-confirm'; // gate humano: lista/confirma/rejeita
 const CS_STATE_URL   = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/cs-state';  // interruptores + limites do bot
 const CS_EXEC_URL    = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/cs-exec';   // coloca a ordem de um cartão do scan
+const CS_SUBSCRIBE_URL = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/cs-subscribe'; // regista o dispositivo p/ Web Push
+const CS_VOLSCAN_URL   = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/cs-vol-scan';  // scanner de volatilidade (cron 15m; teste manual)
+// Chave PÚBLICA VAPID (a privada vive no backend, tabela cs_config). É pública por design.
+const VAPID_PUBLIC   = 'BNG86IR9Fplry-FEix7OGz6vqSuYDe8JN5P1b95YgKKtztT0aowsYcWpk4sI0z-17IfpCawwcHQ0zW8uTfT3Kps';
 const SUPABASE_REST = 'https://yifxgiwmibjaornighvt.supabase.co/rest/v1'; // alvos de saída (transversal)
 
 // Feeds RSS por fonte (com fallbacks). Passam pelo proxy get-news (server-side).
@@ -4188,6 +4213,7 @@ function renderCsTab() {
   csUpdateCfgNote();
   csSettleTrigger();     // pontua sugestões pendentes (também há cron de 15 min no backend)
   csFetchStats();        // desempenho real acumulado (histórico direcional)
+  csPushRefreshUI();     // estado do botão de alertas (Web Push)
   // Bot de execução DESLIGADO por agora: primeiro confirmar edge do modelo de
   // volatilidade. As funções csExec* ficam definidas mas não são chamadas.
   scanCs(false);
@@ -4383,6 +4409,73 @@ function csSettleTrigger() {
   fetch(CS_SETTLE_URL, { method: 'POST', headers: csSupaHdr(), body: '{}' })
     .then(() => setTimeout(csFetchStats, 1500)).catch(() => {});
 }
+
+// ── Web Push (alertas de volatilidade) ──────────────────────────────────────
+// O backend (cs-vol-scan, cron 15 min) faz o scan e envia a notificação. Aqui
+// só registamos/removemos a subscrição deste dispositivo. Chave pública VAPID
+// em VAPID_PUBLIC; a privada vive no backend.
+let csSwReg = null;
+function csUrlB64ToU8(base64) {
+  const pad = '='.repeat((4 - base64.length % 4) % 4);
+  const b64 = (base64 + pad).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(b64), arr = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+  return arr;
+}
+function csPushSupported() {
+  return ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window);
+}
+async function csRegisterSW() {
+  if (!('serviceWorker' in navigator)) return null;
+  try { csSwReg = await navigator.serviceWorker.register('sw.js'); return csSwReg; }
+  catch (e) { console.warn('SW falhou', e); return null; }
+}
+async function csPushRefreshUI() {
+  const btn = document.getElementById('cs-push-btn'), st = document.getElementById('cs-push-state');
+  if (!btn) return;
+  if (!csPushSupported()) {
+    btn.disabled = true; btn.textContent = 'Indisponível';
+    if (st) st.textContent = 'Este navegador não suporta notificações push. No iPhone: adiciona a app ao ecrã inicial (Partilhar → Adicionar ao ecrã principal) e abre-a a partir daí.';
+    return;
+  }
+  const reg = csSwReg || await navigator.serviceWorker.getRegistration();
+  const sub = reg ? await reg.pushManager.getSubscription() : null;
+  if (sub && Notification.permission === 'granted') {
+    btn.classList.add('on'); btn.textContent = 'Ativado ✓'; btn.disabled = false;
+    if (st) st.textContent = 'A receber alertas neste dispositivo. Toca para desativar.';
+  } else {
+    btn.classList.remove('on'); btn.textContent = 'Ativar'; btn.disabled = false;
+    if (st) st.textContent = 'O servidor faz scan a cada 15 min e avisa quando um par estiver prestes a mexer muito.';
+  }
+}
+async function csPushToggle(btn) {
+  if (!csPushSupported()) return;
+  btn.disabled = true;
+  const st = document.getElementById('cs-push-state');
+  try {
+    const reg = csSwReg || await csRegisterSW();
+    if (!reg) { await csPushRefreshUI(); return; }
+    await navigator.serviceWorker.ready;
+    const existing = await reg.pushManager.getSubscription();
+    if (existing) {
+      await fetch(CS_SUBSCRIBE_URL, { method: 'POST', headers: csSupaHdr(), body: JSON.stringify({ action: 'unsubscribe', subscription: existing.toJSON() }) }).catch(() => {});
+      await existing.unsubscribe().catch(() => {});
+      await csPushRefreshUI(); return;
+    }
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') { if (st) st.textContent = 'Permissão negada. Ativa as notificações para este site nas definições do navegador.'; await csPushRefreshUI(); return; }
+    const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: csUrlB64ToU8(VAPID_PUBLIC) });
+    const r = await fetch(CS_SUBSCRIBE_URL, { method: 'POST', headers: csSupaHdr(), body: JSON.stringify({ subscription: sub.toJSON() }) });
+    if (!r.ok) throw new Error('registo falhou (' + r.status + ')');
+    fetch(CS_VOLSCAN_URL, { method: 'POST', headers: csSupaHdr(), body: JSON.stringify({ test: true }) }).catch(() => {});  // push de confirmação
+    await csPushRefreshUI();
+    if (st) st.textContent = 'Ativado ✓ — deves receber já uma notificação de teste.';
+  } catch (e) {
+    console.warn('push toggle', e);
+    if (st) st.textContent = 'Não foi possível ativar: ' + ((e && e.message) || e);
+  } finally { btn.disabled = false; }
+}
+csRegisterSW().then(csPushRefreshUI);
 function csFetchStats() {
   const el = document.getElementById('cs-perf-body'); if (!el) return;
   fetch(CS_STATS_URL, { headers: csSupaHdr() })
