@@ -698,6 +698,7 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
 .cs-sug-note { font-size: 11px; color: var(--dim); line-height: 1.55; padding: 11px 16px; border-bottom: 1px solid var(--border); } .cs-sug-note b { color: var(--text); font-family: 'JetBrains Mono', monospace; }
 .cs-vol-grid { grid-template-columns: repeat(4, 1fr) !important; }
 .cs-sims { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); }
+.cs-sims.one { grid-template-columns: 1fr; }
 .cs-sim { background: var(--s1); padding: 12px 14px; }
 .cs-sim.long { box-shadow: inset 3px 0 0 rgba(45,212,160,.5); } .cs-sim.short { box-shadow: inset 3px 0 0 rgba(247,100,122,.5); }
 .cs-sim.fav { background: var(--s2); }
@@ -4100,6 +4101,7 @@ async function scanCs(force) {
           bbH1: regime.bbPct, atrPct: atrP ? atrP.pct : null, adx: regime.adx, nr7, inside,
           expMove: csExpMove24(k60), tilt: csTilt(c.fr, lsLongPct, c.oiChg6h), rangeHi, rangeLo, wk,
         };
+        c.vol.side = csDirBias(k60, c.chg24, c.vol.tilt).side;   // lado sugerido (momentum)
         c.longSim = csVolBracket(1, c.price, c.atr, rangeHi, rangeLo, CS_CFG.capital, CS_CFG.leverage);
         c.shortSim = csVolBracket(-1, c.price, c.atr, rangeHi, rangeLo, CS_CFG.capital, CS_CFG.leverage);
       } catch (e) { c.err = true; }
@@ -4161,6 +4163,23 @@ function csRender() {
   listEl.innerHTML = html;
 }
 
+// Viés direcional por MOMENTUM (tendência-continuação): preço vs SMA20/50 (1h) +
+// retorno 4h + variação 24h, voto simples. Desempate pelo tilt de posicionamento.
+// NOTA: a direção ainda está EM VALIDAÇÃO — é uma heurística, não um edge provado.
+function csDirBias(k60, chg24, tilt) {
+  const cl = (k60 && k60.closes) || [], px = cl[cl.length - 1];
+  let vote = 0;
+  const sma20 = csSMA(cl, 20), sma50 = csSMA(cl, 50);
+  if (sma20 != null) vote += px > sma20 ? 1 : -1;
+  if (sma50 != null) vote += px > sma50 ? 1 : -1;
+  if (cl.length >= 5) vote += (px - cl[cl.length - 5]) > 0 ? 1 : -1;
+  if (isFinite(chg24)) vote += chg24 > 0 ? 1 : -1;
+  let side;
+  if (vote > 0) side = 'long'; else if (vote < 0) side = 'short';
+  else side = (tilt && tilt.side !== 'neutral') ? tilt.side : (chg24 >= 0 ? 'long' : 'short');
+  return { side, vote };
+}
+
 // Painel de uma simulação de rutura (long ou short) — apoio à decisão.
 function csSimPanel(sim, coin, favored) {
   if (!sim) return '';
@@ -4186,15 +4205,17 @@ function csSimPanel(sim, coin, favored) {
 function csRenderCard(c, id) {
   const v = c.vol;
   const tilt = v.tilt || { side: 'neutral', reasons: [] };
-  const tiltLbl = tilt.side === 'long' ? 'favorece LONG' : tilt.side === 'short' ? 'favorece SHORT' : 'neutro';
-  const tiltCls = tilt.side === 'long' ? 'long' : tilt.side === 'short' ? 'short' : 'flat';
+  const side = v.side || (tilt.side !== 'neutral' ? tilt.side : 'long');   // lado sugerido (momentum)
+  const sideCls = side === 'long' ? 'long' : 'short';
+  const sideLbl = side === 'long' ? 'LONG' : 'SHORT';
+  const sim = side === 'long' ? c.longSim : c.shortSim;
   const scoreCls = v.score >= 70 ? 'hi' : v.score >= 50 ? 'md' : 'lo';
   const open = csExpanded === c.symbol;
-  return `<div class="cs-sug vol">
+  return `<div class="cs-sug vol ${sideCls}">
     <div class="cs-sug-top">
       <div class="cs-sug-idwrap">
         <div class="cs-sug-id">ALERTA DE VOLATILIDADE #${id}</div>
-        <div class="cs-sug-pair"><span class="cs-sug-coin">${c.coin}<small>${fmtPx(c.price)}</small></span><span class="cs-tilt ${tiltCls}"${tilt.reasons.length ? ` title="${tilt.reasons.join(' · ')}"` : ''}>${tiltLbl}</span></div>
+        <div class="cs-sug-pair"><span class="cs-sug-coin">${c.coin}<small>${fmtPx(c.price)}</small></span><span class="cs-side ${sideCls}" title="Viés por momentum (tendência) — direção ainda em validação${tilt.reasons.length ? ' · posicionamento: ' + tilt.reasons.join(' · ') : ''}">Sugestão ${sideLbl}</span></div>
         <div class="cs-sug-meta"><span class="cs-sug-setup">Movimento esperado 24h ~${v.expMove != null ? v.expMove.toFixed(1) + '%' : '—'}</span><span class="cs-sug-tf">ATR p${v.atrPct == null ? '—' : Math.round(v.atrPct)} · BB p${v.bbH1 == null ? '—' : Math.round(v.bbH1)}</span>${c.lowLiq ? `<span class="cs-liq-warn" title="Turnover 24h ${fmtUsd(c.turnover)} — abaixo do saudável (${fmtUsd(CS_CFG.healthyTurnover)}). Spread largo, mais slippage e risco de manipulação. Reduz o size.">⚠ baixa liquidez · ${fmtUsd(c.turnover)}/24h</span>` : ''}</div>
       </div>
       <div class="cs-sug-conf">
@@ -4211,11 +4232,10 @@ function csRenderCard(c, id) {
       <div class="cs-kv"><div class="cs-kv-l">Range 6h (rutura)</div><div class="cs-kv-v sm">${fmtPx(v.rangeLo)} – ${fmtPx(v.rangeHi)}</div></div>
     </div>
 
-    <div class="cs-sug-note">Par <b>ativo</b> — dos com maior probabilidade de mexer nas próximas horas. Rutura acima de <b>${fmtPx(v.rangeHi)}</b> → cenário long · abaixo de <b>${fmtPx(v.rangeLo)}</b> → cenário short. A ferramenta diz <b>onde há movimento</b>; o lado é decisão tua.</div>
+    <div class="cs-sug-note">Par <b>ativo</b> — sugestão <b>${sideLbl}</b> por momentum${side === 'long' ? `, na rutura acima de <b>${fmtPx(v.rangeHi)}</b>` : `, na rutura abaixo de <b>${fmtPx(v.rangeLo)}</b>`}. <span style="color:var(--faint)">Direção ainda em validação — decisão final é tua.</span></div>
 
-    <div class="cs-sims">
-      ${csSimPanel(c.longSim, c.coin, tilt.side === 'long')}
-      ${csSimPanel(c.shortSim, c.coin, tilt.side === 'short')}
+    <div class="cs-sims one">
+      ${csSimPanel(sim, c.coin, false)}
     </div>
 
     <div class="cs-sug-foot">
