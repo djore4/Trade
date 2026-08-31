@@ -54,6 +54,33 @@ function csBBWidthPct(closes: number[], p = 20): { cur: number; pct: number } | 
   return { cur, pct: sorted.filter(x => x <= cur).length / sorted.length * 100 };
 }
 
+// ── Momentum / trend (features de direção a testar) ──
+function csEMA(a: number[], p: number): number | null {
+  if (a.length < p) return null;
+  const k = 2 / (p + 1);
+  let e = a.slice(0, p).reduce((x, y) => x + y, 0) / p;
+  for (let i = p; i < a.length; i++) e = a[i] * k + e * (1 - k);
+  return e;
+}
+// +DI menos -DI no último ponto (>0 = tendência up).
+function csDIDir(h: number[], l: number[], c: number[], p = 14): number | null {
+  const n = c.length; if (n < p + 2) return null;
+  const tr: number[] = [], pdm: number[] = [], mdm: number[] = [];
+  for (let i = 1; i < n; i++) {
+    const up = h[i] - h[i - 1], dn = l[i - 1] - l[i];
+    pdm.push(up > dn && up > 0 ? up : 0);
+    mdm.push(dn > up && dn > 0 ? dn : 0);
+    tr.push(Math.max(h[i] - l[i], Math.abs(h[i] - c[i - 1]), Math.abs(l[i] - c[i - 1])));
+  }
+  const wilder = (arr: number[]) => {
+    let s = arr.slice(0, p).reduce((a, b) => a + b, 0); const o = [s];
+    for (let i = p; i < arr.length; i++) { s = s - s / p + arr[i]; o.push(s); } return o;
+  };
+  const trS = wilder(tr), pS = wilder(pdm), mS = wilder(mdm);
+  const t = trS[trS.length - 1] || 1e-9;
+  return 100 * pS[pS.length - 1] / t - 100 * mS[mS.length - 1] / t;
+}
+
 const cors = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -223,10 +250,19 @@ Deno.serve(async (req) => {
         const score = csVolScore({ bbH1: bbPct, atr15: atrP ? atrP.pct : null });
         const wk = 24;
         const rangeHi = Math.max(...k15.highs.slice(-wk)), rangeLo = Math.min(...k15.lows.slice(-wk));
+        // ── Features de direção (momentum multi-TF) ──
+        const cl = k60.closes, px = cl[cl.length - 1];
+        const ret1h = cl.length >= 2 ? (px - cl[cl.length - 2]) / cl[cl.length - 2] * 100 : null;
+        const ret4h = cl.length >= 5 ? (px - cl[cl.length - 5]) / cl[cl.length - 5] * 100 : null;
+        const ema20 = csEMA(cl, 20), ema50 = csEMA(cl, 50);
+        const ema20Rel = ema20 ? (px - ema20) / ema20 * 100 : null;
+        const ema50Rel = ema50 ? (px - ema50) / ema50 * 100 : null;
+        const diDir = csDIDir(k60.highs, k60.lows, k60.closes, 14);
         cands.push({
           ...c, score, bbH1: bbPct, atrPct: atrP ? atrP.pct : null, adx,
           nr7, inside, expMove: csExpMove24(k60), tilt: csTilt(c.fr, lsLongPct),
           rangeHi, rangeLo, lowLiq: c.turnover < HEALTHY_TURNOVER,
+          ret1h, ret4h, ret24: c.chg24, ema20Rel, ema50Rel, diDir,
         });
       } catch { /* par com dados incompletos — ignora */ }
     }, 8);
@@ -241,6 +277,8 @@ Deno.serve(async (req) => {
       const obsRows = cands.map(c => ({
         ts: nowIso, symbol: c.symbol, coin: c.coin, score: c.score, price: c.price,
         bb_h1: c.bbH1, atr_pct: c.atrPct, exp_move: c.expMove, above_alert: c.score >= volThreshold,
+        ret_1h: c.ret1h, ret_4h: c.ret4h, ret_24h: c.ret24, ema20_rel: c.ema20Rel,
+        ema50_rel: c.ema50Rel, di_dir: c.diDir, adx: c.adx, range_hi: c.rangeHi, range_lo: c.rangeLo,
       }));
       await supa.from('cs_vol_obs').insert(obsRows);
     }

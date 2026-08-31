@@ -14,12 +14,12 @@ const json = (b: unknown, s = 200) =>
 
 const BYBIT = Deno.env.get('BYBIT_BASE') ?? 'https://api.bybit.com';
 
-type Bar = { t: number; h: number; l: number };
+type Bar = { t: number; h: number; l: number; c: number };
 async function fetchBars(sym: string): Promise<Bar[]> {
   const r = await fetch(`${BYBIT}/v5/market/kline?category=linear&symbol=${sym}&interval=15&limit=200`);
   const d = await r.json();
   const list = (d?.result?.list || []).slice().reverse(); // cronológico
-  return list.map((k: string[]) => ({ t: +k[0], h: +k[2], l: +k[3] }));
+  return list.map((k: string[]) => ({ t: +k[0], h: +k[2], l: +k[3], c: +k[4] }));
 }
 async function pool<T>(items: T[], fn: (t: T) => Promise<void>, n: number): Promise<void> {
   let i = 0;
@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
 
     // Observações já com o horizonte cumprido e ainda por pontuar.
     const { data: pend, error } = await supa
-      .from('cs_vol_obs').select('id, symbol, ts, price')
+      .from('cs_vol_obs').select('id, symbol, ts, price, range_hi, range_lo')
       .is('settled_at', null).lt('ts', cutoff)
       .order('ts', { ascending: true }).limit(3000);
     if (error) return json({ error: error.message }, 400);
@@ -68,13 +68,29 @@ Deno.serve(async (req) => {
           }
           const fwdHigh = Math.max(...win.map(b => b.h));
           const fwdLow = Math.min(...win.map(b => b.l));
+          const fwdClose = win[win.length - 1].c;
           const px = +row.price || 0;
           const move = px > 0 ? (fwdHigh - fwdLow) / px * 100 : null;
           const up = px > 0 ? (fwdHigh - px) / px * 100 : null;
           const dn = px > 0 ? (px - fwdLow) / px * 100 : null;
+          const retFwd = px > 0 ? (fwdClose - px) / px * 100 : null;
+          // 1ª rutura: primeira vela que toca o topo (up) ou o fundo (down) do range 6h.
+          let firstBreak: string | null = null;
+          const rHi = row.range_hi != null ? +row.range_hi : null;
+          const rLo = row.range_lo != null ? +row.range_lo : null;
+          if (rHi != null && rLo != null) {
+            firstBreak = 'none';
+            for (const b of win) {
+              const hitUp = b.h >= rHi, hitDn = b.l <= rLo;
+              if (hitUp && hitDn) { firstBreak = 'both'; break; }
+              if (hitUp) { firstBreak = 'up'; break; }
+              if (hitDn) { firstBreak = 'down'; break; }
+            }
+          }
           await supa.from('cs_vol_obs').update({
-            horizon_h: H, fwd_high: fwdHigh, fwd_low: fwdLow,
-            realized_move: move, realized_up: up, realized_dn: dn, settled_at: nowIso,
+            horizon_h: H, fwd_high: fwdHigh, fwd_low: fwdLow, fwd_close: fwdClose,
+            realized_move: move, realized_up: up, realized_dn: dn,
+            ret_fwd: retFwd, first_break: firstBreak, settled_at: nowIso,
           }).eq('id', row.id);
           settled++;
         }
