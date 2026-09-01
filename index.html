@@ -699,6 +699,23 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
 .cs-vol-grid { grid-template-columns: repeat(4, 1fr) !important; }
 .cs-sims { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); }
 .cs-sims.one { grid-template-columns: 1fr; }
+/* Cabeçalho compacto (cartão colapsável) */
+.cs-card-head { display: flex; align-items: center; gap: 10px; padding: 11px 14px; cursor: pointer; flex-wrap: wrap; }
+.cs-card-head:hover { background: var(--s2); }
+.cs-card-chev { color: var(--faint); flex-shrink: 0; transition: transform .15s; }
+.cs-card-chev.open { transform: rotate(90deg); }
+.cs-hc-coin { font-size: 15px; font-weight: 700; color: var(--text); }
+.cs-hc-coin small { font-size: 10.5px; color: var(--faint); font-weight: 500; margin-left: 5px; font-family: 'JetBrains Mono', monospace; }
+.cs-hc-score { font-size: 13px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+.cs-hc-score small { font-size: 9px; color: var(--faint); font-weight: 600; }
+.cs-hc-score.hi { color: var(--red); } .cs-hc-score.md { color: var(--orange); } .cs-hc-score.lo { color: var(--dim); }
+.cs-hc-mov { font-size: 11px; color: var(--dim); font-family: 'JetBrains Mono', monospace; }
+.cs-hc-tp2 { margin-left: auto; font-size: 11.5px; color: var(--dim); white-space: nowrap; }
+.cs-hc-tp2 b { color: var(--green); font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+.cs-hc-liq { color: var(--red); font-size: 12px; }
+.cs-tp2-line { font-size: 12px; color: var(--dim); line-height: 1.5; padding: 11px 16px; border-top: 1px solid var(--border); }
+.cs-tp2-line b { color: var(--text); } .cs-tp2-line b.g { color: var(--green); font-family: 'JetBrains Mono', monospace; }
+@media (max-width: 640px) { .cs-hc-tp2 { margin-left: 0; width: 100%; } }
 .cs-sim { background: var(--s1); padding: 12px 14px; }
 .cs-sim.long { box-shadow: inset 3px 0 0 rgba(45,212,160,.5); } .cs-sim.short { box-shadow: inset 3px 0 0 rgba(247,100,122,.5); }
 .cs-sim.fav { background: var(--s2); }
@@ -4210,21 +4227,29 @@ function csRenderCard(c, id) {
   const sideLbl = side === 'long' ? 'LONG' : 'SHORT';
   const sim = side === 'long' ? c.longSim : c.shortSim;
   const scoreCls = v.score >= 70 ? 'hi' : v.score >= 50 ? 'md' : 'lo';
-  const open = csExpanded === c.symbol;
-  return `<div class="cs-sug vol ${sideCls}">
-    <div class="cs-sug-top">
-      <div class="cs-sug-idwrap">
-        <div class="cs-sug-id">ALERTA DE VOLATILIDADE #${id}</div>
-        <div class="cs-sug-pair"><span class="cs-sug-coin">${c.coin}<small>${fmtPx(c.price)}</small></span><span class="cs-side ${sideCls}" title="Viés por momentum (tendência) — direção ainda em validação${tilt.reasons.length ? ' · posicionamento: ' + tilt.reasons.join(' · ') : ''}">Sugestão ${sideLbl}</span></div>
-        <div class="cs-sug-meta"><span class="cs-sug-setup">Movimento esperado 24h ~${v.expMove != null ? v.expMove.toFixed(1) + '%' : '—'}</span><span class="cs-sug-tf">ATR p${v.atrPct == null ? '—' : Math.round(v.atrPct)} · BB p${v.bbH1 == null ? '—' : Math.round(v.bbH1)}</span>${c.lowLiq ? `<span class="cs-liq-warn" title="Turnover 24h ${fmtUsd(c.turnover)} — abaixo do saudável (${fmtUsd(CS_CFG.healthyTurnover)}). Spread largo, mais slippage e risco de manipulação. Reduz o size.">⚠ baixa liquidez · ${fmtUsd(c.turnover)}/24h</span>` : ''}</div>
-      </div>
-      <div class="cs-sug-conf">
-        <div class="cs-conf-num ${scoreCls}">${v.score.toFixed(0)}<small>/100</small></div>
-        <div class="cs-conf-bar"><div class="cs-conf-fill" style="width:${v.score}%"></div></div>
-        <div class="cs-conf-lbl">Expectativa de movimento</div>
-      </div>
-    </div>
+  const cardOpen = csOpenCards.has(c.symbol);
+  const evOpen = csExpanded === c.symbol;
 
+  // Estimativa de ganho no TP2 com a alavancagem escolhida (bruto, posição inteira).
+  const tp2 = sim && sim.tps[1] ? sim.tps[1] : null;
+  const tp2Pct = tp2 ? tp2.pct * sim.lev : null;              // rentabilidade % sobre a margem
+  const tp2Usd = tp2 ? sim.notional * tp2.pct / 100 : null;   // lucro $ (posição inteira)
+
+  // Cabeçalho compacto (visível colapsado e expandido; clicar alterna).
+  const head = `<div class="cs-card-head" onclick="csCardToggle('${c.symbol}')">
+    <svg class="cs-card-chev ${cardOpen ? 'open' : ''}" width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M3 1.5 6.5 5 3 8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span class="cs-hc-coin">${c.coin}<small>${fmtPx(c.price)}</small></span>
+    <span class="cs-side ${sideCls}" title="Sugestão por momentum — direção ainda em validação">${sideLbl}</span>
+    <span class="cs-hc-score ${scoreCls}" title="Expectativa de movimento">${v.score.toFixed(0)}<small>/100</small></span>
+    <span class="cs-hc-mov">~${v.expMove != null ? v.expMove.toFixed(1) + '%' : '—'} 24h</span>
+    <span class="cs-hc-tp2" title="Se atingir o TP2, com ${sim ? sim.lev.toFixed(0) : '—'}× sobre ${fmtUsd(CS_CFG.capital)} de margem (bruto)">TP2 <b>${tp2 ? '+' + tp2Pct.toFixed(0) + '% · +' + fmtUsd(tp2Usd) : '—'}</b></span>
+    ${c.lowLiq ? '<span class="cs-hc-liq" title="baixa liquidez — reduz o size">⚠</span>' : ''}
+  </div>`;
+
+  if (!cardOpen) return `<div class="cs-sug vol collapsed ${sideCls}">${head}</div>`;
+
+  return `<div class="cs-sug vol ${sideCls}">
+    ${head}
     <div class="cs-sug-grid cs-vol-grid">
       <div class="cs-kv"><div class="cs-kv-l">BB width (1h)</div><div class="cs-kv-v">p${v.bbH1 == null ? '—' : Math.round(v.bbH1)}</div></div>
       <div class="cs-kv"><div class="cs-kv-l">ATR% (15m)</div><div class="cs-kv-v">p${v.atrPct == null ? '—' : Math.round(v.atrPct)}</div></div>
@@ -4238,11 +4263,13 @@ function csRenderCard(c, id) {
       ${csSimPanel(sim, c.coin, false)}
     </div>
 
+    <div class="cs-tp2-line">Se atingir o <b>TP2</b> (${tp2 ? tp2.pct.toFixed(2) : '—'}% no preço) com <b>${sim ? sim.lev.toFixed(0) : '—'}×</b>: rentabilidade esperada <b class="g">+${tp2Pct != null ? tp2Pct.toFixed(0) : '—'}%</b> · <b class="g">+${tp2Usd != null ? fmtUsd(tp2Usd) : '—'}</b> <span style="color:var(--faint)">sobre ${fmtUsd(CS_CFG.capital)} de margem (bruto, posição inteira)</span></div>
+
     <div class="cs-sug-foot">
-      <button class="cs-ev-btn" onclick="csToggle('${c.symbol}')">${open ? 'Ocultar' : 'Ver'} evidência dos sinais<svg class="cs-chev ${open ? 'up' : ''}" width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3 1.5 6.5 5 3 8.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <button class="cs-ev-btn" onclick="csToggle('${c.symbol}')">${evOpen ? 'Ocultar' : 'Ver'} evidência dos sinais<svg class="cs-chev ${evOpen ? 'up' : ''}" width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3 1.5 6.5 5 3 8.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       <a class="cs-ev-btn cs-bybit-btn" href="https://www.bybit.com/trade/usdt/${c.symbol}" target="_blank" rel="noopener noreferrer" onclick="csOpenBybit('${c.symbol}', event)" title="Abrir ${c.coin} na Bybit — na APP se instalada, senão no site (perpétuo USDT)">Abrir na Bybit<svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M4.5 2.5H2.5v7h7v-2M7 2.5h2.5V5M9.3 2.7 5.2 6.8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
     </div>
-    ${open ? csRenderEvidence(c) : ''}
+    ${evOpen ? csRenderEvidence(c) : ''}
   </div>`;
 }
 
@@ -4297,6 +4324,9 @@ function csFmtQty(q) {
 }
 
 function csToggle(sym) { csExpanded = csExpanded === sym ? null : sym; csRender(); }
+// Cartões colapsados por defeito; clicar no cabeçalho expande/colapsa o cartão.
+const csOpenCards = new Set();
+function csCardToggle(sym) { if (csOpenCards.has(sym)) csOpenCards.delete(sym); else csOpenCards.add(sym); csRender(); }
 // Abrir o par na Bybit. No telemóvel tenta primeiro o esquema da APP
 // (bybitapp://) — mais fiável que o Universal Link, que depende de o SO ter o
 // "abrir links suportados" ligado para a Bybit. Se a app abrir, o separador
