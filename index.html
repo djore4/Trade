@@ -1261,6 +1261,68 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
 @media (max-width: 520px) {
   .md-form { grid-template-columns: 1fr 1fr; }
 }
+
+/* ── TAB BTC — Advisor ─────────────────────────────────── */
+.cs-run-btn { flex-shrink:0; font:inherit; font-size:12px; font-weight:600; color:#1a1206; background:linear-gradient(135deg,var(--orange),#e6862a); border:none; border-radius:9px; padding:9px 16px; cursor:pointer; transition:filter .15s; }
+.cs-run-btn:hover { filter:brightness(1.06); }
+.cs-run-btn:disabled { opacity:.6; cursor:not-allowed; }
+.cs-hint { font-size:11px; color:var(--faint); line-height:1.5; }
+.btc-controls { display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between; }
+.btc-seg { display:inline-flex; background:var(--s1); border:1px solid var(--border); border-radius:10px; padding:3px; gap:2px; }
+.btc-seg-btn { background:transparent; border:none; color:var(--dim); font:inherit; font-size:12px; font-weight:600; padding:7px 14px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:6px; }
+.btc-seg-btn.active { background:var(--s3); color:var(--text); }
+.btc-seg-sub { font-size:10px; color:var(--faint); font-weight:500; }
+.btc-inputs { display:flex; align-items:flex-end; gap:10px; }
+.btc-inp { display:flex; flex-direction:column; gap:3px; font-size:10px; color:var(--faint); text-transform:uppercase; letter-spacing:.06em; }
+.btc-inp input { width:80px; background:var(--s1); border:1px solid var(--border); border-radius:8px; color:var(--text); font:inherit; font-size:13px; padding:7px 9px; }
+/* Cartão de decisão */
+.btc-dec { background:var(--s1); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+.btc-dec-top { display:flex; align-items:center; gap:16px; padding:16px 18px; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+.btc-dir-badge { font-size:20px; font-weight:800; letter-spacing:.02em; padding:8px 18px; border-radius:10px; }
+.btc-dir-long { color:var(--green); background:color-mix(in srgb, var(--green) 14%, transparent); }
+.btc-dir-short { color:var(--red); background:color-mix(in srgb, var(--red) 14%, transparent); }
+.btc-dir-flat { color:var(--dim); background:var(--s2); }
+.btc-dec-meta { display:flex; flex-direction:column; gap:2px; }
+.btc-dec-setup { font-size:14px; font-weight:700; color:var(--text); }
+.btc-dec-sub { font-size:11px; color:var(--faint); }
+.btc-gauges { display:flex; gap:20px; margin-left:auto; }
+.btc-gauge { text-align:center; }
+.btc-gauge-v { font-size:20px; font-weight:800; color:var(--text); font-variant-numeric:tabular-nums; }
+.btc-gauge-l { font-size:9px; color:var(--faint); text-transform:uppercase; letter-spacing:.08em; }
+.btc-plan { display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--border); }
+.btc-plan-cell { background:var(--s1); padding:11px 14px; }
+.btc-plan-l { font-size:9px; color:var(--faint); text-transform:uppercase; letter-spacing:.08em; margin-bottom:3px; }
+.btc-plan-v { font-size:14px; font-weight:700; color:var(--text); font-variant-numeric:tabular-nums; }
+.btc-plan-v.g { color:var(--green); } .btc-plan-v.r { color:var(--red); }
+.btc-plan-sub { font-size:10px; color:var(--faint); }
+.btc-warn { padding:10px 18px; font-size:11.5px; color:var(--yellow); background:color-mix(in srgb, var(--yellow) 8%, transparent); border-top:1px solid var(--border); }
+/* Sinais */
+.btc-signals-wrap { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.btc-sigcol { background:var(--s1); border:1px solid var(--border); border-radius:12px; padding:14px 16px; }
+.btc-sigcol h4 { margin:0 0 10px; font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:var(--faint); }
+.btc-sig { display:flex; gap:9px; padding:7px 0; border-top:1px solid var(--border); font-size:12px; line-height:1.45; }
+.btc-sig:first-of-type { border-top:none; }
+.btc-sig-dot { flex:0 0 8px; width:8px; height:8px; border-radius:50%; margin-top:5px; background:var(--dim); }
+.btc-sig-dot.g { background:var(--green); } .btc-sig-dot.r { background:var(--red); } .btc-sig-dot.n { background:var(--dim); }
+.btc-sig-k { color:var(--text); font-weight:600; }
+.btc-sig-t { color:var(--dim); }
+/* Validação */
+.btc-valid { background:var(--s1); border:1px solid var(--border); border-radius:12px; padding:14px 16px; }
+.btc-valid-head { font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:var(--faint); margin-bottom:10px; }
+.btc-valid-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.btc-valid-card { border:1px solid var(--border); border-radius:10px; padding:11px 13px; }
+.btc-valid-h { font-size:12px; font-weight:700; color:var(--text); margin-bottom:8px; display:flex; align-items:center; gap:8px; }
+.btc-valid-tag { font-size:9px; font-weight:700; padding:2px 7px; border-radius:6px; text-transform:uppercase; letter-spacing:.05em; }
+.btc-valid-tag.pending { color:var(--yellow); background:color-mix(in srgb, var(--yellow) 12%, transparent); }
+.btc-valid-tag.ok { color:var(--green); background:color-mix(in srgb, var(--green) 12%, transparent); }
+.btc-valid-row { display:flex; justify-content:space-between; font-size:12px; padding:3px 0; }
+.btc-valid-row span:first-child { color:var(--faint); }
+.btc-valid-row span:last-child { color:var(--text); font-weight:600; font-variant-numeric:tabular-nums; }
+@media (max-width: 640px) {
+  .btc-signals-wrap, .btc-valid-grid { grid-template-columns:1fr; }
+  .btc-plan { grid-template-columns:1fr 1fr; }
+  .btc-gauges { margin-left:0; width:100%; }
+}
 </style>
 </head>
 <body>
@@ -1281,6 +1343,10 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
     <button class="tab-btn" data-tab="cryptoscan" onclick="switchTab('cryptoscan',this)">
       <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="4.6" cy="4.6" r="3.4" stroke="currentColor" stroke-width="1.3" fill="none"/><line x1="7.2" y1="7.2" x2="10" y2="10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M3 4.6h3.2M4.6 3v3.2" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
       CryptoScan
+    </button>
+    <button class="tab-btn" data-tab="btc" onclick="switchTab('btc',this)">
+      <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.7" stroke="currentColor" stroke-width="1.2" fill="none"/><path d="M4.2 3.1v4.8M5.1 3.1v4.8M3.7 3.7h2.1a1 1 0 0 1 0 2H3.7m0 0h2.4a1 1 0 0 1 0 2H3.7" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      BTC
     </button>
     <button class="tab-btn" data-tab="noticias" onclick="switchTab('noticias',this)">
       <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x=".5" y="1.5" width="10" height="8" rx="1.5" stroke="currentColor" stroke-width="1.4" fill="none"/><line x1="3" y1="4.5" x2="8" y2="4.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><line x1="3" y1="7" x2="6.5" y2="7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
@@ -1659,6 +1725,47 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
   </div>
 </div>
 
+<!-- ─── TAB: BTC — Advisor exclusivo (derivação do CryptoScan) ─── -->
+<div class="tab-pane" id="tab-btc">
+  <div style="max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:14px;padding-bottom:96px">
+
+    <div class="cs-head">
+      <div>
+        <div class="cs-title">BTC Advisor <span class="cs-badge" style="background:#f7931a22;color:#f7931a;border-color:#f7931a55">Fase 1 · não validado</span></div>
+        <div class="cs-sub">Só BTC. Backbone de momentum/estrutura (Bybit) + posicionamento exclusivo de BTC: opções (Deribit DVOL/skew/term/put-call), basis e funding multi-venue. Cada decisão é registada e liquidada OOS — o veredito de <i>edge</i> aparece em baixo quando houver amostra.</div>
+      </div>
+    </div>
+
+    <!-- Controlos -->
+    <div class="btc-controls">
+      <div class="btc-seg" id="btc-horizon-seg">
+        <button class="btc-seg-btn active" data-h="intraday" onclick="btcSetHorizon('intraday',this)">Intraday <span class="btc-seg-sub">~4h</span></button>
+        <button class="btc-seg-btn" data-h="swing" onclick="btcSetHorizon('swing',this)">Swing <span class="btc-seg-sub">~3d</span></button>
+      </div>
+      <div class="btc-inputs">
+        <label class="btc-inp"><span>Capital $</span><input id="btc-capital" type="number" min="1" step="10" value="100"></label>
+        <label class="btc-inp"><span>Alavancagem</span><input id="btc-lev" type="number" min="1" max="25" step="1" value="5"></label>
+        <button class="cs-run-btn" id="btc-run" onclick="renderBtcTab(true)">Analisar</button>
+      </div>
+    </div>
+
+    <!-- Cartão de decisão (injetado por JS) -->
+    <div id="btc-decision"><div class="db-empty">A analisar BTC…</div></div>
+
+    <!-- Desagregação de sinais -->
+    <div id="btc-signals" class="btc-signals-wrap"></div>
+
+    <!-- Validação OOS -->
+    <div class="btc-valid" id="btc-valid">
+      <div class="btc-valid-head">Validação OOS <span class="cs-hint">— edge medido, não intuído</span></div>
+      <div id="btc-valid-body"><div class="cs-hint">A carregar desfechos acumulados…</div></div>
+    </div>
+
+    <div class="cs-disclaimer">Apoio à decisão, não aconselhamento financeiro. Modelo <b>não validado</b>: os pesos de posicionamento são hipóteses a testar. Fontes: Bybit v5, Deribit, Binance/OKX (públicas). Fluxos ETF / on-chain / social ficam para a Fase 2.</div>
+
+  </div>
+</div>
+
 <!-- ─── TAB: POSIÇÕES ─────────────────────────────────── -->
 <div class="tab-pane" id="tab-posicoes">
   <div style="max-width:1400px;margin:0 auto;display:flex;flex-direction:column;gap:14px;padding-bottom:96px">
@@ -1844,6 +1951,10 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7"/><line x1="15" y1="15" x2="21" y2="21"/><path d="M6.5 10h7M10 6.5v7"/></svg>
     <span class="mnav-lbl">Scan</span>
   </button>
+  <button class="mnav-btn" data-tab="btc" onclick="switchTab('btc',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M9.5 7v10M11.5 7v10M8 8.2h4.6a2 2 0 0 1 0 4H8m0 0h5.2a2 2 0 0 1 0 4H8"/></svg>
+    <span class="mnav-lbl">BTC</span>
+  </button>
   <button class="mnav-btn" data-tab="noticias" onclick="switchTab('noticias',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="7" y1="9" x2="17" y2="9"/><line x1="7" y1="13" x2="13" y2="13"/></svg>
     <span class="mnav-lbl">Notícias</span>
@@ -1873,6 +1984,9 @@ const VALIDATE_URL  = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/val
 const CS_LOG_URL    = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/cs-log';    // regista sugestões emitidas
 const CS_SETTLE_URL = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/cs-settle'; // pontua o desfecho real
 const CS_STATS_URL  = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/cs-stats';  // desempenho agregado
+const BTC_SCAN_URL  = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/btc-scan';  // BTC advisor: motor enriquecido (teste manual; cron 15m)
+const BTC_STATS_URL = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/btc-stats'; // BTC advisor: edge OOS acumulada
+const DERIBIT       = 'https://www.deribit.com';                                          // opções BTC (DVOL/skew/term/put-call) — público, CORS-aberto
 const CS_BOT_URL     = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/cs-bot';    // loop: corre o motor e enfileira propostas
 const CS_CONFIRM_URL = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/cs-confirm'; // gate humano: lista/confirma/rejeita
 const CS_STATE_URL   = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1/cs-state';  // interruptores + limites do bot
@@ -1955,6 +2069,7 @@ function switchTab(id, btn) {
   if (id === 'dashboard')  { setTimeout(() => loadPortfolioSeries(dbCurrentRange()), 60); renderDbAssets(); }
   if (id === 'posicoes')   renderPosTab();
   if (id === 'cryptoscan') renderCsTab();
+  if (id === 'btc') renderBtcTab();
   if (id === 'tutorial') {
     const f = document.getElementById('tutorial-frame');
     if (f && !f.src) f.src = 'guia_indicadores.html';
@@ -4389,6 +4504,329 @@ function renderCsTab() {
   // Bot de execução DESLIGADO por agora: primeiro confirmar edge do modelo de
   // volatilidade. As funções csExec* ficam definidas mas não são chamadas.
   scanCs(false);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  BTC ADVISOR — derivação BTC-only do CryptoScan (Fase 1).
+//  Espelho 1:1 de supabase/functions/_shared/btc-engine.ts. Reusa o motor base
+//  do browser (csH1..csComposite..csTradePlan) e acrescenta a camada BTC:
+//  opções (Deribit), basis e funding multi-venue. NÃO validado — cada decisão
+//  é registada pelo btc-scan (cron) e liquidada pelo btc-settle; o veredito de
+//  edge aparece no painel de validação (btc-stats).
+// ═══════════════════════════════════════════════════════════════════════════
+const BTC_CFG = {
+  wFunding: 0.35, wBasis: 0.25, wSkew: 0.20, wPutCall: 0.20,
+  fundingHot: 0.02, fundingDispHi: 0.015, basisPerpHot: 0.10, skewHot: 3,
+  putCallHi: 1.30, putCallLo: 0.70, dvolLowPct: 25, dvolHighPct: 75,
+  tiltScoreMax: 12, tiltFlipMin: 0.55, scoreThreshold: 22,
+};
+const BTC_HORIZONS = {
+  intraday: { key: 'intraday', horizonH: 4,  stopAtr: 1.2, tpR: [1.0, 2.0, 3.5], label: 'Intraday · 15m/1h · ~4h' },
+  swing:    { key: 'swing',    horizonH: 72, stopAtr: 2.0, tpR: [1.5, 3.0, 5.0], label: 'Swing · 4h/1d · ~3d' },
+};
+const MONTHS_D = { JAN: 0, FEB: 1, MAR: 2, APR: 3, MAY: 4, JUN: 5, JUL: 6, AUG: 7, SEP: 8, OCT: 9, NOV: 10, DEC: 11 };
+let btcHorizon = 'intraday', btcRunning = false, btcData = null;
+
+const btcClamp = x => Math.max(-1, Math.min(1, x));
+function btcPctile(series, x) {
+  if (!series || series.length < 8 || x == null) return null;
+  const s = series.filter(v => isFinite(v)).slice().sort((a, b) => a - b);
+  return s.length ? s.filter(v => v <= x).length / s.length * 100 : null;
+}
+function parseDeribitExpiry(name) {
+  const m = String(name).match(/^BTC-(\d{1,2})([A-Z]{3})(\d{2})/);
+  if (!m) return null;
+  const mon = MONTHS_D[m[2]]; if (mon == null) return null;
+  return Date.UTC(2000 + +m[3], mon, +m[1], 8, 0, 0);
+}
+function btcOptionSignals(o, nowMs) {
+  if (!o || !o.legs || !o.legs.length || !o.index) return { dvol: o && o.dvol != null ? o.dvol : null, dvolPct: null, skew: null, term: null, putCall: null };
+  const exps = [...new Set(o.legs.map(l => l.expMs))].filter(e => e - nowMs > 2 * 864e5).sort((a, b) => a - b);
+  const front = exps[0] || null, next = exps[1] || null;
+  const atmIv = (exp) => {
+    const same = o.legs.filter(l => l.expMs === exp && l.iv > 0);
+    if (!same.length) return null;
+    same.sort((a, b) => Math.abs(a.strike - o.index) - Math.abs(b.strike - o.index));
+    const n = same.slice(0, 4); return n.reduce((s, l) => s + l.iv, 0) / n.length;
+  };
+  let skew = null;
+  if (front) {
+    const putW = o.legs.filter(l => l.expMs === front && l.isPut && l.strike <= o.index * 0.95 && l.strike >= o.index * 0.85 && l.iv > 0);
+    const callW = o.legs.filter(l => l.expMs === front && !l.isPut && l.strike >= o.index * 1.05 && l.strike <= o.index * 1.15 && l.iv > 0);
+    if (putW.length && callW.length) skew = putW.reduce((s, l) => s + l.iv, 0) / putW.length - callW.reduce((s, l) => s + l.iv, 0) / callW.length;
+  }
+  let term = null;
+  if (front && next) { const a = atmIv(front), b = atmIv(next); if (a != null && b != null) term = a - b; }
+  const putOi = o.legs.filter(l => l.isPut).reduce((s, l) => s + (l.oi || 0), 0);
+  const callOi = o.legs.filter(l => !l.isPut).reduce((s, l) => s + (l.oi || 0), 0);
+  const putCall = callOi > 0 ? putOi / callOi : null;
+  const dvolPct = (o.dvol != null && o.dvolSeries && o.dvolSeries.length) ? btcPctile(o.dvolSeries, o.dvol) : null;
+  return { dvol: o.dvol != null ? o.dvol : null, dvolPct, skew, term, putCall };
+}
+function btcFundingSignals(f) {
+  if (!f) return { agg: null, disp: null };
+  const vals = [f.bybit, f.binance, f.okx].filter(v => v != null && isFinite(v));
+  if (!vals.length) return { agg: null, disp: null };
+  const agg = vals.reduce((a, b) => a + b, 0) / vals.length;
+  const disp = vals.length > 1 ? Math.sqrt(vals.reduce((s, v) => s + (v - agg) ** 2, 0) / vals.length) : 0;
+  return { agg, disp };
+}
+function btcBasisSignals(b) {
+  if (!b) return { perp: null, fut: null };
+  const perp = (b.perp != null && b.spot != null && b.spot > 0) ? (b.perp - b.spot) / b.spot * 100 : null;
+  return { perp, fut: b.fut != null ? b.fut : null };
+}
+function btcPositioningTilt(opt, fund, basis) {
+  const c = BTC_CFG, parts = [];
+  let vF = 0, nF = 'Funding indisponível.';
+  if (fund.agg != null) { vF = btcClamp(-fund.agg / (c.fundingHot * 3)); nF = `Funding agregado ${fund.agg >= 0 ? '+' : ''}${fund.agg.toFixed(4)}%/8h${fund.disp != null ? ` · dispersão ${fund.disp.toFixed(4)}` : ''} → ${vF < 0 ? 'longs lotados (fade short)' : vF > 0 ? 'shorts lotados (fade long)' : 'neutro'}.`; }
+  parts.push({ k: 'Funding multi-venue', v: vF, note: nF });
+  let vB = 0, nB = 'Basis indisponível.';
+  if (basis.perp != null) { vB = btcClamp(-basis.perp / (c.basisPerpHot * 3)); nB = `Basis perp-spot ${basis.perp >= 0 ? '+' : ''}${basis.perp.toFixed(3)}%${basis.fut != null ? ` · fut ${basis.fut >= 0 ? '+' : ''}${basis.fut.toFixed(1)}% a.a.` : ''} → ${vB < 0 ? 'prémio esticado (fade short)' : vB > 0 ? 'desconto (fade long)' : 'neutro'}.`; }
+  parts.push({ k: 'Basis', v: vB, note: nB });
+  let vS = 0, nS = 'Skew indisponível.';
+  if (opt.skew != null) { vS = Math.abs(opt.skew) < c.skewHot ? 0 : btcClamp(opt.skew / (c.skewHot * 4)); nS = `Skew 25Δ ${opt.skew >= 0 ? '+' : ''}${opt.skew.toFixed(1)}pp → ${vS > 0 ? 'medo em puts (contrarian long)' : vS < 0 ? 'ganância em calls (contrarian short)' : 'neutro'}.`; }
+  parts.push({ k: 'Skew opções', v: vS, note: nS });
+  let vP = 0, nP = 'Put/Call indisponível.';
+  if (opt.putCall != null) { if (opt.putCall >= c.putCallHi) vP = btcClamp((opt.putCall - c.putCallHi) / 0.7); else if (opt.putCall <= c.putCallLo) vP = -btcClamp((c.putCallLo - opt.putCall) / 0.5); nP = `Put/Call OI ${opt.putCall.toFixed(2)} → ${vP > 0 ? 'excesso de puts (contrarian long)' : vP < 0 ? 'excesso de calls (contrarian short)' : 'neutro'}.`; }
+  parts.push({ k: 'Put/Call OI', v: vP, note: nP });
+  const wsum = c.wFunding + c.wBasis + c.wSkew + c.wPutCall;
+  const tilt = btcClamp((vF * c.wFunding + vB * c.wBasis + vS * c.wSkew + vP * c.wPutCall) / wsum);
+  return { tilt, parts };
+}
+function btcVolRegime(opt) {
+  const c = BTC_CFG;
+  if (opt.dvolPct == null) return { state: 'na', sizeMult: 1, note: 'DVOL indisponível.' };
+  if (opt.dvolPct <= c.dvolLowPct) return { state: 'comprimido', sizeMult: 1.1, note: `DVOL p${Math.round(opt.dvolPct)} (baixo) → compressão; expansão provável, favorece continuação.` };
+  if (opt.dvolPct >= c.dvolHighPct) return { state: 'esticado', sizeMult: 0.7, note: `DVOL p${Math.round(opt.dvolPct)} (alto) → medo/capitulação; reduzir tamanho, favorece reversão.` };
+  return { state: 'normal', sizeMult: 1, note: `DVOL p${Math.round(opt.dvolPct)} (normal).` };
+}
+// Decisão: backbone (Bybit) + posicionamento (BTC). Usa CS_CFG global do browser
+// (baseline, sem recal) — igual ao btc-engine.ts do servidor.
+function btcDecide(d, enriched, horizonKey, capital, leverage, nowMs) {
+  const H = BTC_HORIZONS[horizonKey];
+  const { k15, k60, fund, oi } = d;
+  const chg24 = k60.closes.length >= 25 ? (k60.closes[k60.closes.length - 1] - k60.closes[k60.closes.length - 25]) / k60.closes[k60.closes.length - 25] * 100 : 0;
+  const sigs = {
+    h1: csH1(fund, chg24), h2: csH2(oi, k15.closes), h3: csH3(k15, oi),
+    st: csStructure(k15.closes), thrust: csThrust(k15), brk: csBreakout(k15), regime: csRegime(k60),
+  };
+  const comp = csComposite(sigs, sigs.regime);
+  const baseDir = comp.finalDir, baseScore = comp.score;
+  const opt = btcOptionSignals(enriched.options, nowMs || Date.now());
+  const funding = btcFundingSignals(enriched.venues);
+  const basis = btcBasisSignals(enriched.basis);
+  const posTilt = btcPositioningTilt(opt, funding, basis);
+  const vol = btcVolRegime(opt);
+  let dir = baseDir, score = baseScore; const t = posTilt.tilt;
+  if (baseDir !== 0) {
+    const agree = Math.sign(t) === Math.sign(baseDir);
+    score += (agree ? 1 : -1) * Math.abs(t) * BTC_CFG.tiltScoreMax;
+    if (!agree && Math.abs(t) >= BTC_CFG.tiltFlipMin && baseScore < BTC_CFG.scoreThreshold) dir = 0;
+  } else if (Math.abs(t) >= BTC_CFG.tiltFlipMin) { dir = t > 0 ? 1 : -1; score = Math.abs(t) * BTC_CFG.tiltScoreMax; }
+  score = Math.max(0, score);
+  const atr = csATR(k15.highs, k15.lows, k15.closes, 14) || 0;
+  const price = k15.closes[k15.closes.length - 1];
+  // Plano com stop/TP do horizonte (override temporário do CS_CFG — síncrono).
+  const _sa = CS_CFG.stopAtr, _tp = CS_CFG.tp;
+  CS_CFG.stopAtr = H.stopAtr; CS_CFG.tp = H.tpR.map((r, i) => ({ r, close: i === 0 ? 0.4 : i === 1 ? 0.35 : 0.25 }));
+  const plan = dir !== 0 ? csTradePlan(price, atr, dir, capital, k15, leverage, sigs.regime.type) : null;
+  CS_CFG.stopAtr = _sa; CS_CFG.tp = _tp;
+  const nConfl = [sigs.h1, sigs.h2, sigs.h3, sigs.thrust, sigs.brk, sigs.st].filter(x => x.on).length;
+  let confidence = csConfidence(score, plan, null, nConfl);
+  if (dir !== 0 && Math.sign(t) === dir) confidence += 0.6; else if (dir !== 0 && t !== 0) confidence -= 0.5;
+  if (funding.disp != null && funding.disp >= BTC_CFG.fundingDispHi) confidence -= 0.4;
+  confidence += (vol.sizeMult - 1) * 2;
+  confidence = Math.max(1, Math.min(10, confidence));
+  const setup = dir !== 0 ? csSetupType({ sigs, dir }) : (Math.abs(t) >= 0.3 ? 'Posicionamento (fade)' : 'Sem sinal');
+  return { horizon: horizonKey, dir, score, confidence, setup, baseDir, baseScore, regime: sigs.regime, adx: sigs.regime.adx, sigs, opt, funding, basis, posTilt, vol, plan, price, atr };
+}
+
+// ── Fetchers da camada BTC (browser; degradam com elegância) ──
+async function btcFetchTicker(category) {
+  try { const r = await fetch(`${BYBIT}/v5/market/tickers?category=${category}&symbol=BTCUSDT`); const d = await r.json(); return d?.result?.list?.[0] || null; } catch (e) { return null; }
+}
+async function btcFetchDeribitIndex() {
+  try { const r = await fetch(`${DERIBIT}/api/v2/public/get_index_price?index_name=btc_usd`); const d = await r.json(); return d?.result?.index_price ?? null; } catch (e) { return null; }
+}
+async function btcFetchDvol() {
+  try {
+    const end = Date.now(), start = end - 30 * 864e5;
+    const r = await fetch(`${DERIBIT}/api/v2/public/get_volatility_index_data?currency=BTC&start_timestamp=${start}&end_timestamp=${end}&resolution=3600`);
+    const d = await r.json(); const rows = d?.result?.data || [];
+    const series = rows.map(x => x[4]).filter(v => isFinite(v));
+    return { cur: series.length ? series[series.length - 1] : null, series };
+  } catch (e) { return { cur: null, series: [] }; }
+}
+async function btcFetchOptions() {
+  try {
+    const r = await fetch(`${DERIBIT}/api/v2/public/get_book_summary_by_currency?currency=BTC&kind=option`);
+    const d = await r.json(); const rows = d?.result || [], legs = [];
+    for (const it of rows) {
+      const parts = String(it.instrument_name || '').split('-'); if (parts.length !== 4) continue;
+      const expMs = parseDeribitExpiry(it.instrument_name); if (expMs == null) continue;
+      const strike = +parts[2]; if (!isFinite(strike)) continue;
+      legs.push({ strike, iv: it.mark_iv != null ? +it.mark_iv : 0, oi: +it.open_interest || 0, isPut: parts[3] === 'P', expMs });
+    }
+    return legs;
+  } catch (e) { return []; }
+}
+async function btcFetchFutBasis(index) {
+  try {
+    const r = await fetch(`${DERIBIT}/api/v2/public/get_book_summary_by_currency?currency=BTC&kind=future`);
+    const d = await r.json(); const now = Date.now();
+    const dated = (d?.result || []).filter(it => it.instrument_name && !/PERPETUAL/.test(it.instrument_name))
+      .map(it => ({ mark: +it.mark_price, exp: parseDeribitExpiry(it.instrument_name) }))
+      .filter(x => x.exp && x.mark > 0 && x.exp - now > 2 * 864e5).sort((a, b) => a.exp - b.exp);
+    if (!dated.length || !index) return null;
+    const f = dated[0], days = (f.exp - now) / 864e5;
+    return days > 0 ? (f.mark / index - 1) * (365 / days) * 100 : null;
+  } catch (e) { return null; }
+}
+async function btcFetchBinanceFunding() {
+  try { const r = await fetch('https://fapi.binance.com/fapi/v1/premiumIndex?symbol=BTCUSDT'); const d = await r.json(); return d?.lastFundingRate != null ? parseFloat(d.lastFundingRate) * 100 : null; } catch (e) { return null; }
+}
+async function btcFetchOkxFunding() {
+  try { const r = await fetch('https://www.okx.com/api/v5/public/funding-rate?instId=BTC-USDT-SWAP'); const d = await r.json(); const x = d?.data?.[0]?.fundingRate; return x != null ? parseFloat(x) * 100 : null; } catch (e) { return null; }
+}
+
+// ── Render ──
+const btcPx = v => v == null || !isFinite(v) ? '—' : '$' + (+v).toLocaleString('en-US', { maximumFractionDigits: Math.abs(v) < 10 ? 4 : 0 });
+const btcPct = (v, dgt = 2) => v == null || !isFinite(v) ? '—' : (v >= 0 ? '+' : '') + (+v).toFixed(dgt) + '%';
+
+function btcSetHorizon(h, btn) {
+  btcHorizon = h;
+  document.querySelectorAll('#btc-horizon-seg .btc-seg-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (btcData) btcRenderDecision();
+}
+
+async function renderBtcTab(force) {
+  const cap = document.getElementById('btc-capital'); if (cap && !cap.value) cap.value = 100;
+  const lv = document.getElementById('btc-lev'); if (lv && !lv.value) lv.value = 5;
+  btcFetchStats();
+  if (btcRunning) return;
+  const now = Date.now();
+  if (!force && btcData && (now - btcData.ts < 45000)) { btcRenderDecision(); return; }
+  btcRunning = true;
+  const btn = document.getElementById('btc-run'); if (btn) btn.disabled = true;
+  const dec = document.getElementById('btc-decision'); if (dec) dec.innerHTML = '<div class="db-empty">A puxar Bybit + Deribit + venues e a analisar BTC…</div>';
+  try {
+    const [k15, k60, fund, oi, lsr, perpT, spotT] = await Promise.all([
+      csFetchKline('BTCUSDT', '15', 200), csFetchKline('BTCUSDT', '60', 200),
+      csFetchFunding('BTCUSDT'), csFetchOI('BTCUSDT'), csFetchLSR('BTCUSDT'),
+      btcFetchTicker('linear'), btcFetchTicker('spot'),
+    ]);
+    if (k15.closes.length < 60 || k60.closes.length < 50) throw new Error('klines insuficientes');
+    const index = (await btcFetchDeribitIndex()) ?? (perpT ? +perpT.markPrice : k15.closes[k15.closes.length - 1]);
+    const [dvol, legs, fut, binF, okxF] = await Promise.all([
+      btcFetchDvol(), btcFetchOptions(), btcFetchFutBasis(index), btcFetchBinanceFunding(), btcFetchOkxFunding(),
+    ]);
+    btcData = {
+      ts: now, k15, k60, fund, oi, lsr,
+      options: { index, dvol: dvol.cur, dvolSeries: dvol.series, legs },
+      venues: { bybit: perpT?.fundingRate != null ? parseFloat(perpT.fundingRate) * 100 : (fund.length ? fund[fund.length - 1] : null), binance: binF, okx: okxF },
+      basis: { perp: perpT ? +perpT.markPrice : null, spot: spotT ? +spotT.lastPrice : null, fut },
+      sources: { deribit: legs.length > 0, dvol: dvol.cur != null, binance: binF != null, okx: okxF != null, futBasis: fut != null },
+    };
+    btcRenderDecision();
+  } catch (e) {
+    if (dec) dec.innerHTML = `<div class="db-empty" style="color:var(--red)">Falha a analisar BTC: ${(e && e.message) || e}. Verifica a ligação (algumas fontes podem estar bloqueadas na tua rede).</div>`;
+  } finally {
+    btcRunning = false; if (btn) btn.disabled = false;
+  }
+}
+
+function btcRenderDecision() {
+  if (!btcData) return;
+  const capital = Math.max(1, +(document.getElementById('btc-capital')?.value) || 100);
+  const leverage = Math.max(1, Math.min(25, +(document.getElementById('btc-lev')?.value) || 5));
+  const H = BTC_HORIZONS[btcHorizon];
+  const d = btcDecide({ k15: btcData.k15, k60: btcData.k60, fund: btcData.fund, oi: btcData.oi }, { options: btcData.options, venues: btcData.venues, basis: btcData.basis }, btcHorizon, capital, leverage, btcData.ts);
+
+  const dirCls = d.dir > 0 ? 'btc-dir-long' : d.dir < 0 ? 'btc-dir-short' : 'btc-dir-flat';
+  const dirTxt = d.dir > 0 ? 'LONG' : d.dir < 0 ? 'SHORT' : 'NEUTRO';
+  const flip = d.dir !== d.baseDir;
+  const baseTxt = d.baseDir > 0 ? 'long' : d.baseDir < 0 ? 'short' : 'neutro';
+  const flipNote = flip
+    ? `<span style="color:var(--yellow)">Posicionamento ${d.dir === 0 ? 'vetou' : 'inverteu'} o backbone (${baseTxt})</span>`
+    : `Backbone e posicionamento alinhados`;
+  const p = d.plan;
+  let planHtml = '';
+  if (p) {
+    const tp1 = p.tps[0];
+    planHtml = `<div class="btc-plan">
+      <div class="btc-plan-cell"><div class="btc-plan-l">Entrada</div><div class="btc-plan-v">${btcPx(p.entry)}</div><div class="btc-plan-sub">zona ${btcPx(p.zLo)}–${btcPx(p.zHi)}</div></div>
+      <div class="btc-plan-cell"><div class="btc-plan-l">Stop</div><div class="btc-plan-v r">${btcPx(p.stop)}</div><div class="btc-plan-sub">${btcPct(-p.stopPct)} · ${p.stopPct.toFixed(2)}% conta·lev</div></div>
+      <div class="btc-plan-cell"><div class="btc-plan-l">TP1 (${tp1.rTarget}R)</div><div class="btc-plan-v g">${btcPx(tp1.price)}</div><div class="btc-plan-sub">${btcPct(d.dir > 0 ? tp1.pct : -tp1.pct)}${tp1.clamped ? ' · limitado' : ''}</div></div>
+      <div class="btc-plan-cell"><div class="btc-plan-l">R:R combinado</div><div class="btc-plan-v">${p.blendedRR.toFixed(2)}</div><div class="btc-plan-sub">risco ${p.riskUsd.toFixed(2)}$ · ${p.lev}× · p_BE ${(p.pWinBE * 100).toFixed(0)}%</div></div>
+    </div>`;
+  }
+  let warn = '';
+  if (d.dir === 0) warn = `<div class="btc-warn">Sem trade acionável neste horizonte: ${d.setup === 'Sem sinal' ? 'sinais insuficientes' : 'só posicionamento, sem confirmação do backbone'}. Espera setup.</div>`;
+  else if (p && p.rejected) warn = `<div class="btc-warn">Plano rejeitado pelo motor de risco: ${p.rejectedRR ? `R:R ${p.blendedRR.toFixed(2)} < ${CS_CFG.minRR} mínimo` : ''}${p.rejectedCost ? (p.rejectedRR ? ' · ' : '') + 'TP1 não paga os custos' : ''}. Direção informativa, não executar.</div>`;
+
+  document.getElementById('btc-decision').innerHTML = `<div class="btc-dec">
+    <div class="btc-dec-top">
+      <div class="btc-dir-badge ${dirCls}">${dirTxt}</div>
+      <div class="btc-dec-meta">
+        <div class="btc-dec-setup">${d.setup}</div>
+        <div class="btc-dec-sub">${H.label} · regime ${d.regime.type} · ${flipNote}</div>
+      </div>
+      <div class="btc-gauges">
+        <div class="btc-gauge"><div class="btc-gauge-v">${Math.round(d.score)}</div><div class="btc-gauge-l">Score</div></div>
+        <div class="btc-gauge"><div class="btc-gauge-v">${d.confidence.toFixed(1)}</div><div class="btc-gauge-l">Confiança</div></div>
+        <div class="btc-gauge"><div class="btc-gauge-v" style="color:${d.posTilt.tilt > 0.05 ? 'var(--green)' : d.posTilt.tilt < -0.05 ? 'var(--red)' : 'var(--dim)'}">${d.posTilt.tilt >= 0 ? '+' : ''}${d.posTilt.tilt.toFixed(2)}</div><div class="btc-gauge-l">Tilt pos.</div></div>
+      </div>
+    </div>
+    ${planHtml}${warn}
+  </div>`;
+
+  // Sinais: backbone (Bybit) + posicionamento (BTC)
+  const dot = s => s.dir > 0 ? 'g' : s.dir < 0 ? 'r' : 'n';
+  const s = d.sigs;
+  const backbone = [
+    { k: 'Funding squeeze', s: s.h1 }, { k: 'OI divergence', s: s.h2 }, { k: 'Cascade fade', s: s.h3 },
+    { k: 'Volume thrust', s: s.thrust }, { k: 'Breakout', s: s.brk }, { k: 'Estrutura range', s: s.st },
+  ].map(x => `<div class="btc-sig"><div class="btc-sig-dot ${dot(x.s)}"></div><div><span class="btc-sig-k">${x.k}.</span> <span class="btc-sig-t">${x.s.ev}</span></div></div>`).join('');
+  const regDot = d.regime.type.includes('up') ? 'g' : d.regime.type.includes('down') ? 'r' : 'n';
+  const backboneReg = `<div class="btc-sig"><div class="btc-sig-dot ${regDot}"></div><div><span class="btc-sig-k">Regime (1h).</span> <span class="btc-sig-t">${d.regime.ev} ${d.regime.type} · ADX ${d.adx == null ? '—' : d.adx.toFixed(0)}</span></div></div>`;
+  const posDot = v => v > 0.03 ? 'g' : v < -0.03 ? 'r' : 'n';
+  const posParts = d.posTilt.parts.map(pt => `<div class="btc-sig"><div class="btc-sig-dot ${posDot(pt.v)}"></div><div><span class="btc-sig-k">${pt.k}.</span> <span class="btc-sig-t">${pt.note}</span></div></div>`).join('');
+  const volDot = d.vol.state === 'comprimido' ? 'g' : d.vol.state === 'esticado' ? 'r' : 'n';
+  const volLine = `<div class="btc-sig"><div class="btc-sig-dot ${volDot}"></div><div><span class="btc-sig-k">Regime de vol.</span> <span class="btc-sig-t">${d.vol.note}${d.opt.dvol != null ? ` · DVOL ${d.opt.dvol.toFixed(1)}` : ''}${d.opt.term != null ? ` · term ${d.opt.term >= 0 ? '+' : ''}${d.opt.term.toFixed(1)}pp` : ''}</span></div></div>`;
+  const srcNote = btcData.sources.deribit ? '' : `<div class="btc-sig-t" style="padding-top:8px">⚠ Opções Deribit indisponíveis nesta rede — só backbone + funding.</div>`;
+
+  document.getElementById('btc-signals').innerHTML = `
+    <div class="btc-sigcol"><h4>Backbone · momentum & estrutura (Bybit)</h4>${backbone}${backboneReg}</div>
+    <div class="btc-sigcol"><h4>Posicionamento exclusivo BTC</h4>${posParts}${volLine}${srcNote}</div>`;
+}
+
+function btcValidCard(title, a) {
+  const enough = a && a.n >= 30;
+  const tag = !a || a.n === 0 ? `<span class="btc-valid-tag pending">sem dados</span>`
+    : enough ? `<span class="btc-valid-tag ok">n=${a.n}</span>` : `<span class="btc-valid-tag pending">não validado · n=${a.n}</span>`;
+  const row = (l, v) => `<div class="btc-valid-row"><span>${l}</span><span>${v}</span></div>`;
+  if (!a || a.n === 0) return `<div class="btc-valid-card"><div class="btc-valid-h">${title} ${tag}</div><div class="cs-hint">Ainda sem desfechos liquidados. O cron regista a cada 15 min; volta mais tarde.</div></div>`;
+  return `<div class="btc-valid-card"><div class="btc-valid-h">${title} ${tag}</div>
+    ${row('Hit-rate direcional', a.hit != null ? (a.hit * 100).toFixed(0) + '%' : '—')}
+    ${row('R médio / trade', a.avgR != null ? (a.avgR >= 0 ? '+' : '') + a.avgR.toFixed(2) + 'R' : '—')}
+    ${row('Profit factor', a.pf != null ? a.pf.toFixed(2) : '—')}
+  </div>`;
+}
+function btcFetchStats() {
+  const body = document.getElementById('btc-valid-body'); if (!body) return;
+  fetch(BTC_STATS_URL, { headers: csSupaHdr() }).then(r => r.json()).then(st => {
+    if (!st || st.error || !st.byHorizon) { body.innerHTML = `<div class="cs-hint">Validação indisponível (${st?.error || 'sem resposta'}). A tabela btc_obs enche quando o cron btc-scan correr.</div>`; return; }
+    const bi = st.byHorizon.intraday || {}, bs = st.byHorizon.swing || {};
+    const enr = bi.enrichedChanged || bs.enrichedChanged || {};
+    body.innerHTML = `
+      <div class="btc-valid-grid">
+        ${btcValidCard('Intraday (~4h)', bi.overall)}
+        ${btcValidCard('Swing (~3d)', bs.overall)}
+      </div>
+      <div class="cs-hint" style="margin-top:10px">${st.total ?? 0} observações registadas · ${st.pending ?? 0} por liquidar. <b>Efeito da camada BTC</b> (decisões onde o posicionamento mudou o backbone): intraday n=${bi.enrichedChanged?.n ?? 0}${bi.enrichedChanged?.avgR != null ? ` · ${(bi.enrichedChanged.avgR >= 0 ? '+' : '') + bi.enrichedChanged.avgR.toFixed(2)}R` : ''}. Enquanto n&lt;30 por célula, trata o veredito como ruído.</div>`;
+  }).catch(() => { body.innerHTML = `<div class="cs-hint">Validação offline. Faz deploy das functions btc-scan/btc-settle/btc-stats e da migração btc_obs.</div>`; });
 }
 
 // ── Loop de registo (backend Supabase) ───────────────────────────────────────
