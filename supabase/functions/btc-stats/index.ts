@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
       .select('*', { count: 'exact', head: true });
 
     const byHorizon: Record<string, any> = {};
-    for (const h of ['intraday', 'swing']) {
+    for (const h of ['scalp', 'intraday', 'swing']) {
       const hr = rows.filter((r) => r.horizon === h);
       byHorizon[h] = {
         overall: agg(hr),

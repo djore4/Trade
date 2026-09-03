@@ -1309,7 +1309,7 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
 /* Validação */
 .btc-valid { background:var(--s1); border:1px solid var(--border); border-radius:12px; padding:14px 16px; }
 .btc-valid-head { font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:var(--faint); margin-bottom:10px; }
-.btc-valid-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.btc-valid-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; }
 .btc-valid-card { border:1px solid var(--border); border-radius:10px; padding:11px 13px; }
 .btc-valid-h { font-size:12px; font-weight:700; color:var(--text); margin-bottom:8px; display:flex; align-items:center; gap:8px; }
 .btc-valid-tag { font-size:9px; font-weight:700; padding:2px 7px; border-radius:6px; text-transform:uppercase; letter-spacing:.05em; }
@@ -1739,6 +1739,7 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
     <!-- Controlos -->
     <div class="btc-controls">
       <div class="btc-seg" id="btc-horizon-seg">
+        <button class="btc-seg-btn" data-h="scalp" onclick="btcSetHorizon('scalp',this)">Scalp <span class="btc-seg-sub">~2h</span></button>
         <button class="btc-seg-btn active" data-h="intraday" onclick="btcSetHorizon('intraday',this)">Intraday <span class="btc-seg-sub">~4h</span></button>
         <button class="btc-seg-btn" data-h="swing" onclick="btcSetHorizon('swing',this)">Swing <span class="btc-seg-sub">~3d</span></button>
       </div>
@@ -4521,6 +4522,7 @@ const BTC_CFG = {
   tiltScoreMax: 12, tiltFlipMin: 0.55, scoreThreshold: 22,
 };
 const BTC_HORIZONS = {
+  scalp:    { key: 'scalp',    horizonH: 2,  stopAtr: 1.0, tpR: [1.0, 1.8, 3.0], label: 'Scalp · 15m · ~2h' },
   intraday: { key: 'intraday', horizonH: 4,  stopAtr: 1.2, tpR: [1.0, 2.0, 3.5], label: 'Intraday · 15m/1h · ~4h' },
   swing:    { key: 'swing',    horizonH: 72, stopAtr: 2.0, tpR: [1.5, 3.0, 5.0], label: 'Swing · 4h/1d · ~3d' },
 };
@@ -4818,14 +4820,14 @@ function btcFetchStats() {
   const body = document.getElementById('btc-valid-body'); if (!body) return;
   fetch(BTC_STATS_URL, { headers: csSupaHdr() }).then(r => r.json()).then(st => {
     if (!st || st.error || !st.byHorizon) { body.innerHTML = `<div class="cs-hint">Validação indisponível (${st?.error || 'sem resposta'}). A tabela btc_obs enche quando o cron btc-scan correr.</div>`; return; }
-    const bi = st.byHorizon.intraday || {}, bs = st.byHorizon.swing || {};
-    const enr = bi.enrichedChanged || bs.enrichedChanged || {};
+    const bsc = st.byHorizon.scalp || {}, bi = st.byHorizon.intraday || {}, bs = st.byHorizon.swing || {};
     body.innerHTML = `
       <div class="btc-valid-grid">
+        ${btcValidCard('Scalp (~2h)', bsc.overall)}
         ${btcValidCard('Intraday (~4h)', bi.overall)}
         ${btcValidCard('Swing (~3d)', bs.overall)}
       </div>
-      <div class="cs-hint" style="margin-top:10px">${st.total ?? 0} observações registadas · ${st.pending ?? 0} por liquidar. <b>Efeito da camada BTC</b> (decisões onde o posicionamento mudou o backbone): intraday n=${bi.enrichedChanged?.n ?? 0}${bi.enrichedChanged?.avgR != null ? ` · ${(bi.enrichedChanged.avgR >= 0 ? '+' : '') + bi.enrichedChanged.avgR.toFixed(2)}R` : ''}. Enquanto n&lt;30 por célula, trata o veredito como ruído.</div>`;
+      <div class="cs-hint" style="margin-top:10px">${st.total ?? 0} observações registadas · ${st.pending ?? 0} por liquidar. <b>Efeito da camada BTC</b> (decisões onde o posicionamento mudou o backbone): scalp n=${bsc.enrichedChanged?.n ?? 0} · intraday n=${bi.enrichedChanged?.n ?? 0}${bi.enrichedChanged?.avgR != null ? ` · ${(bi.enrichedChanged.avgR >= 0 ? '+' : '') + bi.enrichedChanged.avgR.toFixed(2)}R` : ''}. Enquanto n&lt;30 por célula, trata o veredito como ruído.</div>`;
   }).catch(() => { body.innerHTML = `<div class="cs-hint">Validação offline. Faz deploy das functions btc-scan/btc-settle/btc-stats e da migração btc_obs.</div>`; });
 }
 
