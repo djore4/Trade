@@ -144,9 +144,11 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
   try {
     const supa = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-    const { data: cfgRow } = await supa.from('cs_config').select('obs_horizon_h, btc_swing_horizon_h').eq('id', 1).single();
+    const { data: cfgRow } = await supa.from('cs_config').select('obs_horizon_h, btc_swing_horizon_h, btc_scalp_horizon_h').eq('id', 1).single();
+    const hScalp = +(cfgRow?.btc_scalp_horizon_h ?? 2);
     const hIntraday = +(cfgRow?.obs_horizon_h ?? 4);
     const hSwing = +(cfgRow?.btc_swing_horizon_h ?? 72);
+    const hByKey: Record<string, number> = { scalp: hScalp, intraday: hIntraday, swing: hSwing };
 
     // Backbone (Bybit) — obrigatório. Se falhar, não há decisão.
     const [k15, k60, fund, oi, lsr, perpT, spotT] = await Promise.all([
@@ -174,9 +176,9 @@ Deno.serve(async (req) => {
 
     const nowIso = new Date().toISOString();
     const rows: any[] = [];
-    for (const key of ['intraday', 'swing'] as const) {
+    for (const key of ['scalp', 'intraday', 'swing'] as const) {
       const dec = btcDecide({ k15, k60, fund, oi, lsr }, { options, venues, basis }, key, 100, 5);
-      const H = key === 'intraday' ? hIntraday : hSwing;
+      const H = hByKey[key];
       const p = dec.plan;
       rows.push({
         ts: nowIso, horizon: key, horizon_h: H,

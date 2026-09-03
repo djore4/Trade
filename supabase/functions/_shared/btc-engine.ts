@@ -37,9 +37,10 @@ export interface OptionsSnap {
 export interface FundingVenues { bybit: number | null; binance: number | null; okx: number | null; } // %/8h
 export interface BasisSnap { perp: number | null; spot: number | null; fut: number | null; futDays: number | null; }
 
-export interface BtcHorizon { key: 'intraday' | 'swing'; horizonH: number; stopAtr: number; tpR: number[]; label: string; }
+export interface BtcHorizon { key: 'scalp' | 'intraday' | 'swing'; horizonH: number; stopAtr: number; tpR: number[]; label: string; }
 
 export const BTC_HORIZONS: Record<string, BtcHorizon> = {
+  scalp:    { key: 'scalp',    horizonH: 2,  stopAtr: 1.0, tpR: [1.0, 1.8, 3.0], label: 'Scalp (15m · ~2h)' },
   intraday: { key: 'intraday', horizonH: 4,  stopAtr: 1.2, tpR: [1.0, 2.0, 3.5], label: 'Intraday (15m/1h · ~4h)' },
   swing:    { key: 'swing',    horizonH: 72, stopAtr: 2.0, tpR: [1.5, 3.0, 5.0], label: 'Swing (4h/1d · ~3d)' },
 };
@@ -213,7 +214,7 @@ export interface BtcDecision {
 export function btcDecide(
   data: { k15: Kline; k60: Kline; fund: number[]; oi: number[]; lsr: { buy: number; sell: number }[] },
   enriched: { options: OptionsSnap | null; venues: FundingVenues | null; basis: BasisSnap | null },
-  horizonKey: 'intraday' | 'swing',
+  horizonKey: 'scalp' | 'intraday' | 'swing',
   capital: number, leverage: number,
   nowMs = Date.now(),
 ): BtcDecision {
