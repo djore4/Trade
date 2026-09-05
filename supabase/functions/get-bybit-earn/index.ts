@@ -26,14 +26,26 @@ const cors = {
 const json = (b: unknown, s = 200) =>
   new Response(JSON.stringify(b), { status: s, headers: { ...cors, 'Content-Type': 'application/json' } });
 
-// Resolve credenciais preferindo a conta MASTER (Earn é master-only). Cai para a
-// subconta apenas se não houver master configurada.
+// Resolve credenciais preferindo a conta MASTER (Earn é master-only). CRÍTICO:
+// nunca misturar contas — usar o CONJUNTO master inteiro (key+secret+priv) ou,
+// se não houver master, o conjunto sub inteiro. O fallback campo-a-campo dava
+// master.apiKey + sub.privateKeyPem (o bot assina RSA na subconta) → assinatura
+// inválida (retCode 10004), porque a master é HMAC e não tem chave RSA própria.
 function masterKeys(): BybitKeys {
-  const apiKey = Deno.env.get('BYBIT_API_KEY') ?? Deno.env.get('BYBIT_SUB_API_KEY') ?? '';
-  const apiSecret = Deno.env.get('BYBIT_API_SECRET') ?? Deno.env.get('BYBIT_SUB_API_SECRET') ?? '';
-  const privateKeyPem = Deno.env.get('BYBIT_API_PRIVATE_KEY') ?? Deno.env.get('BYBIT_SUB_API_PRIVATE_KEY') ?? '';
   const base = Deno.env.get('BYBIT_BASE') ?? 'https://api.bybit.com';
-  return { apiKey, apiSecret, privateKeyPem, base };
+  const mKey = Deno.env.get('BYBIT_API_KEY');
+  if (mKey) return {
+    apiKey: mKey,
+    apiSecret: Deno.env.get('BYBIT_API_SECRET') ?? '',
+    privateKeyPem: Deno.env.get('BYBIT_API_PRIVATE_KEY') ?? '',
+    base,
+  };
+  return {
+    apiKey: Deno.env.get('BYBIT_SUB_API_KEY') ?? '',
+    apiSecret: Deno.env.get('BYBIT_SUB_API_SECRET') ?? '',
+    privateKeyPem: Deno.env.get('BYBIT_SUB_API_PRIVATE_KEY') ?? '',
+    base,
+  };
 }
 
 interface Holding {
