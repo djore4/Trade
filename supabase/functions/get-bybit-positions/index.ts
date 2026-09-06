@@ -19,11 +19,11 @@ async function hmacSign(message: string, secret: string): Promise<string> {
     .join('');
 }
 
-// Bybit v5 /v5/position/list exige que 'category=linear' seja acompanhado de
-// 'settleCoin' (ou 'symbol'); caso contrario devolve erro e lista vazia. As
-// inversas nao precisam. Por isso consultamos as lineares por moeda de
-// liquidacao (USDT e USDC) e as inversas em separado. queryString tem de estar
-// por ordem alfabetica dos parametros para bater certo com a assinatura.
+// Bybit v5 /v5/position/list exige 'symbol' OU 'settleCoin' — TANTO para
+// 'category=linear' COMO para 'category=inverse' (sem um deles: erro 10001 e
+// lista vazia). Por isso consultamos as lineares por moeda de liquidacao (USDT,
+// USDC) e as inversas por settleCoin (a moeda-base: BTC p/ BTCUSD, APT p/ APTUSD,
+// etc.). queryString tem de estar por ordem alfabetica para bater com a assinatura.
 async function fetchPositions(queryString: string, apiKey: string, apiSecret: string) {
   const timestamp = Date.now().toString();
   const recvWindow = '5000';
@@ -43,6 +43,39 @@ async function fetchPositions(queryString: string, apiKey: string, apiSecret: st
   );
   const data = await response.json();
   return data?.result?.list ?? [];
+}
+
+// settleCoins inversos = moedas-base de todos os contratos inversos (catalogo
+// publico, sem auth). Fallback para os principais se a chamada falhar.
+async function inverseSettleCoins(): Promise<string[]> {
+  const fallback = ['BTC', 'ETH'];
+  try {
+    const r = await fetch('https://api.bybit.com/v5/market/instruments-info?category=inverse&limit=1000');
+    const d = await r.json();
+    const set = new Set<string>(fallback);
+    for (const x of (d?.result?.list ?? []) as Array<Record<string, unknown>>) {
+      const sc = String(x.settleCoin ?? '').toUpperCase();
+      if (sc) set.add(sc);
+    }
+    return [...set];
+  } catch (_e) {
+    return fallback;
+  }
+}
+
+// Consulta as inversas por settleCoin, em lotes (evita rate limit / bursts).
+async function fetchInverse(apiKey: string, apiSecret: string) {
+  const coins = await inverseSettleCoins();
+  const out: unknown[] = [];
+  const CHUNK = 10;
+  for (let i = 0; i < coins.length; i += CHUNK) {
+    const part = coins.slice(i, i + CHUNK);
+    const lists = await Promise.all(
+      part.map(c => fetchPositions(`category=inverse&settleCoin=${c}`, apiKey, apiSecret)),
+    );
+    for (const l of lists) out.push(...l);
+  }
+  return out;
 }
 
 Deno.serve(async (req: Request) => {
@@ -65,7 +98,7 @@ Deno.serve(async (req: Request) => {
     const [linearUsdt, linearUsdc, inverseList] = await Promise.all([
       fetchPositions('category=linear&settleCoin=USDT', apiKey, apiSecret),
       fetchPositions('category=linear&settleCoin=USDC', apiKey, apiSecret),
-      fetchPositions('category=inverse', apiKey, apiSecret),
+      fetchInverse(apiKey, apiSecret),
     ]);
 
     const allPositions = [...linearUsdt, ...linearUsdc, ...inverseList];
