@@ -1282,9 +1282,9 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
       <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="4.6" cy="4.6" r="3.4" stroke="currentColor" stroke-width="1.3" fill="none"/><line x1="7.2" y1="7.2" x2="10" y2="10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M3 4.6h3.2M4.6 3v3.2" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
       CryptoScan
     </button>
-    <button class="tab-btn" data-tab="dca" onclick="switchTab('dca',this)">
-      <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><ellipse cx="5.5" cy="2.4" rx="4" ry="1.6" stroke="currentColor" stroke-width="1.2" fill="none"/><path d="M1.5 2.4v6.2c0 .9 1.8 1.6 4 1.6s4-.7 4-1.6V2.4" stroke="currentColor" stroke-width="1.2" fill="none"/><path d="M1.5 5.5c0 .9 1.8 1.6 4 1.6s4-.7 4-1.6" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>
-      DCA
+    <button class="tab-btn" data-tab="noticias" onclick="switchTab('noticias',this)">
+      <svg class="tab-icon" width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x=".5" y="1.5" width="10" height="8" rx="1.5" stroke="currentColor" stroke-width="1.4" fill="none"/><line x1="3" y1="4.5" x2="8" y2="4.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><line x1="3" y1="7" x2="6.5" y2="7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+      Notícias
     </button>
   </nav>
   <div class="hdr-right">
@@ -1550,71 +1550,6 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
 </div>
 
 <!-- ─── TAB: CRYPTOSCAN — Screener de oportunidades (funil determinístico) ─── -->
-<!-- ══════════ DCA / STAKING ══════════ -->
-<div class="tab-pane" id="tab-dca">
-  <style>
-    #tab-dca .dca-wrap { padding: 12px; max-width: 780px; margin: 0 auto; }
-    #tab-dca .dca-hero { background: var(--s1); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; margin-bottom: 12px; }
-    #tab-dca .dca-hero-lbl { font-size: 11px; color: var(--faint); text-transform: uppercase; letter-spacing: .06em; }
-    #tab-dca .dca-hero-val { font-size: 25px; font-weight: 700; margin: 2px 0 10px; }
-    #tab-dca .dca-hero-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-    #tab-dca .dca-stat { background: var(--s2); border-radius: 9px; padding: 8px 9px; }
-    #tab-dca .dca-stat-lbl { font-size: 9.5px; color: var(--faint); text-transform: uppercase; letter-spacing: .05em; }
-    #tab-dca .dca-stat-val { font-size: 14px; font-weight: 600; margin-top: 2px; }
-    #tab-dca .dca-note { font-size: 11px; color: var(--dim); line-height: 1.5; margin: 10px 2px 4px; }
-    /* Cabeçalho da tabela */
-    #tab-dca .dca-thead { display: flex; align-items: center; justify-content: space-between; padding: 6px 12px; }
-    #tab-dca .dca-thead span { font-size: 10px; color: var(--faint); text-transform: uppercase; letter-spacing: .05em; font-weight: 600; }
-    /* Linha compacta (estilo home) */
-    #tab-dca .dca-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--border); cursor: pointer; }
-    #tab-dca .dca-row:active { background: var(--s2); }
-    #tab-dca .dca-row.open { background: var(--s2); }
-    #tab-dca .dca-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
-    #tab-dca .dca-avatar { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #fff; flex-shrink: 0; }
-    #tab-dca .dca-sym { font-size: 14px; font-weight: 700; }
-    #tab-dca .dca-qty { font-size: 11px; color: var(--faint); font-weight: 500; }
-    #tab-dca .dca-sub { font-size: 11px; color: var(--dim); margin-top: 1px; }
-    #tab-dca .dca-right { display: flex; align-items: center; gap: 10px; text-align: right; }
-    #tab-dca .dca-apr { font-size: 12px; font-weight: 700; color: var(--green); font-family: 'JetBrains Mono', monospace; }
-    #tab-dca .dca-val { }
-    #tab-dca .dca-val-usd { font-size: 14px; font-weight: 700; }
-    #tab-dca .dca-val-pnl { font-size: 11px; font-weight: 600; }
-    #tab-dca .dca-chev { color: var(--faint); transition: transform .18s; flex-shrink: 0; }
-    #tab-dca .dca-row.open .dca-chev { transform: rotate(90deg); }
-    /* Detalhe expandido */
-    #tab-dca .dca-detail { background: var(--s2); border-bottom: 1px solid var(--border); padding: 12px; }
-    #tab-dca .dca-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-    #tab-dca .dca-m { background: var(--s1); border-radius: 8px; padding: 7px 9px; }
-    #tab-dca .dca-m-lbl { font-size: 9px; color: var(--faint); text-transform: uppercase; letter-spacing: .04em; }
-    #tab-dca .dca-m-val { font-size: 13px; font-weight: 600; margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
-    #tab-dca .dca-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 9px; }
-    #tab-dca .dca-in-group { background: var(--s1); border-radius: 9px; padding: 8px 9px; }
-    #tab-dca .dca-in-lbl { font-size: 10px; color: var(--faint); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 4px; }
-    #tab-dca .dca-in-row { display: flex; align-items: center; gap: 5px; }
-    #tab-dca .dca-in-row .pfx { color: var(--faint); font-size: 13px; }
-    #tab-dca .dca-in-row input { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 7px; padding: 6px 8px; font-size: 13px; font-family: 'JetBrains Mono', monospace; width: 100%; outline: none; }
-    #tab-dca .dca-in-row input:focus { border-color: var(--orange); }
-    #tab-dca .dca-in-res { font-size: 11px; margin-top: 5px; color: var(--dim); min-height: 14px; }
-    #tab-dca .dca-empty { text-align: center; color: var(--faint); padding: 40px 16px; font-size: 13px; line-height: 1.6; }
-    @media (max-width: 480px) { #tab-dca .dca-hero-grid { grid-template-columns: repeat(2, 1fr); } }
-  </style>
-  <div class="dca-wrap">
-    <div class="dca-hero">
-      <div class="dca-hero-lbl">DCA · Staking (Bybit Earn)</div>
-      <div class="dca-hero-val" id="dca-total">—</div>
-      <div class="dca-hero-grid">
-        <div class="dca-stat"><div class="dca-stat-lbl">Investido</div><div class="dca-stat-val" id="dca-invested">—</div></div>
-        <div class="dca-stat"><div class="dca-stat-lbl">PnL</div><div class="dca-stat-val" id="dca-pnl">—</div></div>
-        <div class="dca-stat"><div class="dca-stat-lbl">APR média</div><div class="dca-stat-val" id="dca-apr">—</div></div>
-        <div class="dca-stat"><div class="dca-stat-lbl">Income / ano est.</div><div class="dca-stat-val" id="dca-yield">—</div></div>
-      </div>
-    </div>
-    <div class="dca-thead"><span>Ativo</span><span>APR · Valor · PnL</span></div>
-    <div id="dca-list"><div class="dca-empty">A carregar fundos em staking…</div></div>
-    <div class="dca-note" id="dca-note"></div>
-  </div>
-</div>
-
 <div class="tab-pane" id="tab-cryptoscan">
   <div class="cs-wrap">
 
@@ -1784,6 +1719,38 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
 </div>
 
 <!-- ─── TAB: NOTÍCIAS ─────────────────────────────────── -->
+<div class="tab-pane" id="tab-noticias">
+  <div style="max-width:1200px;margin:0 auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+      <div class="sec-label" style="margin-bottom:0">Feed de Notícias</div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <button class="src-tab on" onclick="setNewsSrc('ct',this)">Cointelegraph</button>
+        <button class="src-tab" onclick="setNewsSrc('cd',this)">CoinDesk</button>
+        <button class="src-tab" onclick="setNewsSrc('bm',this)">Bitcoin Mag</button>
+        <button onclick="loadNews()" style="background:var(--s2);border:1px solid var(--border);color:var(--dim);font-size:11px;padding:4px 10px;border-radius:6px;cursor:pointer" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--dim)'">↻</button>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 260px;gap:14px" class="news-layout">
+      <div class="card">
+        <div id="news-list" style="padding:0 14px"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="card">
+          <div class="card-header"><div class="card-title"><div class="ctdot"></div>Contexto</div></div>
+          <div id="ctx-panel">
+            <div class="ctx-row"><div class="ctx-label">BTC Price</div><div id="ctx-price" class="ctx-val">—</div></div>
+            <div class="ctx-row"><div class="ctx-label">Fear & Greed</div><div id="ctx-fg" class="ctx-val">—</div></div>
+            <div class="ctx-row"><div class="ctx-label">BTC Dominance</div><div id="ctx-dom" class="ctx-val o">—</div></div>
+            <div class="ctx-row"><div class="ctx-label">Funding Rate</div><div id="ctx-fund" class="ctx-val">—</div></div>
+            <div class="ctx-row"><div class="ctx-label">24h Change</div><div id="ctx-chg" class="ctx-val">—</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ─── TAB: AGENTE ───────────────────────────────────── -->
 <!-- ─── AGENTE — drawer flutuante, acessível de qualquer tab ─── -->
 <style>
@@ -1832,38 +1799,29 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
   <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 13.6 8.4 19 10l-5.4 1.6L12 17l-1.6-5.4L5 10l5.4-1.6z"/><circle cx="18.5" cy="18.5" r="2.2"/></svg>
 </button>
 
-<!-- ─── MODAL: detalhe de moeda (home) ─── -->
+<!-- ─── Drop-down de detalhe de moeda no home ─── -->
 <style>
   .db-earn-badge{font-size:8.5px;font-weight:700;padding:1px 5px;border-radius:4px;background:rgba(45,212,160,.14);color:var(--green);letter-spacing:.04em;vertical-align:middle;margin-left:4px}
-  #coin-modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .2s;z-index:220}
-  #coin-modal-backdrop.open{opacity:1;pointer-events:auto}
-  #coin-modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-46%) scale(.98);opacity:0;pointer-events:none;width:min(460px,calc(100% - 28px));max-height:88vh;overflow:auto;background:var(--s1);border:1px solid var(--border);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.5);z-index:221;transition:opacity .2s,transform .2s;padding:16px}
-  #coin-modal.open{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
-  #coin-modal .cm-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
-  #coin-modal .cm-coin{display:flex;align-items:center;gap:10px}
-  #coin-modal .cm-sym{font-size:17px;font-weight:700}
-  #coin-modal .cm-qty{font-size:12px;color:var(--dim);margin-top:1px}
-  #coin-modal .cm-x{background:var(--s2);border:1px solid var(--border);color:var(--dim);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:14px;flex-shrink:0}
-  #coin-modal .cm-sec{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin:14px 2px 6px}
-  #coin-modal .cm-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-  #coin-modal .cm-m{background:var(--s2);border-radius:9px;padding:8px 9px}
-  #coin-modal .cm-l{font-size:9.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.04em}
-  #coin-modal .cm-v{font-size:13px;font-weight:600;margin-top:2px;font-family:'JetBrains Mono',monospace}
-  #coin-modal .cm-sub{font-size:11px;color:var(--dim);margin:6px 2px 0}
-  #coin-modal .cm-inputs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
-  #coin-modal .cm-in{background:var(--s2);border-radius:9px;padding:8px 9px}
-  #coin-modal .cm-in-row{display:flex;align-items:center;gap:5px}
-  #coin-modal .cm-in-row span{color:var(--faint);font-size:13px}
-  #coin-modal .cm-in-row input{background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:13px;font-family:'JetBrains Mono',monospace;width:100%;outline:none}
-  #coin-modal .cm-in-row input:focus{border-color:var(--orange)}
-  #coin-modal .cm-res{font-size:11px;margin-top:5px;color:var(--dim);min-height:14px}
-  #coin-modal .cm-actions{display:flex;gap:8px;margin-top:14px}
-  #coin-modal .cm-btn{flex:1;background:var(--orange);color:#11130a;border:none;border-radius:9px;padding:10px;font-size:13px;font-weight:700;cursor:pointer}
-  #coin-modal .cm-btn-sec{background:var(--s2);color:var(--dim);border:1px solid var(--border)}
-  @media(max-width:480px){#coin-modal .cm-metrics{grid-template-columns:repeat(2,1fr)}}
+  .db-asset-row.detail-open{background:var(--s2)}
+  .db-cd-chev{transition:transform .18s;flex-shrink:0;color:var(--faint);margin-left:2px}
+  .db-asset-row.detail-open .db-cd-chev{transform:rotate(90deg)}
+  .db-coin-detail{background:var(--s2);border-bottom:1px solid var(--border);padding:12px}
+  .db-cd-sec{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin:12px 2px 6px}
+  .db-cd-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .db-cd-m{background:var(--s1);border-radius:8px;padding:7px 9px}
+  .db-cd-l{font-size:9.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.04em}
+  .db-cd-v{font-size:13px;font-weight:600;margin-top:2px;font-family:'JetBrains Mono',monospace}
+  .db-cd-inputs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+  .db-cd-in{background:var(--s1);border-radius:9px;padding:8px 9px}
+  .db-cd-in-row{display:flex;align-items:center;gap:5px}
+  .db-cd-in-row span{color:var(--faint);font-size:13px}
+  .db-cd-in-row input{background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:13px;font-family:'JetBrains Mono',monospace;width:100%;outline:none}
+  .db-cd-in-row input:focus{border-color:var(--orange)}
+  .db-cd-res{font-size:11px;margin-top:5px;color:var(--dim);min-height:14px}
+  .db-cd-sub{font-size:11px;color:var(--dim);margin:8px 2px 0}
+  .db-cd-btn{margin-top:10px;width:100%;background:var(--s1);color:var(--dim);border:1px solid var(--border);border-radius:9px;padding:9px;font-size:12px;font-weight:600;cursor:pointer}
+  @media(max-width:480px){.db-cd-metrics{grid-template-columns:repeat(2,1fr)}}
 </style>
-<div id="coin-modal-backdrop" onclick="closeCoinModal()"></div>
-<div id="coin-modal" role="dialog" aria-modal="true" aria-hidden="true"><div id="coin-modal-body"></div></div>
 
 </div><!-- #content -->
 </div><!-- #app -->
@@ -1899,9 +1857,9 @@ details.cs-refbox:not([open]) > summary.cs-refbox-h { border-bottom: none; }
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7"/><line x1="15" y1="15" x2="21" y2="21"/><path d="M6.5 10h7M10 6.5v7"/></svg>
     <span class="mnav-lbl">Scan</span>
   </button>
-  <button class="mnav-btn" data-tab="dca" onclick="switchTab('dca',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v13c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 11.5c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>
-    <span class="mnav-lbl">DCA</span>
+  <button class="mnav-btn" data-tab="noticias" onclick="switchTab('noticias',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="7" y1="9" x2="17" y2="9"/><line x1="7" y1="13" x2="13" y2="13"/></svg>
+    <span class="mnav-lbl">Notícias</span>
   </button>
 </nav>
 
@@ -2007,7 +1965,7 @@ function switchTab(id, btn) {
   if (id === 'dashboard')  { setTimeout(() => loadPortfolioSeries(dbCurrentRange()), 60); renderDbAssets(); }
   if (id === 'posicoes')   renderPosTab();
   if (id === 'cryptoscan') renderCsTab();
-  if (id === 'dca')        renderDcaTab();
+  if (id === 'noticias' && !lastNewsItems.length) loadNews();
 }
 
 // ── Agente — drawer flutuante (acessível de qualquer tab) ──
@@ -6468,8 +6426,9 @@ function coinRowHtml(it) {
     : '—';
   const qStr = qty < 0.0001 ? qty.toFixed(8) : qty < 1 ? qty.toFixed(6) : fmt(qty, qty < 1000 ? 4 : 2);
   const inEarn = (parseFloat(c._earnQty) || 0) > 0;
-  const cls = 'db-asset-row clickable' + (pfIsolate === c.coin ? ' isolated' : '');
-  const onc = ` onclick="openCoinModal('${c.coin}')" title="Ver detalhe de ${c.coin}"`;
+  const isOpen = dbDetailCoin === c.coin;
+  const cls = 'db-asset-row clickable' + (pfIsolate === c.coin ? ' isolated' : '') + (isOpen ? ' detail-open' : '');
+  const onc = ` onclick="toggleCoinDetail('${c.coin}')" title="Ver detalhe de ${c.coin}"`;
   return `<div class="${cls}"${onc}>
     <div class="db-asset-left">
       ${assetAvatarHtml(c.coin, cc, false)}
@@ -6488,8 +6447,9 @@ function coinRowHtml(it) {
       <div class="db-asset-price">
         ${prStr}${avgPrices[c.coin] ? ` <span style="font-size:10px;color:var(--faint)">/ m$${fmt(avgPrices[c.coin], avgPrices[c.coin] < 0.001 ? 6 : avgPrices[c.coin] < 1 ? 4 : avgPrices[c.coin] < 100 ? 2 : 0)}</span>` : ''}
       </div>
+      <svg class="db-cd-chev" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4.5 2.5 8 6l-3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </div>
-  </div>`;
+  </div>${coinDetailHtml(c.coin)}`;
 }
 
 // Linha de um ativo da Trading 212 (ação).
@@ -6693,49 +6653,6 @@ function dcaSourceLabel(sources) {
 }
 
 // Detalhe (expandido) de uma moeda — construído a pedido.
-function dcaDetailHtml(h) {
-  const coin = h.coin, qty = h.qty, price = h.price, hasPx = price != null;
-  const cb = dcaCost(coin, qty);
-  const t = dcaTargets[coin] || {};
-  const invested = cb ? cb.invested : null;
-  const curVal = hasPx ? h.usd : null;
-  const pnl = (cb && hasPx) ? (price - cb.avg) * qty : null;
-  const pnlPct = (cb && hasPx && cb.avg > 0) ? (price / cb.avg - 1) * 100 : null;
-  const incomeUsd = hasPx ? h.income * price : 0;
-  const yieldUsd = hasPx ? h.claimable * price : 0;
-  const annual = (hasPx && h.apr > 0) ? h.usd * h.apr / 100 : 0;
-
-  const buyRes = dcaBuyResHtml(coin, price, t.buy);
-  const sellRes = dcaSellResHtml(coin, qty, cb, t.sell);
-
-  return `<div class="dca-detail" id="dca-det-${coin}">
-    <div class="dca-metrics">
-      <div class="dca-m"><div class="dca-m-lbl">APR estimada</div><div class="dca-m-val" style="color:var(--green)">${h.apr > 0 ? fmt(h.apr, 2) + '%' : '—'}</div></div>
-      <div class="dca-m"><div class="dca-m-lbl">Income / ano est.</div><div class="dca-m-val">${annual > 0 ? fmtUsd(annual, 0) : '—'}</div></div>
-      <div class="dca-m"><div class="dca-m-lbl">Yield p/ reclamar</div><div class="dca-m-val">${yieldUsd > 0 ? fmtUsd(yieldUsd, 2) : (h.claimable ? fmt(h.claimable, 4) : '0')}</div></div>
-      <div class="dca-m"><div class="dca-m-lbl">Custo médio</div><div class="dca-m-val">${cb ? dcaPx(cb.avg) : '—'}</div></div>
-      <div class="dca-m"><div class="dca-m-lbl">Investido</div><div class="dca-m-val">${invested != null ? fmtUsd(invested, 0) : '—'}</div></div>
-      <div class="dca-m"><div class="dca-m-lbl">Valor atual</div><div class="dca-m-val">${curVal != null ? fmtUsd(curVal, 0) : '—'}</div></div>
-      <div class="dca-m"><div class="dca-m-lbl">PnL</div><div class="dca-m-val" style="color:${pnl == null ? 'var(--faint)' : pnl >= 0 ? 'var(--green)' : 'var(--red)'}">${pnl == null ? '—' : (pnl >= 0 ? '+' : '') + fmtUsd(pnl, 0)}</div></div>
-      <div class="dca-m"><div class="dca-m-lbl">PnL %</div><div class="dca-m-val" style="color:${pnlPct == null ? 'var(--faint)' : pnlPct >= 0 ? 'var(--green)' : 'var(--red)'}">${pnlPct == null ? '—' : (pnlPct >= 0 ? '+' : '') + fmt(pnlPct, 1) + '%'}</div></div>
-      <div class="dca-m"><div class="dca-m-lbl">Income total</div><div class="dca-m-val">${incomeUsd > 0 ? fmtUsd(incomeUsd, 2) : (h.income ? fmt(h.income, 4) : '0')}</div></div>
-    </div>
-    <div class="dca-inputs">
-      <div class="dca-in-group">
-        <div class="dca-in-lbl">Zona de compra</div>
-        <div class="dca-in-row"><span class="pfx">$</span><input type="number" inputmode="decimal" step="any" min="0" placeholder="alvo" value="${t.buy != null ? t.buy : ''}" oninput="onDcaTarget('${coin}','buy',this.value)"></div>
-        <div class="dca-in-res" id="dca-buy-${coin}">${buyRes}</div>
-      </div>
-      <div class="dca-in-group">
-        <div class="dca-in-lbl">Cenário de venda</div>
-        <div class="dca-in-row"><span class="pfx">$</span><input type="number" inputmode="decimal" step="any" min="0" placeholder="preço" value="${t.sell != null ? t.sell : ''}" oninput="onDcaTarget('${coin}','sell',this.value)"></div>
-        <div class="dca-in-res" id="dca-sell-${coin}">${sellRes}</div>
-      </div>
-    </div>
-    ${cb ? `<div class="dca-note" style="margin:8px 2px 0">Custo médio ${cb.source === 'spot' ? 'via ordens spot da Bybit' : 'via depósitos manuais'}.</div>` : `<div class="dca-note" style="margin:8px 2px 0">Sem base de custo — regista as compras no modo Real para veres o PnL real.</div>`}
-  </div>`;
-}
-
 function dcaBuyResHtml(coin, price, buy) {
   if (!(buy > 0) || !(price > 0)) return '';
   const diff = (price - buy) / buy * 100;
@@ -6755,185 +6672,67 @@ function dcaSellResHtml(coin, qty, cb, sell) {
   return `<span style="color:var(--dim)">${fmtUsd(proceeds, 0)} de saída</span>`;
 }
 
-async function renderDcaTab() {
-  const list = document.getElementById('dca-list');
-  const note = document.getElementById('dca-note');
-  if (!list) return;
-
-  await loadEarnData();
-  const d = earnRaw;
-  const diagBad = Array.isArray(d?._diag) && d._diag.some(x => x && x.retCode != null && x.retCode !== 0);
-  const items = earnList();
-
-  if (!items.length) {
-    list.innerHTML = `<div class="dca-empty">${!d ? 'Erro a contactar o servidor. Recarrega.' : diagBad
-      ? 'A Bybit respondeu mas sem staking legível. Confirma a permissão <b>Earn</b> na API key da conta <b>master</b>.'
-      : 'Sem fundos em staking (Bybit Earn) neste momento.'}</div>`;
-    if (note) note.innerHTML = '';
-    ['dca-total', 'dca-invested', 'dca-pnl', 'dca-apr', 'dca-yield'].forEach(id => set(id, '—'));
-    return;
-  }
-
-  if ((manualDeposits || []).some(e => e.currency === 'EUR') && cyRate == null) { try { await cyFetchRate(); } catch (e) {} }
-
-  let totVal = 0, totInvested = 0, totPnl = 0, totAnnual = 0, aprW = 0, missingCB = 0;
-
-  const rows = items.sort((a, b) => b.usd - a.usd).map(h => {
-    const coin = h.coin, qty = h.qty, price = h.price, hasPx = price != null;
-    if (hasPx) { totVal += h.usd; totAnnual += h.usd * (h.apr || 0) / 100; aprW += h.usd * (h.apr || 0); }
-    const cb = dcaCost(coin, qty);
-    if (cb) { totInvested += cb.avg * qty; if (hasPx) totPnl += (price - cb.avg) * qty; }
-    else missingCB++;
-
-    let pnlPct = null;
-    if (cb && hasPx && cb.avg > 0) pnlPct = (price / cb.avg - 1) * 100;
-    const pnlCol = pnlPct == null ? 'var(--faint)' : pnlPct >= 0 ? 'var(--green)' : 'var(--red)';
-    const qStr = qty < 1 ? fmt(qty, 4) : fmt(qty, qty < 1000 ? 2 : 0);
-
-    return `<div class="dca-row" id="dca-row-${coin}" onclick="dcaToggle('${coin}')">
-        <div class="dca-left">
-          ${dcaAvatar(coin)}
-          <div>
-            <div class="dca-sym">${coin} <span class="dca-qty">${qStr}</span></div>
-            <div class="dca-sub">${dcaSourceLabel(h.sources)}</div>
-          </div>
-        </div>
-        <div class="dca-right">
-          <div class="dca-apr">${h.apr > 0 ? fmt(h.apr, 1) + '%' : ''}</div>
-          <div class="dca-val">
-            <div class="dca-val-usd">${hasPx ? fmtUsd(h.usd, 0) : '—'}</div>
-            <div class="dca-val-pnl" style="color:${pnlCol}">${pnlPct == null ? '' : (pnlPct >= 0 ? '+' : '') + fmt(pnlPct, 1) + '%'}</div>
-          </div>
-          <svg class="dca-chev" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4.5 2.5 8 6l-3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </div>
-      </div>
-      ${dcaDetailHtml(h).replace('<div class="dca-detail"', '<div class="dca-detail" hidden')}`;
-  }).join('');
-
-  list.innerHTML = rows;
-
-  set('dca-total', '$' + fmt(totVal, 2));
-  set('dca-invested', totInvested > 0 ? fmtUsd(totInvested, 0) : '—');
-  const pnlEl = document.getElementById('dca-pnl');
-  if (pnlEl) {
-    if (totInvested > 0) {
-      const pct = (totPnl / totInvested) * 100;
-      pnlEl.textContent = (totPnl >= 0 ? '+' : '') + fmtUsd(totPnl, 0) + ' (' + (totPnl >= 0 ? '+' : '') + fmt(pct, 1) + '%)';
-      pnlEl.style.color = totPnl >= 0 ? 'var(--green)' : 'var(--red)';
-    } else { pnlEl.textContent = '—'; pnlEl.style.color = 'var(--dim)'; }
-  }
-  set('dca-apr', totVal > 0 && aprW > 0 ? fmt(aprW / totVal, 2) + '%' : '—');
-  set('dca-yield', totAnnual > 0 ? fmtUsd(totAnnual, 0) : '—');
-
-  if (note) {
-    note.innerHTML = `Toca numa moeda para ver detalhe, custo médio, income e cenários. `
-      + (missingCB > 0 ? `${missingCB} moeda(s) sem base de custo (sem ordens spot nem depósitos) — regista no modo Real. ` : '')
-      + `A Bybit não expõe o histórico de recompensas, por isso "income" é o acumulado que ela reporta na posição.`;
-  }
-}
-
-// Expande/colapsa o detalhe de uma moeda.
-function dcaToggle(coin) {
-  const row = document.getElementById(`dca-row-${coin}`);
-  const det = document.getElementById(`dca-det-${coin}`);
-  if (!row || !det) return;
-  const open = det.hidden;
-  det.hidden = !open;
-  row.classList.toggle('open', open);
-}
-
-function onDcaTarget(coin, kind, val) {
-  const num = parseFloat((val || '').replace(',', '.'));
-  const t = dcaTargets[coin] || (dcaTargets[coin] = {});
-  if (val === '' || isNaN(num) || num <= 0) delete t[kind];
-  else t[kind] = num;
-  if (t.buy == null && t.sell == null) delete dcaTargets[coin];
-  saveDcaTargets();
-
-  const h = earnList().find(x => x.coin === coin);
-  const qty = h ? h.qty : 0;
-  const price = h ? h.price : null;
-  const cb = dcaCost(coin, qty);
-  const cur = dcaTargets[coin] || {};
-
-  if (kind === 'buy') {
-    const el = document.getElementById(`dca-buy-${coin}`);
-    if (el) el.innerHTML = dcaBuyResHtml(coin, price, cur.buy);
-  } else {
-    const el = document.getElementById(`dca-sell-${coin}`);
-    if (el) el.innerHTML = dcaSellResHtml(coin, qty, cb, cur.sell);
-  }
-}
-
-// ── MODAL de detalhe de moeda (home) ──────────────────────────────────────────
-// Ao clicar numa moeda do home abre este popup com preço médio, PnL, 24h e, se
-// estiver em staking (Earn), APR/income/yield + zonas de compra/venda. Partilha
-// dcaTargets e os helpers da tab DCA.
+// ── DROP-DOWN de detalhe de moeda no home ─────────────────────────────────────
+// Clicar numa moeda expande um painel inline por baixo da linha, com preço médio,
+// PnL, 24h e — se em Bybit Earn — APR/income/yield + zonas de compra/venda.
+// dbDetailCoin guarda a linha aberta entre re-renders. Partilha dcaTargets.
+let dbDetailCoin = null;
 function coinInEarn(coin) { return earnList().find(x => x.coin === coin) || null; }
 
-function openCoinModal(coin) {
+function toggleCoinDetail(coin) {
+  dbDetailCoin = (dbDetailCoin === coin) ? null : coin;
+  renderDbAssets();
+}
+
+// Painel de detalhe (drop-down) de uma moeda do home. '' se não for a linha aberta.
+function coinDetailHtml(coin) {
+  if (dbDetailCoin !== coin) return '';
   const c = (walletData?.coin || []).find(x => x.coin === coin);
-  if (!c) return;
+  if (!c) return '';
   const qty = parseFloat(c.walletBalance || 0), usd = parseFloat(c.usdValue || 0);
   const price = qty > 0 ? usd / qty : 0;
   const cb = dcaCost(coin, qty);
   const h = coinInEarn(coin);
   const earnQty = parseFloat(c._earnQty) || 0;
-  const cc = COIN_COLORS[coin] || '#7b7fa0';
   const pnl = (cb && price > 0) ? (price - cb.avg) * qty : null;
   const pnlPct = (cb && price > 0 && cb.avg > 0) ? (price / cb.avg - 1) * 100 : null;
   const pcnt = spot24h[coin] != null ? spot24h[coin] : perp24h[coin];
   const chg24 = (pcnt != null && isFinite(pcnt)) ? pcnt * 100 : null;
   const t = dcaTargets[coin] || {};
   const canIsolate = usd >= 1 && !PF_STABLE.has(coin);
+  const m = (l, v, col) => `<div class="db-cd-m"><div class="db-cd-l">${l}</div><div class="db-cd-v"${col ? ` style="color:${col}"` : ''}>${v}</div></div>`;
 
-  const stakeBlock = h ? `
-    <div class="cm-sec">Staking · Earn</div>
-    <div class="cm-metrics">
-      <div class="cm-m"><div class="cm-l">APR estimada</div><div class="cm-v" style="color:var(--green)">${h.apr > 0 ? fmt(h.apr, 2) + '%' : '—'}</div></div>
-      <div class="cm-m"><div class="cm-l">Income / ano est.</div><div class="cm-v">${h.apr > 0 && price > 0 ? fmtUsd((h.usd || usd) * h.apr / 100, 0) : '—'}</div></div>
-      <div class="cm-m"><div class="cm-l">Yield p/ reclamar</div><div class="cm-v">${h.claimable > 0 ? (price > 0 ? fmtUsd(h.claimable * price, 2) : fmt(h.claimable, 4)) : '0'}</div></div>
-      <div class="cm-m"><div class="cm-l">Em staking</div><div class="cm-v">${fmt(earnQty, earnQty < 1 ? 4 : 2)}</div></div>
-      <div class="cm-m"><div class="cm-l">Income total</div><div class="cm-v">${h.income > 0 ? (price > 0 ? fmtUsd(h.income * price, 2) : fmt(h.income, 4)) : '0'}</div></div>
-      <div class="cm-m"><div class="cm-l">Fontes</div><div class="cm-v" style="font-size:11px">${dcaSourceLabel(h.sources) || '—'}</div></div>
+  const stake = h ? `
+    <div class="db-cd-sec">Staking · Earn</div>
+    <div class="db-cd-metrics">
+      ${m('APR estimada', h.apr > 0 ? fmt(h.apr, 2) + '%' : '—', 'var(--green)')}
+      ${m('Income / ano est.', (h.apr > 0 && price > 0) ? fmtUsd(usd * h.apr / 100, 0) : '—')}
+      ${m('Yield p/ reclamar', h.claimable > 0 ? (price > 0 ? fmtUsd(h.claimable * price, 2) : fmt(h.claimable, 4)) : '0')}
+      ${m('Em staking', fmt(earnQty, earnQty < 1 ? 4 : 2))}
+      ${m('Income total', h.income > 0 ? (price > 0 ? fmtUsd(h.income * price, 2) : fmt(h.income, 4)) : '0')}
+      ${m('Fontes', dcaSourceLabel(h.sources) || '—')}
     </div>` : '';
 
-  document.getElementById('coin-modal-body').innerHTML = `
-    <div class="cm-head">
-      <div class="cm-coin">${assetAvatarHtml(coin, cc, false)}<div><div class="cm-sym">${coin}${h ? '<span class="db-earn-badge">EARN</span>' : ''}</div><div class="cm-qty">${fmt(qty, qty < 1 ? 6 : 2)} · ${fmtUsd(usd, 2)}</div></div></div>
-      <button class="cm-x" onclick="closeCoinModal()" aria-label="Fechar">✕</button>
+  return `<div class="db-coin-detail">
+    <div class="db-cd-metrics">
+      ${m('Preço', price > 0 ? dcaPx(price) : '—')}
+      ${m('Custo médio', cb ? dcaPx(cb.avg) : '—')}
+      ${m('24h', chg24 == null ? '—' : (chg24 >= 0 ? '+' : '') + fmt(chg24, 2) + '%', chg24 == null ? '' : chg24 >= 0 ? 'var(--green)' : 'var(--red)')}
+      ${m('Investido', cb ? fmtUsd(cb.invested, 0) : '—')}
+      ${m('PnL', pnl == null ? '—' : (pnl >= 0 ? '+' : '') + fmtUsd(pnl, 0), pnl == null ? '' : pnl >= 0 ? 'var(--green)' : 'var(--red)')}
+      ${m('PnL %', pnlPct == null ? '—' : (pnlPct >= 0 ? '+' : '') + fmt(pnlPct, 1) + '%', pnlPct == null ? '' : pnlPct >= 0 ? 'var(--green)' : 'var(--red)')}
     </div>
-    <div class="cm-metrics">
-      <div class="cm-m"><div class="cm-l">Preço</div><div class="cm-v">${price > 0 ? dcaPx(price) : '—'}</div></div>
-      <div class="cm-m"><div class="cm-l">Custo médio</div><div class="cm-v">${cb ? dcaPx(cb.avg) : '—'}</div></div>
-      <div class="cm-m"><div class="cm-l">24h</div><div class="cm-v" style="color:${chg24 == null ? 'var(--faint)' : chg24 >= 0 ? 'var(--green)' : 'var(--red)'}">${chg24 == null ? '—' : (chg24 >= 0 ? '+' : '') + fmt(chg24, 2) + '%'}</div></div>
-      <div class="cm-m"><div class="cm-l">Investido</div><div class="cm-v">${cb ? fmtUsd(cb.invested, 0) : '—'}</div></div>
-      <div class="cm-m"><div class="cm-l">PnL</div><div class="cm-v" style="color:${pnl == null ? 'var(--faint)' : pnl >= 0 ? 'var(--green)' : 'var(--red)'}">${pnl == null ? '—' : (pnl >= 0 ? '+' : '') + fmtUsd(pnl, 0)}</div></div>
-      <div class="cm-m"><div class="cm-l">PnL %</div><div class="cm-v" style="color:${pnlPct == null ? 'var(--faint)' : pnlPct >= 0 ? 'var(--green)' : 'var(--red)'}">${pnlPct == null ? '—' : (pnlPct >= 0 ? '+' : '') + fmt(pnlPct, 1) + '%'}</div></div>
+    ${stake}
+    <div class="db-cd-inputs">
+      <div class="db-cd-in"><div class="db-cd-l">Zona de compra</div><div class="db-cd-in-row"><span>$</span><input type="number" inputmode="decimal" step="any" min="0" placeholder="alvo" value="${t.buy != null ? t.buy : ''}" oninput="onCoinDetailTarget('${coin}','buy',this.value)"></div><div class="db-cd-res" id="cd-buy-${coin}">${dcaBuyResHtml(coin, price, t.buy)}</div></div>
+      <div class="db-cd-in"><div class="db-cd-l">Cenário de venda</div><div class="db-cd-in-row"><span>$</span><input type="number" inputmode="decimal" step="any" min="0" placeholder="preço" value="${t.sell != null ? t.sell : ''}" oninput="onCoinDetailTarget('${coin}','sell',this.value)"></div><div class="db-cd-res" id="cd-sell-${coin}">${dcaSellResHtml(coin, qty, cb, t.sell)}</div></div>
     </div>
-    ${stakeBlock}
-    <div class="cm-inputs">
-      <div class="cm-in"><div class="cm-l">Zona de compra</div><div class="cm-in-row"><span>$</span><input type="number" inputmode="decimal" step="any" min="0" placeholder="alvo" value="${t.buy != null ? t.buy : ''}" oninput="onCoinModalTarget('${coin}','buy',this.value)"></div><div class="cm-res" id="cm-buy-${coin}">${dcaBuyResHtml(coin, price, t.buy)}</div></div>
-      <div class="cm-in"><div class="cm-l">Cenário de venda</div><div class="cm-in-row"><span>$</span><input type="number" inputmode="decimal" step="any" min="0" placeholder="preço" value="${t.sell != null ? t.sell : ''}" oninput="onCoinModalTarget('${coin}','sell',this.value)"></div><div class="cm-res" id="cm-sell-${coin}">${dcaSellResHtml(coin, qty, cb, t.sell)}</div></div>
-    </div>
-    ${cb ? `<div class="cm-sub">Custo médio ${cb.source === 'spot' ? 'via ordens spot' : 'via depósitos manuais'}.</div>` : `<div class="cm-sub">Sem base de custo — regista as compras no modo Real para o PnL real.</div>`}
-    <div class="cm-actions">
-      ${canIsolate ? `<button class="cm-btn" onclick="closeCoinModal();toggleAssetIsolate('${coin}')">${pfIsolate === coin ? 'Ver portefólio' : 'Isolar no gráfico'}</button>` : ''}
-      <button class="cm-btn cm-btn-sec" onclick="closeCoinModal()">Fechar</button>
-    </div>`;
-
-  const bd = document.getElementById('coin-modal-backdrop'), md = document.getElementById('coin-modal');
-  if (bd) bd.classList.add('open');
-  if (md) { md.classList.add('open'); md.setAttribute('aria-hidden', 'false'); }
+    ${cb ? `<div class="db-cd-sub">Custo médio ${cb.source === 'spot' ? 'via ordens spot' : 'via depósitos manuais'}.</div>` : `<div class="db-cd-sub">Sem base de custo — regista as compras no modo Real para o PnL real.</div>`}
+    ${canIsolate ? `<button class="db-cd-btn" onclick="toggleAssetIsolate('${coin}')">${pfIsolate === coin ? 'Ver portefólio' : 'Isolar no gráfico'}</button>` : ''}
+  </div>`;
 }
 
-function closeCoinModal() {
-  const bd = document.getElementById('coin-modal-backdrop'), md = document.getElementById('coin-modal');
-  if (bd) bd.classList.remove('open');
-  if (md) { md.classList.remove('open'); md.setAttribute('aria-hidden', 'true'); }
-}
-
-function onCoinModalTarget(coin, kind, val) {
+function onCoinDetailTarget(coin, kind, val) {
   const num = parseFloat((val || '').replace(',', '.'));
   const t = dcaTargets[coin] || (dcaTargets[coin] = {});
   if (val === '' || isNaN(num) || num <= 0) delete t[kind];
@@ -6945,10 +6744,9 @@ function onCoinModalTarget(coin, kind, val) {
   const price = qty > 0 ? parseFloat(c.usdValue || 0) / qty : 0;
   const cb = dcaCost(coin, qty);
   const cur = dcaTargets[coin] || {};
-  if (kind === 'buy') { const el = document.getElementById(`cm-buy-${coin}`); if (el) el.innerHTML = dcaBuyResHtml(coin, price, cur.buy); }
-  else { const el = document.getElementById(`cm-sell-${coin}`); if (el) el.innerHTML = dcaSellResHtml(coin, qty, cb, cur.sell); }
+  if (kind === 'buy') { const el = document.getElementById(`cd-buy-${coin}`); if (el) el.innerHTML = dcaBuyResHtml(coin, price, cur.buy); }
+  else { const el = document.getElementById(`cd-sell-${coin}`); if (el) el.innerHTML = dcaSellResHtml(coin, qty, cb, cur.sell); }
 }
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { const m = document.getElementById('coin-modal'); if (m && m.classList.contains('open')) closeCoinModal(); } });
 
 function exitRowHtml(it) {
   const sym  = it.sym;
