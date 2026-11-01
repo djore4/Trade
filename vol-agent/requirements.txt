@@ -1,0 +1,6 @@
+polars
+numpy
+pyarrow
+requests
+pybit
+python-dotenv
