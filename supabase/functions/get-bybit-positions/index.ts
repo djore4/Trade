@@ -24,7 +24,7 @@ async function hmacSign(message: string, secret: string): Promise<string> {
 // lista vazia). Por isso consultamos as lineares por moeda de liquidacao (USDT,
 // USDC) e as inversas por settleCoin (a moeda-base: BTC p/ BTCUSD, APT p/ APTUSD,
 // etc.). queryString tem de estar por ordem alfabetica para bater com a assinatura.
-async function fetchPositions(queryString: string, apiKey: string, apiSecret: string) {
+async function fetchPositions(queryString: string, apiKey: string, apiSecret: string, strict = false) {
   const timestamp = Date.now().toString();
   const recvWindow = '5000';
   const signStr = `${timestamp}${apiKey}${recvWindow}${queryString}`;
@@ -42,6 +42,9 @@ async function fetchPositions(queryString: string, apiKey: string, apiSecret: st
     }
   );
   const data = await response.json();
+  // Antes, um erro da Bybit (ex.: key expirada, 33004) virava lista vazia = "sem posicoes".
+  // Nas consultas lineares (as que interessam) o erro e propagado.
+  if (strict && data?.retCode !== 0) throw new Error(`Bybit ${data?.retCode}: ${data?.retMsg}`);
   return data?.result?.list ?? [];
 }
 
@@ -96,8 +99,8 @@ Deno.serve(async (req: Request) => {
 
     // Ordem alfabetica: category vem antes de settleCoin.
     const [linearUsdt, linearUsdc, inverseList] = await Promise.all([
-      fetchPositions('category=linear&settleCoin=USDT', apiKey, apiSecret),
-      fetchPositions('category=linear&settleCoin=USDC', apiKey, apiSecret),
+      fetchPositions('category=linear&settleCoin=USDT', apiKey, apiSecret, true),
+      fetchPositions('category=linear&settleCoin=USDC', apiKey, apiSecret, true),
       fetchInverse(apiKey, apiSecret),
     ]);
 
