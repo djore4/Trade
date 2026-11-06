@@ -45,7 +45,8 @@ button:active{transform:scale(.96)}
 .wordmark{font-size:27px;line-height:1;letter-spacing:-.035em;white-space:nowrap}
 .wordmark .a{font-weight:300} .wordmark .b{font-weight:800}
 .tagline{margin-top:5px;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut)}
-@media (max-width:380px){.wordmark{font-size:22px}.logo{width:38px;height:38px}}
+@media (max-width:440px){.wordmark{font-size:21px}.logo{width:38px;height:38px;border-radius:11px}.tagline{font-size:9.5px;letter-spacing:.12em}.iconbtn{width:34px;height:34px}.ctrl{gap:6px}.brand{gap:10px}}
+@media (max-width:340px){.wordmark{font-size:17px}.logo{width:30px;height:30px}.logo svg{width:18px;height:18px}.tagline{display:none}.iconbtn{width:32px;height:32px}.ctrl{gap:5px}.brand{gap:8px}body{padding-left:12px;padding-right:12px}}
 .ctrl{display:flex;align-items:center;gap:8px;flex:none}
 .iconbtn{width:36px;height:36px;border-radius:11px;border:1px solid var(--line);background:var(--card);display:grid;place-items:center}
 .iconbtn:hover{border-color:var(--mut)}
@@ -59,6 +60,19 @@ button:active{transform:scale(.96)}
 .mi{padding:10px 0;border-bottom:1px solid var(--line)} .mi:last-child{border-bottom:0;padding-bottom:0} .mi:first-child{padding-top:0}
 .mi .seg{display:flex;margin-top:8px} .mi .seg button{flex:1}
 @keyframes pop{from{opacity:0;transform:scale(.96) translateY(-4px)}to{opacity:1;transform:none}}
+.bellwrap{position:relative;display:inline-block}
+.badge-n{position:absolute;top:-5px;right:-5px;min-width:17px;height:17px;padding:0 4px;border-radius:99px;background:var(--red);color:#fff;font-size:10.5px;font-weight:800;display:grid;place-items:center;border:2px solid var(--bg);pointer-events:none}
+.badge-n.amber{background:var(--amber)} .badge-n.info{background:var(--blue)} .badge-n[hidden]{display:none}
+.iconbtn.ring svg{animation:ring .9s ease;transform-origin:50% 10%}
+@keyframes ring{0%,100%{transform:rotate(0)}20%{transform:rotate(16deg)}40%{transform:rotate(-13deg)}60%{transform:rotate(9deg)}80%{transform:rotate(-5deg)}}
+.menu.wide{width:min(390px,calc(100vw - 32px))}
+.nhead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px}
+.nlist{max-height:min(62vh,440px);overflow:auto;margin:0 -4px;padding:0 4px}
+.ngroup{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--mut);margin:12px 0 2px}
+.nitem{display:grid;grid-template-columns:20px 1fr 28px;gap:8px;align-items:start;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px;line-height:1.4}
+.nitem:last-child{border-bottom:0}
+.nitem .ic{font-size:14px;line-height:1.4;text-align:center}
+.nitem.red .ic{color:var(--red)} .nitem.amber .ic{color:var(--amber)} .nitem.info .ic{color:var(--blue)}
 .status{display:flex;gap:12px;color:var(--mut);font-size:11.5px;margin:-6px 0 14px;flex-wrap:wrap;align-items:center}
 .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;background:var(--mut)}
 .dot.ok{background:var(--green)} .dot.bad{background:var(--red)}
@@ -225,15 +239,18 @@ input.px{width:100%;background:var(--card2);color:var(--text);border:1px solid v
       <button class="iconbtn" id="refresh" title="Atualizar agora" aria-label="Atualizar">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg>
       </button>
+      <span class="bellwrap"><button class="iconbtn" id="bellBtn" title="Notificações" aria-label="Notificações" aria-expanded="false">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></button><span class="badge-n" id="bellBadge" hidden></span></span>
       <button class="iconbtn" id="menuBtn" title="Definições" aria-label="Definições" aria-expanded="false">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
       </button>
     </div>
+    <div class="menu wide" id="notifPanel" hidden role="dialog" aria-label="Notificações"></div>
     <div class="menu" id="menu" hidden role="dialog" aria-label="Definições">
       <div class="mi"><div class="lbl">Aparência</div>
         <div class="seg" id="themeSeg"><button data-th="dark">🌙 Noite</button><button data-th="light">☀️ Dia</button><button data-th="system">Sistema</button></div></div>
       <div class="mi"><div class="lbl">Moeda de apresentação</div>
-        <div class="seg" id="baseSeg"><button data-b="EUR">EUR €</button><button data-b="USD">USD $</button><button data-b="GBP">GBP £</button></div></div>
+        <div class="seg" id="baseSeg"><button data-b="EUR">EUR €</button><button data-b="USD">USD $</button><button data-b="BTC">BTC ₿</button></div></div>
       <div class="mi"><div class="lbl">Aplicação</div>
         <button class="btn" id="installBtn" style="width:100%;margin-top:8px">⬇ Descarregar app</button>
         <div class="mut" id="installNote" style="font-size:12px;margin-top:8px;line-height:1.5"></div></div>
@@ -243,7 +260,6 @@ input.px{width:100%;background:var(--card2);color:var(--text);border:1px solid v
 
   <!-- ══ PORTEFÓLIO ══ -->
   <main class="view" id="v-portfolio">
-    <div id="alerts"></div>
     <div class="pgrid">
       <section class="card" id="hero"></section>
       <section class="card" id="alloc"></section>
@@ -277,7 +293,7 @@ input.px{width:100%;background:var(--card2);color:var(--text);border:1px solid v
       </div>
       <div class="card" style="margin:0"><h2>Simular saída por ativo</h2><div id="wiRows"></div></div>
     </div>
-    <div class="foot">Simulação linear com os preços atuais. Futuros: perda limitada à margem se o preço tocar na liquidação. Não inclui comissões, funding, spreads nem impostos.</div>
+    <div class="foot">Simulação linear com os preços atuais (os cenários guardam-se em % face ao preço de hoje). Futuros: perda limitada à margem se o preço tocar na liquidação. Não inclui comissões, funding, spreads nem impostos.</div>
   </main>
 
   <!-- ══ ASSISTENTE IA ══ -->
@@ -319,8 +335,10 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 const cls = v => v > 0.005 ? 'pos' : v < -0.005 ? 'neg' : '';
 const fmt = (v, d = 2) => v.toLocaleString('pt-PT', { minimumFractionDigits: d, maximumFractionDigits: d });
 let base = store.get('base', 'EUR');
+if (!['EUR', 'USD', 'BTC'].includes(base)) base = 'EUR';   // GBP foi substituída por BTC
 function money(v, c = base, d = 2) {
   if (v == null || !isFinite(v)) return '—';
+  if (c === 'BTC') return (v < 0 ? '−' : '') + '₿' + fmt(Math.abs(v), Math.abs(v) >= 1 ? 4 : 6);
   const cur = c === 'USDT' ? 'USD' : c;
   try { return new Intl.NumberFormat('pt-PT', { style: 'currency', currency: cur, minimumFractionDigits: d, maximumFractionDigits: d }).format(v); }
   catch (e) { return fmt(v, d) + ' ' + c; }
@@ -336,11 +354,16 @@ function ago(ts) {
   const h = Math.round(m / 60); if (h < 24) return `há ${h} h`;
   return `há ${Math.round(h / 24)} d`;
 }
-async function call(name, opts) {
-  const r = await fetch(`${API}/${name}`, { headers: HDR, ...opts });
-  const d = await r.json().catch(() => ({}));
-  if (!r.ok || d.error) throw new Error(d.error || `HTTP ${r.status}`);
-  return d;
+async function call(name, opts = {}) {
+  const { timeout = 25000, ...o } = opts;
+  const ctrl = new AbortController(), to = setTimeout(() => ctrl.abort(), timeout);
+  try {
+    const r = await fetch(`${API}/${name}`, { headers: HDR, signal: ctrl.signal, ...o });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || d.error) throw new Error(d.error || `HTTP ${r.status}`);
+    return d;
+  } catch (e) { throw e.name === 'AbortError' ? new Error('demorou demasiado') : e; }
+  finally { clearTimeout(to); }
 }
 // Anima um número até ao novo valor (dinamismo no valor total).
 function tween(el, from, to, render, ms = 650) {
@@ -356,8 +379,8 @@ function tween(el, from, to, render, ms = 650) {
 
 /* ── estado ──────────────────────────────────────────────────────────────── */
 const st = { bbPos: null, bbWal: null, t212: null, acct: null, instr: {}, acctErr: null,
-  err: { bb: null, t: null, fx: null }, at: { bb: 0, t: 0, fx: 0, w: 0 }, loading: false };
-const fx = { eurusd: null, eurgbp: null };
+  err: { bb: null, t: null, fx: null }, at: { bb: 0, t: 0, fx: 0, w: 0 }, loading: false, tStale: false, tLocal: false, tReq: 0 };
+const fx = Object.assign({ eurusd: null, eurgbp: null, btcusd: null }, store.get('fxcache', {}));   // última taxa conhecida: a app abre já convertida
 
 /* ── FX (Yahoo via edge function; fallback BCE/frankfurter) ──────────────── */
 function toEur(c) {
@@ -365,6 +388,7 @@ function toEur(c) {
   if (c === 'EUR') return 1;
   if (c === 'USD' || c === 'USDT' || c === 'USDC') return fx.eurusd ? 1 / fx.eurusd : null;
   if (c === 'GBP') return fx.eurgbp ? 1 / fx.eurgbp : null;
+  if (c === 'BTC') return fx.btcusd && fx.eurusd ? fx.btcusd / fx.eurusd : null;
   if (c === 'GBX') return fx.eurgbp ? 0.01 / fx.eurgbp : null;
   return null;
 }
@@ -378,9 +402,9 @@ async function lastClose(sym) {
 }
 async function loadFx() {
   try {
-    const [a, b] = await Promise.all([lastClose('EURUSD=X'), lastClose('EURGBP=X')]);
+    const [a, b, c] = await Promise.all([lastClose('EURUSD=X'), lastClose('EURGBP=X'), lastClose('BTC-USD').catch(() => null)]);
     if (!a) throw new Error('sem EURUSD');
-    fx.eurusd = a; if (b) fx.eurgbp = b; st.err.fx = null; st.at.fx = Date.now();
+    fx.eurusd = a; if (b) fx.eurgbp = b; if (c) fx.btcusd = c; st.err.fx = null; st.at.fx = Date.now(); store.set('fxcache', fx);
   } catch (e) {
     try {
       const r = await fetch('https://api.frankfurter.app/latest?from=EUR&to=USD,GBP');
@@ -401,14 +425,29 @@ async function loadBybit() {
     st.bbWal = acc; st.err.bb = null; st.at.bb = Date.now();
   } catch (e) { st.err.bb = e.message; st.bbPos = null; st.bbWal = null; }
 }
-async function loadT212() {
-  try {
-    const d = await call('get-t212-portfolio');
-    if (!Array.isArray(d.positions)) throw new Error('resposta inesperada');
-    st.t212 = d.positions; st.acct = d.account || d.cash || null; st.acctErr = d.accountError || null;
-    if (d.instruments && Object.keys(d.instruments).length) st.instr = { ...st.instr, ...d.instruments };
-    st.err.t = null; st.at.t = Date.now();
-  } catch (e) { st.err.t = e.message; }   // mantém os últimos dados bons
+const T_CACHE = 't212cache';
+function applyT212(d) {
+  st.t212 = d.positions; st.acct = d.account || d.cash || null; st.acctErr = d.accountError || null;
+  if (d.instruments && Object.keys(d.instruments).length) st.instr = { ...st.instr, ...d.instruments };
+  st.tStale = !!d.stale; st.at.t = d.at || Date.now();
+}
+// Mostra logo a última resposta guardada (a app abre instantaneamente) e atualiza em seguida.
+function restoreT212() {
+  const c = store.get(T_CACHE, null);
+  if (c && c.data && Array.isArray(c.data.positions)) { applyT212(c.data); st.tLocal = true; }
+}
+async function loadT212(force) {
+  st.tReq = Date.now();
+  let last = null;
+  for (const wait of [0, 1500, 4000]) {           // até 3 tentativas com recuo
+    if (wait) await new Promise(r => setTimeout(r, wait));
+    try {
+      const d = await call('get-t212-portfolio' + (force ? '?force=1' : ''), { timeout: 15000 });
+      if (!Array.isArray(d.positions)) throw new Error('resposta inesperada');
+      applyT212(d); st.tLocal = false; st.err.t = null; store.set(T_CACHE, { data: d }); return;
+    } catch (e) { last = e; }
+  }
+  st.err.t = last ? last.message : 'erro';        // mantém os últimos dados bons
 }
 
 /* ── modelo unificado (tudo convertido para a moeda base) ────────────────── */
@@ -545,17 +584,17 @@ function risks(M) {
   const out = [];
   M.fut.forEach(f => {
     if (f.liqDist != null) {
-      if (f.liqDist < 15) out.push({ lvl: 'red', t: `${f.symbol}: a só ${fmt(f.liqDist, 1)}% da liquidação (${price(f.liq)}).` });
-      else if (f.liqDist < 25) out.push({ lvl: 'amber', t: `${f.symbol}: ${fmt(f.liqDist, 1)}% de distância à liquidação (${price(f.liq)}) — margem curta.` });
+      if (f.liqDist < 15) out.push({ id: 'liq:' + f.symbol, lvl: 'red', t: `${f.symbol}: a só ${fmt(f.liqDist, 1)}% da liquidação (${price(f.liq)}).` });
+      else if (f.liqDist < 25) out.push({ id: 'liq:' + f.symbol, lvl: 'amber', t: `${f.symbol}: ${fmt(f.liqDist, 1)}% de distância à liquidação (${price(f.liq)}) — margem curta.` });
     }
-    if (!f.sl) out.push({ lvl: 'amber', t: `${f.symbol}: sem stop-loss definido.` });
+    if (!f.sl) out.push({ id: 'sl:' + f.symbol, lvl: 'amber', t: `${f.symbol}: sem stop-loss definido.` });
   });
-  if (M.effLev != null && M.effLev > 3) out.push({ lvl: M.effLev > 5 ? 'red' : 'amber', t: `Alavancagem efetiva ${fmt(M.effLev, 1)}× (nocional ${money(M.notionalUsd, 'USD', 0)} sobre equity ${money(M.b.equityUsd, 'USD', 0)}).` });
+  if (M.effLev != null && M.effLev > 3) out.push({ id: 'lev', lvl: M.effLev > 5 ? 'red' : 'amber', t: `Alavancagem efetiva ${fmt(M.effLev, 1)}× (nocional ${money(M.notionalUsd, 'USD', 0)} sobre equity ${money(M.b.equityUsd, 'USD', 0)}).` });
   if (M.b && M.fut.length && M.fut.reduce((a, f) => a + f.im, 0) >= M.b.walletUsd * 0.98)
-    out.push({ lvl: 'info', t: 'Todo o saldo da Bybit está alocado como margem: não há colateral livre para absorver quedas ou aumentar a margem.' });
+    out.push({ id: 'margin', lvl: 'info', t: 'Todo o saldo da Bybit está alocado como margem: não há colateral livre para absorver quedas ou aumentar a margem.' });
   const top = [...M.holdings].filter(h => h.kind !== 'cash').sort((a, b) => b.value - a.value)[0];
-  if (top && M.value > 0 && top.value / M.value > 0.4) out.push({ lvl: 'amber', t: `Concentração: ${top.label} pesa ${fmt(top.value / M.value * 100, 0)}% do portefólio.` });
-  if (M.fxMissing) out.push({ lvl: 'amber', t: 'Taxa de câmbio indisponível: alguns valores estão excluídos do total.' });
+  if (top && M.value > 0 && top.value / M.value > 0.4) out.push({ id: 'conc', lvl: 'amber', t: `Concentração: ${top.label} pesa ${fmt(top.value / M.value * 100, 0)}% do portefólio.` });
+  if (M.fxMissing && (st.at.fx || st.err.fx)) out.push({ id: 'fxmiss', lvl: 'amber', t: 'Taxa de câmbio indisponível: alguns valores estão excluídos do total.' });
   return out;
 }
 
@@ -563,8 +602,8 @@ function risks(M) {
 let M = null, lastHero = null, firstDraw = true;
 function renderStatus() {
   const chip = (name, ok, err, at) => `<span title="${esc(err || '')}"><i class="dot ${ok ? 'ok' : err ? 'bad' : ''} ${ok && st.loading ? 'live' : ''}"></i>${name}${at ? ' · ' + ago(at) : ''}</span>`;
-  $('status').innerHTML = chip('Bybit', !!st.bbWal, st.err.bb, st.at.bb) + chip('Trading 212', !!st.t212, st.err.t, st.at.t) + chip('Câmbio', !!fx.eurusd, st.err.fx, 0)
-    + (fx.eurusd ? `<span>EUR/USD ${fmt(fx.eurusd, 4)}</span>` : '');
+  $('status').innerHTML = chip('Bybit', !!st.bbWal, st.err.bb, st.at.bb) + chip('Trading 212' + (st.tStale || st.tLocal ? ' (cache)' : ''), !!st.t212, st.err.t, st.at.t) + chip('Câmbio', !!fx.eurusd, st.err.fx, 0)
+    + (fx.eurusd ? `<span>EUR/USD ${fmt(fx.eurusd, 4)}</span>` : '') + (base === 'BTC' && fx.btcusd ? `<span>BTC ${money(fx.btcusd, 'USD', 0)}</span>` : '');
 }
 const SKEL = `<div class="sk" style="height:12px;width:40%"></div><div class="sk" style="height:40px;width:70%;margin:12px 0"></div><div class="sk" style="height:12px;width:55%"></div><div class="sk" style="height:10px;margin-top:20px"></div><div class="sk" style="height:10px;margin-top:10px;width:80%"></div>`;
 
@@ -574,10 +613,6 @@ function renderPortfolio() {
   if (st.err.bb) errs.push(`Bybit: ${esc(st.err.bb)}`);
   if (st.err.t) errs.push(`Trading 212: ${esc(st.err.t)}`);
   if (st.acctErr) errs.push(`T212 (conta): ${/403/.test(st.acctErr) ? 'a key não tem permissão de dados da conta' : esc(st.acctErr)}`);
-  const al = risks(M).sort((a, b) => ({ red: 0, amber: 1, info: 2 }[a.lvl] - { red: 0, amber: 1, info: 2 }[b.lvl]));
-  $('alerts').innerHTML = errs.map(e => `<div class="alert red">⚠ ${e}</div>`).join('')
-    + al.map(a => `<div class="alert ${a.lvl}"><span>${a.lvl === 'info' ? 'ℹ' : '⚠'}</span><span>${esc(a.t)}</span></div>`).join('');
-
   const loadingFirst = !M.holdings.length && !errs.length;
   const mx = Math.max(M.value, M.cost, 1);
   const parts = [];
@@ -592,7 +627,7 @@ function renderPortfolio() {
       <div class="row"><span class="mut">Atual</span><div class="track"><div class="fill" style="width:${M.value / mx * 100}%;background:${M.pnl >= 0 ? 'var(--green)' : 'var(--red)'}"></div></div><b class="num">${money(M.value)}</b></div>
     </div>
     <div class="parts">${parts.join('<span>+</span>')}<span>= <b class="num">${money(M.value)}</b></span></div>
-    ${sparkline()}` : loadingFirst ? SKEL : `<div class="empty">Sem dados — ver erros acima.</div>`;
+    ${sparkline()}` : loadingFirst ? SKEL : `<div class="empty">Sem dados — vê as notificações (🔔).</div>`;
   if (M.holdings.length) { tween($('heroVal'), lastHero, M.value, v => money(v)); lastHero = M.value; }
 
   const slices = allocSlices(M), tot = slices.reduce((a, s) => a + s.value, 0);
@@ -657,7 +692,53 @@ function renderPortfolio() {
   </div>` : '';
   $('risk').hidden = !(M.value > 0);
   if (M.value > 0 && !M.fxMissing) snapshot(M.value);
+  renderNotifs();
 }
+
+/* ── Centro de notificações ──────────────────────────────────────────────── */
+const SEV = { red: 0, amber: 1, info: 2 };
+let dismissed = store.get('notif-dismissed', {});    // id -> nível em que foi dispensada
+let prevNotifIds = null;
+function buildNotifs() {
+  const a = [];
+  if (st.err.bb) a.push({ id: 'err:bb', lvl: 'red', g: 'Ligações', t: `Bybit: ${st.err.bb}` });
+  if (st.err.t) a.push({ id: 'err:t', lvl: st.t212 ? 'amber' : 'red', g: 'Ligações', t: `Trading 212: ${st.err.t}${st.t212 ? ' — a mostrar os últimos dados.' : ''}` });
+  if (st.tStale && !st.tLocal && !st.err.t) a.push({ id: 'stale:t', lvl: 'info', g: 'Ligações', t: `Trading 212 em cache (${ago(st.at.t)}): a T212 limitou os pedidos; atualiza sozinho.` });
+  if (st.acctErr) a.push({ id: 'err:acct', lvl: 'amber', g: 'Ligações', t: `T212 (conta): ${/403/.test(st.acctErr) ? 'a key não tem permissão de dados da conta.' : st.acctErr}` });
+  if (st.err.fx && !fx.eurusd) a.push({ id: 'err:fx', lvl: 'amber', g: 'Ligações', t: 'Câmbio indisponível.' });
+  risks(M).forEach(r => a.push({ ...r, g: 'Risco' }));
+  return a;
+}
+function renderNotifs() {
+  if (!M) return;
+  const all = buildNotifs();
+  let changed = false;
+  // Só limpa dispensas depois de ambas as fontes terem dados reais (no 1.º render ainda não há alertas).
+  if (st.at.bb && st.at.t && !st.tLocal) Object.keys(dismissed).forEach(id => { if (!all.some(x => x.id === id)) { delete dismissed[id]; changed = true; } });   // condição desapareceu: volta a poder avisar
+  if (changed) store.set('notif-dismissed', dismissed);
+  const vis = all.filter(x => !(x.id in dismissed) || SEV[x.lvl] < SEV[dismissed[x.id]]).sort((x, y) => SEV[x.lvl] - SEV[y.lvl]);
+  const nd = all.length - vis.length;
+  const badge = $('bellBadge');
+  badge.hidden = !vis.length; badge.textContent = vis.length;
+  badge.className = 'badge-n' + (vis.some(x => x.lvl === 'red') ? '' : vis.some(x => x.lvl === 'amber') ? ' amber' : ' info');
+  const ids = new Set(vis.map(x => x.id + x.lvl));
+  if (prevNotifIds && [...ids].some(i => !prevNotifIds.has(i))) { $('bellBtn').classList.add('ring'); setTimeout(() => $('bellBtn').classList.remove('ring'), 1000); }
+  prevNotifIds = ids;
+  const groups = ['Ligações', 'Risco'];
+  $('notifPanel').innerHTML = `<div class="nhead"><b>Notificações</b><span>${vis.length ? '<button class="pill" id="nClear" style="padding:4px 10px;font-size:11px">Limpar tudo</button>' : ''}</span></div>
+    <div class="nlist">${vis.length ? groups.map(g => { const it = vis.filter(x => x.g === g); return it.length ? `<div class="ngroup">${g}</div>` + it.map(x => `<div class="nitem ${x.lvl}"><span class="ic">${x.lvl === 'info' ? 'ℹ' : '⚠'}</span><span>${esc(x.t)}</span><button class="x" data-nd="${esc(x.id)}" data-lvl="${x.lvl}" aria-label="Dispensar" title="Dispensar">×</button></div>`).join('') : ''; }).join('')
+      : '<div class="empty">Tudo em ordem ✓<br><span style="font-size:12px">Sem alertas de risco nem erros de ligação.</span></div>'}</div>
+    ${nd ? `<div style="margin-top:8px;text-align:center"><button class="pill" id="nReset" style="padding:4px 10px;font-size:11px">Repor ${nd} dispensada${nd > 1 ? 's' : ''}</button></div>` : ''}`;
+  window.__vis = vis;
+}
+$('notifPanel').addEventListener('click', e => {
+  const d = e.target.closest('[data-nd]');
+  if (d) { dismissed[d.dataset.nd] = d.dataset.lvl; }
+  else if (e.target.closest('#nClear')) { (window.__vis || []).forEach(x => { dismissed[x.id] = x.lvl; }); }
+  else if (e.target.closest('#nReset')) { dismissed = {}; }
+  else return;
+  store.set('notif-dismissed', dismissed); renderNotifs();
+});
 
 /* ── Watchlist ───────────────────────────────────────────────────────────── */
 let watch = store.get('watch', []);           // [símbolo Yahoo]
@@ -748,7 +829,9 @@ function renderNews() {
 }
 
 /* ── What-if ─────────────────────────────────────────────────────────────── */
-const scen = { pct: {}, fx: 0 };
+const scen = Object.assign({ pct: {}, fx: 0 }, store.get('scen', {}));
+const saveScen = () => store.set('scen', { pct: scen.pct, fx: scen.fx });
+const hasScen = () => scen.fx !== 0 || Object.values(scen.pct).some(v => Math.abs(v) > 1e-9);
 function setGroup(g, v) {
   if (g === 'eq') M.holdings.filter(h => h.kind === 't212').forEach(h => { scen.pct[h.id] = v; });
   else M.fut.forEach(f => { scen.pct[f.id] = v; });
@@ -762,7 +845,7 @@ const PRESETS = [
 function fxFactor(ccy) {
   const s = scen.fx / 100;   // variação de EUR/USD
   if (base === 'EUR' && ccy === 'USD') return 1 / (1 + s);
-  if (base === 'USD' && ccy === 'EUR') return 1 + s;
+  if (base !== 'EUR' && ccy === 'EUR') return 1 + s;   // base USD ou BTC: EUR sobe => ativos em EUR valem mais
   return 1;
 }
 function scenario() {
@@ -792,7 +875,8 @@ function renderWhatIfSummary() {
     <div><div class="lbl">Valor no cenário</div><div class="big num" style="font-size:30px">${money(s.total)}</div></div>
     <div style="text-align:right"><div class="num ${cls(d)}" style="font-weight:700">${smoney(d)} · ${pct(M.value ? d / M.value * 100 : 0)}</div><div class="mut" style="font-size:12px">vs hoje (${money(M.value)})</div>
       <div class="num ${cls(vsCost)}" style="font-size:12px">${smoney(vsCost)} vs investido</div></div></div>
-    ${s.liq.length ? `<div class="alert red" style="margin:10px 0 0">⚠ Liquidação em ${s.liq.map(f => esc(f.symbol)).join(', ')}: perdes a margem dessa posição.</div>` : ''}`;
+    ${s.liq.length ? `<div class="alert red" style="margin:10px 0 0">⚠ Liquidação em ${s.liq.map(f => esc(f.symbol)).join(', ')}: perdes a margem dessa posição.</div>` : ''}
+    <div class="mut" style="font-size:11px;margin-top:8px">${hasScen() ? '💾 Cenário guardado neste dispositivo — mantém-se ao reabrir.' : 'Os valores que definires ficam guardados neste dispositivo.'}</div>`;
   M.holdings.filter(h => h.kind === 't212').forEach(h => { const el = $('wv-' + h.id); if (el && s.per[h.id]) { const d2 = s.per[h.id].d; el.innerHTML = `${money(s.per[h.id].nv)} <span class="${cls(d2)}">(${smoney(d2)})</span>`; } });
   M.fut.forEach(f => { const el = $('wf-' + f.id), r = s.per[f.id]; if (el && r) el.innerHTML = r.crossed ? '<span class="neg">LIQUIDADO — perdes a margem</span>' : `PnL vs hoje <span class="${cls(r.dPnl)}">${smoney(r.dPnl, 'USD')}</span>`; });
 }
@@ -814,7 +898,7 @@ function renderWhatIf() {
   renderWhatIfSummary();
 }
 function setPct(id, p, fromInput) {
-  scen.pct[id] = p;
+  scen.pct[id] = p; saveScen();
   const r = document.querySelector(`[data-r="${CSS.escape(id)}"]`), i = document.querySelector(`[data-px="${CSS.escape(id)}"]`), lab = $('wp-' + id);
   if (r) r.value = Math.max(+r.min, Math.min(+r.max, p));
   if (i && !fromInput) i.value = price(+i.dataset.cur * (1 + p / 100)).replace(/\s/g, '');
@@ -878,7 +962,7 @@ function applyTheme(t) {
 matchMedia('(prefers-color-scheme: light)').addEventListener?.('change', () => applyTheme(store.get('theme', 'system')));
 $('themeSeg').onclick = e => { const b = e.target.closest('button'); if (!b) return; store.set('theme', b.dataset.th); applyTheme(b.dataset.th); };
 function setBaseUI() { document.querySelectorAll('#baseSeg button').forEach(b => b.classList.toggle('on', b.dataset.b === base)); }
-$('baseSeg').onclick = e => { const b = e.target.closest('button'); if (!b) return; base = b.dataset.b; store.set('base', base); scen.fx = 0; lastHero = null; setBaseUI(); renderAll(); };
+$('baseSeg').onclick = e => { const b = e.target.closest('button'); if (!b) return; base = b.dataset.b; store.set('base', base); lastHero = null; setBaseUI(); renderAll(); };
 
 let deferredInstall = null;
 const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
@@ -897,10 +981,16 @@ $('installBtn').onclick = async () => {
     ? 'No Safari: toca em <b>Partilhar</b> (⬆) e depois em <b>Adicionar ao ecrã principal</b>.'
     : 'No menu do navegador (⋮ ou ⋯) escolhe <b>Instalar app</b> ou <b>Adicionar ao ecrã principal</b>. Se a opção não aparecer, abre o site no Chrome/Edge/Safari.';
 };
-function toggleMenu(show) { const m = $('menu'); const open = show ?? m.hidden; m.hidden = !open; $('menuBtn').setAttribute('aria-expanded', String(open)); }
-$('menuBtn').onclick = e => { e.stopPropagation(); toggleMenu(); };
-document.addEventListener('click', e => { if (!$('menu').hidden && !$('menu').contains(e.target) && e.target !== $('menuBtn')) toggleMenu(false); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') toggleMenu(false); });
+function closePanels(except) {
+  ['menu', 'notifPanel'].forEach(id => { if (id !== except) $(id).hidden = true; });
+  $('menuBtn').setAttribute('aria-expanded', String(!$('menu').hidden));
+  $('bellBtn').setAttribute('aria-expanded', String(!$('notifPanel').hidden));
+}
+function togglePanel(id) { const opening = $(id).hidden; closePanels(opening ? id : null); $(id).hidden = !opening; closePanels($(id).hidden ? null : id); }
+$('menuBtn').onclick = e => { e.stopPropagation(); togglePanel('menu'); };
+$('bellBtn').onclick = e => { e.stopPropagation(); togglePanel('notifPanel'); };
+document.addEventListener('click', e => { if (!e.target.closest('#menu, #notifPanel, #menuBtn, #bellBtn')) closePanels(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closePanels(); });
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 
 /* ── navegação / eventos ─────────────────────────────────────────────────── */
@@ -918,8 +1008,8 @@ function go(t) {
 $('tabbar').onclick = e => { const b = e.target.closest('button'); if (b) go(b.dataset.t); };
 $('alloc').onclick = e => { const b = e.target.closest('[data-a]'); if (b) { allocBy = b.dataset.a; store.set('allocBy', allocBy); renderPortfolio(); } };
 $('newsSeg').onclick = e => { const b = e.target.closest('button'); if (!b) return; news.tab = b.dataset.n; document.querySelectorAll('#newsSeg button').forEach(x => x.classList.toggle('on', x === b)); renderNews(); };
-$('presets').onclick = e => { const b = e.target.closest('[data-p]'); if (b) { PRESETS[+b.dataset.p][1](); renderWhatIf(); } };
-$('fxShock').oninput = e => { scen.fx = +e.target.value; $('fxShockV').textContent = (scen.fx > 0 ? '+' : '') + scen.fx + '%'; renderWhatIfSummary(); };
+$('presets').onclick = e => { const b = e.target.closest('[data-p]'); if (b) { PRESETS[+b.dataset.p][1](); saveScen(); renderWhatIf(); } };
+$('fxShock').oninput = e => { scen.fx = +e.target.value; saveScen(); $('fxShockV').textContent = (scen.fx > 0 ? '+' : '') + scen.fx + '%'; renderWhatIfSummary(); };
 $('wiRows').addEventListener('input', e => {
   if (e.target.dataset.r) setPct(e.target.dataset.r, +e.target.value, false);
   else if (e.target.dataset.px) { const v = parseFloat(String(e.target.value).replace(',', '.')), cur = +e.target.dataset.cur; if (isFinite(v) && cur > 0 && v >= 0) setPct(e.target.dataset.px, (v / cur - 1) * 100, true); }
@@ -941,14 +1031,14 @@ async function tick(force) {
   if (busy) return; busy = true; st.loading = true; $('refresh').classList.add('spin'); renderStatus();
   try {
     const jobs = [loadBybit()];
-    if (force || Date.now() - st.at.t > 60000) jobs.push(loadT212());
+    if (force || Date.now() - st.tReq > 45000) jobs.push(loadT212(force));
     if (force || !fx.eurusd || Date.now() - st.at.fx > 600000) jobs.push(loadFx());
-    await Promise.all(jobs);
+    await Promise.all(jobs.map(j => j.then(renderAll)));   // cada fonte atualiza a UI assim que responde (a T212 lenta não bloqueia o resto)
     if (Date.now() - st.at.w > 60000 && watch.length) loadWatch();
   } finally { busy = false; st.loading = false; $('refresh').classList.remove('spin'); renderAll(); }
 }
 document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
-applyTheme(store.get('theme', 'system')); setBaseUI(); installUI(); renderChat(); renderWatch(); renderPortfolio();
+applyTheme(store.get('theme', 'system')); setBaseUI(); installUI(); renderChat(); renderWatch(); restoreT212(); renderStatus(); renderPortfolio();
 go((location.hash || '').slice(1));
 tick(true); if (watch.length) loadWatch();
 setInterval(() => { if (!document.hidden) tick(); }, 15000);
