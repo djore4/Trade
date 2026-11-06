@@ -1,18 +1,19 @@
-// Service worker do CryptoScan — recebe Web Push e mostra as notificações de
-// volatilidade, mesmo com a app fechada. Sem cache/offline (mantém-se simples).
+// Service worker do Asset Manager — necessário para a app ser instalável (PWA).
+// Mantém o handler de push (alertas) e não faz cache: os dados são sempre ao vivo.
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
+self.addEventListener('fetch', () => { /* passthrough: sem cache/offline */ });
 
 self.addEventListener('push', (event) => {
   let data = {};
   try { data = event.data ? event.data.json() : {}; }
-  catch (_e) { data = { title: 'CryptoScan', body: event.data ? event.data.text() : '' }; }
-  const title = data.title || 'CryptoScan';
+  catch (_e) { data = { title: 'Asset Manager', body: event.data ? event.data.text() : '' }; }
+  const title = data.title || 'Asset Manager';
   const options = {
     body: data.body || '',
     icon: 'icon-192.png',
     badge: 'icon-192.png',
-    tag: 'cs-vol',            // agrupa (substitui a anterior em vez de empilhar)
+    tag: 'am-alert',
     renotify: true,
     data: data.data || {},
   };
@@ -21,7 +22,7 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const url = (event.notification.data && event.notification.data.url) || '/';
+  const url = (event.notification.data && event.notification.data.url) || './';
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((wins) => {
       for (const w of wins) { if ('focus' in w) return w.focus(); }

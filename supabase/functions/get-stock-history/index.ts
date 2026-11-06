@@ -5,8 +5,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Histórico de preço de acoes (para isolar ativos T212 no grafico do portefolio).
-// Fonte: API publica de chart do Yahoo Finance (sem chave). Só leitura.
+// Histórico de preço (ações, ETFs, cripto, FX, índices) via API pública de chart do Yahoo Finance
+// (sem chave). Só leitura. Devolve também moeda e nome do instrumento (para a watchlist).
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -41,8 +41,13 @@ Deno.serve(async (req: Request) => {
       const c = closes[i];
       if (c != null && isFinite(c)) points.push({ t: ts[i], c });
     }
+    const meta = res?.meta || {};
 
-    return new Response(JSON.stringify({ symbol, points }), {
+    return new Response(JSON.stringify({
+      symbol, points,
+      currency: meta.currency ?? null,
+      name: meta.shortName ?? meta.longName ?? null,
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200,
     });
   } catch (error) {
