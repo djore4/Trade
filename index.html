@@ -126,7 +126,7 @@ const KEY  = 'sb_publishable_xHjsFJbSuAhO6r6BUylTCw_tDE-nFXT';
 const HDR  = { Authorization: `Bearer ${KEY}`, apikey: KEY };
 const $ = id => document.getElementById(id);
 
-const st = { bb: null, wallet: null, t212: null, cash: null, fx: null, bbErr: null, tErr: null, bbAt: 0, tAt: 0, fxAt: 0 };
+const st = { bb: null, wallet: null, t212: null, cash: null, fx: null, bbErr: null, tErr: null, bbAt: 0, tAt: 0, fxAt: 0, acctErr: null };
 let ccy = 'EUR';
 try { ccy = localStorage.getItem('ccy') || 'EUR'; } catch (e) {}
 $('ccy').value = ccy;
@@ -165,7 +165,8 @@ async function loadT212() {
   try {
     const d = await call('get-t212-portfolio');
     if (!Array.isArray(d.positions)) throw new Error('Resposta T212 inesperada');
-    st.t212 = d.positions; st.cash = d.cash; st.tErr = null; st.tAt = Date.now();
+    st.t212 = d.positions; st.cash = d.cash; st.acctErr = d.accountError || null; st.tErr = null; st.tAt = Date.now();
+    if (d.account?.currency && d.account.currency !== ccy) { ccy = d.account.currency; $('ccy').value = ccy; await loadFx(); }
   } catch (e) { st.tErr = e.message; }   // mantém os últimos dados bons
 }
 
@@ -250,7 +251,7 @@ function renderT212() {
     $('t-inv').textContent = 'n/d';
     $('t-free').textContent = 'n/d';
     $('t-err').hidden = false;
-    $('t-err').textContent = (st.tErr ? 'Trading 212: ' + st.tErr + '. ' : '') + 'Totais da conta indisponíveis (a chamada de cash falhou); a mostrar só as posições.';
+    $('t-err').textContent = (st.tErr ? 'Trading 212: ' + st.tErr + '. ' : '') + (/403/.test(st.acctErr || '') ? 'A key da T212 não tem permissão de "Account data" (HTTP 403): cria uma key com essa permissão.' : 'Totais da conta indisponíveis' + (st.acctErr ? ' — ' + st.acctErr : '')) + ' A mostrar só as posições.';
   }
   if (!pos) return;
   $('t-count').textContent = pos.length ? `${pos.length} posiç${pos.length > 1 ? 'ões' : 'ão'}` : '';
