@@ -153,11 +153,11 @@ async function call(name) {
 async function loadBybit() {
   try {
     const [p, w] = await Promise.all([call('get-bybit-positions'), call('get-bybit-wallet')]);
-    st.bb = (p?.result?.list || []).filter(x => n(x.size) > 0);
     const acc = w?.balance?.result?.list?.[0];
     if (!acc) throw new Error(w?.balance?.retMsg || 'Wallet Bybit sem dados');
+    st.bb = (p?.result?.list || []).filter(x => n(x.size) > 0);
     st.wallet = acc; st.bbErr = null; st.bbAt = Date.now();
-  } catch (e) { st.bbErr = e.message; }
+  } catch (e) { st.bbErr = e.message; st.bb = null; st.wallet = null; }   // a função de posições devolve [] mesmo com erro: não confiar
 }
 
 // ── Trading 212 ──────────────────────────────────────────────────────────────
@@ -201,7 +201,11 @@ function renderBybit() {
     $('bb-avail').textContent = money(n(w.totalAvailableBalance));
   }
   const rows = st.bb;
-  if (!rows) return;
+  if (!rows) {
+    $('bb-count').textContent = '';
+    $('bb-rows').innerHTML = `<tr><td colspan="7" class="empty neg">Indisponível${st.bbErr ? ' — ' + esc(st.bbErr) : ''}</td></tr>`;
+    return;
+  }
   $('bb-count').textContent = rows.length ? `${rows.length} aberta${rows.length > 1 ? 's' : ''}` : '';
   if (!rows.length) { $('bb-rows').innerHTML = '<tr><td colspan="7" class="empty">Sem posições abertas</td></tr>'; return; }
   $('bb-rows').innerHTML = rows.map(p => {
@@ -227,17 +231,27 @@ function renderBybit() {
   }).join('');
 }
 
+const pnlSum = pos => pos.reduce((a, p) => a + n(p.ppl) + n(p.fxPpl), 0);
+
 function renderT212() {
   const c = st.cash;
   $('t-err').hidden = !st.tErr;
   if (st.tErr) $('t-err').textContent = 'Trading 212: ' + st.tErr + (st.t212 ? ' (a mostrar últimos dados)' : '');
+  const pos = st.t212;
   if (c) {
     $('t-total').textContent = money(n(c.total), ccy);
     setPnl($('t-ppl'), n(c.ppl), ccy);
     $('t-inv').textContent = money(n(c.invested), ccy);
     $('t-free').textContent = money(n(c.free), ccy);
+  } else if (pos) {
+    // A conta (cash/total) não veio: o PnL das posições já está na moeda da conta.
+    $('t-total').textContent = 'n/d';
+    setPnl($('t-ppl'), pnlSum(pos), ccy);
+    $('t-inv').textContent = 'n/d';
+    $('t-free').textContent = 'n/d';
+    $('t-err').hidden = false;
+    $('t-err').textContent = (st.tErr ? 'Trading 212: ' + st.tErr + '. ' : '') + 'Totais da conta indisponíveis (a chamada de cash falhou); a mostrar só as posições.';
   }
-  const pos = st.t212;
   if (!pos) return;
   $('t-count').textContent = pos.length ? `${pos.length} posiç${pos.length > 1 ? 'ões' : 'ão'}` : '';
   if (!pos.length) { $('t-rows').innerHTML = '<tr><td colspan="6" class="empty">Sem posições</td></tr>'; return; }
@@ -255,21 +269,25 @@ function renderT212() {
 }
 
 function renderTotal() {
-  const bbOk = !!st.wallet, tOk = !!st.cash;
-  if (!bbOk && !tOk) return;
+  const bbOk = !!st.wallet, tCash = !!st.cash, tPos = !!st.t212;
+  if (!bbOk && !tPos) return;
   const fx = ccy === 'USD' ? 1 : st.fx;
   const bbEq = bbOk ? n(st.wallet.totalEquity) : 0;
   const bbUpl = bbOk ? n(st.wallet.totalPerpUPL) : 0;
-  let tTot = tOk ? n(st.cash.total) * (fx || 0) : 0;
-  const tPpl = tOk ? n(st.cash.ppl) * (fx || 0) : 0;
-  const missingFx = tOk && !fx;
+  const tTot = tCash && fx ? n(st.cash.total) * fx : 0;
+  const tPpl = tCash ? n(st.cash.ppl) : tPos ? pnlSum(st.t212) : 0;
+  const tPplUsd = fx ? tPpl * fx : 0;
+  const notes = [];
+  if (!bbOk) notes.push('sem Bybit');
+  if (!tCash) notes.push('sem total T212');
+  if (tCash && !fx) notes.push('sem taxa FX');
   const total = bbEq + tTot;
-  $('total').textContent = money(total, 'USD');
-  setPnl($('totalPnl'), bbUpl + tPpl, 'USD');
+  $('total').textContent = bbOk || tCash ? money(total, 'USD') : '—';
+  setPnl($('totalPnl'), bbUpl + tPplUsd, 'USD');
   $('totalPnl').textContent += ' não realizado';
-  $('totalNote').textContent = missingFx ? '(sem taxa FX — T212 excluída)' : '';
+  $('totalNote').textContent = notes.length ? '(' + notes.join(', ') + ')' : '';
   $('fxv').textContent = ccy === 'USD' ? '1' : st.fx ? fmt(st.fx, 4) : 'n/d';
-  if (!missingFx && st.bbAt && st.tAt) snapshot(total);
+  if (!notes.length && st.bbAt && st.tAt) snapshot(total);
 }
 
 // Snapshots locais (máx. 1 a cada 5 min, 600 pontos) para o mini-gráfico.
