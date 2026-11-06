@@ -198,8 +198,13 @@ function renderBybit() {
   if (w) {
     $('bb-equity').textContent = money(n(w.totalEquity));
     setPnl($('bb-upl'), n(w.totalPerpUPL), 'USD');
-    $('bb-im').textContent = fmt(n(w.accountIMRate) * 100, 1) + '%';
-    $('bb-avail').textContent = money(n(w.totalAvailableBalance));
+    // Em algumas contas a Bybit devolve estes agregados vazios: estima a partir das posições.
+    const eq = n(w.totalEquity);
+    const imSum = (st.bb || []).reduce((acc, p) => acc + n(p.positionIM), 0);
+    if (w.accountIMRate !== '' && w.accountIMRate != null) $('bb-im').textContent = fmt(n(w.accountIMRate) * 100, 1) + '%';
+    else $('bb-im').textContent = st.bb && eq > 0 ? '≈ ' + fmt(imSum / eq * 100, 1) + '%' : '—';
+    if (w.totalAvailableBalance !== '' && w.totalAvailableBalance != null) $('bb-avail').textContent = money(n(w.totalAvailableBalance));
+    else $('bb-avail').textContent = st.bb ? '≈ ' + money(Math.max(0, eq - imSum)) : '—';
   }
   const rows = st.bb;
   if (!rows) {
