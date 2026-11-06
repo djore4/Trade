@@ -1,7 +1,7 @@
 {
-  "name": "CryptoScan — Trade Desk",
-  "short_name": "CryptoScan",
-  "description": "Scanner de volatilidade de perpétuos da Bybit com alertas.",
+  "name": "Portfolio",
+  "short_name": "Portfolio",
+  "description": "Acompanhamento de futuros Bybit e ações/ETFs Trading 212.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
