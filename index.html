@@ -1348,7 +1348,10 @@ function macdArr(v, f = 12, s = 26, sg = 9) {
 }
 let rangeSync = false;
 function syncRange(src) {
-  return r => { if (!r || rangeSync) return; rangeSync = true; [ch.chart, ch.rsiC, ch.macdC].forEach(c => { if (c && c !== src) c.timeScale().setVisibleLogicalRange(r); }); rangeSync = false; };
+  return r => {
+    if (!r || rangeSync) return;
+    if (src._born && Date.now() - src._born < 800) return;   // painel acabado de criar: ainda a ganhar largura, não deve arrastar o gráfico principal
+    rangeSync = true; [ch.chart, ch.rsiC, ch.macdC].forEach(c => { if (c && c !== src) c.timeScale().setVisibleLogicalRange(r); }); rangeSync = false; };
 }
 function subOpts() {
   return { autoSize: true, layout: { background: { type: LightweightCharts.ColorType.Solid, color: 'transparent' }, textColor: cv('--mut'), fontSize: 11 },
@@ -1374,11 +1377,20 @@ function ensureSub(kind) {
     ch.macdS = c.addLineSeries({ color: '#f5b83d', lineWidth: 2, priceLineVisible: false, lastValueVisible: false });
     c.subscribeCrosshairMove(p => { if (!p || !p.seriesData) return; const m = p.seriesData.get(ch.macdL), s = p.seriesData.get(ch.macdS), h = p.seriesData.get(ch.macdH); if (m && s && h) macdLbl(m.value, s.value, h.value); });
   }
+  c._born = Date.now();
   c.timeScale().subscribeVisibleLogicalRangeChange(syncRange(c));
-  const r = ch.chart.timeScale().getVisibleLogicalRange(); if (r) c.timeScale().setVisibleLogicalRange(r);
+  // O painel nasce sem largura (autoSize só mede depois): adota o intervalo do principal e volta a aplicá-lo quando já tem largura,
+  // sem que as correções de layout do painel mexam no zoom do gráfico principal.
+  const adopt = () => { const r = ch.chart.timeScale().getVisibleLogicalRange(); if (r && ch[key] === c) { rangeSync = true; c.timeScale().setVisibleLogicalRange(r); rangeSync = false; } };
+  adopt(); [60, 250, 600].forEach(ms => setTimeout(adopt, ms));
   return true;
 }
 function macdLbl(m, s, h) { const p = prec(Math.abs(m) || 1) + 1; $('lblMacd').innerHTML = `MACD (12,26,9) <b class="num" style="color:#5b8cff">${fmt(m, p)}</b> <b class="num" style="color:#f5b83d">${fmt(s, p)}</b> <b class="num ${cls(h)}">${fmt(h, p)}</b>`; }
+function alignScales() {
+  const cs = [ch.chart, ch.rsiC, ch.macdC].filter(Boolean); if (cs.length < 2) return;
+  const w = Math.max(64, ...cs.map(c => c.priceScale('right').width()));
+  cs.forEach(c => c.priceScale('right').applyOptions({ minimumWidth: w }));
+}
 function clearIndicators() {
   [ch.e20, ch.e50, ch.bbU, ch.bbM, ch.bbL].forEach(s => s && s.setData([]));
   [ch.rsiC && ch.rsiS, ch.macdC && ch.macdH, ch.macdC && ch.macdL, ch.macdC && ch.macdS].forEach(s => s && s.setData([]));
@@ -1387,16 +1399,20 @@ function paintIndicators() {
   if (!ch.chart || !ch.data.length) return;
   const d = ch.data, closes = d.map(c => c.c);
   const ser = arr => { const o = []; for (let i = 0; i < d.length; i++) if (arr[i] != null && isFinite(arr[i])) o.push({ time: d[i].t, value: arr[i] }); return o; };
+  // Nos painéis (gráficos separados) cada vela tem de existir, mesmo sem valor (período de aquecimento do indicador): senão o
+  // índice lógico começa mais tarde que o do gráfico principal e os painéis ficam deslocados horizontalmente (RSI: 14 velas, MACD: 25).
+  const serW = arr => d.map((c, i) => arr[i] != null && isFinite(arr[i]) ? { time: c.t, value: arr[i] } : { time: c.t });
   ch.e20.setData(ui.ind.ema20 ? ser(emaArr(closes, 20)) : []);
   ch.e50.setData(ui.ind.ema50 ? ser(emaArr(closes, 50)) : []);
   if (ui.ind.bb) { const b = bollArr(closes); ch.bbM.setData(ser(b.mid)); ch.bbU.setData(ser(b.up)); ch.bbL.setData(ser(b.lo)); } else { ch.bbM.setData([]); ch.bbU.setData([]); ch.bbL.setData([]); }
-  if (ensureSub('rsi')) { const r = rsiArr(closes, 14); ch.rsiS.setData(ser(r)); const v = r[r.length - 1]; $('lblRsi').innerHTML = `RSI (14) <b class="num">${v != null ? fmt(v, 1) : '—'}</b>`; }
+  if (ensureSub('rsi')) { const r = rsiArr(closes, 14); ch.rsiS.setData(serW(r)); const v = r[r.length - 1]; $('lblRsi').innerHTML = `RSI (14) <b class="num">${v != null ? fmt(v, 1) : '—'}</b>`; }
   if (ensureSub('macd')) {
     const m = macdArr(closes), g = cv('--green'), rd = cv('--red');
-    ch.macdL.setData(ser(m.macd)); ch.macdS.setData(ser(m.signal));
-    ch.macdH.setData(d.map((c, i) => m.hist[i] != null ? { time: c.t, value: m.hist[i], color: hexA(m.hist[i] >= 0 ? g : rd, '99') } : null).filter(Boolean));
+    ch.macdL.setData(serW(m.macd)); ch.macdS.setData(serW(m.signal));
+    ch.macdH.setData(d.map((c, i) => m.hist[i] != null ? { time: c.t, value: m.hist[i], color: hexA(m.hist[i] >= 0 ? g : rd, '99') } : { time: c.t }));
     const i = d.length - 1; if (m.macd[i] != null && m.signal[i] != null) macdLbl(m.macd[i], m.signal[i], m.hist[i]); else $('lblMacd').textContent = 'MACD (12,26,9)';
   }
+  if (ch.rsiC || ch.macdC) { alignScales(); setTimeout(alignScales, 80); }
 }
 
 /* ── Alertas de preço / liquidação (servidor + Web Push) ─────────────────────── */
