@@ -225,6 +225,21 @@ input.px{width:100%;background:var(--card2);color:var(--text);border:1px solid v
 .trow>div:not(:first-child){text-align:right}
 @media (max-width:520px){.trow{grid-template-columns:1.3fr 1fr 1fr}.trow>.hide-s{display:none}}
 
+/* Indicadores (RSI/MACD) e alertas */
+.subpane{position:relative;margin-top:6px;border-radius:12px;overflow:hidden}
+.subpane[hidden]{display:none}
+.subchart{height:110px;width:100%}
+.sublbl{position:absolute;left:8px;top:4px;z-index:3;pointer-events:none;font-size:11px;background:color-mix(in srgb,var(--card) 70%,transparent);border-radius:8px;padding:1px 6px}
+#indSeg{max-width:100%;overflow-x:auto;scrollbar-width:none}
+#indSeg::-webkit-scrollbar{display:none}
+#indSeg button{white-space:nowrap}
+.alform{padding:4px 0 10px;border-bottom:1px solid var(--line);margin-bottom:6px}
+.alrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.alrow input.px{width:112px}
+.rep{display:flex;align-items:center;gap:5px;color:var(--mut);font-size:12.5px}
+.alitem{display:grid;grid-template-columns:24px 1fr auto;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.alitem:last-child{border-bottom:0}
+
 /* Chat */
 .msgs{display:flex;flex-direction:column;gap:10px;min-height:200px}
 .msg{max-width:92%;padding:10px 13px;border-radius:14px;line-height:1.5;word-wrap:break-word;animation:slide .25s ease-out}
@@ -314,14 +329,17 @@ input.px{width:100%;background:var(--card2);color:var(--text);border:1px solid v
       <div class="chead"><div><div class="csym" id="cSym">—</div><div class="mut" id="cName" style="font-size:12px"></div></div><div class="cprice num" id="cPrice"></div></div>
       <div class="ctools">
         <div class="seg" id="tfSeg"></div>
-        <div class="seg" id="indSeg"><button data-i="vol">Vol</button><button data-i="ema20">EMA 20</button><button data-i="ema50">EMA 50</button><button data-i="lines">Níveis</button></div>
+        <div class="seg" id="indSeg"><button data-i="vol">Vol</button><button data-i="ema20">EMA 20</button><button data-i="ema50">EMA 50</button><button data-i="bb">Bollinger</button><button data-i="rsi">RSI</button><button data-i="macd">MACD</button><button data-i="lines">Níveis</button></div>
         <span class="grow"></span>
         <button class="iconbtn" id="fsBtn" title="Ecrã inteiro" aria-label="Ecrã inteiro" style="width:32px;height:32px">⛶</button>
       </div>
       <div class="cwrap"><div id="chart"></div><div id="cLegend"></div><div id="cMsg">A carregar…</div></div>
+      <div class="subpane" id="paneRsi" hidden><div class="sublbl" id="lblRsi">RSI (14)</div><div class="subchart" id="subRsi"></div></div>
+      <div class="subpane" id="paneMacd" hidden><div class="sublbl" id="lblMacd">MACD (12,26,9)</div><div class="subchart" id="subMacd"></div></div>
       <div class="foot attr">Gráfico: <a href="https://www.tradingview.com/" target="_blank" rel="noopener noreferrer">TradingView Lightweight Charts™</a> · Bybit (futuros) e Yahoo Finance (ações/ETFs); os dados podem ter atraso.</div>
     </div>
     <div class="card" id="tDetail"></div>
+    <div class="card" id="tAlerts"><h2>Alertas <span class="mut" id="alCount"></span></h2><div id="alPush"></div><div id="alForm"></div><div id="alList"></div></div>
     <div class="card" id="tAll"></div>
   </main>
 
@@ -763,6 +781,8 @@ function buildNotifs() {
   if (st.acctErr) a.push({ id: 'err:acct', lvl: 'amber', g: 'Ligações', t: `T212 (conta): ${/403/.test(st.acctErr) ? 'a key não tem permissão de dados da conta.' : st.acctErr}` });
   if (st.err.fx && !fx.eurusd) a.push({ id: 'err:fx', lvl: 'amber', g: 'Ligações', t: 'Câmbio indisponível.' });
   risks(M).forEach(r => a.push({ ...r, g: 'Risco' }));
+  (al.list || []).filter(x => x.triggered_at && Date.now() - Date.parse(x.triggered_at) < 864e5)
+    .forEach(x => a.push({ id: `alert:${x.id}:${x.triggered_at}`, lvl: x.kind === 'liq' ? 'amber' : 'info', g: 'Alertas', t: alertText(x) }));
   return a;
 }
 function renderNotifs() {
@@ -780,7 +800,7 @@ function renderNotifs() {
   const ids = new Set(vis.map(x => x.id + x.lvl));
   if (prevNotifIds && [...ids].some(i => !prevNotifIds.has(i))) { $('bellBtn').classList.add('ring'); setTimeout(() => $('bellBtn').classList.remove('ring'), 1000); }
   prevNotifIds = ids;
-  const groups = ['Ligações', 'Risco'];
+  const groups = ['Alertas', 'Ligações', 'Risco'];
   $('notifPanel').innerHTML = `<div class="nhead"><b>Notificações</b><span>${vis.length ? '<button class="pill" id="nClear" style="padding:4px 10px;font-size:11px">Limpar tudo</button>' : ''}</span></div>
     <div class="nlist">${vis.length ? groups.map(g => { const it = vis.filter(x => x.g === g); return it.length ? `<div class="ngroup">${g}</div>` + it.map(x => `<div class="nitem ${x.lvl}"><span class="ic">${x.lvl === 'info' ? 'ℹ' : '⚠'}</span><span>${esc(x.t)}</span><button class="x" data-nd="${esc(x.id)}" data-lvl="${x.lvl}" aria-label="Dispensar" title="Dispensar">×</button></div>`).join('') : ''; }).join('')
       : '<div class="empty">Tudo em ordem ✓<br><span style="font-size:12px">Sem alertas de risco nem erros de ligação.</span></div>'}</div>
@@ -1052,7 +1072,7 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catc
 
 /* ── Trade: posições abertas + gráfico de velas (TradingView Lightweight Charts) ─ */
 const ui = Object.assign({ sel: null, tf: { bybit: '15', yahoo: '15m' }, ind: { vol: true, ema20: false, ema50: false, lines: true } }, store.get('trade-ui', {}));
-ui.tf = Object.assign({ bybit: '15', yahoo: '15m' }, ui.tf); ui.ind = Object.assign({ vol: true, ema20: false, ema50: false, lines: true }, ui.ind);
+ui.tf = Object.assign({ bybit: '15', yahoo: '15m' }, ui.tf); ui.ind = Object.assign({ vol: true, ema20: false, ema50: false, bb: false, rsi: false, macd: false, lines: true }, ui.ind);
 const saveUi = () => store.set('trade-ui', ui);
 const TFS = {
   bybit: [['1', '1m'], ['5', '5m'], ['15', '15m'], ['60', '1h'], ['240', '4h'], ['D', '1D'], ['W', '1W']],
@@ -1060,7 +1080,7 @@ const TFS = {
 };
 const Y_RANGE = { '5m': '5d', '15m': '1mo', '60m': '6mo', '1d': '2y', '1wk': '10y' };      // histórico inicial
 const Y_LIVE = { '5m': '1d', '15m': '1d', '60m': '5d', '1d': '5d', '1wk': '1mo' };         // atualização ao vivo
-const ch = { chart: null, candle: null, vol: null, e20: null, e50: null, lines: [], levels: [], data: [], key: '', timer: null, prevClose: null, last: null };
+const ch = { chart: null, candle: null, vol: null, e20: null, e50: null, bbU: null, bbM: null, bbL: null, rsiC: null, rsiS: null, macdC: null, macdH: null, macdL: null, macdS: null, lines: [], levels: [], data: [], key: '', timer: null, prevClose: null, last: null };
 const cv = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const hexA = (hex, a) => /^#[0-9a-f]{6}$/i.test(hex) ? hex + a : hex;
 const prec = p => p >= 100 ? 2 : p >= 1 ? 3 : p >= 0.1 ? 4 : 5;
@@ -1132,6 +1152,7 @@ function renderTrade() {
   }).join('') : '<div class="empty">Sem posições abertas.</div>');
 
   renderLevels();
+  renderAlerts(items, sel);
 }
 function renderTfSeg() {
   const it = curItem(tradeItems()); if (!it) return;
@@ -1148,7 +1169,7 @@ function ensureChart() {
     autoSize: true,
     layout: { background: { type: L.ColorType.Solid, color: 'transparent' }, textColor: cv('--mut'), fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif', fontSize: 11 },
     grid: { vertLines: { color: cv('--line') }, horzLines: { color: cv('--line') } },
-    rightPriceScale: { borderColor: cv('--line'), scaleMargins: { top: 0.08, bottom: 0.2 } },
+    rightPriceScale: { borderColor: cv('--line'), minimumWidth: 64, scaleMargins: { top: 0.08, bottom: 0.2 } },
     timeScale: { borderColor: cv('--line'), timeVisible: true, secondsVisible: false, rightOffset: 6, barSpacing: 8,
       tickMarkFormatter: (t, type) => { const d = new Date(t * 1000); return type <= 1 ? d.toLocaleDateString('pt-PT', { month: 'short', year: '2-digit' }) : type === 2 ? d.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' }) : d.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }); } },
     localization: { locale: 'pt-PT', timeFormatter: t => new Date(t * 1000).toLocaleString('pt-PT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) },
@@ -1167,6 +1188,9 @@ function ensureChart() {
   ch.chart.priceScale('vol').applyOptions({ scaleMargins: { top: 0.84, bottom: 0 } });
   ch.e20 = ch.chart.addLineSeries({ color: '#f5b83d', lineWidth: 2, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
   ch.e50 = ch.chart.addLineSeries({ color: '#5b8cff', lineWidth: 2, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
+  const bbOpt = c => ({ color: c, lineWidth: 1, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
+  ch.bbU = ch.chart.addLineSeries(bbOpt('#5b8cffcc')); ch.bbL = ch.chart.addLineSeries(bbOpt('#5b8cffcc')); ch.bbM = ch.chart.addLineSeries({ ...bbOpt('#5b8cff88'), lineStyle: 2 });
+  ch.chart.timeScale().subscribeVisibleLogicalRangeChange(syncRange(ch.chart));
   ch.chart.subscribeCrosshairMove(p => {
     const d = p && p.seriesData ? p.seriesData.get(ch.candle) : null;
     const v = p && p.seriesData ? p.seriesData.get(ch.vol) : null;
@@ -1178,6 +1202,7 @@ function applyChartTheme() {
   if (!ch.chart) return;
   ch.chart.applyOptions({ layout: { textColor: cv('--mut') }, grid: { vertLines: { color: cv('--line') }, horzLines: { color: cv('--line') } }, rightPriceScale: { borderColor: cv('--line') }, timeScale: { borderColor: cv('--line') } });
   ch.candle.applyOptions({ upColor: cv('--green'), downColor: cv('--red'), wickUpColor: cv('--green'), wickDownColor: cv('--red') });
+  [ch.rsiC, ch.macdC].forEach(c => c && c.applyOptions({ layout: { textColor: cv('--mut') }, grid: { vertLines: { color: cv('--line') }, horzLines: { color: cv('--line') } }, rightPriceScale: { borderColor: cv('--line') } }));
   paintSeries(false);
 }
 const toBar = c => ({ time: c.t, open: c.o, high: c.h, low: c.l, close: c.c });
@@ -1201,10 +1226,9 @@ function paintSeries(reset) {
   ch.candle.setData(d.map(toBar));
   const hasVol = ui.ind.vol && d.some(c => c.v > 0);
   ch.vol.setData(hasVol ? d.map(volBar) : []);
-  ch.e20.setData(ui.ind.ema20 ? ema(d, 20) : []);
-  ch.e50.setData(ui.ind.ema50 ? ema(d, 50) : []);
   if (reset) { const n = d.length; ch.chart.timeScale().setVisibleLogicalRange({ from: Math.max(0, n - 110), to: n + 6 }); }
   ch.last = toBar(last); legend(ch.last, last.v); priceHeader();
+  paintIndicators();
 }
 function priceHeader() {
   if (!ch.data.length) { $('cPrice').innerHTML = ''; return; }
@@ -1234,13 +1258,15 @@ function drawLevels(it, add) {
     const f = it.f; add(f.avg, 'Entrada', '#5b8cff', 2); if (f.liq) add(f.liq, 'Liquidação', cv('--red'), 0);
     if (f.sl) add(f.sl, 'Stop-loss', cv('--red'), 3); if (f.tp) add(f.tp, 'Take-profit', cv('--green'), 3);
   } else add(it.h.avg, 'Preço médio', '#5b8cff', 2);
+  (al.list || []).filter(a => a.active && a.kind === 'price' && a.symbol === it.src.symbol && a.source === it.src.source)
+    .forEach(a => add(Number(a.level), `Alerta ${a.op === 'above' ? '≥' : '≤'}`, '#f5b83d', 1));
 }
 function cmsg(t) { $('cMsg').hidden = !t; if (t) $('cMsg').textContent = t; }
 
 async function loadCandles(initial) {
   const items = tradeItems(), it = curItem(items); if (!it || !ensureChart()) return;
   const { source, symbol } = it.src, tf = ui.tf[source], key = `${source}:${symbol}:${tf}`;
-  if (initial) { ch.key = key; ch.data = []; ch.prevClose = null; ch.last = null; cmsg('A carregar velas…'); ch.candle.setData([]); ch.vol.setData([]); ch.e20.setData([]); ch.e50.setData([]); $('cPrice').innerHTML = ''; $('cLegend').innerHTML = ''; renderLevels(); }
+  if (initial) { ch.key = key; ch.data = []; ch.prevClose = null; ch.last = null; cmsg('A carregar velas…'); ch.candle.setData([]); ch.vol.setData([]); clearIndicators(); $('cPrice').innerHTML = ''; $('cLegend').innerHTML = ''; renderLevels(); }
   else if (key !== ch.key) return;
   const q = source === 'bybit' ? `get-candles?source=bybit&symbol=${encodeURIComponent(symbol)}&interval=${tf}&limit=${initial ? 500 : 4}`
     : `get-candles?source=yahoo&symbol=${encodeURIComponent(symbol)}&interval=${tf}&range=${initial ? Y_RANGE[tf] : Y_LIVE[tf]}`;
@@ -1252,7 +1278,7 @@ async function loadCandles(initial) {
     else {
       let last = ch.data[ch.data.length - 1].t;
       d.candles.forEach(c => { if (c.t < last) return; if (c.t === last) ch.data[ch.data.length - 1] = c; else { ch.data.push(c); last = c.t; } ch.candle.update(toBar(c)); if (ui.ind.vol && c.v > 0) ch.vol.update(volBar(c)); });
-      ch.e20.setData(ui.ind.ema20 ? ema(ch.data, 20) : []); ch.e50.setData(ui.ind.ema50 ? ema(ch.data, 50) : []);
+      paintIndicators();
       const lb = ch.data[ch.data.length - 1]; ch.last = toBar(lb); legend(ch.last, lb.v); priceHeader();
     }
   } catch (e) { if (initial && key === ch.key) cmsg(`Sem velas para ${symbol}: ${e.message}`); }
@@ -1287,6 +1313,196 @@ $('tfSeg').onclick = e => { const b = e.target.closest('[data-tf]'); if (!b) ret
 $('indSeg').onclick = e => { const b = e.target.closest('[data-i]'); if (!b) return; ui.ind[b.dataset.i] = !ui.ind[b.dataset.i]; saveUi(); b.classList.toggle('on', ui.ind[b.dataset.i]); paintSeries(false); renderLevels(); };
 $('fsBtn').onclick = () => setFullscreen(!$('chartCard').classList.contains('fs'));
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('chartCard').classList.contains('fs')) setFullscreen(false); });
+
+/* ── Indicadores técnicos (calculados no browser a partir das velas) ─────────── */
+const smaArr = (v, n) => { const o = Array(v.length).fill(null); let s = 0; for (let i = 0; i < v.length; i++) { s += v[i]; if (i >= n) s -= v[i - n]; if (i >= n - 1) o[i] = s / n; } return o; };
+const emaArr = (v, n) => { const o = Array(v.length).fill(null); if (v.length < n) return o; const k = 2 / (n + 1); let e = 0; for (let i = 0; i < n; i++) e += v[i]; e /= n; o[n - 1] = e; for (let i = n; i < v.length; i++) { e = v[i] * k + e * (1 - k); o[i] = e; } return o; };
+function rsiArr(v, n = 14) {                       // RSI de Wilder
+  const o = Array(v.length).fill(null); if (v.length <= n) return o;
+  let g = 0, l = 0; for (let i = 1; i <= n; i++) { const d = v[i] - v[i - 1]; if (d >= 0) g += d; else l -= d; } g /= n; l /= n;
+  o[n] = l === 0 ? 100 : 100 - 100 / (1 + g / l);
+  for (let i = n + 1; i < v.length; i++) { const d = v[i] - v[i - 1]; g = (g * (n - 1) + Math.max(d, 0)) / n; l = (l * (n - 1) + Math.max(-d, 0)) / n; o[i] = l === 0 ? 100 : 100 - 100 / (1 + g / l); }
+  return o;
+}
+function bollArr(v, n = 20, k = 2) {
+  const m = smaArr(v, n), up = Array(v.length).fill(null), lo = Array(v.length).fill(null);
+  for (let i = n - 1; i < v.length; i++) { let s = 0; for (let j = i - n + 1; j <= i; j++) s += (v[j] - m[i]) ** 2; const sd = Math.sqrt(s / n); up[i] = m[i] + k * sd; lo[i] = m[i] - k * sd; }
+  return { mid: m, up, lo };
+}
+function macdArr(v, f = 12, s = 26, sg = 9) {
+  const ef = emaArr(v, f), es = emaArr(v, s), macd = v.map((_, i) => ef[i] != null && es[i] != null ? ef[i] - es[i] : null);
+  const first = macd.findIndex(x => x != null), signal = Array(v.length).fill(null);
+  if (first >= 0) { const sig = emaArr(macd.slice(first), sg); sig.forEach((x, i) => { signal[first + i] = x; }); }
+  return { macd, signal, hist: macd.map((x, i) => x != null && signal[i] != null ? x - signal[i] : null) };
+}
+let rangeSync = false;
+function syncRange(src) {
+  return r => { if (!r || rangeSync) return; rangeSync = true; [ch.chart, ch.rsiC, ch.macdC].forEach(c => { if (c && c !== src) c.timeScale().setVisibleLogicalRange(r); }); rangeSync = false; };
+}
+function subOpts() {
+  return { autoSize: true, layout: { background: { type: LightweightCharts.ColorType.Solid, color: 'transparent' }, textColor: cv('--mut'), fontSize: 11 },
+    grid: { vertLines: { color: cv('--line') }, horzLines: { color: cv('--line') } },
+    rightPriceScale: { borderColor: cv('--line'), minimumWidth: 64, scaleMargins: { top: 0.14, bottom: 0.1 } },
+    timeScale: { borderColor: cv('--line'), visible: false, rightOffset: 6, barSpacing: 8 },
+    crosshair: { mode: LightweightCharts.CrosshairMode.Normal }, kineticScroll: { touch: true, mouse: false } };
+}
+// cria/remove o painel de RSI ou MACD conforme o botão; devolve true se está ativo
+function ensureSub(kind) {
+  const on = !!ui.ind[kind], pane = $(kind === 'rsi' ? 'paneRsi' : 'paneMacd'), key = kind === 'rsi' ? 'rsiC' : 'macdC';
+  pane.hidden = !on;
+  if (!on) { if (ch[key]) { ch[key].remove(); ch[key] = null; } return false; }
+  if (ch[key]) return true;
+  const L = LightweightCharts, c = L.createChart($(kind === 'rsi' ? 'subRsi' : 'subMacd'), subOpts()); ch[key] = c;
+  if (kind === 'rsi') {
+    ch.rsiS = c.addLineSeries({ color: '#b08cff', lineWidth: 2, priceLineVisible: false, autoscaleInfoProvider: () => ({ priceRange: { minValue: 0, maxValue: 100 } }) });
+    [70, 30].forEach(p => ch.rsiS.createPriceLine({ price: p, color: cv('--mut'), lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: '' }));
+    c.subscribeCrosshairMove(p => { const d = p && p.seriesData ? p.seriesData.get(ch.rsiS) : null; if (d) $('lblRsi').innerHTML = `RSI (14) <b class="num">${fmt(d.value, 1)}</b>`; });
+  } else {
+    ch.macdH = c.addHistogramSeries({ priceLineVisible: false, lastValueVisible: false });
+    ch.macdL = c.addLineSeries({ color: '#5b8cff', lineWidth: 2, priceLineVisible: false, lastValueVisible: false });
+    ch.macdS = c.addLineSeries({ color: '#f5b83d', lineWidth: 2, priceLineVisible: false, lastValueVisible: false });
+    c.subscribeCrosshairMove(p => { if (!p || !p.seriesData) return; const m = p.seriesData.get(ch.macdL), s = p.seriesData.get(ch.macdS), h = p.seriesData.get(ch.macdH); if (m && s && h) macdLbl(m.value, s.value, h.value); });
+  }
+  c.timeScale().subscribeVisibleLogicalRangeChange(syncRange(c));
+  const r = ch.chart.timeScale().getVisibleLogicalRange(); if (r) c.timeScale().setVisibleLogicalRange(r);
+  return true;
+}
+function macdLbl(m, s, h) { const p = prec(Math.abs(m) || 1) + 1; $('lblMacd').innerHTML = `MACD (12,26,9) <b class="num" style="color:#5b8cff">${fmt(m, p)}</b> <b class="num" style="color:#f5b83d">${fmt(s, p)}</b> <b class="num ${cls(h)}">${fmt(h, p)}</b>`; }
+function clearIndicators() {
+  [ch.e20, ch.e50, ch.bbU, ch.bbM, ch.bbL].forEach(s => s && s.setData([]));
+  [ch.rsiC && ch.rsiS, ch.macdC && ch.macdH, ch.macdC && ch.macdL, ch.macdC && ch.macdS].forEach(s => s && s.setData([]));
+}
+function paintIndicators() {
+  if (!ch.chart || !ch.data.length) return;
+  const d = ch.data, closes = d.map(c => c.c);
+  const ser = arr => { const o = []; for (let i = 0; i < d.length; i++) if (arr[i] != null && isFinite(arr[i])) o.push({ time: d[i].t, value: arr[i] }); return o; };
+  ch.e20.setData(ui.ind.ema20 ? ser(emaArr(closes, 20)) : []);
+  ch.e50.setData(ui.ind.ema50 ? ser(emaArr(closes, 50)) : []);
+  if (ui.ind.bb) { const b = bollArr(closes); ch.bbM.setData(ser(b.mid)); ch.bbU.setData(ser(b.up)); ch.bbL.setData(ser(b.lo)); } else { ch.bbM.setData([]); ch.bbU.setData([]); ch.bbL.setData([]); }
+  if (ensureSub('rsi')) { const r = rsiArr(closes, 14); ch.rsiS.setData(ser(r)); const v = r[r.length - 1]; $('lblRsi').innerHTML = `RSI (14) <b class="num">${v != null ? fmt(v, 1) : '—'}</b>`; }
+  if (ensureSub('macd')) {
+    const m = macdArr(closes), g = cv('--green'), rd = cv('--red');
+    ch.macdL.setData(ser(m.macd)); ch.macdS.setData(ser(m.signal));
+    ch.macdH.setData(d.map((c, i) => m.hist[i] != null ? { time: c.t, value: m.hist[i], color: hexA(m.hist[i] >= 0 ? g : rd, '99') } : null).filter(Boolean));
+    const i = d.length - 1; if (m.macd[i] != null && m.signal[i] != null) macdLbl(m.macd[i], m.signal[i], m.hist[i]); else $('lblMacd').textContent = 'MACD (12,26,9)';
+  }
+}
+
+/* ── Alertas de preço / liquidação (servidor + Web Push) ─────────────────────── */
+const al = { list: [], subs: 0, at: 0, err: null, push: null, formFor: null, msg: '', msgBad: false };
+const alertApi = body => call('am-alerts', { method: 'POST', headers: { ...HDR, 'content-type': 'application/json' }, body: JSON.stringify(body), timeout: 20000 });
+const alertText = a => {
+  const ts = a.triggered_at ? ago(Date.parse(a.triggered_at)) : '';
+  return a.kind === 'liq' ? `${a.label}: a ${fmt(Number(a.trigger_value), 1)}% da liquidação (limite ${fmt(Number(a.level), 0)}%) · ${ts}`
+    : `${a.label} ${a.op === 'above' ? 'subiu para' : 'desceu para'} ${price(Number(a.trigger_value))} (alerta ${a.op === 'above' ? '≥' : '≤'} ${price(Number(a.level))}) · ${ts}`;
+};
+async function loadAlerts() {
+  al.at = Date.now();
+  try { const d = await alertApi({ action: 'list' }); al.list = d.alerts || []; al.subs = d.subscribers || 0; al.err = null; } catch (e) { al.err = e.message; }
+  if (!$('v-trade').hidden) renderAlerts();
+  renderNotifs(); renderLevels();
+}
+const pushSupported = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+const b64u = s => { const raw = atob((s + '='.repeat((4 - s.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(raw, c => c.charCodeAt(0)); };
+const swReady = () => Promise.race([navigator.serviceWorker.ready, new Promise((_, rej) => setTimeout(() => rej(new Error('service worker indisponível (abre a app por https)')), 8000))]);
+async function pushStatus() {
+  if (!pushSupported()) return 'unsupported';
+  if (Notification.permission === 'denied') return 'denied';
+  try { const sub = await (await swReady()).pushManager.getSubscription(); return sub ? 'on' : 'off'; } catch (e) { return 'off'; }
+}
+async function enablePush() {
+  if (!pushSupported()) throw new Error('este navegador não suporta notificações push');
+  if (await Notification.requestPermission() !== 'granted') throw new Error('permissão recusada — ativa as notificações nas definições do navegador');
+  const reg = await swReady(), cfg = await alertApi({ action: 'config' });
+  let sub = await reg.pushManager.getSubscription();
+  if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u(cfg.vapidPublic) });
+  await alertApi({ action: 'subscribe', subscription: sub.toJSON() });
+}
+async function disablePush() {
+  const sub = await (await swReady()).pushManager.getSubscription();
+  if (sub) { await alertApi({ action: 'unsubscribe', subscription: { endpoint: sub.endpoint } }); await sub.unsubscribe(); }
+}
+function alMsg(t, bad) { al.msg = t; al.msgBad = !!bad; const el = $('alMsg'); if (el) { el.textContent = t; el.className = 'mut ' + (bad ? 'neg' : ''); } }
+function lastPrice(it) {
+  if (!it) return 0;
+  if (it.kind === 'fut') return it.f.mark;
+  if (it.kind === 'stock') return it.h.price;
+  const q = wq[it.src.symbol]; return q && q.price ? q.price : 0;
+}
+function renderPushRow() {
+  const s = al.push;
+  const txt = { unsupported: 'Este navegador não suporta notificações push.' + (isIOS() && !isStandalone() ? ' No iPhone, instala primeiro a app (Partilhar → Adicionar ao ecrã principal).' : ''),
+    denied: 'Notificações bloqueadas nas definições do navegador.', on: `Notificações ativas neste dispositivo · ${al.subs} dispositivo${al.subs === 1 ? '' : 's'} registado${al.subs === 1 ? '' : 's'}`,
+    off: 'Notificações desligadas neste dispositivo: os alertas só aparecem aqui na app.', null: 'A verificar notificações…' }[s];
+  $('alPush').innerHTML = `<div class="alrow" style="margin-top:0"><span style="flex:1;min-width:180px;font-size:13px" class="${s === 'on' ? 'pos' : 'mut'}">${s === 'on' ? '🔔' : '🔕'} ${esc(txt)}</span>
+    ${s === 'off' ? '<button class="btn" data-act="push-on">Ativar notificações</button>' : ''}
+    ${s === 'on' ? '<button class="pill" data-act="push-test">Enviar teste</button><button class="pill" data-act="push-off">Desligar</button>' : ''}</div>
+    <div class="mut" id="alMsg" style="font-size:12px;min-height:16px;margin-top:6px">${esc(al.msg)}</div>`;
+  const m = $('alMsg'); if (m && al.msgBad) m.classList.add('neg');
+}
+function renderAlertForm(sel) {
+  if (!sel) { $('alForm').innerHTML = ''; al.formFor = null; return; }
+  if (al.formFor === sel.id) return;                       // não reconstrói: preserva o que o utilizador está a escrever
+  al.formFor = sel.id;
+  const px = lastPrice(sel), p = prec(px || 1);
+  $('alForm').innerHTML = `<div class="alform"><div class="lbl">Novo alerta · ${esc(sel.label)}${px ? ` <span style="text-transform:none;letter-spacing:0">(preço atual ${price(px)})</span>` : ''}</div>
+    <div class="alrow"><div class="seg" id="alOp"><button data-op="above" class="on">Acima de</button><button data-op="below">Abaixo de</button></div>
+      <input class="px num" id="alPx" inputmode="decimal" value="${px ? px.toFixed(p) : ''}" aria-label="Preço do alerta">
+      <label class="rep"><input type="checkbox" id="alRep"> repetir</label><button class="btn" data-act="al-price">Criar</button></div>
+    <div class="presets" style="margin-top:8px">${[2, 5, 10, -2, -5, -10].map(v => `<button class="pill" data-act="al-chip" data-pct="${v}" style="padding:4px 10px;font-size:12px">${v > 0 ? '+' : '−'}${Math.abs(v)}%</button>`).join('')}</div>
+    ${sel.kind === 'fut' ? `<div class="alrow" style="margin-top:14px"><span style="font-size:13px">Avisar quando faltar menos de</span><input class="px num" id="alLiq" style="width:64px" value="10" inputmode="decimal" aria-label="% à liquidação"><span style="font-size:13px">% para a liquidação</span><button class="btn" data-act="al-liq">Criar</button></div>` : ''}</div>`;
+}
+function renderAlertList() {
+  const act = al.list.filter(a => a.active), done = al.list.filter(a => !a.active);
+  $('alCount').textContent = act.length ? `${act.length} ativo${act.length > 1 ? 's' : ''}` : '';
+  const row = a => {
+    const what = a.kind === 'liq' ? `${esc(a.label)} · menos de ${fmt(Number(a.level), 0)}% da liquidação` : `${esc(a.label)} ${a.op === 'above' ? 'acima de' : 'abaixo de'} ${price(Number(a.level))}`;
+    const meta = a.triggered_at ? `disparado ${ago(Date.parse(a.triggered_at))} · ${a.kind === 'liq' ? fmt(Number(a.trigger_value), 1) + '%' : price(Number(a.trigger_value))}${a.active ? ' · repete' : ''}` : `ativo${a.repeat ? ' · repete' : ''}`;
+    return `<div class="alitem"><span style="font-size:16px">${a.kind === 'liq' ? '⚠' : a.op === 'above' ? '↑' : '↓'}</span><div><div style="font-weight:600">${what}</div><div class="mut" style="font-size:12px">${meta}</div></div>
+      <span style="display:flex;gap:4px">${!a.active ? `<button class="x" data-act="al-rearm" data-id="${a.id}" title="Re-armar" aria-label="Re-armar">↻</button>` : ''}<button class="x" data-act="al-del" data-id="${a.id}" title="Apagar" aria-label="Apagar">×</button></span></div>`;
+  };
+  $('alList').innerHTML = al.err ? `<div class="mut neg" style="font-size:12.5px">Alertas indisponíveis: ${esc(al.err)}</div>`
+    : (act.length || done.length) ? (act.length ? act.map(row).join('') : '') + (done.length ? `<div class="ngroup">Disparados</div>` + done.slice(0, 8).map(row).join('') : '')
+    : '<div class="empty" style="padding:12px">Sem alertas. Cria o primeiro acima.</div>';
+}
+function renderAlerts(items, sel) {
+  items = items || tradeItems(); sel = sel || curItem(items);
+  renderPushRow(); renderAlertForm(sel); renderAlertList();
+  pushStatus().then(s => { if (s !== al.push) { al.push = s; renderPushRow(); } });
+}
+async function createAlert(alert) {
+  try {
+    const d = await alertApi({ action: 'create', alert });
+    await loadAlerts();
+    const cur = alert.kind === 'price' ? lastPrice(curItem(tradeItems())) : 0;
+    const already = alert.kind === 'price' && cur && (alert.op === 'above' ? cur >= alert.level : cur <= alert.level);
+    alMsg(already ? 'Alerta criado, mas a condição já se verifica: dispara no próximo minuto.' : 'Alerta criado ✓', false);
+    return d;
+  } catch (e) { alMsg('Não consegui criar o alerta: ' + e.message, true); }
+}
+$('tAlerts').addEventListener('click', async e => {
+  const b = e.target.closest('[data-act],[data-op]'); if (!b) return;
+  if (b.dataset.op) { document.querySelectorAll('#alOp button').forEach(x => x.classList.toggle('on', x === b)); return; }
+  const act = b.dataset.act, sel = curItem(tradeItems());
+  try {
+    if (act === 'push-on') { b.disabled = true; alMsg('A ativar…'); await enablePush(); al.push = 'on'; await loadAlerts(); alMsg('Notificações ativadas ✓', false); renderPushRow(); }
+    else if (act === 'push-off') { await disablePush(); al.push = 'off'; await loadAlerts(); alMsg('Notificações desligadas.', false); renderPushRow(); }
+    else if (act === 'push-test') { const r = await alertApi({ action: 'test' }); alMsg(r.sent ? `Teste enviado a ${r.sent} dispositivo${r.sent > 1 ? 's' : ''} ✓` : 'Nenhum dispositivo registado.', !r.sent); }
+    else if (act === 'al-chip') { const px = lastPrice(sel), v = Number(b.dataset.pct); if (px) { $('alPx').value = (px * (1 + v / 100)).toFixed(prec(px)); document.querySelectorAll('#alOp button').forEach(x => x.classList.toggle('on', x.dataset.op === (v > 0 ? 'above' : 'below'))); } }
+    else if (act === 'al-price' && sel) {
+      const level = parseFloat(String($('alPx').value).replace(',', '.')), op = document.querySelector('#alOp .on').dataset.op;
+      if (!(level > 0)) return alMsg('Indica um preço válido.', true);
+      await createAlert({ kind: 'price', source: sel.src.source, symbol: sel.src.symbol, label: sel.label, op, level, repeat: $('alRep').checked });
+    }
+    else if (act === 'al-liq' && sel) {
+      const level = parseFloat(String($('alLiq').value).replace(',', '.'));
+      if (!(level > 0 && level < 100)) return alMsg('Indica uma percentagem entre 0 e 100.', true);
+      await createAlert({ kind: 'liq', source: 'bybit', symbol: sel.src.symbol, label: sel.label, level });
+    }
+    else if (act === 'al-del') { await alertApi({ action: 'delete', id: Number(b.dataset.id) }); await loadAlerts(); }
+    else if (act === 'al-rearm') { await alertApi({ action: 'rearm', id: Number(b.dataset.id) }); await loadAlerts(); }
+  } catch (err) { alMsg(err.message, true); if (b.disabled) b.disabled = false; }
+});
 
 /* ── navegação / eventos ─────────────────────────────────────────────────── */
 const TABS = ['portfolio', 'trade', 'news', 'whatif', 'ai'];
@@ -1328,6 +1544,7 @@ async function tick(force) {
   if (busy) return; busy = true; st.loading = true; $('refresh').classList.add('spin'); renderStatus();
   try {
     const jobs = [loadBybit()];
+    if (force || Date.now() - al.at > 60000) jobs.push(loadAlerts());
     if (force || Date.now() - st.tReq > 45000) jobs.push(loadT212(force));
     if (force || !fx.eurusd || Date.now() - st.at.fx > 600000) jobs.push(loadFx());
     await Promise.all(jobs.map(j => j.then(renderAll)));   // cada fonte atualiza a UI assim que responde (a T212 lenta não bloqueia o resto)
