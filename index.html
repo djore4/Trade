@@ -358,8 +358,7 @@ input.px{width:100%;background:var(--card2);color:var(--text);border:1px solid v
       <div class="cwrap"><div id="chart"></div><div id="cLegend"></div><div id="cMsg">A carregar…</div></div>
       <div class="subpane" id="paneRsi" hidden><div class="sublbl" id="lblRsi">RSI (14)</div><div class="subchart" id="subRsi"></div></div>
       <div class="subpane" id="paneMacd" hidden><div class="sublbl" id="lblMacd">MACD (12,26,9)</div><div class="subchart" id="subMacd"></div></div>
-      <div class="foot attr">Gráfico: <a href="https://www.tradingview.com/" target="_blank" rel="noopener noreferrer">TradingView Lightweight Charts™</a> · Bybit (futuros) e Yahoo Finance (ações/ETFs); os dados podem ter atraso.</div>
-    </div>
+          </div>
     <div class="card" id="tLiq" hidden></div>
     <div class="card" id="tDetail"></div>
     <div class="card" id="tAlerts"><h2>Alertas <span class="mut" id="alCount"></span></h2><div id="alPush"></div><div id="alForm"></div><div id="alList"></div></div>
@@ -1125,7 +1124,7 @@ function renderTrade() {
       ${M && M.effLev != null ? `<div class="mut" style="font-size:12px">alavancagem Bybit ${fmt(M.effLev, 1)}×</div>` : ''}</div></div>`;
 
   $('tChips').innerHTML = items.map(i => `<button class="tchip ${i.id === ui.sel ? 'on' : ''} ${i.kind === 'watch' ? 'watch' : ''}" data-sel="${esc(i.id)}">
-    <b>${esc(i.label)}</b><span class="tg">${esc(i.tag)}</span>${i.pct != null ? `<span class="pc num ${cls(i.pct)}">${pct(i.pct, 1)}</span>` : '<span class="pc">&nbsp;</span>'}</button>`).join('');
+    <b>${esc(i.label)}</b><span class="tg">${esc(i.tag)}</span>${i.pct != null ? `<span class="pc num ${cls(i.pct)}">${pct(i.pct, 1)}${i.pnl != null ? ` · ${smoney(i.pnl)}` : ''}</span>` : '<span class="pc">&nbsp;</span>'}</button>`).join('');
 
   renderTfSeg();
   $('indSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', !!ui.ind[b.dataset.i]));
@@ -1739,7 +1738,7 @@ function renderLiqPanel(it, sym) {
   const d = liq.data, el = $('tLiq');
   const seg = `<span class="seg" id="liqSeg">${[['1d', '24H'], ['1w', '1W'], ['1m', '1M']].map(([v, l]) => `<button data-lw="${v}" class="${liqWin() === v ? 'on' : ''}">${l}</button>`).join('')}</span>`;
   const head = `<h2>Mapa de liquidações${sym ? ' · ' + esc(sym) : ''} ${sym ? seg : ''}</h2>`;
-  if (!sym) { el.innerHTML = `<h2>Mapa de liquidações</h2><div class="mut" style="font-size:13px">Só disponível para futuros (e cripto da watchlist, ex.: BTC-USD). Ações e ETFs não têm liquidações.</div>`; return; }
+  if (!sym) { el.hidden = true; el.innerHTML = ''; return; }
   if (liq.err) { el.innerHTML = head + `<div class="mut neg" style="font-size:13px">Não consegui carregar o mapa: ${esc(liq.err)}</div>`; return; }
   if (!d) { el.innerHTML = head + `<div class="sk" style="height:90px"></div>`; return; }
   const P = d.price, f = it && it.kind === 'fut' ? it.f : null;
