@@ -248,6 +248,16 @@ input.px{width:100%;background:var(--card2);color:var(--text);border:1px solid v
 #pfMsg{position:absolute;inset:0;z-index:4;display:grid;place-items:center;color:var(--mut);font-size:12.5px;pointer-events:none;text-align:center;padding:12px}
 #pfMsg[hidden]{display:none}
 
+/* Mapa de liquidações */
+.liqleg{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--mut);margin:2px 0 10px}
+.liqleg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.liqcols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:520px){.liqcols{grid-template-columns:1fr}}
+.liqrow{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--line);font-size:13px}
+.liqrow:last-child{border-bottom:0}
+.liqnote{font-size:11px;color:var(--mut);line-height:1.55;margin-top:12px}
+.liqins{padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--blue) 9%,var(--card2));border:1px solid color-mix(in srgb,var(--blue) 30%,transparent);font-size:13px;line-height:1.5;margin:10px 0}
+
 /* Chat */
 .msgs{display:flex;flex-direction:column;gap:10px;min-height:200px}
 .msg{max-width:92%;padding:10px 13px;border-radius:14px;line-height:1.5;word-wrap:break-word;animation:slide .25s ease-out}
@@ -341,7 +351,7 @@ input.px{width:100%;background:var(--card2);color:var(--text);border:1px solid v
       <div class="chead"><div><div class="csym" id="cSym">—</div><div class="mut" id="cName" style="font-size:12px"></div></div><div class="cprice num" id="cPrice"></div></div>
       <div class="ctools">
         <div class="seg" id="tfSeg"></div>
-        <div class="seg" id="indSeg"><button data-i="vol">Vol</button><button data-i="ema20">EMA 20</button><button data-i="ema50">EMA 50</button><button data-i="bb">Bollinger</button><button data-i="rsi">RSI</button><button data-i="macd">MACD</button><button data-i="lines">Níveis</button></div>
+        <div class="seg" id="indSeg"><button data-i="vol">Vol</button><button data-i="ema20">EMA 20</button><button data-i="ema50">EMA 50</button><button data-i="bb">Bollinger</button><button data-i="rsi">RSI</button><button data-i="macd">MACD</button><button data-i="liq">Liq. map</button><button data-i="lines">Níveis</button></div>
         <span class="grow"></span>
         <button class="iconbtn" id="fsBtn" title="Ecrã inteiro" aria-label="Ecrã inteiro" style="width:32px;height:32px">⛶</button>
       </div>
@@ -350,6 +360,7 @@ input.px{width:100%;background:var(--card2);color:var(--text);border:1px solid v
       <div class="subpane" id="paneMacd" hidden><div class="sublbl" id="lblMacd">MACD (12,26,9)</div><div class="subchart" id="subMacd"></div></div>
       <div class="foot attr">Gráfico: <a href="https://www.tradingview.com/" target="_blank" rel="noopener noreferrer">TradingView Lightweight Charts™</a> · Bybit (futuros) e Yahoo Finance (ações/ETFs); os dados podem ter atraso.</div>
     </div>
+    <div class="card" id="tLiq" hidden></div>
     <div class="card" id="tDetail"></div>
     <div class="card" id="tAlerts"><h2>Alertas <span class="mut" id="alCount"></span></h2><div id="alPush"></div><div id="alForm"></div><div id="alList"></div></div>
     <div class="card" id="tAll"></div>
@@ -1069,7 +1080,7 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catc
 
 /* ── Trade: posições abertas + gráfico de velas (TradingView Lightweight Charts) ─ */
 const ui = Object.assign({ sel: null, tf: { bybit: '15', yahoo: '15m' }, ind: { vol: true, ema20: false, ema50: false, lines: true } }, store.get('trade-ui', {}));
-ui.tf = Object.assign({ bybit: '15', yahoo: '15m' }, ui.tf); ui.ind = Object.assign({ vol: true, ema20: false, ema50: false, bb: false, rsi: false, macd: false, lines: true }, ui.ind);
+ui.tf = Object.assign({ bybit: '15', yahoo: '15m' }, ui.tf); ui.ind = Object.assign({ vol: true, ema20: false, ema50: false, bb: false, rsi: false, macd: false, liq: false, lines: true }, ui.ind);
 const saveUi = () => store.set('trade-ui', ui);
 const TFS = {
   bybit: [['1', '1m'], ['5', '5m'], ['15', '15m'], ['60', '1h'], ['240', '4h'], ['D', '1D'], ['W', '1W']],
@@ -1077,7 +1088,7 @@ const TFS = {
 };
 const Y_RANGE = { '5m': '5d', '15m': '1mo', '60m': '6mo', '1d': '2y', '1wk': '10y' };      // histórico inicial
 const Y_LIVE = { '5m': '1d', '15m': '1d', '60m': '5d', '1d': '5d', '1wk': '1mo' };         // atualização ao vivo
-const ch = { chart: null, candle: null, vol: null, e20: null, e50: null, bbU: null, bbM: null, bbL: null, rsiC: null, rsiS: null, macdC: null, macdH: null, macdL: null, macdS: null, lines: [], levels: [], data: [], key: '', timer: null, prevClose: null, last: null };
+const ch = { chart: null, candle: null, vol: null, e20: null, e50: null, bbU: null, bbM: null, bbL: null, rsiC: null, rsiS: null, macdC: null, macdH: null, macdL: null, macdS: null, lines: [], levels: [], liq: null, data: [], key: '', timer: null, prevClose: null, last: null };
 const cv = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const hexA = (hex, a) => /^#[0-9a-f]{6}$/i.test(hex) ? hex + a : hex;
 const prec = p => p >= 100 ? 2 : p >= 1 ? 3 : p >= 0.1 ? 4 : 5;
@@ -1150,6 +1161,7 @@ function renderTrade() {
 
   renderLevels();
   renderAlerts(items, sel);
+  liqEnsure();
 }
 function renderTfSeg() {
   const it = curItem(tradeItems()); if (!it) return;
@@ -1181,6 +1193,7 @@ function ensureChart() {
       ch.levels.forEach(v => { if (v < minValue) minValue = v; if (v > maxValue) maxValue = v; });
       return { priceRange: { minValue, maxValue }, margins: r.margins };
     } });
+  ch.liq = new LiqBars(); ch.candle.attachPrimitive(ch.liq);
   ch.vol = ch.chart.addHistogramSeries({ priceFormat: { type: 'volume' }, priceScaleId: 'vol', lastValueVisible: false, priceLineVisible: false });
   ch.chart.priceScale('vol').applyOptions({ scaleMargins: { top: 0.84, bottom: 0 } });
   ch.e20 = ch.chart.addLineSeries({ color: '#f5b83d', lineWidth: 2, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
@@ -1295,6 +1308,7 @@ function selectTrade(id) {
 function openTrade() {
   renderTrade();
   if (!ensureChart()) return;
+  liqEnsure();
   const it = curItem(tradeItems());
   if (it && ch.key !== `${it.src.source}:${it.src.symbol}:${ui.tf[it.src.source]}`) loadCandles(true);
   else if (ch.chart) { ch.chart.timeScale().applyOptions({}); }
@@ -1307,7 +1321,7 @@ function setFullscreen(on) {
 $('tChips').onclick = e => { const b = e.target.closest('[data-sel]'); if (b) selectTrade(b.dataset.sel); };
 $('tAll').onclick = e => { const r = e.target.closest('[data-sel]'); if (r) selectTrade(r.dataset.sel); };
 $('tfSeg').onclick = e => { const b = e.target.closest('[data-tf]'); if (!b) return; const it = curItem(tradeItems()); if (!it) return; ui.tf[it.src.source] = b.dataset.tf; saveUi(); renderTfSeg(); loadCandles(true); startLive(); };
-$('indSeg').onclick = e => { const b = e.target.closest('[data-i]'); if (!b) return; ui.ind[b.dataset.i] = !ui.ind[b.dataset.i]; saveUi(); b.classList.toggle('on', ui.ind[b.dataset.i]); paintSeries(false); renderLevels(); };
+$('indSeg').onclick = e => { const b = e.target.closest('[data-i]'); if (!b) return; ui.ind[b.dataset.i] = !ui.ind[b.dataset.i]; saveUi(); b.classList.toggle('on', ui.ind[b.dataset.i]); paintSeries(false); renderLevels(); if (b.dataset.i === 'liq') liqEnsure(); };
 $('fsBtn').onclick = () => setFullscreen(!$('chartCard').classList.contains('fs'));
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('chartCard').classList.contains('fs')) setFullscreen(false); });
 
@@ -1647,6 +1661,95 @@ $('pfSeg').onclick = e => {
   pf.range = b.dataset.r; store.set('pf-range', pf.range); pf.data = []; renderPfSeg(); loadPfHistory();
 };
 function renderPfSeg() { document.querySelectorAll('#pfSeg button').forEach(b => b.classList.toggle('on', b.dataset.r === pf.range)); }
+
+/* ── Mapa de liquidações (estimado) sobre o gráfico + painel ─────────────────── */
+class LiqBars {                                    // primitiva do gráfico: barras horizontais alinhadas com o eixo de preço
+  constructor() { this.bins = []; this.bw = 0; this.maxV = 1; this.series = null; this.req = null;
+    this._view = { zOrder: () => 'bottom', renderer: () => ({ draw: t => this.draw(t) }) }; }
+  attached(p) { this.series = p.series; this.req = p.requestUpdate; }
+  detached() { this.series = null; this.req = null; }
+  updateAllViews() {}
+  paneViews() { return [this._view]; }
+  setData(bins, bw) { this.bins = bins || []; this.bw = bw || 0; this.maxV = Math.max(1, ...this.bins.map(b => Math.max(b.l, b.s))); if (this.req) this.req(); }
+  draw(target) {
+    if (!this.series || !this.bins.length) return;
+    target.useBitmapCoordinateSpace(({ context: ctx, bitmapSize, horizontalPixelRatio: hr, verticalPixelRatio: vr }) => {
+      const W = bitmapSize.width, H = bitmapSize.height, half = this.bw / 2;
+      for (const b of this.bins) {
+        for (const [v, rgb] of [[b.l, '255,93,108'], [b.s, '57,197,212']]) {
+          if (!(v > 0)) continue;
+          const y1 = this.series.priceToCoordinate(b.p + half), y2 = this.series.priceToCoordinate(b.p - half);
+          if (y1 == null || y2 == null) continue;
+          const top = Math.min(y1, y2) * vr, h = Math.max(2 * vr, Math.abs(y2 - y1) * vr - vr);
+          if (top > H || top + h < 0) continue;
+          const k = v / this.maxV, len = Math.max(2 * hr, k * W * 0.42);
+          ctx.fillStyle = `rgba(${rgb},${(0.16 + 0.62 * k).toFixed(3)})`;
+          ctx.fillRect(W - len, top, len, h);
+        }
+      }
+    });
+  }
+}
+const liq = { key: '', at: 0, busy: false, data: null, err: null };
+function liqSymbolFor(it) {
+  if (!it) return null;
+  if (it.kind === 'fut') return it.src.symbol;
+  if (it.kind === 'watch') { const m = /^([A-Z0-9]{2,12})-USD$/.exec(it.src.symbol); return m ? m[1] + 'USDT' : null; }
+  return null;                                      // ações/ETFs não têm liquidações
+}
+const liqWin = () => ui.liqWin || '1w';
+function liqClear() { if (ch.liq) ch.liq.setData([], 0); }
+function liqEnsure() {
+  $('tLiq').hidden = !ui.ind.liq;
+  if (!ui.ind.liq) { liqClear(); return; }
+  if (!ch.chart) return;
+  const it = curItem(tradeItems()), sym = liqSymbolFor(it), key = sym ? `${sym}|${liqWin()}` : '';
+  if (!sym) { liq.key = ''; liq.data = null; liq.err = null; liqClear(); renderLiqPanel(it, null); return; }
+  if (key !== liq.key) { liq.key = key; liq.data = null; liq.err = null; liqClear(); }
+  if (!liq.data || Date.now() - liq.at > 300000) loadLiq(sym, key);
+  renderLiqPanel(it, sym);
+}
+async function loadLiq(sym, key) {
+  if (liq.busy) return; liq.busy = true; liq.at = Date.now();
+  try {
+    const d = await call(`get-liq-map?symbol=${encodeURIComponent(sym)}&window=${liqWin()}`, { timeout: 20000 });
+    if (liq.key !== key) { liq.busy = false; return; }
+    liq.data = d; liq.err = null; ch.liq.setData(d.bins.map(b => ({ p: b.p, l: b.l, s: b.s })), d.bucket);
+  } catch (e) { if (liq.key === key) liq.err = e.message; }
+  liq.busy = false; renderLiqPanel(curItem(tradeItems()), sym);
+}
+const usdK = v => v >= 1e6 ? '$' + fmt(v / 1e6, 2) + 'M' : v >= 1e3 ? '$' + fmt(v / 1e3, 0) + 'k' : '$' + fmt(v, 0);
+function renderLiqPanel(it, sym) {
+  const d = liq.data, el = $('tLiq');
+  const seg = `<span class="seg" id="liqSeg">${[['1d', '24H'], ['1w', '1W'], ['1m', '1M']].map(([v, l]) => `<button data-lw="${v}" class="${liqWin() === v ? 'on' : ''}">${l}</button>`).join('')}</span>`;
+  const head = `<h2>Mapa de liquidações${sym ? ' · ' + esc(sym) : ''} ${sym ? seg : ''}</h2>`;
+  if (!sym) { el.innerHTML = `<h2>Mapa de liquidações</h2><div class="mut" style="font-size:13px">Só disponível para futuros (e cripto da watchlist, ex.: BTC-USD). Ações e ETFs não têm liquidações.</div>`; return; }
+  if (liq.err) { el.innerHTML = head + `<div class="mut neg" style="font-size:13px">Não consegui carregar o mapa: ${esc(liq.err)}</div>`; return; }
+  if (!d) { el.innerHTML = head + `<div class="sk" style="height:90px"></div>`; return; }
+  const P = d.price, f = it && it.kind === 'fut' ? it.f : null;
+  const row = c => `<div class="liqrow"><span class="num"><b>${price(c.p)}</b> <span class="mut">${pct(c.pct, 1)}</span></span><b class="num">${usdK(c.usd)}</b></div>`;
+  let ins = '';
+  if (f && f.liq > 0) {
+    const side = f.long ? d.clusters.long : d.clusters.short;
+    const far = side.length ? (f.long ? Math.min(...side.map(c => c.p)) : Math.max(...side.map(c => c.p))) : null;
+    const sameSide = d.bins.filter(b => f.long ? (b.l > 0 && b.p >= f.liq) : (b.s > 0 && b.p <= f.liq)).reduce((a, b) => a + (f.long ? b.l : b.s), 0);
+    const tot = f.long ? d.totals.long : d.totals.short, share = tot > 0 ? sameSide / tot * 100 : 0;
+    const beyond = far != null && (f.long ? f.liq < far : f.liq > far);
+    ins = `<div class="liqins">A tua liquidação (<b>${price(f.liq)}</b>, ${pct((f.liq / P - 1) * 100, 1)}) ${far == null ? 'não tem aglomerados estimados do mesmo lado.' : beyond
+      ? `fica <b>${fmt(Math.abs(f.liq / far - 1) * 100, 1)}% para lá</b> do aglomerado ${f.long ? 'mais fundo' : 'mais alto'} estimado (${price(far)}): o preço tem de atravessar ${fmt(share, 0)}% das liquidações estimadas do teu lado antes de chegar a ti.`
+      : `está <b>dentro da zona de aglomerados</b> estimados (o mais ${f.long ? 'fundo' : 'alto'} está em ${price(far)}): zona onde é provável o preço ser puxado.`}</div>`;
+  }
+  const o = d.okx;
+  const okx = o ? `<div class="lbl" style="margin-top:12px">Liquidações reais recentes (OKX)</div><div style="font-size:13px;margin-top:4px">${o.n} evento${o.n > 1 ? 's' : ''} desde ${new Date(o.since * 1000).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}: <b class="neg num">longs ${usdK(o.longUsd)}</b> · <b class="num" style="color:#39c5d4">shorts ${usdK(o.shortUsd)}</b></div>
+    ${o.events.slice(0, 4).map(e => `<div class="liqrow"><span>${e.side === 'long' ? 'Long' : 'Short'} liquidado a <b class="num">${price(e.px)}</b></span><span class="mut num">${usdK(e.usd)} · ${ago(e.t * 1000)}</span></div>`).join('')}`
+    : `<div class="mut" style="font-size:12px;margin-top:10px">Sem liquidações reais recentes disponíveis na OKX para este ativo.</div>`;
+  el.innerHTML = head + `<div class="liqleg"><span><i style="background:rgba(255,93,108,.8)"></i>Longs (liquidam se o preço cair)</span><span><i style="background:rgba(57,197,212,.8)"></i>Shorts (liquidam se subir)</span></div>
+    <div style="font-size:13px;margin-bottom:10px">Estimado na janela: <b class="num neg">longs ${usdK(d.totals.long)}</b> abaixo do preço · <b class="num" style="color:#39c5d4">shorts ${usdK(d.totals.short)}</b> acima · open interest total <b class="num">${usdK(d.oiUsd)}</b></div>${ins}
+    <div class="liqcols"><div><div class="lbl">Aglomerados abaixo (longs)</div>${d.clusters.long.length ? d.clusters.long.map(row).join('') : '<div class="mut" style="font-size:12.5px">—</div>'}</div>
+    <div><div class="lbl">Aglomerados acima (shorts)</div>${d.clusters.short.length ? d.clusters.short.map(row).join('') : '<div class="mut" style="font-size:12.5px">—</div>'}</div></div>${okx}
+    <div class="liqnote"><b>É uma estimativa, não dados reais de posições.</b> Calculada a partir do open interest e das velas da Bybit (${d.bars} barras desde ${new Date(d.from * 1000).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' })}): cada aumento de OI abre posições longas e curtas ao preço da vela, repartidas por alavancagens ${d.model.tiers.map(x => x + '×').join(', ')} (pesos assumidos), e retiram-se as que o preço já varreu. Ignora posições anteriores à janela e a margem real de cada conta. Usa como indicação de zonas de liquidez, não como previsão.</div>`;
+}
+$('tLiq').addEventListener('click', e => { const b = e.target.closest('[data-lw]'); if (!b) return; ui.liqWin = b.dataset.lw; saveUi(); liq.key = ''; liqEnsure(); });
 
 /* ── navegação / eventos ─────────────────────────────────────────────────── */
 const TABS = ['portfolio', 'trade', 'news', 'whatif', 'ai'];
