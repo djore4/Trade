@@ -240,6 +240,14 @@ input.px{width:100%;background:var(--card2);color:var(--text);border:1px solid v
 .alitem{display:grid;grid-template-columns:24px 1fr auto;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
 .alitem:last-child{border-bottom:0}
 
+/* Evolução do portefólio (histórico por período) */
+.pfbox{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.pfhead{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+#pfChart{height:180px;width:100%}
+.pflegend{position:absolute;left:6px;top:4px;z-index:3;pointer-events:none;font-size:11.5px;background:color-mix(in srgb,var(--card) 70%,transparent);border-radius:8px;padding:2px 6px}
+#pfMsg{position:absolute;inset:0;z-index:4;display:grid;place-items:center;color:var(--mut);font-size:12.5px;pointer-events:none;text-align:center;padding:12px}
+#pfMsg[hidden]{display:none}
+
 /* Chat */
 .msgs{display:flex;flex-direction:column;gap:10px;min-height:200px}
 .msg{max-width:92%;padding:10px 13px;border-radius:14px;line-height:1.5;word-wrap:break-word;animation:slide .25s ease-out}
@@ -311,7 +319,11 @@ input.px{width:100%;background:var(--card2);color:var(--text);border:1px solid v
   <!-- ══ PORTEFÓLIO ══ -->
   <main class="view" id="v-portfolio">
     <div class="pgrid">
-      <section class="card" id="hero"></section>
+      <section class="card" id="hero"><div id="heroBody"></div>
+        <div class="pfbox"><div class="pfhead"><div><div class="lbl">Evolução</div><div class="num" id="pfDelta" style="font-weight:600;font-size:14px">—</div></div>
+          <div class="seg" id="pfSeg"><button data-r="1h">1H</button><button data-r="4h">4H</button><button data-r="24h">24H</button><button data-r="1w">1W</button></div></div>
+          <div class="cwrap"><div id="pfChart"></div><div class="pflegend" id="pfLegend"></div><div id="pfMsg">A carregar histórico…</div></div>
+          <div class="foot" id="pfNote" style="margin-top:6px;font-size:10.5px"></div></div></section>
       <section class="card" id="alloc"></section>
       <div class="grid2 span2" id="sources"></div>
       <section class="card" id="futures"></section>
@@ -633,26 +645,12 @@ function allocSlices(M) {
   arr.forEach((s, i) => { s.color = allocBy === 'cat' ? (CATCOL[s.label] || PAL[i % 8]) : PAL[i % 8]; });
   return arr;
 }
-function sparkline() {
-  const h = store.get('hist-' + base, []);
-  if (h.length < 2) return '';
-  const W = 600, H = 64, vs = h.map(x => x[1]), lo = Math.min(...vs), hi = Math.max(...vs), r = hi - lo || 1;
-  const pts = h.map((x, i) => `${(i / (h.length - 1) * W).toFixed(1)},${(H - 6 - (x[1] - lo) / r * (H - 12)).toFixed(1)}`).join(' ');
-  const up = vs[vs.length - 1] >= vs[0];
-  return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><polyline fill="none" stroke="${up ? 'var(--green)' : 'var(--red)'}" stroke-width="2" vector-effect="non-scaling-stroke" points="${pts}"/></svg>
-    <div class="mut" style="font-size:11px">Evolução neste dispositivo (${h.length} registos)</div>`;
-}
 function miniSpark(pts) {
   if (!pts || pts.length < 2) return '<svg viewBox="0 0 84 28"></svg>';
   const lo = Math.min(...pts), hi = Math.max(...pts), r = hi - lo || 1;
   const p = pts.map((v, i) => `${(i / (pts.length - 1) * 84).toFixed(1)},${(25 - (v - lo) / r * 22).toFixed(1)}`).join(' ');
   return `<svg viewBox="0 0 84 28" preserveAspectRatio="none"><polyline fill="none" stroke="${pts[pts.length - 1] >= pts[0] ? 'var(--green)' : 'var(--red)'}" stroke-width="1.8" vector-effect="non-scaling-stroke" points="${p}"/></svg>`;
 }
-function snapshot(v) {
-  const k = 'hist-' + base, h = store.get(k, []), last = h[h.length - 1];
-  if (!last || Date.now() - last[0] > 300000) { h.push([Date.now(), v]); store.set(k, h.slice(-600)); }
-}
-
 /* ── alertas e risco ─────────────────────────────────────────────────────── */
 function risks(M) {
   const out = [];
@@ -692,7 +690,7 @@ function renderPortfolio() {
   const parts = [];
   if (M.b) parts.push(`Bybit <b class="num">${money(M.b.value)}</b>`);
   if (M.t) parts.push(`Trading 212 <b class="num">${money(M.t.value)}</b>`);
-  $('hero').innerHTML = M.holdings.length ? `
+  $('heroBody').innerHTML = M.holdings.length ? `
     <div class="lbl">Valor atual do portefólio</div>
     <div class="big num" id="heroVal">${money(M.value)}</div>
     <div class="num ${cls(M.pnl)}" style="font-weight:600">${smoney(M.pnl)} · ${pct(M.pct)} <span class="mut" style="font-weight:400">vs investido</span></div>
@@ -700,8 +698,7 @@ function renderPortfolio() {
       <div class="row"><span class="mut">Investido</span><div class="track"><div class="fill" style="width:${M.cost / mx * 100}%;background:var(--mut)"></div></div><b class="num">${money(M.cost)}</b></div>
       <div class="row"><span class="mut">Atual</span><div class="track"><div class="fill" style="width:${M.value / mx * 100}%;background:${M.pnl >= 0 ? 'var(--green)' : 'var(--red)'}"></div></div><b class="num">${money(M.value)}</b></div>
     </div>
-    <div class="parts">${parts.join('<span>+</span>')}<span>= <b class="num">${money(M.value)}</b></span></div>
-    ${sparkline()}` : loadingFirst ? SKEL : `<div class="empty">Sem dados — vê as notificações (🔔).</div>`;
+    <div class="parts">${parts.join('<span>+</span>')}<span>= <b class="num">${money(M.value)}</b></span></div>` : loadingFirst ? SKEL : `<div class="empty">Sem dados — vê as notificações (🔔).</div>`;
   if (M.holdings.length) { tween($('heroVal'), lastHero, M.value, v => money(v)); lastHero = M.value; }
 
   const slices = allocSlices(M), tot = slices.reduce((a, s) => a + s.value, 0);
@@ -765,8 +762,8 @@ function renderPortfolio() {
     ${M.b ? tile('Cripto (equity)', fmt(M.b.value / M.value * 100, 0) + '%', 'do portefólio total') : ''}
   </div>` : '';
   $('risk').hidden = !(M.value > 0);
-  if (M.value > 0 && !M.fxMissing) snapshot(M.value);
   renderNotifs();
+  pfEnsure();
 }
 
 /* ── Centro de notificações ──────────────────────────────────────────────── */
@@ -1035,6 +1032,7 @@ function applyTheme(t) {
   const light = t === 'light' || (t === 'system' && matchMedia('(prefers-color-scheme: light)').matches);
   $('themeColor').content = light ? '#f3f3f7' : '#0b0b0e';
   if (typeof applyChartTheme === 'function') applyChartTheme();
+  if (typeof applyPfTheme === 'function') applyPfTheme();
 }
 matchMedia('(prefers-color-scheme: light)').addEventListener?.('change', () => applyTheme(store.get('theme', 'system')));
 $('themeSeg').onclick = e => { const b = e.target.closest('button'); if (!b) return; store.set('theme', b.dataset.th); applyTheme(b.dataset.th); };
@@ -1504,6 +1502,153 @@ $('tAlerts').addEventListener('click', async e => {
   } catch (err) { alMsg(err.message, true); if (b.disabled) b.disabled = false; }
 });
 
+/* ── Evolução do portefólio por período (1H / 4H / 24H / 1W) ─────────────────────
+   Reconstruída a partir do histórico de preços de mercado das posições atuais (velas Bybit/Yahoo + câmbio),
+   por isso é igual em qualquer dispositivo e funciona logo ao abrir, mesmo depois de dias sem uso.
+   Pressuposto: as posições de hoje já existiam em todo o período (ignora compras, vendas e depósitos). */
+const PFR = {
+  '1h':  { step: 60,   win: 3600,   by: '1',  yi: '1m',  yr: '1d',  lim: 70,  label: '1H' },
+  '4h':  { step: 300,  win: 14400,  by: '5',  yi: '5m',  yr: '5d',  lim: 60,  label: '4H' },
+  '24h': { step: 900,  win: 86400,  by: '15', yi: '15m', yr: '5d',  lim: 110, label: '24H' },
+  '1w':  { step: 3600, win: 604800, by: '60', yi: '60m', yr: '1mo', lim: 180, label: '1W' },
+};
+const pf = { chart: null, series: null, line: null, range: store.get('pf-range', '24h'), key: '', at: 0, busy: false, data: [], missing: 0 };
+if (!PFR[pf.range]) pf.range = '24h';
+const histCache = new Map();
+function histCandles(source, symbol, R) {
+  const k = `${source}|${symbol}|${R.step}`, c = histCache.get(k);
+  if (c && Date.now() - c.at < 55000) return c.p;
+  const q = source === 'bybit' ? `get-candles?source=bybit&symbol=${encodeURIComponent(symbol)}&interval=${R.by}&limit=${R.lim}`
+    : `get-candles?source=yahoo&symbol=${encodeURIComponent(symbol)}&interval=${R.yi}&range=${R.yr}`;
+  const p = call(q, { timeout: 20000 }).then(d => d.candles || []);
+  histCache.set(k, { at: Date.now(), p }); p.catch(() => histCache.delete(k));
+  return p;
+}
+// preço no instante t: abertura da vela que começa em t; entre velas (ou mercado fechado) mantém o último fecho
+function priceAtFn(c) {
+  if (!c || !c.length) return null;
+  return t => {
+    let lo = 0, hi = c.length - 1, i = -1;
+    while (lo <= hi) { const mid = (lo + hi) >> 1; if (c[mid].t <= t) { i = mid; lo = mid + 1; } else hi = mid - 1; }
+    if (i < 0) return c[0].o;
+    return t === c[i].t ? c[i].o : c[i].c;
+  };
+}
+function pfSetMsg(t) { $('pfMsg').hidden = !t; if (t) $('pfMsg').textContent = t; }
+function ensurePfChart() {
+  if (pf.chart) return true;
+  if (!window.LightweightCharts) return false;
+  const L = LightweightCharts;
+  pf.chart = L.createChart($('pfChart'), {
+    autoSize: true, handleScroll: false, handleScale: false,
+    layout: { background: { type: L.ColorType.Solid, color: 'transparent' }, textColor: cv('--mut'), fontSize: 11 },
+    grid: { vertLines: { visible: false }, horzLines: { color: cv('--line') } },
+    rightPriceScale: { borderVisible: false, minimumWidth: 76, scaleMargins: { top: 0.14, bottom: 0.08 } },
+    timeScale: { borderVisible: false, timeVisible: true, secondsVisible: false, fixLeftEdge: true, fixRightEdge: true,
+      tickMarkFormatter: (t, type) => { const d = new Date(t * 1000); return type <= 2 ? d.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' }) : d.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }); } },
+    localization: { locale: 'pt-PT', timeFormatter: t => new Date(t * 1000).toLocaleString('pt-PT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) },
+    crosshair: { mode: L.CrosshairMode.Magnet, vertLine: { labelVisible: false } },
+  });
+  pf.series = pf.chart.addAreaSeries({ lineWidth: 2, priceLineVisible: false, lastValueVisible: true, crosshairMarkerRadius: 4,
+    priceFormat: { type: 'custom', formatter: v => money(v, base, Math.abs(v) >= 1000 || base === 'BTC' ? 0 : 2), minMove: 0.000001 } });
+  pf.chart.subscribeCrosshairMove(p => {
+    const d = p && p.seriesData ? p.seriesData.get(pf.series) : null;
+    if (!d || !pf.data.length) { $('pfLegend').innerHTML = ''; return; }
+    const first = pf.data[0].value, ch_ = first ? (d.value / first - 1) * 100 : 0;
+    $('pfLegend').innerHTML = `<b class="num">${money(d.value)}</b> <span class="num ${cls(ch_)}">${pct(ch_, 2)}</span> <span class="mut">${new Date(p.time * 1000).toLocaleString('pt-PT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>`;
+  });
+  return true;
+}
+function applyPfTheme() {
+  if (!pf.chart) return;
+  pf.chart.applyOptions({ layout: { textColor: cv('--mut') }, grid: { horzLines: { color: cv('--line') } } });
+  paintPf();
+}
+function paintPf() {
+  if (!pf.chart || !pf.data.length) return;
+  const first = pf.data[0].value, last = pf.data[pf.data.length - 1].value, up = last >= first;
+  const col = up ? cv('--green') : cv('--red');
+  pf.series.applyOptions({ lineColor: col, topColor: hexA(col, '55'), bottomColor: hexA(col, '08'),
+    priceFormat: { type: 'custom', formatter: v => money(v, base, Math.abs(v) >= 1000 || base === 'BTC' ? 0 : 2), minMove: 0.000001 } });
+  pf.series.setData(pf.data);
+  if (pf.line) { try { pf.series.removePriceLine(pf.line); } catch (e) {} pf.line = null; }
+  if (M && M.cost > 0) pf.line = pf.series.createPriceLine({ price: M.cost, color: cv('--mut'), lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: 'Investido' });
+  pf.chart.timeScale().fitContent();
+  const d = last - first;
+  $('pfDelta').innerHTML = `<span class="${cls(d)}">${smoney(d, base, base === 'BTC' ? 6 : 2)} · ${pct(first ? d / first * 100 : 0, 2)}</span> <span class="mut" style="font-weight:400">nas últimas ${PFR[pf.range].label}</span>`;
+}
+async function loadPfHistory() {
+  if (pf.busy || !M || !M.holdings.length || !ensurePfChart()) return;
+  const range = pf.range, R = PFR[range], sig = M.holdings.map(h => h.id).join(',');
+  pf.busy = true; pf.key = `${range}|${base}|${sig}`;
+  if (!pf.data.length) pfSetMsg('A carregar histórico…');
+  try {
+    const now = Math.floor(Date.now() / 1000), t0 = Math.floor((now - R.win) / R.step) * R.step, times = [];
+    for (let t = t0; t < now; t += R.step) times.push(t);
+    times.push(now);
+
+    const jobs = [], idx = {};
+    const want = (k, src, sym) => { if (idx[k] === undefined) { idx[k] = jobs.length; jobs.push(histCandles(src, sym, R).then(c => c.length ? c : null).catch(() => null)); } };
+    const t212 = M.holdings.filter(h => h.kind === 't212');
+    t212.forEach(h => { const tk = h.id.slice(2); want('s:' + h.id, 'yahoo', yahooSym(tk, (st.instr[tk] || {}).shortName)); });
+    M.fut.forEach(f => want('f:' + f.symbol, 'bybit', f.symbol));
+    const usdNeeded = base !== 'EUR' || !!M.b || t212.some(h => h.pxCcy === 'USD');
+    if (usdNeeded) want('fx:usd', 'yahoo', 'EURUSD=X');
+    if (t212.some(h => h.pxCcy === 'GBX' || h.pxCcy === 'GBP')) want('fx:gbp', 'yahoo', 'EURGBP=X');
+    if (base === 'BTC') want('fx:btc', 'yahoo', 'BTC-USD');
+    const res = await Promise.all(jobs);
+    if (pf.key !== `${pf.range}|${base}|${sig}`) { pf.busy = false; return; }   // mudou de período/moeda entretanto
+    const assetKeys = Object.keys(idx).filter(k => !k.startsWith('fx:'));
+    if (assetKeys.length && assetKeys.every(k => !res[idx[k]])) {   // nenhuma série de preços chegou: não desenhar uma linha plana a fingir
+      pf.data = []; pf.series.setData([]); $('pfDelta').textContent = '—'; $('pfNote').textContent = '';
+      pfSetMsg('Sem histórico de preços disponível de momento. Tenta novamente daqui a pouco.'); pf.at = Date.now(); pf.busy = false; return;
+    }
+    const get = k => idx[k] === undefined ? null : priceAtFn(res[idx[k]]);
+    const fU = get('fx:usd'), fG = get('fx:gbp'), fB = get('fx:btc');
+
+    // taxa de conversão para EUR no instante t (série histórica; se faltar, usa a taxa atual)
+    const toEurT = (c, t) => {
+      if (c === 'EUR') return 1;
+      if (c === 'USD' || c === 'USDT') { const v = fU ? fU(t) : fx.eurusd; return v ? 1 / v : null; }
+      if (c === 'GBP' || c === 'GBX') { const v = fG ? fG(t) : fx.eurgbp; return v ? (c === 'GBX' ? 0.01 : 1) / v : null; }
+      if (c === 'BTC') { const b = fB ? fB(t) : fx.btcusd, u = fU ? fU(t) : fx.eurusd; return b && u ? b / u : null; }
+      return null;
+    };
+    const rate = (from, t) => { const a = toEurT(from, t), b = toEurT(base, t); return a && b ? a / b : 1; };
+
+    pf.missing = 0;
+    const parts = t212.map(h => { const P = get('s:' + h.id); if (!P) pf.missing++; return { h, P, r0: rate(h.pxCcy || h.ccy, now), p0: P ? P(now) : 1 }; });
+    const constVal = M.holdings.filter(h => h.kind === 'cash').reduce((a, h) => a + h.value, 0);
+    const fut = M.fut.map(f => { const P = get('f:' + f.symbol); if (!P) pf.missing++; return { f, P, p0: P ? P(now) : 0, dir: f.long ? 1 : -1 }; });
+    const eq0 = M.b ? M.b.equityUsd : 0, u0 = rate('USD', now);
+
+    pf.data = times.map(t => {
+      let v = constVal;
+      parts.forEach(({ h, P, r0, p0 }) => { const ratio = P && p0 ? P(t) / p0 : 1; v += h.value * ratio * (rate(h.pxCcy || h.ccy, t) / r0); });
+      if (M.b) {
+        const eq = Math.max(0, eq0 + fut.reduce((a, x) => a + (x.P ? x.f.size * (x.P(t) - x.p0) * x.dir : 0), 0));
+        v += M.b.value * (eq0 > 0 ? eq / eq0 : 0) * (rate('USD', t) / u0);
+      }
+      return { time: t, value: v };
+    });
+    pf.at = Date.now(); pfSetMsg(''); paintPf();
+    const note = pf.missing ? ` · ${pf.missing} ativo${pf.missing > 1 ? 's' : ''} sem histórico (valor constante)` : '';
+    $('pfNote').textContent = `Evolução das posições atuais em ${PFR[pf.range].label} (assume as mesmas posições em todo o período; ignora compras, vendas e depósitos)${note}.`;
+  } catch (e) { pfSetMsg('Sem histórico: ' + e.message); }
+  pf.busy = false;
+}
+// chamado a cada render: recarrega se mudou período/moeda/ativos ou passou 1 min
+function pfEnsure() {
+  if (!M || !M.holdings.length || $('v-portfolio').hidden) return;
+  const key = `${pf.range}|${base}|${M.holdings.map(h => h.id).join(',')}`;
+  if (pf.key !== key || Date.now() - pf.at > 60000) loadPfHistory();
+}
+$('pfSeg').onclick = e => {
+  const b = e.target.closest('[data-r]'); if (!b || !PFR[b.dataset.r]) return;
+  pf.range = b.dataset.r; store.set('pf-range', pf.range); pf.data = []; renderPfSeg(); loadPfHistory();
+};
+function renderPfSeg() { document.querySelectorAll('#pfSeg button').forEach(b => b.classList.toggle('on', b.dataset.r === pf.range)); }
+
 /* ── navegação / eventos ─────────────────────────────────────────────────── */
 const TABS = ['portfolio', 'trade', 'news', 'whatif', 'ai'];
 function go(t) {
@@ -1512,6 +1657,7 @@ function go(t) {
   document.querySelectorAll('#tabbar button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
   try { history.replaceState(null, '', '#' + t); } catch (e) {}
   if (t === 'trade') openTrade(); else stopLive();
+  if (t === 'portfolio') pfEnsure();
   if (t === 'news') loadNews();
   if (t === 'whatif') renderWhatIf();
   if (t === 'ai') renderChat();
@@ -1552,7 +1698,7 @@ async function tick(force) {
   } finally { busy = false; st.loading = false; $('refresh').classList.remove('spin'); renderAll(); }
 }
 document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
-applyTheme(store.get('theme', 'system')); setBaseUI(); installUI(); renderChat(); renderWatch(); restoreT212(); renderStatus(); renderPortfolio();
+applyTheme(store.get('theme', 'system')); setBaseUI(); renderPfSeg(); installUI(); renderChat(); renderWatch(); restoreT212(); renderStatus(); renderPortfolio();
 go((location.hash || '').slice(1));
 tick(true); if (watch.length) loadWatch();
 setInterval(() => { if (!document.hidden) tick(); }, 15000);
