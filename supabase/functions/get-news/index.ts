@@ -77,6 +77,17 @@ Deno.serve(async (req: Request) => {
     }
     const xml = await r.text();
     const items = parseFeed(xml);
+    // Itens sem imagem no RSS (ex.: Yahoo por ticker): tenta o og:image do artigo (até 8, 3 s cada).
+    await Promise.all(items.filter(i => !i.image && /^https?:/.test(i.link)).slice(0, 8).map(async (i) => {
+      try {
+        const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 3000);
+        const pr = await fetch(i.link, { signal: ctl.signal, headers: { 'User-Agent': 'Mozilla/5.0 (compatible; TradeDesk/1.0)' } });
+        const html = (await pr.text()).slice(0, 200000); clearTimeout(to);
+        const m = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
+          || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+        if (m) i.image = m[1].replace(/&amp;/g, '&');
+      } catch (_) { /* sem imagem */ }
+    }));
     return new Response(JSON.stringify({ items }), { headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=120' }, status: 200 });
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 });
