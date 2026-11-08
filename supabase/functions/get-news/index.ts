@@ -10,6 +10,7 @@ const corsHeaders = {
 const ALLOW = [
   'cointelegraph.com', 'coindesk.com', 'bitcoinmagazine.com', 'feedburner.com',
   'finance.yahoo.com', 'feeds.finance.yahoo.com', 'cnbc.com', 'marketwatch.com',
+  'news.google.com',   // pesquisa de notícias dos PPR
 ];
 
 function pick(block: string, tag: string): string {

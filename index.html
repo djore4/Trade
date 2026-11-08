@@ -380,6 +380,7 @@ input.px{width:100%;background:var(--card2);color:var(--text);border:1px solid v
     <div class="card" id="tLiq" hidden></div>
     <div class="card" id="tDetail"></div>
     <div class="card" id="tAlerts"><h2>Alertas <span class="mut" id="alCount"></span></h2><div id="alPush"></div><div id="alForm"></div><div id="alList"></div></div>
+    <div class="card" id="tPpr" hidden></div>
     <div class="card" id="tAll"></div>
   </main>
 
@@ -638,7 +639,7 @@ function buildModel() {
     const c = pprCalc(f); if (c.units <= 0 && c.inv <= 0) return;
     const v = conv(c.value, 'EUR', base), ci = conv(c.inv, 'EUR', base);
     if (v == null || ci == null) { M.fxMissing = true; return; }
-    M.holdings.push({ id: 'p:' + f.id, kind: 'ppr', label: f.name, name: 'PPR · valor introduzido manualmente', cat: 'PPR', ccy: 'EUR', value: v, cost: ci, pnl: v - ci, pnlPct: ci > 0 ? (v - ci) / ci * 100 : 0 });
+    M.holdings.push({ id: 'p:' + f.id, kind: 'ppr', label: f.name, name: 'PPR · valor introduzido manualmente', cat: 'PPR', ccy: 'EUR', pxCcy: 'EUR', qty: c.units, price: c.priced ? f.price.v : c.avg, avg: c.avg, value: v, cost: ci, pnl: v - ci, pnlPct: ci > 0 ? (v - ci) / ci * 100 : 0 });
   });
 
   const sumH = k => M.holdings.reduce((a, h) => a + h[k], 0);
@@ -905,7 +906,25 @@ function pprCalc(f) {
   const value = priced ? units * f.price.v : inv;   // sem preço atual: assume o valor investido (resultado 0)
   return { units, inv, value, pnl: value - inv, pct: inv > 0 ? (value - inv) / inv * 100 : 0, priced, avg: units > 0 ? inv / units : 0 };
 }
+// série do valor da unidade: preços implícitos das compras + atualizações manuais (por data)
+function pprSeries(f) {
+  const m = new Map();
+  f.buys.forEach(b => { if (b.units > 0) m.set(b.d, b.amt / b.units); });
+  (f.pxh || []).forEach(p => m.set(p.d, p.v));
+  if (f.price) m.set(f.price.d, f.price.v);
+  return [...m].map(([d, v]) => ({ d, v })).sort((a, b) => a.d.localeCompare(b.d));
+}
+function pprSpark(ser) {
+  if (ser.length < 2) return '<div class="mut" style="font-size:12px">Histórico do valor da unidade: precisa de pelo menos 2 datas (compras ou atualizações de preço).</div>';
+  const W = 320, H = 80, lo = Math.min(...ser.map(p => p.v)), hi = Math.max(...ser.map(p => p.v)), sp = hi - lo || 1;
+  const t0 = Date.parse(ser[0].d), t1 = Date.parse(ser[ser.length - 1].d), tr = (t1 - t0) || 1;
+  const pts = ser.map(p => `${((Date.parse(p.d) - t0) / tr * W).toFixed(1)},${(H - 6 - (p.v - lo) / sp * (H - 12)).toFixed(1)}`).join(' ');
+  const up = ser[ser.length - 1].v >= ser[0].v;
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="${up ? 'var(--green)' : 'var(--red)'}" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>
+    <div class="mut num" style="display:flex;justify-content:space-between;font-size:11px"><span>${esc(ser[0].d)} · ${fmt(ser[0].v, 4)} €</span><span>${esc(ser[ser.length - 1].d)} · ${fmt(ser[ser.length - 1].v, 4)} €</span></div>`;
+}
 function pprSave() {
+  news.at = 0;   // volta a pedir notícias (pesquisa pode ter mudado)
   store.set('ppr', pprFunds); store.set('ppr-sel', pprSel);
   renderPpr(); renderPortfolio();
   if (typeof pf !== 'undefined') pf.at = 0;   // força o gráfico de evolução a refletir já o novo valor
@@ -926,6 +945,7 @@ function renderPpr() {
         <div class="tile"><div class="lbl">Unidades</div><div class="v num">${fmt(c.units, 4)}</div><div class="n">custo médio ${c.units ? fmt(c.avg, 4) + ' €' : '—'}</div></div>
       </div>
       <form class="prform" id="prPrice" autocomplete="off"><div><label for="prPx">Valor atual da unidade (€)</label><input id="prPx" inputmode="decimal" placeholder="ex.: 12,3456" value="${f.price ? esc(String(f.price.v).replace('.', ',')) : ''}"></div><div><label for="prPxD">Data</label><input id="prPxD" type="date" value="${esc(f.price ? f.price.d : pprToday())}"></div><button class="pill" type="submit">Atualizar preço</button></form>
+      <form class="prform" id="prNews" autocomplete="off"><div style="grid-column:1/-2"><label for="prQ">Pesquisa de notícias</label><input id="prQ" placeholder="${esc(f.name)}" value="${esc(f.q || '')}" maxlength="80"></div><button class="pill" type="submit">Guardar</button></form>
       <h2 style="margin-top:16px">Adicionar compra</h2>
       <form class="prform" id="prBuy" autocomplete="off"><div><label for="prD">Data</label><input id="prD" type="date" value="${pprToday()}" required></div><div><label for="prAmt">Montante (€)</label><input id="prAmt" inputmode="decimal" placeholder="ex.: 500" required></div><div><label for="prU">Unidades compradas</label><input id="prU" inputmode="decimal" placeholder="ex.: 41,2345" required></div><button class="btn" type="submit">Adicionar</button></form>
       ${[...f.buys].sort((a, b) => b.d.localeCompare(a.d)).map(b => `<div class="hrow"><div><span class="t">${esc(b.d)}</span></div><div class="r num"><b>${e(b.amt)}</b></div><div class="s">${fmt(b.units, 4)} un. · ${b.units ? fmt(b.amt / b.units, 4) : '—'} €/un.</div><div class="r"><button class="x" data-bd="${esc(b.id)}" aria-label="Remover entrada" title="Remover">×</button></div></div>`).join('')}
@@ -963,7 +983,9 @@ $('ppr').addEventListener('submit', e => {
   } else if (e.target.id === 'prPrice') {
     const v = pprNum($('prPx').value), d = $('prPxD').value || pprToday();
     if (!(v > 0)) { pprMsg = 'Indica um valor da unidade positivo.'; renderPpr(); return; }
-    f.price = { v, d }; pprMsg = 'Preço atualizado.'; pprSave();
+    f.price = { v, d }; f.pxh = (f.pxh || []).filter(p => p.d !== d).concat([{ d, v }]); pprMsg = 'Preço atualizado.'; pprSave();
+  } else if (e.target.id === 'prNews') {
+    f.q = $('prQ').value.trim(); pprMsg = 'Pesquisa de notícias guardada.'; pprSave();
   }
 });
 
@@ -979,7 +1001,11 @@ const news = { at: 0, assets: [], market: [], loading: false, tab: 'assets' };
 async function feed(url, src, tag) {
   try {
     const d = await call(`get-news?feed=${encodeURIComponent(url)}`);
-    return (d.items || []).map(i => ({ title: decode(i.title), link: i.link, ts: Date.parse(i.pubDate) || 0, src, tag: tag || null, img: /^https?:/.test(i.image || '') ? i.image : '' }));
+    return (d.items || []).map(i => {
+      let title = decode(i.title), s = src;
+      if (src === 'Google News') { const k = title.lastIndexOf(' - '); if (k > 0) { s = title.slice(k + 3); title = title.slice(0, k); } }   // “Título - Fonte”
+      return { title, link: i.link, ts: Date.parse(i.pubDate) || 0, src: s, tag: tag || null, img: /^https?:/.test(i.image || '') ? i.image : '' };
+    });
   } catch (e) { return []; }
 }
 async function loadNews(force) {
@@ -990,6 +1016,7 @@ async function loadNews(force) {
     const tk = h.id.slice(2), ins = st.instr[tk] || {};
     return feed(`https://feeds.finance.yahoo.com/rss/2.0/headline?s=${encodeURIComponent(yahooSym(tk, ins.shortName))}&region=US&lang=en-US`, 'Yahoo Finance', h.label);
   });
+  pprFunds.filter(f => pprCalc(f).units > 0).forEach(f => jobs.push(feed(`https://news.google.com/rss/search?q=${encodeURIComponent(f.q || f.name)}&hl=pt-PT&gl=PT&ceid=PT:pt-PT`, 'Google News', f.name)));
   const [mkt, ...rest] = await Promise.all([Promise.all(FEEDS.map(([s, u]) => feed(u, s))), ...jobs]);
   const marketItems = mkt.flat();
   const dedupe = a => { const seen = new Set(); return a.filter(x => { const k = x.title.toLowerCase().slice(0, 60); if (seen.has(k)) return false; seen.add(k); return true; }); };
@@ -1042,11 +1069,13 @@ const saveScen = () => store.set('scen', { pct: scen.pct, fx: scen.fx });
 const hasScen = () => scen.fx !== 0 || Object.values(scen.pct).some(v => Math.abs(v) > 1e-9);
 function setGroup(g, v) {
   if (g === 'eq') M.holdings.filter(h => h.kind === 't212').forEach(h => { scen.pct[h.id] = v; });
+  else if (g === 'pp') M.holdings.filter(h => h.kind === 'ppr').forEach(h => { scen.pct[h.id] = v; });
   else M.fut.forEach(f => { scen.pct[f.id] = v; });
 }
 const PRESETS = [
   ['Reset', () => { scen.pct = {}; scen.fx = 0; }],
   ['Bolsa −10%', () => setGroup('eq', -10)], ['Bolsa −20%', () => setGroup('eq', -20)], ['Bolsa +10%', () => setGroup('eq', 10)],
+  ['PPR −10%', () => setGroup('pp', -10)], ['PPR +10%', () => setGroup('pp', 10)],
   ['Cripto −20%', () => setGroup('cr', -20)], ['Cripto −35%', () => setGroup('cr', -35)], ['Cripto +30%', () => setGroup('cr', 30)],
   ['Crash (bolsa −30%, cripto −45%)', () => { setGroup('eq', -30); setGroup('cr', -45); }],
 ];
@@ -1059,7 +1088,7 @@ function fxFactor(ccy) {
 function scenario() {
   let total = 0; const per = {}, liq = [];
   M.holdings.forEach(h => {
-    if (h.kind === 't212') {
+    if (h.kind === 't212' || h.kind === 'ppr') {
       const p = scen.pct[h.id] || 0, nv = h.value * (1 + p / 100) * fxFactor(h.ccy); per[h.id] = { nv, d: nv - h.value }; total += nv;
     } else if (h.kind === 'bybit') {
       let eq = M.b.equityUsd;
@@ -1085,7 +1114,7 @@ function renderWhatIfSummary() {
       <div class="num ${cls(vsCost)}" style="font-size:12px">${smoney(vsCost)} vs investido</div></div></div>
     ${s.liq.length ? `<div class="alert red" style="margin:10px 0 0">⚠ Liquidação em ${s.liq.map(f => esc(f.symbol)).join(', ')}: perdes a margem dessa posição.</div>` : ''}
     <div class="mut" style="font-size:11px;margin-top:8px">${hasScen() ? '💾 Cenário guardado neste dispositivo — mantém-se ao reabrir.' : 'Os valores que definires ficam guardados neste dispositivo.'}</div>`;
-  M.holdings.filter(h => h.kind === 't212').forEach(h => { const el = $('wv-' + h.id); if (el && s.per[h.id]) { const d2 = s.per[h.id].d; el.innerHTML = `${money(s.per[h.id].nv)} <span class="${cls(d2)}">(${smoney(d2)})</span>`; } });
+  M.holdings.filter(h => h.kind === 't212' || h.kind === 'ppr').forEach(h => { const el = $('wv-' + h.id); if (el && s.per[h.id]) { const d2 = s.per[h.id].d; el.innerHTML = `${money(s.per[h.id].nv)} <span class="${cls(d2)}">(${smoney(d2)})</span>`; } });
   M.fut.forEach(f => { const el = $('wf-' + f.id), r = s.per[f.id]; if (el && r) el.innerHTML = r.crossed ? '<span class="neg">LIQUIDADO — perdes a margem</span>' : `PnL vs hoje <span class="${cls(r.dPnl)}">${smoney(r.dPnl, 'USD')}</span>`; });
 }
 function wrow(id, label, name, px, ccy, min, max, fut) {
@@ -1099,7 +1128,7 @@ function renderWhatIf() {
   if (!M) M = buildModel();
   $('presets').innerHTML = PRESETS.map((p, i) => `<button class="pill" data-p="${i}">${esc(p[0])}</button>`).join('');
   const rows = [];
-  M.holdings.filter(h => h.kind === 't212').sort((a, b) => b.value - a.value).forEach(h => rows.push(wrow(h.id, h.label, h.name, h.price, h.pxCcy, -100, 200, false)));
+  M.holdings.filter(h => h.kind === 't212' || h.kind === 'ppr').sort((a, b) => b.value - a.value).forEach(h => rows.push(wrow(h.id, h.label, h.name, h.price, h.pxCcy, -100, 200, false)));
   M.fut.forEach(f => rows.push(wrow(f.id, `${f.symbol} · ${f.long ? 'LONG' : 'SHORT'} ${fmt(f.lev, 0)}×`, 'Futuros Bybit · liq. ' + (f.liq ? price(f.liq) : '—'), f.mark, 'USDT', -90, 300, true)));
   $('wiRows').innerHTML = rows.join('') || '<div class="empty">Sem ativos.</div>';
   $('fxShock').value = scen.fx; $('fxShockV').textContent = (scen.fx > 0 ? '+' : '') + scen.fx + '%';
@@ -1230,22 +1259,37 @@ function tradeItems() {
   return it;
 }
 const curItem = items => items.find(i => i.id === ui.sel) || null;
+// PPR não têm cotação nem velas: ficam fora dos itens com gráfico e aparecem em cartão próprio e nos totais
+function pprTradeItems() {
+  return ((M && M.holdings) || []).filter(h => h.kind === 'ppr').map(h => ({ id: h.id, kind: 'ppr', label: h.label, tag: 'PPR', pnl: h.pnl, pct: h.pnlPct, h }));
+}
+function renderTradePpr() {
+  const funds = pprFunds.filter(f => f.buys.length), el = $('tPpr');
+  el.hidden = !funds.length; if (!funds.length) return;
+  el.innerHTML = `<h2>PPR <span>${funds.length}</span></h2>` + funds.map(f => {
+    const c = pprCalc(f), m = (k, v, cl) => `<div class="m"><div class="k">${k}</div><div class="v num ${cl || ''}">${v}</div></div>`;
+    return `<div style="margin-bottom:14px"><div style="font-weight:650;margin-bottom:6px">${esc(f.name)} <span class="chip">PPR</span></div>
+      <div class="fgrid">${m('Valor', money(c.value, 'EUR'))}${m('Investido', money(c.inv, 'EUR'))}${m('Resultado', c.priced ? smoney(c.pnl, 'EUR') + ' · ' + pct(c.pct, 1) : '—', c.priced ? cls(c.pnl) : '')}${m('Unidades', fmt(c.units, 4))}${m('Custo médio', c.units ? fmt(c.avg, 4) + ' €' : '—')}${m('Valor da unidade', c.priced ? fmt(f.price.v, 4) + ' €' : '—')}</div>
+      <div style="margin-top:8px">${pprSpark(pprSeries(f))}</div></div>`;
+  }).join('') + '<div class="foot">Sem cotação em tempo real: o valor da unidade é o que indicaste no Portefólio.</div>';
+}
 
 function renderTrade() {
   const items = tradeItems();
+  renderTradePpr();
   if (!items.length) {
-    $('tSummary').innerHTML = '<div class="empty">Sem posições abertas. Adiciona ativos à watchlist (separador Portefólio) para os veres aqui.</div>';
+    $('tSummary').innerHTML = '<div class="empty">Sem posições com gráfico (ações, ETFs ou futuros). Adiciona ativos à watchlist (separador Portefólio) para os veres aqui.</div>';
     $('tChips').innerHTML = ''; $('tDetail').innerHTML = ''; $('tAll').innerHTML = ''; return;
   }
   let sel = curItem(items);
   if (!sel) { sel = items[0]; ui.sel = sel.id; saveUi(); if (!$('v-trade').hidden) loadCandles(true); }
 
-  const pos = items.filter(i => i.kind !== 'watch');
+  const pprIt = pprTradeItems(), pos = items.filter(i => i.kind !== 'watch').concat(pprIt);
   const totPnl = pos.reduce((a, i) => a + (i.pnl || 0), 0);
   const futs = items.filter(i => i.kind === 'fut');
   $('tSummary').innerHTML = `<div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-end">
     <div><div class="lbl">Posições abertas</div><div class="big num" style="font-size:30px">${pos.length}</div>
-      <div class="mut" style="font-size:12px">${futs.length} futuro${futs.length === 1 ? '' : 's'} · ${pos.length - futs.length} ação/ETF</div></div>
+      <div class="mut" style="font-size:12px">${futs.length} futuro${futs.length === 1 ? '' : 's'} · ${pos.length - futs.length - pprIt.length} ação/ETF${pprIt.length ? ` · ${pprIt.length} PPR` : ''}</div></div>
     <div style="text-align:right"><div class="lbl">PnL aberto</div><div class="num ${cls(totPnl)}" style="font-size:24px;font-weight:700">${smoney(totPnl)}</div>
       ${M && M.effLev != null ? `<div class="mut" style="font-size:12px">alavancagem Bybit ${fmt(M.effLev, 1)}×</div>` : ''}</div></div>`;
 
@@ -1279,9 +1323,9 @@ function renderTrade() {
 
   // tabela de todas as posições
   $('tAll').innerHTML = `<h2>Todas as posições abertas</h2><div class="trow head"><div>Ativo</div><div class="hide-s">Tamanho</div><div>Entrada → Preço</div><div>PnL</div></div>` + (pos.length ? pos.map(i => {
-    const sz = i.kind === 'fut' ? fmt(i.f.size, 2) : fmt(i.h.qty, i.h.qty % 1 ? 3 : 0);
+    const sz = i.kind === 'fut' ? fmt(i.f.size, 2) : fmt(i.h.qty, i.h.qty % 1 ? 3 : 0), ppr = i.kind === 'ppr';
     const e = i.kind === 'fut' ? `${price(i.f.avg)} → ${price(i.f.mark)}` : `${price(i.h.avg)} → ${price(i.h.price)}`;
-    return `<div class="trow" data-sel="${esc(i.id)}"><div><b>${esc(i.label)}</b> <span class="chip">${esc(i.tag)}</span></div><div class="hide-s num">${sz}</div><div class="num" style="font-size:12.5px">${e}</div><div class="num ${cls(i.pnl)}"><b>${smoney(i.pnl)}</b><div style="font-size:11px">${pct(i.pct, 1)}</div></div></div>`;
+    return `<div class="trow"${ppr ? '' : ` data-sel="${esc(i.id)}"`}><div><b>${esc(i.label)}</b> <span class="chip">${esc(i.tag)}</span></div><div class="hide-s num">${sz}</div><div class="num" style="font-size:12.5px">${e}</div><div class="num ${cls(i.pnl)}"><b>${smoney(i.pnl)}</b><div style="font-size:11px">${pct(i.pct, 1)}</div></div></div>`;
   }).join('') : '<div class="empty">Sem posições abertas.</div>');
 
   renderLevels();
