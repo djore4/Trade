@@ -896,6 +896,8 @@ $('watch').addEventListener('click', e => {
 
 /* ── PPR (manual, sem API) ───────────────────────────────────────────────── */
 // pprFunds: [{ id, name, price: { v, d } | null, buys: [{ id, d, amt, units }] }] — valores em EUR, guardado neste dispositivo
+// Fonte de verdade: Supabase (função am-ppr), partilhada por todos os dispositivos. O localStorage é só cache/offline.
+let pprRev = store.get('ppr-rev', null), pprDirty = store.get('ppr-dirty', false), pprBusy = false, pprAt = 0, pprSyncMsg = '';
 let pprFunds = store.get('ppr', []), pprSel = store.get('ppr-sel', null), pprAdding = false, pprMsg = '';
 if (!Array.isArray(pprFunds)) pprFunds = [];
 const pprNum = v => { const x = parseFloat(String(v).trim().replace(/\s/g, '').replace(',', '.')); return isFinite(x) ? x : NaN; };
@@ -923,9 +925,52 @@ function pprSpark(ser) {
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="${up ? 'var(--green)' : 'var(--red)'}" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>
     <div class="mut num" style="display:flex;justify-content:space-between;font-size:11px"><span>${esc(ser[0].d)} · ${fmt(ser[0].v, 4)} €</span><span>${esc(ser[ser.length - 1].d)} · ${fmt(ser[ser.length - 1].v, 4)} €</span></div>`;
 }
+const pprApi = body => call('am-ppr', { method: 'POST', headers: { ...HDR, 'content-type': 'application/json' }, body: JSON.stringify(body), timeout: 15000 });
+function pprMerge(a, b) {   // união por id (compras, preços); usada na migração inicial e em conflitos
+  const out = new Map();
+  [...a, ...b].forEach(f => {
+    const x = out.get(f.id);
+    if (!x) { out.set(f.id, JSON.parse(JSON.stringify(f))); return; }
+    const ids = new Set(x.buys.map(k => k.id)); f.buys.forEach(k => { if (!ids.has(k.id)) x.buys.push(k); });
+    x.pxh = [...new Map((x.pxh || []).concat(f.pxh || []).map(p => [p.d, p])).values()];
+    if (f.price && (!x.price || f.price.d > x.price.d)) x.price = f.price;
+    if (!x.q && f.q) x.q = f.q;
+  });
+  return [...out.values()];
+}
+function pprPersist() { store.set('ppr', pprFunds); store.set('ppr-rev', pprRev); store.set('ppr-dirty', pprDirty); }
+function pprSetSync(m) { pprSyncMsg = m; const el = $('prSync'); if (el) el.textContent = m; }
+async function pprPush() {
+  if (pprBusy) return; pprBusy = true; pprSetSync('A sincronizar…');
+  try {
+    let r = await pprApi({ action: 'put', rev: pprRev == null ? 0 : pprRev, data: { funds: pprFunds } });
+    if (r.conflict) { pprFunds = pprMerge(r.data.funds || [], pprFunds); r = await pprApi({ action: 'put', rev: r.rev, data: { funds: pprFunds } }); }
+    if (r.conflict) throw new Error('conflito');
+    pprRev = r.rev; pprDirty = false; pprPersist(); pprSetSync('Sincronizado ✓');
+  } catch (e) { pprDirty = true; pprPersist(); pprSetSync('Sem sincronização (' + e.message + '): guardado neste dispositivo, tenta de novo mais tarde.'); }
+  pprBusy = false;
+  if (!$('ppr').contains(document.activeElement)) renderPpr(); renderPortfolio();
+}
+async function pprPull() {
+  if (pprBusy) return; pprAt = Date.now();
+  if (pprDirty || (pprRev == null && pprFunds.length)) return pprPush();   // alterações pendentes ou dados deste dispositivo ainda por enviar
+  pprBusy = true;
+  try {
+    const r = await pprApi({ action: 'get' });
+    if (pprDirty) { pprBusy = false; return pprPush(); }   // o utilizador editou entretanto: não sobrescrever
+    if (r.rev !== pprRev) {
+      pprFunds = (r.data && r.data.funds) || []; pprRev = r.rev; pprPersist();
+      if (!$('ppr').contains(document.activeElement)) renderPpr();
+      renderPortfolio();
+    }
+    pprSetSync('Sincronizado ✓');
+  } catch (e) { pprSetSync('Sem ligação ao servidor: a mostrar os últimos dados guardados.'); }
+  pprBusy = false;
+}
 function pprSave() {
+  pprDirty = true; pprPersist(); pprPush();
   news.at = 0;   // volta a pedir notícias (pesquisa pode ter mudado)
-  store.set('ppr', pprFunds); store.set('ppr-sel', pprSel);
+  store.set('ppr-sel', pprSel);
   renderPpr(); renderPortfolio();
   if (typeof pf !== 'undefined') pf.at = 0;   // força o gráfico de evolução a refletir já o novo valor
 }
@@ -950,7 +995,7 @@ function renderPpr() {
       <form class="prform" id="prBuy" autocomplete="off"><div><label for="prD">Data</label><input id="prD" type="date" value="${pprToday()}" required></div><div><label for="prAmt">Montante (€)</label><input id="prAmt" inputmode="decimal" placeholder="ex.: 500" required></div><div><label for="prU">Unidades compradas</label><input id="prU" inputmode="decimal" placeholder="ex.: 41,2345" required></div><button class="btn" type="submit">Adicionar</button></form>
       ${[...f.buys].sort((a, b) => b.d.localeCompare(a.d)).map(b => `<div class="hrow"><div><span class="t">${esc(b.d)}</span></div><div class="r num"><b>${e(b.amt)}</b></div><div class="s">${fmt(b.units, 4)} un. · ${b.units ? fmt(b.amt / b.units, 4) : '—'} €/un.</div><div class="r"><button class="x" data-bd="${esc(b.id)}" aria-label="Remover entrada" title="Remover">×</button></div></div>`).join('')}
       <div style="margin-top:10px"><button class="pill" id="prDel">Apagar este PPR</button></div>` : '<div class="empty">Cria o teu primeiro PPR para registar compras.</div>'}
-    <div class="foot" style="margin-top:8px">Valores em euros, introduzidos por ti e guardados neste dispositivo. O valor atual é unidades × valor da unidade que indicares; entra no total do portefólio como categoria “PPR”.</div>`;
+    <div class="foot" style="margin-top:8px">Valores em euros, introduzidos por ti e sincronizados entre dispositivos <span id="prSync">${esc(pprSyncMsg)}</span>. O valor atual é unidades × valor da unidade que indicares; entra no total do portefólio como categoria “PPR”.</div>`;
 }
 $('ppr').addEventListener('change', e => { if (e.target.id === 'prSel') { pprSel = e.target.value; pprMsg = ''; store.set('ppr-sel', pprSel); renderPpr(); } });
 $('ppr').addEventListener('click', e => {
@@ -1981,10 +2026,11 @@ async function tick(force) {
     if (force || !fx.eurusd || Date.now() - st.at.fx > 600000) jobs.push(loadFx());
     await Promise.all(jobs.map(j => j.then(renderAll)));   // cada fonte atualiza a UI assim que responde (a T212 lenta não bloqueia o resto)
     if (Date.now() - st.at.w > 60000 && watch.length) loadWatch();
+    if (Date.now() - pprAt > 45000) pprPull();
   } finally { busy = false; st.loading = false; $('refresh').classList.remove('spin'); renderAll(); }
 }
 document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
-applyTheme(store.get('theme', 'system')); setBaseUI(); renderPfSeg(); installUI(); renderChat(); renderWatch(); renderPpr(); restoreT212(); renderStatus(); renderPortfolio();
+applyTheme(store.get('theme', 'system')); setBaseUI(); renderPfSeg(); installUI(); renderChat(); renderWatch(); renderPpr(); pprPull(); restoreT212(); renderStatus(); renderPortfolio();
 go((location.hash || '').slice(1));
 tick(true); if (watch.length) loadWatch();
 setInterval(() => { if (!document.hidden) tick(); }, 15000);
