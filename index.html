@@ -114,7 +114,7 @@ button:active{transform:scale(.96)}
 .cmp .row{display:grid;grid-template-columns:64px 1fr auto;gap:10px;align-items:center;margin:6px 0;font-size:13px}
 .cmp .track{height:10px;border-radius:6px;background:var(--card2);overflow:hidden}
 .cmp .fill{height:100%;border-radius:6px;transition:width .7s cubic-bezier(.2,.8,.2,1)}
-.parts{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-size:12.5px;color:var(--mut)}
+.parts{display:flex;gap:6px;flex-wrap:nowrap;white-space:nowrap;overflow:hidden;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-size:min(12.5px,3.3vw);color:var(--mut)}
 .parts b{color:var(--text);font-weight:600}
 svg.spark{width:100%;height:64px;display:block;margin-top:10px}
 
@@ -176,6 +176,7 @@ svg.donut circle{transition:stroke-dasharray .6s ease,stroke-dashoffset .6s ease
 .news a{display:flex;gap:12px;align-items:flex-start}
 .news .nbody{flex:1;min-width:0}
 .news .nth{flex:none;width:72px;height:54px;object-fit:cover;border-radius:8px;background:var(--card2)}
+.nph{display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;letter-spacing:.03em}
 .oneline{font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .fxlink{cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px}
 .fxov{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:16px}
@@ -911,11 +912,13 @@ async function loadNews(force) {
   news.market = dedupe(marketItems).sort((a, b) => b.ts - a.ts).slice(0, 40);
   news.at = Date.now(); news.loading = false; renderNews();
 }
+const tile = i => { const t = (i.tag || i.src || '?').replace(/[^A-Za-z0-9]/g, '').slice(0, 4).toUpperCase() || '?', h = [...(i.tag || i.src || '')].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 360, 7);
+  return `<div class="nth nph" style="background:hsl(${h} 45% 32%)">${esc(t)}</div>`; };
 function renderNews() {
   const list = news.tab === 'assets' ? news.assets : news.market;
   if (news.loading && !list.length) { $('newsList').innerHTML = [1, 2, 3, 4, 5].map(() => `<div style="padding:12px 0"><div class="sk" style="height:14px;width:90%"></div><div class="sk" style="height:10px;width:40%;margin-top:8px"></div></div>`).join(''); return; }
   if (!list.length) { $('newsList').innerHTML = `<div class="empty">${news.tab === 'assets' ? 'Sem notícias recentes para os teus ativos (os feeds de ETFs são escassos). Vê “Mercados”.' : 'Sem notícias de momento.'}</div>`; return; }
-  $('newsList').innerHTML = list.map(i => `<a href="${/^https?:/.test(i.link) ? esc(i.link) : '#'}" target="_blank" rel="noopener noreferrer">${i.img ? `<img class="nth" src="${esc(i.img)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}<div class="nbody"><div class="h">${esc(i.title)}</div>
+  $('newsList').innerHTML = list.map(i => `<a href="${/^https?:/.test(i.link) ? esc(i.link) : '#'}" target="_blank" rel="noopener noreferrer">${i.img ? `<img class="nth" src="${esc(i.img)}" data-fb="${esc(tile(i))}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.outerHTML=this.dataset.fb">` : tile(i)}<div class="nbody"><div class="h">${esc(i.title)}</div>
     <div class="meta">${i.tag ? `<span class="chip" style="margin:0">${esc(i.tag)}</span>` : ''}<span>${esc(i.src)}</span><span>${ago(i.ts)}</span></div></div></a>`).join('');
 }
 
