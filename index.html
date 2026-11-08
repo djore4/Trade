@@ -397,7 +397,6 @@ input.px{width:100%;background:var(--card2);color:var(--text);border:1px solid v
       </div>
       <div class="card" style="margin:0"><h2>Simular saída por ativo</h2><div id="wiRows"></div></div>
     </div>
-    <div class="foot">Simulação linear com os preços atuais (os cenários guardam-se em % face ao preço de hoje). Futuros: perda limitada à margem se o preço tocar na liquidação. Não inclui comissões, funding, spreads nem impostos.</div>
   </main>
 
   <!-- ══ ASSISTENTE IA ══ -->
@@ -1695,8 +1694,7 @@ async function loadPfHistory() {
       return { time: t, value: v };
     });
     pf.at = Date.now(); pfSetMsg(''); paintPf();
-    const note = pf.missing ? ` · ${pf.missing} ativo${pf.missing > 1 ? 's' : ''} sem histórico (valor constante)` : '';
-    $('pfNote').textContent = `Evolução das posições atuais em ${PFR[pf.range].label} (assume as mesmas posições em todo o período; ignora compras, vendas e depósitos)${note}.`;
+    $('pfNote').textContent = pf.missing ? `${pf.missing} ativo${pf.missing > 1 ? 's' : ''} sem histórico (valor constante).` : '';
   } catch (e) { pfSetMsg('Sem histórico: ' + e.message); }
   pf.busy = false;
 }
