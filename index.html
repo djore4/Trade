@@ -173,6 +173,15 @@ svg.donut circle{transition:stroke-dasharray .6s ease,stroke-dashoffset .6s ease
 .news a{display:block;color:inherit;text-decoration:none;padding:12px 8px;margin:0 -8px;border-bottom:1px solid var(--line);border-radius:10px;transition:background .15s}
 .news a:hover{background:var(--card2)}
 .news a:last-child{border-bottom:0}
+.news a{display:flex;gap:12px;align-items:flex-start}
+.news .nbody{flex:1;min-width:0}
+.news .nth{flex:none;width:72px;height:54px;object-fit:cover;border-radius:8px;background:var(--card2)}
+.oneline{font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.fxlink{cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px}
+.fxov{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:16px}
+.fxbox{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;width:min(360px,100%);max-height:80vh;overflow:auto}
+.fxbox h3{margin:0 0 8px;font-size:15px;display:flex;justify-content:space-between;align-items:center}
+.fxbox .x{background:none;border:0;color:var(--mut);font-size:20px;cursor:pointer}
 .news .h{font-weight:600;line-height:1.35}
 .news .meta{font-size:11.5px;color:var(--mut);margin-top:4px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .empty{padding:18px;color:var(--mut);text-align:center}
@@ -682,9 +691,9 @@ function risks(M) {
 /* ── render: Portefólio ──────────────────────────────────────────────────── */
 let M = null, lastHero = null, firstDraw = true;
 function renderStatus() {
-  const chip = (name, ok, err, at) => `<span title="${esc(err || '')}"><i class="dot ${ok ? 'ok' : err ? 'bad' : ''} ${ok && st.loading ? 'live' : ''}"></i>${name}${at ? ' · ' + ago(at) : ''}</span>`;
-  $('status').innerHTML = chip('Bybit', !!st.bbWal, st.err.bb, st.at.bb) + chip('Trading 212' + (st.tStale || st.tLocal ? ' (cache)' : ''), !!st.t212, st.err.t, st.at.t) + chip('Câmbio', !!fx.eurusd, st.err.fx, 0)
-    + (fx.eurusd ? `<span>EUR/USD ${fmt(fx.eurusd, 4)}</span>` : '') + (base === 'BTC' && fx.btcusd ? `<span>BTC ${money(fx.btcusd, 'USD', 0)}</span>` : '');
+  const chip = (name, ok, err, at) => `<span title="${esc(err || '')}"><i class="dot ${ok ? 'ok' : err ? 'bad' : ''} ${ok && st.loading ? 'live' : ''}"></i>${name}</span>`;
+  $('status').innerHTML = chip('Bybit', !!st.bbWal, st.err.bb, st.at.bb) + chip('Trading 212' + (st.tStale || st.tLocal ? ' (cache)' : ''), !!st.t212, st.err.t, st.at.t) + chip('Câmbio', !!fx.eurusd, st.err.fx, 0).replace('<span ', '<span class="fxlink" data-fx="1" role="button" tabindex="0" ')
+    + (fx.eurusd ? `<span class="fxlink" data-fx="1">EUR/USD ${fmt(fx.eurusd, 4)}</span>` : '') + (base === 'BTC' && fx.btcusd ? `<span>BTC ${money(fx.btcusd, 'USD', 0)}</span>` : '');
 }
 const SKEL = `<div class="sk" style="height:12px;width:40%"></div><div class="sk" style="height:40px;width:70%;margin:12px 0"></div><div class="sk" style="height:12px;width:55%"></div><div class="sk" style="height:10px;margin-top:20px"></div><div class="sk" style="height:10px;margin-top:10px;width:80%"></div>`;
 
@@ -723,8 +732,8 @@ function renderPortfolio() {
     <div class="kv"><span>Valor atual</span><b class="num">${money(o.value)}</b></div>
     <div class="kv"><span>Investido</span><span class="num">${money(o.cost)}</span></div>
     <div class="kv"><span>Resultado</span><b class="num ${cls(o.pnl)}">${smoney(o.pnl)} · ${pct(o.pct)}</b></div>${extra || ''}</div>` : '';
-  $('sources').innerHTML = src('Futuros', 'b-bybit', M.b, `<div class="kv"><span class="mut" style="font-size:11.5px">Investido = saldo da wallet (sem PnL aberto)</span></div>`)
-    + src('Ações e ETFs', 'b-t212', M.t, M.t && !M.t.official ? `<div class="kv"><span class="mut" style="font-size:11.5px">Totais calculados (conta T212 indisponível)</span></div>` : '');
+  $('sources').innerHTML = src('Futuros', 'b-bybit', M.b, `<div class="kv"><span class="mut oneline">Investido = saldo da wallet (sem PnL aberto)</span></div>`)
+    + src('Ações e ETFs', 'b-t212', M.t, M.t && !M.t.official ? `<div class="kv"><span class="mut oneline">Totais calculados (conta T212 indisponível)</span></div>` : '');
   $('sources').hidden = !M.b && !M.t;
 
   $('futures').innerHTML = M.fut.length ? `<h2>Posições em futuros <span>${M.fut.length}</span></h2>` + M.fut.map(f => {
@@ -753,7 +762,7 @@ function renderPortfolio() {
       <div class="r num"><b>${money(h.value)}</b> <span class="mut">${fmt(M.value > 0 ? h.value / M.value * 100 : 0, 1)}%</span></div>
       <div class="s">${esc(h.name)}${h.kind === 't212' ? ` · ${fmt(h.qty, h.qty % 1 ? 3 : 0)} × ${h.pxCcy === 'GBX' ? fmt(h.price, 0) + ' p' : price(h.price) + ' ' + esc(h.pxCcy)}` : ''}</div>
       <div class="r num ${cls(h.pnl)}" style="font-size:12.5px">${h.kind === 'cash' ? '' : smoney(h.pnl) + ' · ' + pct(h.pnlPct)}</div></div>`).join('')
-    + (Math.abs(M.adj) > 0.5 ? `<div class="hrow"><div class="s">Ajuste T212 (comissões/câmbio não atribuídos a posições)</div><div class="r num ${cls(-M.adj)}" style="font-size:12.5px">${smoney(-M.adj)}</div></div>` : '')
+    + (Math.abs(M.adj) > 0.5 ? `<div class="hrow"><div class="s">Ajuste T212 (comissões/câmbio)</div><div class="r num ${cls(-M.adj)}" style="font-size:12.5px">${smoney(-M.adj)}</div></div>` : '')
     + `<div class="hrow" style="border-top:1px solid var(--line)"><div class="mut">Investido ${M.t ? money(M.t.cost) : ''}</div><div class="r num"><b>${M.t ? money(M.t.value) : ''}</b></div></div>` : '';
   $('holdings').hidden = !th.length;
 
@@ -878,7 +887,7 @@ const news = { at: 0, assets: [], market: [], loading: false, tab: 'assets' };
 async function feed(url, src, tag) {
   try {
     const d = await call(`get-news?feed=${encodeURIComponent(url)}`);
-    return (d.items || []).map(i => ({ title: decode(i.title), link: i.link, ts: Date.parse(i.pubDate) || 0, src, tag: tag || null }));
+    return (d.items || []).map(i => ({ title: decode(i.title), link: i.link, ts: Date.parse(i.pubDate) || 0, src, tag: tag || null, img: /^https?:/.test(i.image || '') ? i.image : '' }));
   } catch (e) { return []; }
 }
 async function loadNews(force) {
@@ -906,9 +915,32 @@ function renderNews() {
   const list = news.tab === 'assets' ? news.assets : news.market;
   if (news.loading && !list.length) { $('newsList').innerHTML = [1, 2, 3, 4, 5].map(() => `<div style="padding:12px 0"><div class="sk" style="height:14px;width:90%"></div><div class="sk" style="height:10px;width:40%;margin-top:8px"></div></div>`).join(''); return; }
   if (!list.length) { $('newsList').innerHTML = `<div class="empty">${news.tab === 'assets' ? 'Sem notícias recentes para os teus ativos (os feeds de ETFs são escassos). Vê “Mercados”.' : 'Sem notícias de momento.'}</div>`; return; }
-  $('newsList').innerHTML = list.map(i => `<a href="${/^https?:/.test(i.link) ? esc(i.link) : '#'}" target="_blank" rel="noopener noreferrer"><div class="h">${esc(i.title)}</div>
-    <div class="meta">${i.tag ? `<span class="chip" style="margin:0">${esc(i.tag)}</span>` : ''}<span>${esc(i.src)}</span><span>${ago(i.ts)}</span></div></a>`).join('');
+  $('newsList').innerHTML = list.map(i => `<a href="${/^https?:/.test(i.link) ? esc(i.link) : '#'}" target="_blank" rel="noopener noreferrer">${i.img ? `<img class="nth" src="${esc(i.img)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}<div class="nbody"><div class="h">${esc(i.title)}</div>
+    <div class="meta">${i.tag ? `<span class="chip" style="margin:0">${esc(i.tag)}</span>` : ''}<span>${esc(i.src)}</span><span>${ago(i.ts)}</span></div></div></a>`).join('');
 }
+
+/* ── Histórico do câmbio (janela ao clicar em Câmbio / EUR/USD) ──────────── */
+async function showFx() {
+  const ov = document.createElement('div'); ov.className = 'fxov';
+  ov.innerHTML = `<div class="fxbox" role="dialog" aria-label="Histórico EUR/USD"><h3>EUR/USD · últimos dias <button class="x" aria-label="Fechar">×</button></h3><div id="fxBody"><div class="sk" style="height:90px"></div></div></div>`;
+  const close = () => { ov.remove(); document.removeEventListener('keydown', onKey); };
+  const onKey = e => { if (e.key === 'Escape') close(); };
+  ov.addEventListener('click', e => { if (e.target === ov || e.target.closest('.x')) close(); });
+  document.addEventListener('keydown', onKey); document.body.appendChild(ov);
+  try {
+    const d = await call('get-stock-history?symbol=EURUSD%3DX&range=1mo&interval=1d');
+    const p = (d.points || []).slice(-10);
+    if (p.length < 2) throw new Error('sem dados');
+    const lo = Math.min(...p.map(x => x.c)), hi = Math.max(...p.map(x => x.c)), W = 320, H = 80, sp = hi - lo || 1;
+    const pts = p.map((x, i) => `${(i / (p.length - 1) * W).toFixed(1)},${(H - 6 - (x.c - lo) / sp * (H - 12)).toFixed(1)}`).join(' ');
+    const up = p[p.length - 1].c >= p[0].c;
+    $('fxBody').innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="${up ? 'var(--green)' : 'var(--red)'}" stroke-width="2" stroke-linejoin="round"/></svg>`
+      + [...p].reverse().map((x, i, a) => { const prev = a[i + 1], ch = prev ? (x.c / prev.c - 1) * 100 : null;
+        return `<div class="kv"><span>${new Date(x.t * 1000).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' })}</span><span class="num"><b>${fmt(x.c, 4)}</b> ${ch != null ? `<span class="${cls(ch)}" style="font-size:12px">${pct(ch, 2)}</span>` : ''}</span></div>`; }).join('');
+  } catch (e) { const b = $('fxBody'); if (b) b.innerHTML = `<div class="mut neg" style="font-size:13px">Não consegui carregar o histórico${fx.eurusd ? ` (atual ${fmt(fx.eurusd, 4)})` : ''}.</div>`; }
+}
+$('status').addEventListener('click', e => { if (e.target.closest('[data-fx]')) showFx(); });
+$('status').addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('[data-fx]')) { e.preventDefault(); showFx(); } });
 
 /* ── What-if ─────────────────────────────────────────────────────────────── */
 const scen = Object.assign({ pct: {}, fx: 0 }, store.get('scen', {}));
