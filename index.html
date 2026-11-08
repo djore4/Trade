@@ -297,6 +297,13 @@ input.px{width:100%;background:var(--card2);color:var(--text);border:1px solid v
 .view[hidden]{display:none}
 .view{animation:viewin .28s ease-out}
 @keyframes viewin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.prgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:12px 0}
+.prform{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr)) auto;gap:8px;align-items:end;margin:10px 0 4px}
+.prform label{display:block;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--mut);margin-bottom:4px}
+.prform input,.prbar input,.prbar select{width:100%;min-width:0;background:var(--card2);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit}
+.prbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.prbar select,.prbar input{flex:1;min-width:140px;width:auto}
+.prform input:focus,.prbar input:focus,.prbar select:focus{outline:2px solid color-mix(in srgb,var(--accent) 60%,transparent);outline-offset:0;border-color:transparent}
 .foot{color:var(--mut);font-size:11px;line-height:1.6;margin-top:14px}
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 </style>
@@ -350,6 +357,7 @@ input.px{width:100%;background:var(--card2);color:var(--text);border:1px solid v
       <section class="card" id="holdings"></section>
       <section class="card span2" id="risk"></section>
       <section class="card span2" id="watch"></section>
+      <section class="card span2" id="ppr"></section>
     </div>
   </main>
 
@@ -625,6 +633,14 @@ function buildModel() {
     } else M.fxMissing = true;
   }
 
+  // PPR (introduzido manualmente)
+  pprFunds.forEach(f => {
+    const c = pprCalc(f); if (c.units <= 0 && c.inv <= 0) return;
+    const v = conv(c.value, 'EUR', base), ci = conv(c.inv, 'EUR', base);
+    if (v == null || ci == null) { M.fxMissing = true; return; }
+    M.holdings.push({ id: 'p:' + f.id, kind: 'ppr', label: f.name, name: 'PPR · valor introduzido manualmente', cat: 'PPR', ccy: 'EUR', value: v, cost: ci, pnl: v - ci, pnlPct: ci > 0 ? (v - ci) / ci * 100 : 0 });
+  });
+
   const sumH = k => M.holdings.reduce((a, h) => a + h[k], 0);
   M.value = sumH('value'); M.cost = sumH('cost') + M.adj; M.pnl = M.value - M.cost;
   M.pct = M.cost > 0 ? M.pnl / M.cost * 100 : 0;
@@ -635,7 +651,7 @@ function buildModel() {
 
 /* ── gráficos ────────────────────────────────────────────────────────────── */
 const PAL = ['#5b8cff', '#f7931a', '#2ecc8f', '#b08cff', '#ff6b8a', '#39c5d4', '#e8c547', '#8a8a97'];
-const CATCOL = { 'Ações': '#5b8cff', 'ETFs': '#b08cff', 'Cripto': '#f7931a', 'Cash': '#8a8a97', 'Outros': '#39c5d4' };
+const CATCOL = { 'PPR': '#2ecc8f', 'Ações': '#5b8cff', 'ETFs': '#b08cff', 'Cripto': '#f7931a', 'Cash': '#8a8a97', 'Outros': '#39c5d4' };
 function donut(slices, total, c1, c2, anim) {
   const R = 62, C = 2 * Math.PI * R; let off = 0;
   const arcs = slices.map(s => {
@@ -708,6 +724,8 @@ function renderPortfolio() {
   const parts = [];
   if (M.b) parts.push(`Bybit <b class="num">${money(M.b.value)}</b>`);
   if (M.t) parts.push(`Trading 212 <b class="num">${money(M.t.value)}</b>`);
+  const pprV = M.holdings.filter(h => h.kind === 'ppr').reduce((a, h) => a + h.value, 0);
+  if (pprV > 0) parts.push(`PPR <b class="num">${money(pprV)}</b>`);
   $('heroBody').innerHTML = M.holdings.length ? `
     <div class="lbl">Valor atual do portefólio</div>
     <div class="big num" id="heroVal">${money(M.value)}</div>
@@ -873,6 +891,80 @@ $('watch').addEventListener('click', e => {
   const rm = e.target.closest('[data-rm]'), sg = e.target.closest('[data-sug]');
   if (rm) { watch = watch.filter(s => s !== rm.dataset.rm); store.set('watch', watch); renderWatch(); }
   else if (sg) addWatch(sg.dataset.sug);
+});
+
+/* ── PPR (manual, sem API) ───────────────────────────────────────────────── */
+// pprFunds: [{ id, name, price: { v, d } | null, buys: [{ id, d, amt, units }] }] — valores em EUR, guardado neste dispositivo
+let pprFunds = store.get('ppr', []), pprSel = store.get('ppr-sel', null), pprAdding = false, pprMsg = '';
+if (!Array.isArray(pprFunds)) pprFunds = [];
+const pprNum = v => { const x = parseFloat(String(v).trim().replace(/\s/g, '').replace(',', '.')); return isFinite(x) ? x : NaN; };
+const pprToday = () => new Date().toISOString().slice(0, 10);
+function pprCalc(f) {
+  const units = f.buys.reduce((a, b) => a + b.units, 0), inv = f.buys.reduce((a, b) => a + b.amt, 0);
+  const priced = !!(f.price && f.price.v > 0);
+  const value = priced ? units * f.price.v : inv;   // sem preço atual: assume o valor investido (resultado 0)
+  return { units, inv, value, pnl: value - inv, pct: inv > 0 ? (value - inv) / inv * 100 : 0, priced, avg: units > 0 ? inv / units : 0 };
+}
+function pprSave() {
+  store.set('ppr', pprFunds); store.set('ppr-sel', pprSel);
+  renderPpr(); renderPortfolio();
+  if (typeof pf !== 'undefined') pf.at = 0;   // força o gráfico de evolução a refletir já o novo valor
+}
+function renderPpr() {
+  if (!pprFunds.some(f => f.id === pprSel)) pprSel = pprFunds.length ? pprFunds[0].id : null;
+  const f = pprFunds.find(x => x.id === pprSel), c = f ? pprCalc(f) : null;
+  const e = v => money(v, 'EUR');
+  $('ppr').innerHTML = `<h2>PPR <span>${pprFunds.length || ''}</span></h2>
+    <div class="prbar">${pprFunds.length ? `<select id="prSel" aria-label="PPR">${pprFunds.map(x => `<option value="${esc(x.id)}"${x.id === pprSel ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select>` : ''}
+      ${pprAdding || !pprFunds.length ? `<input id="prName" placeholder="Nome do PPR (ex.: Casa da Moeda …)" maxlength="60" aria-label="Nome do PPR"><button class="btn" id="prCreate">Criar PPR</button>${pprFunds.length ? '<button class="pill" id="prCancel">Cancelar</button>' : ''}`
+        : '<button class="pill" id="prNew">+ Novo PPR</button>'}</div>
+    <div class="mut" style="font-size:12px;min-height:18px">${esc(pprMsg)}</div>
+    ${f ? `<div class="prgrid">
+        <div class="tile"><div class="lbl">Valor atual</div><div class="v num">${e(c.value)}</div><div class="n">${c.priced ? `${c.units ? fmt(c.units, 4) : 0} un. × ${fmt(f.price.v, 4)} €` : 'sem preço da unidade: usa o investido'}</div></div>
+        <div class="tile"><div class="lbl">Investido</div><div class="v num">${e(c.inv)}</div><div class="n">${f.buys.length} entrada${f.buys.length === 1 ? '' : 's'}</div></div>
+        <div class="tile"><div class="lbl">Resultado</div><div class="v num ${cls(c.pnl)}">${c.priced ? smoney(c.pnl, 'EUR') : '—'}</div><div class="n ${cls(c.pnl)}">${c.priced ? pct(c.pct) : ''}</div></div>
+        <div class="tile"><div class="lbl">Unidades</div><div class="v num">${fmt(c.units, 4)}</div><div class="n">custo médio ${c.units ? fmt(c.avg, 4) + ' €' : '—'}</div></div>
+      </div>
+      <form class="prform" id="prPrice" autocomplete="off"><div><label for="prPx">Valor atual da unidade (€)</label><input id="prPx" inputmode="decimal" placeholder="ex.: 12,3456" value="${f.price ? esc(String(f.price.v).replace('.', ',')) : ''}"></div><div><label for="prPxD">Data</label><input id="prPxD" type="date" value="${esc(f.price ? f.price.d : pprToday())}"></div><button class="pill" type="submit">Atualizar preço</button></form>
+      <h2 style="margin-top:16px">Adicionar compra</h2>
+      <form class="prform" id="prBuy" autocomplete="off"><div><label for="prD">Data</label><input id="prD" type="date" value="${pprToday()}" required></div><div><label for="prAmt">Montante (€)</label><input id="prAmt" inputmode="decimal" placeholder="ex.: 500" required></div><div><label for="prU">Unidades compradas</label><input id="prU" inputmode="decimal" placeholder="ex.: 41,2345" required></div><button class="btn" type="submit">Adicionar</button></form>
+      ${[...f.buys].sort((a, b) => b.d.localeCompare(a.d)).map(b => `<div class="hrow"><div><span class="t">${esc(b.d)}</span></div><div class="r num"><b>${e(b.amt)}</b></div><div class="s">${fmt(b.units, 4)} un. · ${b.units ? fmt(b.amt / b.units, 4) : '—'} €/un.</div><div class="r"><button class="x" data-bd="${esc(b.id)}" aria-label="Remover entrada" title="Remover">×</button></div></div>`).join('')}
+      <div style="margin-top:10px"><button class="pill" id="prDel">Apagar este PPR</button></div>` : '<div class="empty">Cria o teu primeiro PPR para registar compras.</div>'}
+    <div class="foot" style="margin-top:8px">Valores em euros, introduzidos por ti e guardados neste dispositivo. O valor atual é unidades × valor da unidade que indicares; entra no total do portefólio como categoria “PPR”.</div>`;
+}
+$('ppr').addEventListener('change', e => { if (e.target.id === 'prSel') { pprSel = e.target.value; pprMsg = ''; store.set('ppr-sel', pprSel); renderPpr(); } });
+$('ppr').addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t) return;
+  if (t.id === 'prNew') { pprAdding = true; pprMsg = ''; renderPpr(); const i = $('prName'); if (i) i.focus(); }
+  else if (t.id === 'prCancel') { pprAdding = false; pprMsg = ''; renderPpr(); }
+  else if (t.id === 'prCreate') {
+    const name = $('prName').value.trim();
+    if (!name) { pprMsg = 'Indica o nome do PPR.'; renderPpr(); return; }
+    const id = Date.now().toString(36);
+    pprFunds.push({ id, name, price: null, buys: [] }); pprSel = id; pprAdding = false; pprMsg = ''; pprSave();
+  }
+  else if (t.dataset.bd) { const f = pprFunds.find(x => x.id === pprSel); if (f) { f.buys = f.buys.filter(b => b.id !== t.dataset.bd); pprMsg = ''; pprSave(); } }
+  else if (t.id === 'prDel') {
+    const f = pprFunds.find(x => x.id === pprSel);
+    if (f && confirm(`Apagar o PPR “${f.name}” e todas as suas entradas?`)) { pprFunds = pprFunds.filter(x => x.id !== f.id); pprSel = null; pprMsg = ''; pprSave(); }
+  }
+});
+$('ppr').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'prName') { e.preventDefault(); $('prCreate').click(); } });
+$('ppr').addEventListener('submit', e => {
+  e.preventDefault();
+  const f = pprFunds.find(x => x.id === pprSel); if (!f) return;
+  if (e.target.id === 'prBuy') {
+    const d = $('prD').value, amt = pprNum($('prAmt').value), units = pprNum($('prU').value);
+    if (!d || !(amt > 0) || !(units > 0)) { pprMsg = 'Preenche data, montante e unidades com valores positivos.'; renderPpr(); return; }
+    f.buys.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), d, amt, units });
+    // o preço implícito da compra mais recente serve de preço da unidade, se ainda não houver um mais recente
+    if (!f.price || d > f.price.d) f.price = { v: amt / units, d };
+    pprMsg = 'Compra adicionada.'; pprSave();
+  } else if (e.target.id === 'prPrice') {
+    const v = pprNum($('prPx').value), d = $('prPxD').value || pprToday();
+    if (!(v > 0)) { pprMsg = 'Indica um valor da unidade positivo.'; renderPpr(); return; }
+    f.price = { v, d }; pprMsg = 'Preço atualizado.'; pprSave();
+  }
 });
 
 /* ── Notícias ────────────────────────────────────────────────────────────── */
@@ -1680,7 +1772,7 @@ async function loadPfHistory() {
 
     pf.missing = 0;
     const parts = t212.map(h => { const P = get('s:' + h.id); if (!P) pf.missing++; return { h, P, r0: rate(h.pxCcy || h.ccy, now), p0: P ? P(now) : 1 }; });
-    const constVal = M.holdings.filter(h => h.kind === 'cash').reduce((a, h) => a + h.value, 0);
+    const constVal = M.holdings.filter(h => h.kind === 'cash' || h.kind === 'ppr').reduce((a, h) => a + h.value, 0);
     const fut = M.fut.map(f => { const P = get('f:' + f.symbol); if (!P) pf.missing++; return { f, P, p0: P ? P(now) : 0, dir: f.long ? 1 : -1 }; });
     const eq0 = M.b ? M.b.equityUsd : 0, u0 = rate('USD', now);
 
@@ -1848,7 +1940,7 @@ async function tick(force) {
   } finally { busy = false; st.loading = false; $('refresh').classList.remove('spin'); renderAll(); }
 }
 document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
-applyTheme(store.get('theme', 'system')); setBaseUI(); renderPfSeg(); installUI(); renderChat(); renderWatch(); restoreT212(); renderStatus(); renderPortfolio();
+applyTheme(store.get('theme', 'system')); setBaseUI(); renderPfSeg(); installUI(); renderChat(); renderWatch(); renderPpr(); restoreT212(); renderStatus(); renderPortfolio();
 go((location.hash || '').slice(1));
 tick(true); if (watch.length) loadWatch();
 setInterval(() => { if (!document.hidden) tick(); }, 15000);
