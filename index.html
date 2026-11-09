@@ -155,19 +155,11 @@ svg.donut circle{transition:stroke-dasharray .6s ease,stroke-dashoffset .6s ease
 .tile .v{font-size:20px;font-weight:700;margin-top:2px}
 .tile .n{font-size:11.5px;color:var(--mut);margin-top:2px}
 
-/* Watchlist */
-.wlform{display:flex;gap:8px;margin-bottom:6px}
-.wlform input{flex:1;min-width:0;background:var(--card2);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit;text-transform:uppercase}
-.wlform input::placeholder{text-transform:none}
-.wlform input:focus,.chatbar textarea:focus,input.px:focus{outline:2px solid color-mix(in srgb,var(--accent) 60%,transparent);outline-offset:0;border-color:transparent}
+input.px:focus,.chatbar textarea:focus{outline:2px solid color-mix(in srgb,var(--accent) 60%,transparent);outline-offset:0;border-color:transparent}
 .btn{padding:10px 16px;border-radius:12px;background:linear-gradient(135deg,#f7931a,#ff5d6c);color:#fff;font-weight:700}
 .btn:disabled{opacity:.55}
-.wl{display:grid;grid-template-columns:1fr 84px auto 32px;gap:10px;align-items:center;padding:10px 6px;margin:0 -6px;border-bottom:1px solid var(--line);border-radius:10px;transition:background .15s;animation:slide .25s ease-out}
-.wl:hover{background:var(--card2)} .wl:last-child{border-bottom:0}
-.wl svg{width:84px;height:28px}
 .x{width:30px;height:30px;border-radius:8px;color:var(--mut);font-size:18px;line-height:1}
 .x:hover{background:var(--card2);color:var(--red)}
-@media (max-width:460px){.wl{grid-template-columns:1fr auto 32px}.wl svg{display:none}}
 
 /* Notícias */
 .news a{display:block;color:inherit;text-decoration:none;padding:12px 8px;margin:0 -8px;border-bottom:1px solid var(--line);border-radius:10px;transition:background .15s}
@@ -210,7 +202,6 @@ input.px{width:100%;background:var(--card2);color:var(--text);border:1px solid v
 .tchip b{font-size:13.5px}
 .tchip .tg{font-size:9.5px;font-weight:800;letter-spacing:.05em;color:var(--mut)}
 .tchip .pc{font-size:12px;font-weight:600}
-.tchip.watch{border-style:dashed}
 .chartcard{padding:12px 12px 10px}
 .chead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin:2px 4px 8px}
 .csym{font-size:19px;font-weight:750;letter-spacing:-.01em}
@@ -301,6 +292,8 @@ input.px{width:100%;background:var(--card2);color:var(--text);border:1px solid v
 .prform{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr)) auto;gap:8px;align-items:end;margin:10px 0 4px}
 .prform label{display:block;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--mut);margin-bottom:4px}
 .prform input,.prbar input,.prbar select{width:100%;min-width:0;background:var(--card2);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit}
+.prtog{display:flex;align-items:center;gap:6px;font:inherit;letter-spacing:inherit;text-transform:inherit;color:inherit;font-weight:inherit;padding:0;text-align:left}
+.prcar{width:12px}
 .prbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
 .prbar select,.prbar input{flex:1;min-width:140px;width:auto}
 .prform input:focus,.prbar input:focus,.prbar select:focus{outline:2px solid color-mix(in srgb,var(--accent) 60%,transparent);outline-offset:0;border-color:transparent}
@@ -356,7 +349,6 @@ input.px{width:100%;background:var(--card2);color:var(--text);border:1px solid v
       <section class="card" id="futures"></section>
       <section class="card" id="holdings"></section>
       <section class="card span2" id="risk"></section>
-      <section class="card span2" id="watch"></section>
       <section class="card span2" id="ppr"></section>
     </div>
   </main>
@@ -492,7 +484,7 @@ function tween(el, from, to, render, ms = 650) {
 
 /* ── estado ──────────────────────────────────────────────────────────────── */
 const st = { bbPos: null, bbWal: null, t212: null, acct: null, instr: {}, acctErr: null,
-  err: { bb: null, t: null, fx: null }, at: { bb: 0, t: 0, fx: 0, w: 0 }, loading: false, tStale: false, tLocal: false, tReq: 0 };
+  err: { bb: null, t: null, fx: null }, at: { bb: 0, t: 0, fx: 0 }, loading: false, tStale: false, tLocal: false, tReq: 0 };
 const fx = Object.assign({ eurusd: null, eurgbp: null, btcusd: null }, store.get('fxcache', {}));   // última taxa conhecida: a app abre já convertida
 
 /* ── FX (Yahoo via edge function; fallback BCE/frankfurter) ──────────────── */
@@ -680,12 +672,6 @@ function allocSlices(M) {
   arr.forEach((s, i) => { s.color = allocBy === 'cat' ? (CATCOL[s.label] || PAL[i % 8]) : PAL[i % 8]; });
   return arr;
 }
-function miniSpark(pts) {
-  if (!pts || pts.length < 2) return '<svg viewBox="0 0 84 28"></svg>';
-  const lo = Math.min(...pts), hi = Math.max(...pts), r = hi - lo || 1;
-  const p = pts.map((v, i) => `${(i / (pts.length - 1) * 84).toFixed(1)},${(25 - (v - lo) / r * 22).toFixed(1)}`).join(' ');
-  return `<svg viewBox="0 0 84 28" preserveAspectRatio="none"><polyline fill="none" stroke="${pts[pts.length - 1] >= pts[0] ? 'var(--green)' : 'var(--red)'}" stroke-width="1.8" vector-effect="non-scaling-stroke" points="${p}"/></svg>`;
-}
 /* ── alertas e risco ─────────────────────────────────────────────────────── */
 function risks(M) {
   const out = [];
@@ -850,55 +836,11 @@ $('notifPanel').addEventListener('click', e => {
   store.set('notif-dismissed', dismissed); renderNotifs();
 });
 
-/* ── Watchlist ───────────────────────────────────────────────────────────── */
-let watch = store.get('watch', []);           // [símbolo Yahoo]
-const wq = {};                                 // símbolo -> {price, chg, cur, name, pts}
-const WL_SUG = ['^GSPC', 'BTC-USD', 'VWCE.DE', 'NVDA', 'GC=F'];
-let wlMsg = '';
-async function loadQuote(sym) {
-  try {
-    const d = await call(`get-stock-history?symbol=${encodeURIComponent(sym)}&range=1mo&interval=1d`);
-    const p = (d.points || []).map(x => x.c);
-    if (!p.length) throw new Error('sem dados');
-    const last = p[p.length - 1], prev = p.length > 1 ? p[p.length - 2] : null;
-    wq[sym] = { price: last, chg: prev ? (last / prev - 1) * 100 : null, cur: d.currency || '', name: d.name || '', pts: p };
-    return true;
-  } catch (e) { if (!wq[sym]) wq[sym] = { err: e.message }; return false; }
-}
-async function loadWatch() { await Promise.all(watch.map(loadQuote)); st.at.w = Date.now(); renderWatch(); }
-function renderWatch() {
-  $('watch').innerHTML = `<h2>Watchlist <span>${watch.length || ''}</span></h2>
-    <form class="wlform" id="wlForm" autocomplete="off"><input id="wlIn" placeholder="Adicionar símbolo (ex.: AAPL, BTC-USD, VWCE.DE)" aria-label="Símbolo" maxlength="20"><button class="btn" id="wlAdd" type="submit">Adicionar</button></form>
-    <div class="mut" style="font-size:12px;min-height:18px" id="wlMsg">${esc(wlMsg)}</div>
-    ${watch.length ? watch.map(s => { const q = wq[s] || {};
-      return `<div class="wl"><div style="min-width:0"><b>${esc(s)}</b><div class="mut" style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(q.name || (q.err ? 'sem dados' : 'a carregar…'))}</div></div>
-        ${miniSpark(q.pts)}
-        <div class="num" style="text-align:right">${q.price != null ? `<b>${price(q.price)}</b> <span class="mut" style="font-size:11px">${esc(q.cur)}</span><div class="${cls(q.chg || 0)}" style="font-size:12px">${q.chg != null ? pct(q.chg) : ''}</div>` : '<span class="mut">—</span>'}</div>
-        <button class="x" data-rm="${esc(s)}" aria-label="Remover ${esc(s)}" title="Remover">×</button></div>`; }).join('')
-      : `<div class="empty">Segue ativos que ainda não tens. Sugestões: ${WL_SUG.map(s => `<button class="pill" data-sug="${esc(s)}" style="margin:2px">${esc(s)}</button>`).join(' ')}</div>`}
-    <div class="foot" style="margin-top:8px">Símbolos no formato do Yahoo Finance (ações: AAPL; Xetra: BMW.DE; Londres: IUVF.L; cripto: BTC-USD). Guardada neste dispositivo.</div>`;
-}
-async function addWatch(raw) {
-  const sym = String(raw || '').trim().toUpperCase().replace(/\s+/g, '');
-  if (!sym) return;
-  if (watch.includes(sym)) { wlMsg = `${sym} já está na watchlist.`; renderWatch(); return; }
-  wlMsg = 'A validar…'; renderWatch();
-  const ok = await loadQuote(sym);
-  if (!ok) { delete wq[sym]; wlMsg = `Não encontrei “${sym}”. Usa o símbolo do Yahoo Finance.`; renderWatch(); return; }
-  watch = [sym, ...watch]; store.set('watch', watch); wlMsg = ''; renderWatch();
-}
-$('watch').addEventListener('submit', e => { e.preventDefault(); addWatch($('wlIn').value); });
-$('watch').addEventListener('click', e => {
-  const rm = e.target.closest('[data-rm]'), sg = e.target.closest('[data-sug]');
-  if (rm) { watch = watch.filter(s => s !== rm.dataset.rm); store.set('watch', watch); renderWatch(); }
-  else if (sg) addWatch(sg.dataset.sug);
-});
-
 /* ── PPR (manual, sem API) ───────────────────────────────────────────────── */
 // pprFunds: [{ id, name, price: { v, d } | null, buys: [{ id, d, amt, units }] }] — valores em EUR, guardado neste dispositivo
 // Fonte de verdade: Supabase (função am-ppr), partilhada por todos os dispositivos. O localStorage é só cache/offline.
 let pprRev = store.get('ppr-rev', null), pprDirty = store.get('ppr-dirty', false), pprBusy = false, pprAt = 0, pprSyncMsg = '';
-let pprFunds = store.get('ppr', []), pprSel = store.get('ppr-sel', null), pprAdding = false, pprMsg = '';
+let pprOpen = false, pprFunds = store.get('ppr', []), pprSel = store.get('ppr-sel', null), pprAdding = false, pprMsg = '';
 if (!Array.isArray(pprFunds)) pprFunds = [];
 const pprNum = v => { const x = parseFloat(String(v).trim().replace(/\s/g, '').replace(',', '.')); return isFinite(x) ? x : NaN; };
 const pprToday = () => new Date().toISOString().slice(0, 10);
@@ -939,7 +881,7 @@ function pprMerge(a, b) {   // união por id (compras, preços); usada na migra�
   return [...out.values()];
 }
 function pprPersist() { store.set('ppr', pprFunds); store.set('ppr-rev', pprRev); store.set('ppr-dirty', pprDirty); }
-function pprSetSync(m) { pprSyncMsg = m; const el = $('prSync'); if (el) el.textContent = m; }
+function pprSetSync(m) { pprSyncMsg = m.startsWith('Sem') ? m : ''; const el = $('prSync'); if (el) el.textContent = pprSyncMsg; }
 async function pprPush() {
   if (pprBusy) return; pprBusy = true; pprSetSync('A sincronizar…');
   try {
@@ -978,7 +920,10 @@ function renderPpr() {
   if (!pprFunds.some(f => f.id === pprSel)) pprSel = pprFunds.length ? pprFunds[0].id : null;
   const f = pprFunds.find(x => x.id === pprSel), c = f ? pprCalc(f) : null;
   const e = v => money(v, 'EUR');
-  $('ppr').innerHTML = `<h2>PPR <span>${pprFunds.length || ''}</span></h2>
+  const tot = pprFunds.reduce((a, x) => a + pprCalc(x).value, 0);
+  const head = `<h2 style="margin-bottom:${pprOpen ? 12 : 0}px"><button class="prtog" id="prTog" aria-expanded="${pprOpen}" aria-controls="prBody"><span class="prcar">${pprOpen ? '▾' : '▸'}</span> PPR <span>${pprFunds.length || ''}</span></button>${pprOpen || !pprFunds.length ? '' : `<span class="num" style="text-transform:none;letter-spacing:0;font-size:14px;color:var(--text)">${money(tot, 'EUR')}</span>`}</h2>`;
+  if (!pprOpen) { $('ppr').innerHTML = head; return; }
+  $('ppr').innerHTML = head + `<div id="prBody">
     <div class="prbar">${pprFunds.length ? `<select id="prSel" aria-label="PPR">${pprFunds.map(x => `<option value="${esc(x.id)}"${x.id === pprSel ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select>` : ''}
       ${pprAdding || !pprFunds.length ? `<input id="prName" placeholder="Nome do PPR (ex.: Casa da Moeda …)" maxlength="60" aria-label="Nome do PPR"><button class="btn" id="prCreate">Criar PPR</button>${pprFunds.length ? '<button class="pill" id="prCancel">Cancelar</button>' : ''}`
         : '<button class="pill" id="prNew">+ Novo PPR</button>'}</div>
@@ -995,8 +940,9 @@ function renderPpr() {
       <form class="prform" id="prBuy" autocomplete="off"><div><label for="prD">Data</label><input id="prD" type="date" value="${pprToday()}" required></div><div><label for="prAmt">Montante (€)</label><input id="prAmt" inputmode="decimal" placeholder="ex.: 500" required></div><div><label for="prU">Unidades compradas</label><input id="prU" inputmode="decimal" placeholder="ex.: 41,2345" required></div><button class="btn" type="submit">Adicionar</button></form>
       ${[...f.buys].sort((a, b) => b.d.localeCompare(a.d)).map(b => `<div class="hrow"><div><span class="t">${esc(b.d)}</span></div><div class="r num"><b>${e(b.amt)}</b></div><div class="s">${fmt(b.units, 4)} un. · ${b.units ? fmt(b.amt / b.units, 4) : '—'} €/un.</div><div class="r"><button class="x" data-bd="${esc(b.id)}" aria-label="Remover entrada" title="Remover">×</button></div></div>`).join('')}
       <div style="margin-top:10px"><button class="pill" id="prDel">Apagar este PPR</button></div>` : '<div class="empty">Cria o teu primeiro PPR para registar compras.</div>'}
-    <div class="foot" style="margin-top:8px">Valores em euros, introduzidos por ti e sincronizados entre dispositivos <span id="prSync">${esc(pprSyncMsg)}</span>. O valor atual é unidades × valor da unidade que indicares; entra no total do portefólio como categoria “PPR”.</div>`;
+    <div class="foot" id="prSync" style="margin-top:8px">${esc(pprSyncMsg)}</div></div>`;
 }
+$('ppr').addEventListener('click', e => { if (e.target.closest('#prTog')) { pprOpen = !pprOpen; renderPpr(); } });
 $('ppr').addEventListener('change', e => { if (e.target.id === 'prSel') { pprSel = e.target.value; pprMsg = ''; store.set('ppr-sel', pprSel); renderPpr(); } });
 $('ppr').addEventListener('click', e => {
   const t = e.target.closest('button'); if (!t) return;
@@ -1208,8 +1154,6 @@ function aiContext() {
   m.holdings.forEach(h => L.push(`- ${h.label} [${h.cat}] ${h.name}: ${money(h.value)} (${fmt(m.value ? h.value / m.value * 100 : 0, 1)}%), resultado ${smoney(h.pnl)} (${pct(h.pnlPct)})`));
   m.fut.forEach(f => L.push(`FUTURO ${f.symbol} ${f.long ? 'LONG' : 'SHORT'} ${f.lev}x: tamanho ${f.size}, entrada ${f.avg}, mark ${f.mark}, liquidação ${f.liq || 'n/d'} (${f.liqDist != null ? f.liqDist.toFixed(1) + '% de distância' : 'n/d'}), margem ${f.im.toFixed(0)} USDT, nocional ${f.notional.toFixed(0)} USD, PnL aberto ${f.upl.toFixed(0)} USD, stop-loss ${f.sl || 'NÃO DEFINIDO'}, take-profit ${f.tp || 'n/d'}.`));
   if (m.effLev != null) L.push(`Alavancagem efetiva da Bybit ${m.effLev.toFixed(1)}x; saldo da wallet totalmente alocado como margem: ${m.b && m.fut.reduce((a, f) => a + f.im, 0) >= m.b.walletUsd * 0.98 ? 'sim' : 'não'}.`);
-  const wl = watch.filter(s => wq[s] && wq[s].price != null);
-  if (wl.length) L.push('WATCHLIST: ' + wl.map(s => `${s} ${price(wq[s].price)} ${wq[s].cur}${wq[s].chg != null ? ' (' + pct(wq[s].chg) + ' 1d)' : ''}`).join('; '));
   const hl = (news.assets.concat(news.market)).slice(0, 14);
   if (hl.length) L.push('MANCHETES RECENTES:\n' + hl.map(i => `- [${i.src}${i.tag ? '/' + i.tag : ''}] ${i.title}`).join('\n'));
   return L.join('\n');
@@ -1300,7 +1244,6 @@ function tradeItems() {
     const tk = h.id.slice(2), ins = st.instr[tk] || {};
     it.push({ id: h.id, kind: 'stock', label: h.label, full: h.name, tag: h.cat === 'ETFs' ? 'ETF' : 'AÇÃO', pnl: h.pnl, pct: h.pnlPct, src: { source: 'yahoo', symbol: yahooSym(tk, ins.shortName) }, h });
   });
-  watch.forEach(s => it.push({ id: 'w:' + s, kind: 'watch', label: s, full: (wq[s] && wq[s].name) || s, tag: '★ WATCHLIST', pnl: null, pct: wq[s] && wq[s].chg != null ? wq[s].chg : null, src: { source: 'yahoo', symbol: s } }));
   return it;
 }
 const curItem = items => items.find(i => i.id === ui.sel) || null;
@@ -1323,13 +1266,13 @@ function renderTrade() {
   const items = tradeItems();
   renderTradePpr();
   if (!items.length) {
-    $('tSummary').innerHTML = '<div class="empty">Sem posições com gráfico (ações, ETFs ou futuros). Adiciona ativos à watchlist (separador Portefólio) para os veres aqui.</div>';
+    $('tSummary').innerHTML = '<div class="empty">Sem posições com gráfico (ações, ETFs ou futuros).</div>';
     $('tChips').innerHTML = ''; $('tDetail').innerHTML = ''; $('tAll').innerHTML = ''; return;
   }
   let sel = curItem(items);
   if (!sel) { sel = items[0]; ui.sel = sel.id; saveUi(); if (!$('v-trade').hidden) loadCandles(true); }
 
-  const pprIt = pprTradeItems(), pos = items.filter(i => i.kind !== 'watch').concat(pprIt);
+  const pprIt = pprTradeItems(), pos = items.concat(pprIt);
   const totPnl = pos.reduce((a, i) => a + (i.pnl || 0), 0);
   const futs = items.filter(i => i.kind === 'fut');
   $('tSummary').innerHTML = `<div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-end">
@@ -1338,7 +1281,7 @@ function renderTrade() {
     <div style="text-align:right"><div class="lbl">PnL aberto</div><div class="num ${cls(totPnl)}" style="font-size:24px;font-weight:700">${smoney(totPnl)}</div>
       ${M && M.effLev != null ? `<div class="mut" style="font-size:12px">alavancagem Bybit ${fmt(M.effLev, 1)}×</div>` : ''}</div></div>`;
 
-  $('tChips').innerHTML = items.map(i => `<button class="tchip ${i.id === ui.sel ? 'on' : ''} ${i.kind === 'watch' ? 'watch' : ''}" data-sel="${esc(i.id)}">
+  $('tChips').innerHTML = items.map(i => `<button class="tchip ${i.id === ui.sel ? 'on' : ''} " data-sel="${esc(i.id)}">
     <b>${esc(i.label)}</b><span class="tg">${esc(i.tag)}</span>${i.pct != null ? `<span class="pc num ${cls(i.pct)}">${pct(i.pct, 1)}${i.pnl != null ? ` · ${smoney(i.pnl)}` : ''}</span>` : '<span class="pc">&nbsp;</span>'}</button>`).join('');
 
   renderTfSeg();
@@ -1361,9 +1304,6 @@ function renderTrade() {
     $('tDetail').innerHTML = `<h2>Posição · ${esc(h.label)} <span class="chip" style="margin:0">${esc(sel.tag)}</span></h2>
       <div class="fgrid">${m('PnL aberto', smoney(h.pnl) + ' · ' + pct(h.pnlPct, 1), cls(h.pnl))}${m('Valor', money(h.value))}${m('Peso', M && M.value ? fmt(h.value / M.value * 100, 1) + '%' : '—')}
       ${m('Quantidade', fmt(h.qty, h.qty % 1 ? 4 : 0))}${m('Preço médio', av)}${m('Preço', px)}${m('Investido', money(h.cost))}</div>`;
-  } else {
-    const q = wq[sel.src.symbol] || {};
-    $('tDetail').innerHTML = `<h2>${esc(sel.src.symbol)} <span class="chip" style="margin:0">WATCHLIST</span></h2><div class="mut">Sem posição aberta — a seguir na watchlist${q.price != null ? ` · último ${price(q.price)} ${esc(q.cur || '')}` : ''}.</div>`;
   }
 
   // tabela de todas as posições
@@ -1466,7 +1406,7 @@ function renderLevels() {
   if (!ch.candle) return;
   ch.lines.forEach(l => { try { ch.candle.removePriceLine(l); } catch (e) {} }); ch.lines = []; ch.levels = [];
   const it = curItem(tradeItems());
-  if (ui.ind.lines && it && it.kind !== 'watch') {
+  if (ui.ind.lines && it) {
     const ref = ch.data.length ? ch.data[ch.data.length - 1].c : 0;
     const add = (price_, title, color, style) => {
       if (!(price_ > 0)) return;
@@ -1668,7 +1608,7 @@ function lastPrice(it) {
   if (!it) return 0;
   if (it.kind === 'fut') return it.f.mark;
   if (it.kind === 'stock') return it.h.price;
-  const q = wq[it.src.symbol]; return q && q.price ? q.price : 0;
+  return 0;
 }
 function renderPushRow() {
   const s = al.push;
@@ -1923,7 +1863,6 @@ const liq = { key: '', at: 0, busy: false, data: null, err: null };
 function liqSymbolFor(it) {
   if (!it) return null;
   if (it.kind === 'fut') return it.src.symbol;
-  if (it.kind === 'watch') { const m = /^([A-Z0-9]{2,12})-USD$/.exec(it.src.symbol); return m ? m[1] + 'USDT' : null; }
   return null;                                      // ações/ETFs não têm liquidações
 }
 const liqWin = () => ui.liqWin || '1w';
@@ -2015,7 +1954,7 @@ function renderAll() {
   if (!$('v-news').hidden) renderNews();
   if (!$('v-trade').hidden) renderTrade();
 }
-$('refresh').onclick = () => { tick(true); loadWatch(); };
+$('refresh').onclick = () => { tick(true); };
 let busy = false;
 async function tick(force) {
   if (busy) return; busy = true; st.loading = true; $('refresh').classList.add('spin'); renderStatus();
@@ -2025,14 +1964,13 @@ async function tick(force) {
     if (force || Date.now() - st.tReq > 45000) jobs.push(loadT212(force));
     if (force || !fx.eurusd || Date.now() - st.at.fx > 600000) jobs.push(loadFx());
     await Promise.all(jobs.map(j => j.then(renderAll)));   // cada fonte atualiza a UI assim que responde (a T212 lenta não bloqueia o resto)
-    if (Date.now() - st.at.w > 60000 && watch.length) loadWatch();
     if (Date.now() - pprAt > 45000) pprPull();
   } finally { busy = false; st.loading = false; $('refresh').classList.remove('spin'); renderAll(); }
 }
 document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
-applyTheme(store.get('theme', 'system')); setBaseUI(); renderPfSeg(); installUI(); renderChat(); renderWatch(); renderPpr(); pprPull(); restoreT212(); renderStatus(); renderPortfolio();
+applyTheme(store.get('theme', 'system')); setBaseUI(); renderPfSeg(); installUI(); renderChat(); renderPpr(); pprPull(); restoreT212(); renderStatus(); renderPortfolio();
 go((location.hash || '').slice(1));
-tick(true); if (watch.length) loadWatch();
+tick(true);
 setInterval(() => { if (!document.hidden) tick(); }, 15000);
 </script>
 </body>
