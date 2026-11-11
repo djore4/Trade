@@ -677,25 +677,37 @@ function donut(slices, total, c1, c2, anim) {
 let allocBy = store.get('allocBy', 'cat');
 /* Variação por grupo da alocação: 24h (preço atual vs há 24h) ou vs compra média (resultado / investido). Modo por grupo, guardado. */
 let allocMode = store.get('allocMode', {});
-const dd = { map: new Map(), at: 0, busy: false, key: '' };      // id da posição -> variação em 24h na moeda base
+const dd = { map: new Map(), at: 0, busy: false, key: '', miss: false };      // id da posição -> variação em 24h na moeda base
 async function loadDayDelta() {
   if (dd.busy || !M || !M.holdings.length) return;
-  dd.busy = true; dd.at = Date.now();
+  dd.busy = true; dd.at = Date.now(); dd.key = ddKey(); dd.miss = false;
   try {
-    const R = PFR['24h'], now = Math.floor(Date.now() / 1000), ago = now - 86400, out = new Map();
+    const R = PFR['24h'], now = Math.floor(Date.now() / 1000), ago = now - 86400, out = new Map(dd.map);   // mantém o último valor bom se uma atualização falhar
     const jobs = [];
     M.holdings.filter(h => h.kind === 't212').forEach(h => {
       const tk = h.id.slice(2);
-      jobs.push(histCandles('yahoo', yahooSym(tk, (st.instr[tk] || {}).shortName), R).then(c => { const f = priceAtFn(c); if (f && h.price > 0) { const p0 = f(ago); if (p0 > 0) out.set(h.id, h.value * (1 - p0 / h.price)); } }).catch(() => {}));
+      jobs.push(histCandles('yahoo', yahooSym(tk, (st.instr[tk] || {}).shortName), R).then(c => { const f = priceAtFn(c); const p0 = f && h.price > 0 ? f(ago) : 0; if (p0 > 0) out.set(h.id, h.value * (1 - p0 / h.price)); else dd.miss = true; }).catch(() => { dd.miss = true; }));
     });
-    if (M.fut.length) jobs.push(Promise.all(M.fut.map(f => histCandles('bybit', f.symbol, R).then(c => { const pf_ = priceAtFn(c); if (!pf_) return null; const p0 = pf_(ago); return p0 > 0 ? f.size * (f.mark - p0) * (f.long ? 1 : -1) : null; }).catch(() => null)))
-      .then(arr => { if (arr.some(x => x == null)) return; const u = conv(arr.reduce((a, x) => a + x, 0), 'USD', base); if (u != null) out.set('b:eq', u); }));
+    if (M.fut.length) jobs.push(Promise.all(M.fut.map(f => histCandles('bybit', f.symbol, R).then(c => { const g = priceAtFn(c); const p0 = g ? g(ago) : 0; return p0 > 0 ? f.size * (f.mark - p0) * (f.long ? 1 : -1) : null; }).catch(() => null)))
+      .then(arr => {
+        if (arr.some(x => x == null)) dd.miss = true;
+        const ok = arr.filter(x => x != null); if (!ok.length) return;     // soma as posições com dados (melhor que nada)
+        const u = conv(ok.reduce((a, x) => a + x, 0), 'USD', base); if (u != null) out.set('b:eq', u); else dd.miss = true;
+      }));
+    else if (M.holdings.some(h => h.kind === 'bybit')) dd.miss = true;     // equity Bybit sem posições carregadas ainda
     await Promise.all(jobs);
     dd.map = out;
-  } finally { dd.busy = false; dd.at = Date.now(); }
+  } catch (e) { dd.miss = true; }
+  finally { dd.busy = false; dd.at = Date.now(); }
   renderAlloc();
 }
-function dayEnsure() { if (M && M.holdings.length && !$('v-portfolio').hidden && !dd.busy && Date.now() - dd.at > 60000) loadDayDelta(); }
+const ddKey = () => `${base}|${M.holdings.map(h => h.id).join(',')}|${M.fut.map(f => f.symbol + f.size).join(',')}`;
+// recalcula se mudaram as posições/moeda, a cada minuto, ou ao fim de 10 s quando faltou algum dado
+function dayEnsure() {
+  if (!M || !M.holdings.length || $('v-portfolio').hidden || dd.busy) return;
+  const age = Date.now() - dd.at;
+  if (age > 60000 || ddKey() !== dd.key || (dd.miss && age > 10000)) loadDayDelta();
+}
 // variação % de um conjunto de posições; null se não houver dados
 function groupChg(hs, mode) {
   if (mode === 'avg') {
