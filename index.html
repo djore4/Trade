@@ -94,7 +94,6 @@ button:active{transform:scale(.96)}
 .big{font-size:40px;line-height:1.1;font-weight:760;letter-spacing:-.025em;margin:4px 0 2px}
 @media (max-width:380px){.big{font-size:33px}}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-#sources{grid-template-columns:1fr}
 @media (max-width:640px){.grid2{grid-template-columns:1fr}}
 .kv{display:flex;justify-content:space-between;gap:10px;padding:5px 0}
 .kv>span:first-child{color:var(--mut)}
@@ -359,9 +358,6 @@ input.px{width:100%;background:var(--card2);color:var(--text);border:1px solid v
           <div class="cwrap"><div id="pfChart"></div><div class="pflegend" id="pfLegend"></div><div id="pfMsg">A carregar histórico…</div></div>
           <div class="foot" id="pfNote" style="margin-top:6px;font-size:10.5px"></div></div></section>
       <section class="card" id="alloc"></section>
-      <div class="grid2 span2" id="sources"></div>
-      <section class="card" id="futures"></section>
-      <section class="card" id="holdings"></section>
       <section class="card span2" id="risk"></section>
       <section class="card span2" id="ppr"></section>
     </div>
@@ -806,43 +802,6 @@ function renderPortfolio() {
 
   renderAlloc(loadingFirst);
   dayEnsure();
-
-  const src = (name, badge, o, extra) => o ? `<div class="card" style="margin:0"><h2>${name} <span class="badge ${badge}">${badge === 'b-bybit' ? 'BYBIT' : 'T212'}</span></h2>
-    <div class="kv"><span>Valor atual</span><b class="num">${money(o.value)}</b></div>
-    <div class="kv"><span>Investido</span><span class="num">${money(o.cost)}</span></div>
-    <div class="kv"><span>Resultado</span><b class="num ${cls(o.pnl)}">${smoney(o.pnl)} · ${pct(o.pct)}</b></div>${extra || ''}</div>` : '';
-  $('sources').innerHTML = src('Futuros', 'b-bybit', M.b, `<div class="kv"><span class="mut oneline">Investido = saldo da wallet (sem PnL aberto)</span></div>`);
-  $('sources').hidden = !M.b;
-
-  $('futures').innerHTML = M.fut.length ? `<h2>Posições em futuros <span>${M.fut.length}</span></h2>` + M.fut.map(f => {
-    const uplB = conv(f.upl, 'USD', base), roe = f.im > 0 ? f.upl / f.im * 100 : 0;
-    const dc = f.liqDist == null ? 'var(--mut)' : f.liqDist < 15 ? 'var(--red)' : f.liqDist < 25 ? 'var(--amber)' : 'var(--green)';
-    return `<div class="fcard"><div class="fhead">
-      <div><span class="sym">${esc(f.symbol)}</span><span class="side ${f.long ? 'long' : 'short'}">${f.long ? 'LONG' : 'SHORT'} ${fmt(f.lev, 0)}×</span>
-        <div class="mut" style="font-size:12px;margin-top:3px">${qv(fmt(f.size, 2))} ${esc(f.coin)} · nocional ${money(f.notional, 'USD', 0)}</div></div>
-      <div style="text-align:right"><div class="num ${cls(f.upl)}" style="font-size:18px;font-weight:700">${smoney(uplB)}</div><div class="num ${cls(f.upl)}" style="font-size:12px">${pct(roe)} s/ margem</div></div></div>
-      <div class="fgrid">
-        <div class="m"><div class="k">Entrada</div><div class="v num">${price(f.avg)}</div></div>
-        <div class="m"><div class="k">Mark</div><div class="v num">${price(f.mark)}</div></div>
-        <div class="m"><div class="k">Liquidação</div><div class="v num">${f.liq ? price(f.liq) : '—'}</div></div>
-        <div class="m"><div class="k">Margem</div><div class="v num">${money(f.im, 'USD', 0)}</div></div>
-        <div class="m"><div class="k">Stop-loss</div><div class="v num ${f.sl ? '' : 'amber'}">${f.sl ? price(f.sl) : 'não definido'}</div></div>
-        <div class="m"><div class="k">Take-profit</div><div class="v num">${f.tp ? price(f.tp) : '—'}</div></div>
-      </div>
-      ${f.liqDist != null ? `<div style="margin-top:12px"><div class="mut" style="font-size:10.5px;letter-spacing:.07em;text-transform:uppercase">Distância à liquidação · <b style="color:${dc}">${fmt(f.liqDist, 1)}%</b></div><div class="bar"><i style="width:${Math.min(100, f.liqDist * 2)}%;background:${dc}"></i></div></div>` : ''}
-    </div>`;
-  }).join('') : (st.bbWal ? `<h2>Posições em futuros</h2><div class="empty">Sem posições abertas</div>` : '');
-  $('futures').hidden = !M.fut.length && !st.bbWal;
-
-  const th = M.holdings.filter(h => h.kind === 't212' || h.kind === 'cash').sort((a, b) => b.value - a.value);
-  $('holdings').innerHTML = th.length ? `<h2>Ações e ETFs <span>${th.filter(h => h.kind === 't212').length}</span></h2>` + th.map(h => `
-    <div class="hrow"><div><span class="t">${esc(h.label)}</span><span class="chip">${esc(h.cat === 'ETFs' ? 'ETF' : h.cat === 'Cash' ? 'CASH' : 'AÇÃO')}</span></div>
-      <div class="r num"><b>${money(h.value)}</b> <span class="mut">${fmt(M.value > 0 ? h.value / M.value * 100 : 0, 1)}%</span></div>
-      <div class="s">${esc(h.name)}${h.kind === 't212' ? ` · ${qv(fmt(h.qty, h.qty % 1 ? 3 : 0))} × ${h.pxCcy === 'GBX' ? fmt(h.price, 0) + ' p' : price(h.price) + ' ' + esc(h.pxCcy)}` : ''}</div>
-      <div class="r num ${cls(h.pnl)}" style="font-size:12.5px">${h.kind === 'cash' ? '' : smoney(h.pnl) + ' · ' + pct(h.pnlPct)}</div></div>`).join('')
-    + (Math.abs(M.adj) > 0.5 ? `<div class="hrow"><div class="s">Ajuste T212 (comissões/câmbio)</div><div class="r num ${cls(-M.adj)}" style="font-size:12.5px">${smoney(-M.adj)}</div></div>` : '')
-    + `<div class="hrow" style="border-top:1px solid var(--line)"><div class="mut">Investido ${M.t ? money(M.t.cost) : ''}</div><div class="r num"><b>${M.t ? money(M.t.value) : ''}</b></div></div>` : '';
-  $('holdings').hidden = !th.length;
 
   const usd = M.holdings.filter(h => h.ccy === 'USD').reduce((a, h) => a + h.value, 0);
   const sortedH = M.holdings.filter(h => h.kind !== 'cash').sort((a, b) => b.value - a.value);
