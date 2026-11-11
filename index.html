@@ -340,6 +340,8 @@ input.px{width:100%;background:var(--card2);color:var(--text);border:1px solid v
         <div class="seg" id="themeSeg"><button data-th="dark">🌙 Noite</button><button data-th="light">☀️ Dia</button><button data-th="system">Sistema</button></div></div>
       <div class="mi"><div class="lbl">Moeda de apresentação</div>
         <div class="seg" id="baseSeg"><button data-b="EUR">EUR €</button><button data-b="USD">USD $</button><button data-b="BTC">BTC ₿</button></div></div>
+      <div class="mi"><div class="lbl">Modo demonstração</div>
+        <div class="seg" id="privSeg"><button data-p="0">Mostrar valores</button><button data-p="1">Ocultar valores</button></div></div>
       <div class="mi"><div class="lbl">Aplicação</div>
         <button class="btn" id="installBtn" style="width:100%;margin-top:8px">⬇ Descarregar app</button>
         <div class="mut" id="installNote" style="font-size:12px;margin-top:8px;line-height:1.5"></div></div>
@@ -452,8 +454,13 @@ const cls = v => v > 0.005 ? 'pos' : v < -0.005 ? 'neg' : '';
 const fmt = (v, d = 2) => v.toLocaleString('pt-PT', { minimumFractionDigits: d, maximumFractionDigits: d });
 let base = store.get('base', 'EUR');
 if (!['EUR', 'USD', 'BTC'].includes(base)) base = 'EUR';   // GBP foi substituída por BTC
+/* Modo demonstração: oculta valores monetários e quantidades do portefólio (as % mantêm-se). O contexto do assistente usa sempre valores reais. */
+let priv = store.get('priv', false), revealN = 0;
+const hidden = () => priv && revealN === 0;
+const qv = t => hidden() ? '•••' : t;
 function money(v, c = base, d = 2) {
   if (v == null || !isFinite(v)) return '—';
+  if (hidden()) return '•••••';
   if (c === 'BTC') return (v < 0 ? '−' : '') + '₿' + fmt(Math.abs(v), Math.abs(v) >= 1 ? 4 : 6);
   const cur = c === 'USDT' ? 'USD' : c;
   try { return new Intl.NumberFormat('pt-PT', { style: 'currency', currency: cur, minimumFractionDigits: d, maximumFractionDigits: d }).format(v); }
@@ -800,7 +807,7 @@ function renderPortfolio() {
     const dc = f.liqDist == null ? 'var(--mut)' : f.liqDist < 15 ? 'var(--red)' : f.liqDist < 25 ? 'var(--amber)' : 'var(--green)';
     return `<div class="fcard"><div class="fhead">
       <div><span class="sym">${esc(f.symbol)}</span><span class="side ${f.long ? 'long' : 'short'}">${f.long ? 'LONG' : 'SHORT'} ${fmt(f.lev, 0)}×</span>
-        <div class="mut" style="font-size:12px;margin-top:3px">${fmt(f.size, 2)} ${esc(f.coin)} · nocional ${money(f.notional, 'USD', 0)}</div></div>
+        <div class="mut" style="font-size:12px;margin-top:3px">${qv(fmt(f.size, 2))} ${esc(f.coin)} · nocional ${money(f.notional, 'USD', 0)}</div></div>
       <div style="text-align:right"><div class="num ${cls(f.upl)}" style="font-size:18px;font-weight:700">${smoney(uplB)}</div><div class="num ${cls(f.upl)}" style="font-size:12px">${pct(roe)} s/ margem</div></div></div>
       <div class="fgrid">
         <div class="m"><div class="k">Entrada</div><div class="v num">${price(f.avg)}</div></div>
@@ -819,7 +826,7 @@ function renderPortfolio() {
   $('holdings').innerHTML = th.length ? `<h2>Ações e ETFs <span>${th.filter(h => h.kind === 't212').length}</span></h2>` + th.map(h => `
     <div class="hrow"><div><span class="t">${esc(h.label)}</span><span class="chip">${esc(h.cat === 'ETFs' ? 'ETF' : h.cat === 'Cash' ? 'CASH' : 'AÇÃO')}</span></div>
       <div class="r num"><b>${money(h.value)}</b> <span class="mut">${fmt(M.value > 0 ? h.value / M.value * 100 : 0, 1)}%</span></div>
-      <div class="s">${esc(h.name)}${h.kind === 't212' ? ` · ${fmt(h.qty, h.qty % 1 ? 3 : 0)} × ${h.pxCcy === 'GBX' ? fmt(h.price, 0) + ' p' : price(h.price) + ' ' + esc(h.pxCcy)}` : ''}</div>
+      <div class="s">${esc(h.name)}${h.kind === 't212' ? ` · ${qv(fmt(h.qty, h.qty % 1 ? 3 : 0))} × ${h.pxCcy === 'GBX' ? fmt(h.price, 0) + ' p' : price(h.price) + ' ' + esc(h.pxCcy)}` : ''}</div>
       <div class="r num ${cls(h.pnl)}" style="font-size:12.5px">${h.kind === 'cash' ? '' : smoney(h.pnl) + ' · ' + pct(h.pnlPct)}</div></div>`).join('')
     + (Math.abs(M.adj) > 0.5 ? `<div class="hrow"><div class="s">Ajuste T212 (comissões/câmbio)</div><div class="r num ${cls(-M.adj)}" style="font-size:12.5px">${smoney(-M.adj)}</div></div>` : '')
     + `<div class="hrow" style="border-top:1px solid var(--line)"><div class="mut">Investido ${M.t ? money(M.t.cost) : ''}</div><div class="r num"><b>${M.t ? money(M.t.value) : ''}</b></div></div>` : '';
@@ -983,16 +990,16 @@ function renderPpr() {
         : '<button class="pill" id="prNew">+ Novo PPR</button>'}</div>
     <div class="mut" style="font-size:12px;min-height:18px">${esc(pprMsg)}</div>
     ${f ? `<div class="prgrid">
-        <div class="tile"><div class="lbl">Valor atual</div><div class="v num">${e(c.value)}</div><div class="n">${c.priced ? `${c.units ? fmt(c.units, 4) : 0} un. × ${fmt(f.price.v, 4)} €` : 'sem preço da unidade: usa o investido'}</div></div>
+        <div class="tile"><div class="lbl">Valor atual</div><div class="v num">${e(c.value)}</div><div class="n">${c.priced ? `${qv(c.units ? fmt(c.units, 4) : '0')} un. × ${qv(fmt(f.price.v, 4))} €` : 'sem preço da unidade: usa o investido'}</div></div>
         <div class="tile"><div class="lbl">Investido</div><div class="v num">${e(c.inv)}</div><div class="n">${f.buys.length} entrada${f.buys.length === 1 ? '' : 's'}</div></div>
         <div class="tile"><div class="lbl">Resultado</div><div class="v num ${cls(c.pnl)}">${c.priced ? smoney(c.pnl, 'EUR') : '—'}</div><div class="n ${cls(c.pnl)}">${c.priced ? pct(c.pct) : ''}</div></div>
-        <div class="tile"><div class="lbl">Unidades</div><div class="v num">${fmt(c.units, 4)}</div><div class="n">custo médio ${c.units ? fmt(c.avg, 4) + ' €' : '—'}</div></div>
+        <div class="tile"><div class="lbl">Unidades</div><div class="v num">${qv(fmt(c.units, 4))}</div><div class="n">custo médio ${c.units ? qv(fmt(c.avg, 4)) + ' €' : '—'}</div></div>
       </div>
       <form class="prform" id="prPrice" autocomplete="off"><div><label for="prPx">Valor atual da unidade (€)</label><input id="prPx" inputmode="decimal" placeholder="ex.: 12,3456" value="${f.price ? esc(String(f.price.v).replace('.', ',')) : ''}"></div><div><label for="prPxD">Data</label><input id="prPxD" type="date" value="${esc(f.price ? f.price.d : pprToday())}"></div><button class="pill" type="submit">Atualizar preço</button></form>
       <form class="prform" id="prNews" autocomplete="off"><div style="grid-column:1/-2"><label for="prQ">Pesquisa de notícias</label><input id="prQ" placeholder="${esc(f.name)}" value="${esc(f.q || '')}" maxlength="80"></div><button class="pill" type="submit">Guardar</button></form>
       <h2 style="margin-top:16px">Adicionar compra</h2>
       <form class="prform" id="prBuy" autocomplete="off"><div><label for="prD">Data</label><input id="prD" type="date" value="${pprToday()}" required></div><div><label for="prAmt">Montante (€)</label><input id="prAmt" inputmode="decimal" placeholder="ex.: 500" required></div><div><label for="prU">Unidades compradas</label><input id="prU" inputmode="decimal" placeholder="ex.: 41,2345" required></div><button class="btn" type="submit">Adicionar</button></form>
-      ${[...f.buys].sort((a, b) => b.d.localeCompare(a.d)).map(b => `<div class="hrow"><div><span class="t">${esc(b.d)}</span></div><div class="r num"><b>${e(b.amt)}</b></div><div class="s">${fmt(b.units, 4)} un. · ${b.units ? fmt(b.amt / b.units, 4) : '—'} €/un.</div><div class="r"><button class="x" data-bd="${esc(b.id)}" aria-label="Remover entrada" title="Remover">×</button></div></div>`).join('')}
+      ${[...f.buys].sort((a, b) => b.d.localeCompare(a.d)).map(b => `<div class="hrow"><div><span class="t">${esc(b.d)}</span></div><div class="r num"><b>${e(b.amt)}</b></div><div class="s">${qv(fmt(b.units, 4))} un. · ${b.units ? qv(fmt(b.amt / b.units, 4)) : '—'} €/un.</div><div class="r"><button class="x" data-bd="${esc(b.id)}" aria-label="Remover entrada" title="Remover">×</button></div></div>`).join('')}
       <div style="margin-top:10px"><button class="pill" id="prDel">Apagar este PPR</button></div>` : '<div class="empty">Cria o teu primeiro PPR para registar compras.</div>'}
     <div class="foot" id="prSync" style="margin-top:8px">${esc(pprSyncMsg)}</div></div>`;
 }
@@ -1199,7 +1206,8 @@ function md(s) {
   });
   return out + (inList ? '</ul>' : '');
 }
-function aiContext() {
+function aiContext() { revealN++; try { return aiContext_(); } finally { revealN--; } }
+function aiContext_() {
   const m = M || buildModel(), L = [];
   L.push(`Data: ${new Date().toLocaleString('pt-PT')}. Moeda base do utilizador: ${base}. Utilizador em Portugal (conta T212 em ${(st.acct && st.acct.currency) || 'EUR'}).`);
   if (fx.eurusd) L.push(`EUR/USD ${fx.eurusd.toFixed(4)}${fx.eurgbp ? `, EUR/GBP ${fx.eurgbp.toFixed(4)}` : ''}.`);
@@ -1243,7 +1251,9 @@ function applyTheme(t) {
 }
 matchMedia('(prefers-color-scheme: light)').addEventListener?.('change', () => applyTheme(store.get('theme', 'system')));
 $('themeSeg').onclick = e => { const b = e.target.closest('button'); if (!b) return; store.set('theme', b.dataset.th); applyTheme(b.dataset.th); };
-function setBaseUI() { document.querySelectorAll('#baseSeg button').forEach(b => b.classList.toggle('on', b.dataset.b === base)); }
+function setBaseUI() { setPrivUI(); document.querySelectorAll('#baseSeg button').forEach(b => b.classList.toggle('on', b.dataset.b === base)); }
+function setPrivUI() { document.querySelectorAll('#privSeg button').forEach(b => b.classList.toggle('on', (b.dataset.p === '1') === priv)); document.body.classList.toggle('priv', priv); }
+$('privSeg').onclick = e => { const b = e.target.closest('button'); if (!b) return; priv = b.dataset.p === '1'; store.set('priv', priv); lastHero = null; setPrivUI(); renderAll(); renderPpr(); if (!$('v-trade').hidden) renderTrade(); paintPf(); };
 $('baseSeg').onclick = e => { const b = e.target.closest('button'); if (!b) return; base = b.dataset.b; store.set('base', base); lastHero = null; setBaseUI(); renderAll(); };
 
 let deferredInstall = null;
@@ -1349,7 +1359,7 @@ function renderTrade() {
     const f = sel.f, roe = f.im > 0 ? f.upl / f.im * 100 : 0;
     const dc = f.liqDist == null ? '' : f.liqDist < 15 ? 'neg' : f.liqDist < 25 ? 'amber' : 'pos';
     $('tDetail').innerHTML = `<h2>Posição · ${esc(f.symbol)} <span class="side ${f.long ? 'long' : 'short'}" style="margin:0">${f.long ? 'LONG' : 'SHORT'} ${fmt(f.lev, 0)}×</span></h2>
-      <div class="fgrid">${m('PnL aberto', smoney(sel.pnl) + ' · ' + pct(roe, 1), cls(f.upl))}${m('Tamanho', fmt(f.size, 2) + ' ' + esc(f.coin))}${m('Nocional', money(f.notional, 'USD', 0))}
+      <div class="fgrid">${m('PnL aberto', smoney(sel.pnl) + ' · ' + pct(roe, 1), cls(f.upl))}${m('Tamanho', qv(fmt(f.size, 2)) + ' ' + esc(f.coin))}${m('Nocional', money(f.notional, 'USD', 0))}
       ${m('Entrada', price(f.avg))}${m('Mark', price(f.mark))}${m('Liquidação', f.liq ? price(f.liq) : '—')}
       ${m('Dist. liquidação', f.liqDist != null ? fmt(f.liqDist, 1) + '%' : '—', dc)}${m('Margem', money(f.im, 'USD', 0))}
       ${m('Stop-loss', f.sl ? price(f.sl) : 'não definido', f.sl ? '' : 'amber')}${m('Take-profit', f.tp ? price(f.tp) : '—')}</div>`;
@@ -1357,12 +1367,12 @@ function renderTrade() {
     const h = sel.h, px = h.pxCcy === 'GBX' ? fmt(h.price, 0) + ' p' : price(h.price) + ' ' + h.pxCcy, av = h.pxCcy === 'GBX' ? fmt(h.avg, 0) + ' p' : price(h.avg) + ' ' + h.pxCcy;
     $('tDetail').innerHTML = `<h2>Posição · ${esc(h.label)} <span class="chip" style="margin:0">${esc(sel.tag)}</span></h2>
       <div class="fgrid">${m('PnL aberto', smoney(h.pnl) + ' · ' + pct(h.pnlPct, 1), cls(h.pnl))}${m('Valor', money(h.value))}${m('Peso', M && M.value ? fmt(h.value / M.value * 100, 1) + '%' : '—')}
-      ${m('Quantidade', fmt(h.qty, h.qty % 1 ? 4 : 0))}${m('Preço médio', av)}${m('Preço', px)}${m('Investido', money(h.cost))}</div>`;
+      ${m('Quantidade', qv(fmt(h.qty, h.qty % 1 ? 4 : 0)))}${m('Preço médio', av)}${m('Preço', px)}${m('Investido', money(h.cost))}</div>`;
   }
 
   // tabela de todas as posições
   $('tAll').innerHTML = `<h2>Todas as posições abertas</h2><div class="trow head"><div>Ativo</div><div class="hide-s">Tamanho</div><div>Entrada → Preço</div><div>PnL</div></div>` + (pos.length ? pos.map(i => {
-    const sz = i.kind === 'fut' ? fmt(i.f.size, 2) : fmt(i.h.qty, i.h.qty % 1 ? 3 : 0), ppr = i.kind === 'ppr';
+    const sz = qv(i.kind === 'fut' ? fmt(i.f.size, 2) : fmt(i.h.qty, i.h.qty % 1 ? 3 : 0)), ppr = i.kind === 'ppr';
     const e = i.kind === 'fut' ? `${price(i.f.avg)} → ${price(i.f.mark)}` : `${price(i.h.avg)} → ${price(i.h.price)}`;
     return `<div class="trow"${ppr ? '' : ` data-sel="${esc(i.id)}"`}><div><b>${esc(i.label)}</b> <span class="chip">${esc(i.tag)}</span></div><div class="hide-s num">${sz}</div><div class="num" style="font-size:12.5px">${e}</div><div class="num ${cls(i.pnl)}"><b>${smoney(i.pnl)}</b><div style="font-size:11px">${pct(i.pct, 1)}</div></div></div>`;
   }).join('') : '<div class="empty">Sem posições abertas.</div>');
