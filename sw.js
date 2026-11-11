@@ -1,5 +1,6 @@
 // Service worker do Asset Manager — necessário para a app ser instalável (PWA).
 // Mantém o handler de push (alertas) e não faz cache: os dados são sempre ao vivo.
+// build: 2026-11-11b
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
 self.addEventListener('fetch', () => { /* passthrough: sem cache/offline */ });
