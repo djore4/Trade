@@ -1903,7 +1903,6 @@ function renderLiqPanel(it, sym) {
   if (liq.err) { el.innerHTML = head + `<div class="mut neg" style="font-size:13px">Não consegui carregar o mapa: ${esc(liq.err)}</div>`; return; }
   if (!d) { el.innerHTML = head + `<div class="sk" style="height:90px"></div>`; return; }
   const P = d.price, f = it && it.kind === 'fut' ? it.f : null;
-  const row = c => `<div class="liqrow"><span class="num"><b>${price(c.p)}</b> <span class="mut">${pct(c.pct, 1)}</span></span><b class="num">${usdK(c.usd)}</b></div>`;
   let ins = '';
   if (f && f.liq > 0) {
     const side = f.long ? d.clusters.long : d.clusters.short;
@@ -1915,15 +1914,8 @@ function renderLiqPanel(it, sym) {
       ? `fica <b>${fmt(Math.abs(f.liq / far - 1) * 100, 1)}% para lá</b> do aglomerado ${f.long ? 'mais fundo' : 'mais alto'} estimado (${price(far)}): o preço tem de atravessar ${fmt(share, 0)}% das liquidações estimadas do teu lado antes de chegar a ti.`
       : `está <b>dentro da zona de aglomerados</b> estimados (o mais ${f.long ? 'fundo' : 'alto'} está em ${price(far)}): zona onde é provável o preço ser puxado.`}</div>`;
   }
-  const o = d.okx;
-  const okx = o ? `<div class="lbl" style="margin-top:12px">Liquidações reais recentes (OKX)</div><div style="font-size:13px;margin-top:4px">${o.n} evento${o.n > 1 ? 's' : ''} desde ${new Date(o.since * 1000).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}: <b class="neg num">longs ${usdK(o.longUsd)}</b> · <b class="num" style="color:#39c5d4">shorts ${usdK(o.shortUsd)}</b></div>
-    ${o.events.slice(0, 4).map(e => `<div class="liqrow"><span>${e.side === 'long' ? 'Long' : 'Short'} liquidado a <b class="num">${price(e.px)}</b></span><span class="mut num">${usdK(e.usd)} · ${ago(e.t * 1000)}</span></div>`).join('')}`
-    : `<div class="mut" style="font-size:12px;margin-top:10px">Sem liquidações reais recentes disponíveis na OKX para este ativo.</div>`;
   el.innerHTML = head + `<div class="liqleg"><span><i style="background:rgba(255,93,108,.8)"></i>Longs (liquidam se o preço cair)</span><span><i style="background:rgba(57,197,212,.8)"></i>Shorts (liquidam se subir)</span></div>
-    <div style="font-size:13px;margin-bottom:10px">Estimado na janela: <b class="num neg">longs ${usdK(d.totals.long)}</b> abaixo do preço · <b class="num" style="color:#39c5d4">shorts ${usdK(d.totals.short)}</b> acima · open interest total <b class="num">${usdK(d.oiUsd)}</b></div>${ins}
-    <div class="liqcols"><div><div class="lbl">Aglomerados abaixo (longs)</div>${d.clusters.long.length ? d.clusters.long.map(row).join('') : '<div class="mut" style="font-size:12.5px">—</div>'}</div>
-    <div><div class="lbl">Aglomerados acima (shorts)</div>${d.clusters.short.length ? d.clusters.short.map(row).join('') : '<div class="mut" style="font-size:12.5px">—</div>'}</div></div>${okx}
-    <div class="liqnote"><b>É uma estimativa, não dados reais de posições.</b> Calculada a partir do open interest e das velas da Bybit (${d.bars} barras desde ${new Date(d.from * 1000).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' })}): cada aumento de OI abre posições longas e curtas ao preço da vela, repartidas por alavancagens ${d.model.tiers.map(x => x + '×').join(', ')} (pesos assumidos), e retiram-se as que o preço já varreu. Ignora posições anteriores à janela e a margem real de cada conta. Usa como indicação de zonas de liquidez, não como previsão.</div>`;
+    <div style="font-size:13px;margin-bottom:10px">Estimado na janela: <b class="num neg">longs ${usdK(d.totals.long)}</b> abaixo do preço · <b class="num" style="color:#39c5d4">shorts ${usdK(d.totals.short)}</b> acima · open interest total <b class="num">${usdK(d.oiUsd)}</b></div>${ins}`;
 }
 $('tLiq').addEventListener('click', e => { const b = e.target.closest('[data-lw]'); if (!b) return; ui.liqWin = b.dataset.lw; saveUi(); liq.key = ''; liqEnsure(); });
 
