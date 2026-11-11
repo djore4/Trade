@@ -125,16 +125,19 @@ svg.donut{width:100%;height:auto;display:block}
 svg.donut.anim{animation:pop .55s ease-out}
 svg.donut circle{transition:stroke-dasharray .6s ease,stroke-dashoffset .6s ease}
 .legend{display:grid;gap:2px}
-.lg{display:grid;grid-template-columns:12px 1fr auto auto;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px}
+.lg,.lgh{display:grid;grid-template-columns:12px minmax(0,1fr) 46px 64px 92px;gap:8px;align-items:center}
+.lg{padding:6px 0;border-bottom:1px solid var(--line);font-size:13px}
 .lg:last-child{border-bottom:0}
-.lg{grid-template-columns:12px 1fr auto auto auto}
-.lgv{font:inherit;font-size:12px;font-weight:600;background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:5px 8px;cursor:pointer;color:var(--mut);min-width:96px;text-align:right;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.lg>span:nth-child(2){overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lg>b,.lg>.mut,.lgh>span:nth-child(n+3){text-align:right;font-variant-numeric:tabular-nums}
+.lgh{padding:0 0 4px;border-bottom:1px solid var(--line);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+.lgv{font:inherit;font-size:12.5px;font-weight:700;background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:3px 7px;cursor:pointer;color:var(--mut);width:100%;text-align:right;line-height:1.25;touch-action:manipulation;-webkit-tap-highlight-color:transparent;font-variant-numeric:tabular-nums}
 .lgv:active{transform:scale(.96)}
-.lgv small::after{content:' ⇄'}
-.lgmode{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:2px 0 8px;font-size:12px;color:var(--mut)}
-.lgv small{font-weight:500;opacity:.75;margin-left:4px;font-size:10px;letter-spacing:.02em}
+.lgv small{display:block;font-weight:500;font-size:11px;opacity:.85}
+.lgv em{font-style:normal;font-size:9.5px;font-weight:600;opacity:.7;margin-left:4px;text-transform:uppercase;letter-spacing:.03em}
 .lgv.pos{color:var(--green)}.lgv.neg{color:var(--red)}
-@media (max-width:420px){.lg{gap:6px}.lgv{min-width:0}}
+.lgmode{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:2px 0 8px;font-size:12px;color:var(--mut)}
+@media (max-width:420px){.lg,.lgh{grid-template-columns:10px minmax(0,1fr) 40px 56px 86px;gap:6px}.lg{font-size:12.5px}}
 .sw{width:10px;height:10px;border-radius:3px}
 
 /* Futuros */
@@ -690,11 +693,11 @@ function dayEnsure() { if (M && M.holdings.length && !$('v-portfolio').hidden &&
 function groupChg(hs, mode) {
   if (mode === 'avg') {
     const h2 = hs.filter(h => h.kind !== 'cash'), cost = h2.reduce((a, h) => a + h.cost, 0);
-    return cost > 0 ? h2.reduce((a, h) => a + h.pnl, 0) / cost * 100 : null;
+    return cost > 0 ? { pct: h2.reduce((a, h) => a + h.pnl, 0) / cost * 100, amt: h2.reduce((a, h) => a + h.pnl, 0) } : null;
   }
   const known = hs.filter(h => dd.map.has(h.id)); if (!known.length) return null;
   const val = known.reduce((a, h) => a + h.value, 0), d = known.reduce((a, h) => a + dd.map.get(h.id), 0), prior = val - d;
-  return prior > 0 ? d / prior * 100 : null;
+  return prior > 0 ? { pct: d / prior * 100, amt: d } : null;
 }
 function allocSlices(M) {
   const map = new Map();
@@ -740,19 +743,20 @@ function renderStatus() {
 const SKEL = `<div class="sk" style="height:12px;width:40%"></div><div class="sk" style="height:40px;width:70%;margin:12px 0"></div><div class="sk" style="height:12px;width:55%"></div><div class="sk" style="height:10px;margin-top:20px"></div><div class="sk" style="height:10px;margin-top:10px;width:80%"></div>`;
 
 const modeOf = k => (allocMode[k] || allocMode._d) === 'avg' ? 'avg' : '24h';
-function allocChip(s) {
-  const m = modeOf(s.label), v = groupChg(s.hs, m);
-  return `<button class="lgv ${v == null ? '' : cls(v)}" data-m="${esc(s.label)}" title="Clica para alternar entre 24h e vs compra média">${v == null ? '—' : pct(v, 1)}<small>${m === 'avg' ? 'vs compra' : '24h'}</small></button>`;
+function allocChip(s, mixed) {
+  const m = modeOf(s.label), v = groupChg(s.hs, m), tip = m === 'avg' ? 'vs compra média' : 'últimas 24h', tag = mixed && v ? `<em>${m === 'avg' ? 'PM' : '24h'}</em>` : '';
+  return `<button class="lgv ${v == null ? '' : cls(v.amt)}" data-m="${esc(s.label)}" title="${tip} · toca para alternar">${v == null ? '—' : pct(v.pct, 1)}<small>${v == null ? '' : smoney(v.amt, base, Math.abs(v.amt) >= 100 ? 0 : 2)}${tag}</small></button>`;
 }
 function renderAlloc(loadingFirst) {
   if (!M) return;
-  const slices = allocSlices(M), tot = slices.reduce((a, s) => a + s.value, 0);
+  const slices = allocSlices(M), tot = slices.reduce((a, s) => a + s.value, 0), mixed = new Set(slices.map(s => modeOf(s.label))).size > 1;
   $('alloc').innerHTML = tot > 0 ? `
     <h2>Alocação <span class="seg" id="allocSeg">
       ${[['cat', 'Categoria'], ['asset', 'Ativo'], ['ccy', 'Moeda']].map(([k, l]) => `<button data-a="${k}" class="${allocBy === k ? 'on' : ''}">${l}</button>`).join('')}</span></h2>
     <div class="alloc"><div class="donutwrap">${donut(slices, tot, 'Total', money(tot, base, 0), firstDraw)}</div>
     <div class="lgmode"><span>Variação:</span><span class="seg" id="modeSeg">${[['24h', '24h'], ['avg', 'vs compra']].map(([k, l]) => `<button data-gm="${k}" class="${slices.every(s => modeOf(s.label) === k) ? 'on' : ''}">${l}</button>`).join('')}</span></div>
-    <div class="legend">${slices.map(s => `<div class="lg"><i class="sw" style="background:${s.color}"></i><span>${esc(s.label)}</span><b class="num">${fmt(s.value / tot * 100, 1)}%</b><span class="mut num">${money(s.value, base, 0)}</span>${allocChip(s)}</div>`).join('')}</div></div>`
+    <div class="lgh"><i></i><span>Grupo</span><span>Peso</span><span>Valor</span><span>${modeOf(slices[0].label) === 'avg' && slices.every(s => modeOf(s.label) === 'avg') ? 'vs compra' : slices.every(s => modeOf(s.label) === '24h') ? '24h' : '24h / compra'}</span></div>
+    <div class="legend">${slices.map(s => `<div class="lg"><i class="sw" style="background:${s.color}"></i><span>${esc(s.label)}</span><b class="num">${fmt(s.value / tot * 100, 1)}%</b><span class="mut num">${money(s.value, base, 0)}</span>${allocChip(s, mixed)}</div>`).join('')}</div></div>`
     : loadingFirst ? `<div class="sk" style="height:150px"></div>` : '';
   if (tot > 0) firstDraw = false;
 }
