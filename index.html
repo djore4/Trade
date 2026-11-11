@@ -128,7 +128,10 @@ svg.donut circle{transition:stroke-dasharray .6s ease,stroke-dashoffset .6s ease
 .lg{display:grid;grid-template-columns:12px 1fr auto auto;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px}
 .lg:last-child{border-bottom:0}
 .lg{grid-template-columns:12px 1fr auto auto auto}
-.lgv{font:inherit;font-size:12px;font-weight:600;background:var(--card2);border:0;border-radius:8px;padding:3px 7px;cursor:pointer;color:var(--mut);min-width:84px;text-align:right}
+.lgv{font:inherit;font-size:12px;font-weight:600;background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:5px 8px;cursor:pointer;color:var(--mut);min-width:96px;text-align:right;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.lgv:active{transform:scale(.96)}
+.lgv small::after{content:' ⇄'}
+.lgmode{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:2px 0 8px;font-size:12px;color:var(--mut)}
 .lgv small{font-weight:500;opacity:.75;margin-left:4px;font-size:10px;letter-spacing:.02em}
 .lgv.pos{color:var(--green)}.lgv.neg{color:var(--red)}
 @media (max-width:420px){.lg{gap:6px}.lgv{min-width:0}}
@@ -736,8 +739,9 @@ function renderStatus() {
 }
 const SKEL = `<div class="sk" style="height:12px;width:40%"></div><div class="sk" style="height:40px;width:70%;margin:12px 0"></div><div class="sk" style="height:12px;width:55%"></div><div class="sk" style="height:10px;margin-top:20px"></div><div class="sk" style="height:10px;margin-top:10px;width:80%"></div>`;
 
+const modeOf = k => (allocMode[k] || allocMode._d) === 'avg' ? 'avg' : '24h';
 function allocChip(s) {
-  const m = allocMode[s.label] === 'avg' ? 'avg' : '24h', v = groupChg(s.hs, m);
+  const m = modeOf(s.label), v = groupChg(s.hs, m);
   return `<button class="lgv ${v == null ? '' : cls(v)}" data-m="${esc(s.label)}" title="Clica para alternar entre 24h e vs compra média">${v == null ? '—' : pct(v, 1)}<small>${m === 'avg' ? 'vs compra' : '24h'}</small></button>`;
 }
 function renderAlloc(loadingFirst) {
@@ -747,6 +751,7 @@ function renderAlloc(loadingFirst) {
     <h2>Alocação <span class="seg" id="allocSeg">
       ${[['cat', 'Categoria'], ['asset', 'Ativo'], ['ccy', 'Moeda']].map(([k, l]) => `<button data-a="${k}" class="${allocBy === k ? 'on' : ''}">${l}</button>`).join('')}</span></h2>
     <div class="alloc"><div class="donutwrap">${donut(slices, tot, 'Total', money(tot, base, 0), firstDraw)}</div>
+    <div class="lgmode"><span>Variação:</span><span class="seg" id="modeSeg">${[['24h', '24h'], ['avg', 'vs compra']].map(([k, l]) => `<button data-gm="${k}" class="${slices.every(s => modeOf(s.label) === k) ? 'on' : ''}">${l}</button>`).join('')}</span></div>
     <div class="legend">${slices.map(s => `<div class="lg"><i class="sw" style="background:${s.color}"></i><span>${esc(s.label)}</span><b class="num">${fmt(s.value / tot * 100, 1)}%</b><span class="mut num">${money(s.value, base, 0)}</span>${allocChip(s)}</div>`).join('')}</div></div>`
     : loadingFirst ? `<div class="sk" style="height:150px"></div>` : '';
   if (tot > 0) firstDraw = false;
@@ -1979,7 +1984,13 @@ function go(t) {
   if (t !== 'ai') window.scrollTo({ top: 0 });
 }
 $('tabbar').onclick = e => { const b = e.target.closest('button'); if (b) go(b.dataset.t); };
-$('alloc').onclick = e => { const c = e.target.closest('[data-m]'); if (c) { const k = c.dataset.m; allocMode[k] = allocMode[k] === 'avg' ? '24h' : 'avg'; store.set('allocMode', allocMode); renderAlloc(); return; }
+// o toque no grupo usa pointerup (e não click): se a lista for redesenhada a meio do toque, o click perdia-se
+$('alloc').addEventListener('pointerup', e => {
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
+  const g = e.target.closest('[data-gm]'); if (g) { allocMode = { _d: g.dataset.gm }; store.set('allocMode', allocMode); renderAlloc(); return; }
+  const c = e.target.closest('[data-m]'); if (c) { const k = c.dataset.m; allocMode[k] = modeOf(k) === 'avg' ? '24h' : 'avg'; store.set('allocMode', allocMode); renderAlloc(); }
+});
+$('alloc').onclick = e => {
    const b = e.target.closest('[data-a]'); if (b) { allocBy = b.dataset.a; store.set('allocBy', allocBy); renderPortfolio(); } };
 $('newsSeg').onclick = e => { const b = e.target.closest('button'); if (!b) return; news.tab = b.dataset.n; document.querySelectorAll('#newsSeg button').forEach(x => x.classList.toggle('on', x === b)); renderNews(); };
 $('presets').onclick = e => { const b = e.target.closest('[data-p]'); if (b) { PRESETS[+b.dataset.p][1](); saveScen(); renderWhatIf(); } };
