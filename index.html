@@ -1387,12 +1387,21 @@ function paintSeries(reset) {
   if (!ch.chart || !ch.data.length) return;
   const d = ch.data, last = d[d.length - 1], p = prec(last.c);
   ch.candle.applyOptions({ priceFormat: { type: 'price', precision: p, minMove: 1 / Math.pow(10, p) } });
-  ch.candle.setData(d.map(toBar));
-  const hasVol = ui.ind.vol && d.some(c => c.v > 0);
-  ch.vol.setData(hasVol ? d.map(volBar) : []);
-  if (reset) { const n = d.length; ch.chart.timeScale().setVisibleLogicalRange({ from: Math.max(0, n - 110), to: n + 6 }); }
-  ch.last = toBar(last); legend(ch.last, last.v); priceHeader();
-  paintIndicators();
+  // durante a carga os painéis (RSI/MACD) mudam de intervalo ao receber dados: não deixar isso arrastar o gráfico principal
+  const wasSync = rangeSync; if (reset) rangeSync = true;
+  try {
+    ch.candle.setData(d.map(toBar));
+    const hasVol = ui.ind.vol && d.some(c => c.v > 0);
+    ch.vol.setData(hasVol ? d.map(volBar) : []);
+    ch.last = toBar(last); legend(ch.last, last.v); priceHeader();
+    paintIndicators();
+  } finally { rangeSync = wasSync; }
+  if (reset) {
+    const key = ch.key, n = d.length, r = { from: Math.max(0, n - 110), to: n + 6 };
+    const apply = () => { if (ch.key !== key || !ch.chart) return; rangeSync = true;
+      try { [ch.chart, ch.rsiC, ch.macdC].forEach(c => c && c.timeScale().setVisibleLogicalRange(r)); } finally { rangeSync = false; } };
+    apply(); [60, 250, 600].forEach(ms => setTimeout(apply, ms));
+  }
 }
 function priceHeader() {
   if (!ch.data.length) { $('cPrice').innerHTML = ''; return; }
@@ -1430,7 +1439,7 @@ function cmsg(t) { $('cMsg').hidden = !t; if (t) $('cMsg').textContent = t; }
 async function loadCandles(initial) {
   const items = tradeItems(), it = curItem(items); if (!it || !ensureChart()) return;
   const { source, symbol } = it.src, tf = ui.tf[source], key = `${source}:${symbol}:${tf}`;
-  if (initial) { ch.key = key; ch.data = []; ch.prevClose = null; ch.last = null; cmsg('A carregar velas…'); ch.candle.setData([]); ch.vol.setData([]); clearIndicators(); $('cPrice').innerHTML = ''; $('cLegend').innerHTML = ''; renderLevels(); }
+  if (initial) { ch.key = key; ch.data = []; ch.prevClose = null; ch.last = null; cmsg('A carregar velas…'); rangeSync = true; try { ch.candle.setData([]); ch.vol.setData([]); clearIndicators(); } finally { rangeSync = false; } $('cPrice').innerHTML = ''; $('cLegend').innerHTML = ''; renderLevels(); }
   else if (key !== ch.key) return;
   const q = source === 'bybit' ? `get-candles?source=bybit&symbol=${encodeURIComponent(symbol)}&interval=${tf}&limit=${initial ? 500 : 4}`
     : `get-candles?source=yahoo&symbol=${encodeURIComponent(symbol)}&interval=${tf}&range=${initial ? Y_RANGE[tf] : Y_LIVE[tf]}`;
@@ -1455,9 +1464,8 @@ function startLive() {
 }
 function stopLive() { if (ch.timer) { clearInterval(ch.timer); ch.timer = null; } }
 function selectTrade(id) {
-  if (ui.sel === id) { $('chartCard').scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+  if (ui.sel === id) return;                         // sem scroll: a página fica onde o utilizador a deixou
   ui.sel = id; saveUi(); renderTrade(); loadCandles(true); startLive();
-  $('chartCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 function openTrade() {
   renderTrade();
