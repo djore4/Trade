@@ -127,6 +127,11 @@ svg.donut circle{transition:stroke-dasharray .6s ease,stroke-dashoffset .6s ease
 .legend{display:grid;gap:2px}
 .lg{display:grid;grid-template-columns:12px 1fr auto auto;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px}
 .lg:last-child{border-bottom:0}
+.lg{grid-template-columns:12px 1fr auto auto auto}
+.lgv{font:inherit;font-size:12px;font-weight:600;background:var(--card2);border:0;border-radius:8px;padding:3px 7px;cursor:pointer;color:var(--mut);min-width:84px;text-align:right}
+.lgv small{font-weight:500;opacity:.75;margin-left:4px;font-size:10px;letter-spacing:.02em}
+.lgv.pos{color:var(--green)}.lgv.neg{color:var(--red)}
+@media (max-width:420px){.lg{gap:6px}.lgv{min-width:0}}
 .sw{width:10px;height:10px;border-radius:3px}
 
 /* Futuros */
@@ -657,17 +662,48 @@ function donut(slices, total, c1, c2, anim) {
     <text x="80" y="94" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">${esc(c2)}</text></svg>`;
 }
 let allocBy = store.get('allocBy', 'cat');
+/* Variação por grupo da alocação: 24h (preço atual vs há 24h) ou vs compra média (resultado / investido). Modo por grupo, guardado. */
+let allocMode = store.get('allocMode', {});
+const dd = { map: new Map(), at: 0, busy: false, key: '' };      // id da posição -> variação em 24h na moeda base
+async function loadDayDelta() {
+  if (dd.busy || !M || !M.holdings.length) return;
+  dd.busy = true; dd.at = Date.now();
+  try {
+    const R = PFR['24h'], now = Math.floor(Date.now() / 1000), ago = now - 86400, out = new Map();
+    const jobs = [];
+    M.holdings.filter(h => h.kind === 't212').forEach(h => {
+      const tk = h.id.slice(2);
+      jobs.push(histCandles('yahoo', yahooSym(tk, (st.instr[tk] || {}).shortName), R).then(c => { const f = priceAtFn(c); if (f && h.price > 0) { const p0 = f(ago); if (p0 > 0) out.set(h.id, h.value * (1 - p0 / h.price)); } }).catch(() => {}));
+    });
+    if (M.fut.length) jobs.push(Promise.all(M.fut.map(f => histCandles('bybit', f.symbol, R).then(c => { const pf_ = priceAtFn(c); if (!pf_) return null; const p0 = pf_(ago); return p0 > 0 ? f.size * (f.mark - p0) * (f.long ? 1 : -1) : null; }).catch(() => null)))
+      .then(arr => { if (arr.some(x => x == null)) return; const u = conv(arr.reduce((a, x) => a + x, 0), 'USD', base); if (u != null) out.set('b:eq', u); }));
+    await Promise.all(jobs);
+    dd.map = out;
+  } finally { dd.busy = false; dd.at = Date.now(); }
+  renderAlloc();
+}
+function dayEnsure() { if (M && M.holdings.length && !$('v-portfolio').hidden && !dd.busy && Date.now() - dd.at > 60000) loadDayDelta(); }
+// variação % de um conjunto de posições; null se não houver dados
+function groupChg(hs, mode) {
+  if (mode === 'avg') {
+    const h2 = hs.filter(h => h.kind !== 'cash'), cost = h2.reduce((a, h) => a + h.cost, 0);
+    return cost > 0 ? h2.reduce((a, h) => a + h.pnl, 0) / cost * 100 : null;
+  }
+  const known = hs.filter(h => dd.map.has(h.id)); if (!known.length) return null;
+  const val = known.reduce((a, h) => a + h.value, 0), d = known.reduce((a, h) => a + dd.map.get(h.id), 0), prior = val - d;
+  return prior > 0 ? d / prior * 100 : null;
+}
 function allocSlices(M) {
   const map = new Map();
   M.holdings.forEach(h => {
     if (h.value <= 0) return;
     const key = allocBy === 'cat' ? h.cat : allocBy === 'ccy' ? h.ccy : (h.kind === 'bybit' ? h.label + ' (fut.)' : h.label);
-    map.set(key, (map.get(key) || 0) + h.value);
+    const g = map.get(key) || { value: 0, hs: [] }; g.value += h.value; g.hs.push(h); map.set(key, g);
   });
-  let arr = [...map].map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value);
+  let arr = [...map].map(([label, g]) => ({ label, value: g.value, hs: g.hs })).sort((a, b) => b.value - a.value);
   if (allocBy === 'asset' && arr.length > 8) {
-    const rest = arr.slice(7).reduce((a, s) => a + s.value, 0);
-    arr = arr.slice(0, 7).concat([{ label: 'Outros', value: rest }]);
+    const rest = arr.slice(7);
+    arr = arr.slice(0, 7).concat([{ label: 'Outros', value: rest.reduce((a, s) => a + s.value, 0), hs: rest.flatMap(s => s.hs) }]);
   }
   arr.forEach((s, i) => { s.color = allocBy === 'cat' ? (CATCOL[s.label] || PAL[i % 8]) : PAL[i % 8]; });
   return arr;
@@ -700,6 +736,21 @@ function renderStatus() {
 }
 const SKEL = `<div class="sk" style="height:12px;width:40%"></div><div class="sk" style="height:40px;width:70%;margin:12px 0"></div><div class="sk" style="height:12px;width:55%"></div><div class="sk" style="height:10px;margin-top:20px"></div><div class="sk" style="height:10px;margin-top:10px;width:80%"></div>`;
 
+function allocChip(s) {
+  const m = allocMode[s.label] === 'avg' ? 'avg' : '24h', v = groupChg(s.hs, m);
+  return `<button class="lgv ${v == null ? '' : cls(v)}" data-m="${esc(s.label)}" title="Clica para alternar entre 24h e vs compra média">${v == null ? '—' : pct(v, 1)}<small>${m === 'avg' ? 'vs compra' : '24h'}</small></button>`;
+}
+function renderAlloc(loadingFirst) {
+  if (!M) return;
+  const slices = allocSlices(M), tot = slices.reduce((a, s) => a + s.value, 0);
+  $('alloc').innerHTML = tot > 0 ? `
+    <h2>Alocação <span class="seg" id="allocSeg">
+      ${[['cat', 'Categoria'], ['asset', 'Ativo'], ['ccy', 'Moeda']].map(([k, l]) => `<button data-a="${k}" class="${allocBy === k ? 'on' : ''}">${l}</button>`).join('')}</span></h2>
+    <div class="alloc"><div class="donutwrap">${donut(slices, tot, 'Total', money(tot, base, 0), firstDraw)}</div>
+    <div class="legend">${slices.map(s => `<div class="lg"><i class="sw" style="background:${s.color}"></i><span>${esc(s.label)}</span><b class="num">${fmt(s.value / tot * 100, 1)}%</b><span class="mut num">${money(s.value, base, 0)}</span>${allocChip(s)}</div>`).join('')}</div></div>`
+    : loadingFirst ? `<div class="sk" style="height:150px"></div>` : '';
+  if (tot > 0) firstDraw = false;
+}
 function renderPortfolio() {
   M = buildModel();
   const errs = [];
@@ -724,14 +775,8 @@ function renderPortfolio() {
     <div class="parts">${parts.join('<span>+</span>')}<span>= <b class="num">${money(M.value)}</b></span></div>` : loadingFirst ? SKEL : `<div class="empty">Sem dados — vê as notificações (🔔).</div>`;
   if (M.holdings.length) { tween($('heroVal'), lastHero, M.value, v => money(v)); lastHero = M.value; }
 
-  const slices = allocSlices(M), tot = slices.reduce((a, s) => a + s.value, 0);
-  $('alloc').innerHTML = tot > 0 ? `
-    <h2>Alocação <span class="seg" id="allocSeg">
-      ${[['cat', 'Categoria'], ['asset', 'Ativo'], ['ccy', 'Moeda']].map(([k, l]) => `<button data-a="${k}" class="${allocBy === k ? 'on' : ''}">${l}</button>`).join('')}</span></h2>
-    <div class="alloc"><div class="donutwrap">${donut(slices, tot, 'Total', money(tot, base, 0), firstDraw)}</div>
-    <div class="legend">${slices.map(s => `<div class="lg"><i class="sw" style="background:${s.color}"></i><span>${esc(s.label)}</span><b class="num">${fmt(s.value / tot * 100, 1)}%</b><span class="mut num">${money(s.value, base, 0)}</span></div>`).join('')}</div></div>`
-    : loadingFirst ? `<div class="sk" style="height:150px"></div>` : '';
-  if (tot > 0) firstDraw = false;
+  renderAlloc(loadingFirst);
+  dayEnsure();
 
   const src = (name, badge, o, extra) => o ? `<div class="card" style="margin:0"><h2>${name} <span class="badge ${badge}">${badge === 'b-bybit' ? 'BYBIT' : 'T212'}</span></h2>
     <div class="kv"><span>Valor atual</span><b class="num">${money(o.value)}</b></div>
@@ -1934,7 +1979,8 @@ function go(t) {
   if (t !== 'ai') window.scrollTo({ top: 0 });
 }
 $('tabbar').onclick = e => { const b = e.target.closest('button'); if (b) go(b.dataset.t); };
-$('alloc').onclick = e => { const b = e.target.closest('[data-a]'); if (b) { allocBy = b.dataset.a; store.set('allocBy', allocBy); renderPortfolio(); } };
+$('alloc').onclick = e => { const c = e.target.closest('[data-m]'); if (c) { const k = c.dataset.m; allocMode[k] = allocMode[k] === 'avg' ? '24h' : 'avg'; store.set('allocMode', allocMode); renderAlloc(); return; }
+   const b = e.target.closest('[data-a]'); if (b) { allocBy = b.dataset.a; store.set('allocBy', allocBy); renderPortfolio(); } };
 $('newsSeg').onclick = e => { const b = e.target.closest('button'); if (!b) return; news.tab = b.dataset.n; document.querySelectorAll('#newsSeg button').forEach(x => x.classList.toggle('on', x === b)); renderNews(); };
 $('presets').onclick = e => { const b = e.target.closest('[data-p]'); if (b) { PRESETS[+b.dataset.p][1](); saveScen(); renderWhatIf(); } };
 $('fxShock').oninput = e => { scen.fx = +e.target.value; saveScen(); $('fxShockV').textContent = (scen.fx > 0 ? '+' : '') + scen.fx + '%'; renderWhatIfSummary(); };
