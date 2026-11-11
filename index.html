@@ -94,6 +94,7 @@ button:active{transform:scale(.96)}
 .big{font-size:40px;line-height:1.1;font-weight:760;letter-spacing:-.025em;margin:4px 0 2px}
 @media (max-width:380px){.big{font-size:33px}}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#sources{grid-template-columns:1fr}
 @media (max-width:640px){.grid2{grid-template-columns:1fr}}
 .kv{display:flex;justify-content:space-between;gap:10px;padding:5px 0}
 .kv>span:first-child{color:var(--mut)}
@@ -810,9 +811,8 @@ function renderPortfolio() {
     <div class="kv"><span>Valor atual</span><b class="num">${money(o.value)}</b></div>
     <div class="kv"><span>Investido</span><span class="num">${money(o.cost)}</span></div>
     <div class="kv"><span>Resultado</span><b class="num ${cls(o.pnl)}">${smoney(o.pnl)} · ${pct(o.pct)}</b></div>${extra || ''}</div>` : '';
-  $('sources').innerHTML = src('Futuros', 'b-bybit', M.b, `<div class="kv"><span class="mut oneline">Investido = saldo da wallet (sem PnL aberto)</span></div>`)
-    + src('Ações e ETFs', 'b-t212', M.t, M.t && !M.t.official ? `<div class="kv"><span class="mut oneline">Totais calculados (conta T212 indisponível)</span></div>` : '');
-  $('sources').hidden = !M.b && !M.t;
+  $('sources').innerHTML = src('Futuros', 'b-bybit', M.b, `<div class="kv"><span class="mut oneline">Investido = saldo da wallet (sem PnL aberto)</span></div>`);
+  $('sources').hidden = !M.b;
 
   $('futures').innerHTML = M.fut.length ? `<h2>Posições em futuros <span>${M.fut.length}</span></h2>` + M.fut.map(f => {
     const uplB = conv(f.upl, 'USD', base), roe = f.im > 0 ? f.upl / f.im * 100 : 0;
