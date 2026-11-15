@@ -98,3 +98,10 @@ select cron.schedule('am-brief-daily', '30 7 * * *', $$
     headers := jsonb_build_object('Content-Type','application/json',
       'x-am-secret', coalesce((select decrypted_secret from vault.decrypted_secrets where name='am_secret'), '')),
     body := '{"action":"run"}'::jsonb, timeout_milliseconds := 120000); $$);
+
+-- Leitura do segredo pelas edge functions (alternativa ao secret AM_SECRET do painel): só a service role executa.
+create or replace function public.am_secret() returns text
+  language sql security definer stable set search_path = ''
+  as $$ select decrypted_secret from vault.decrypted_secrets where name = 'am_secret' limit 1 $$;
+revoke all on function public.am_secret() from public, anon, authenticated;
+grant execute on function public.am_secret() to service_role;

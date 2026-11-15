@@ -56,3 +56,20 @@ nos headers CORS permitidos, por isso o browser **bloqueia o pedido real** se o 
 Ao redeployar uma função com a guarda, acrescenta o nome dela a `GUARDED` **no mesmo PR/merge**.
 (Bug real de 15/11/2026: o front-end enviou o header a todas as funções antes de estas serem redeployadas e a app
 deixou de carregar dados. Os testes com `page.route` não o apanham — o Playwright responde sozinho ao preflight.)
+
+---
+
+# Estado real da ativação (15/11/2026) e lições dos dados reais
+
+- O código de acesso vive no **Vault** (`am_secret`); as funções leem-no via `public.am_secret()` (só `service_role`).
+  O secret `AM_SECRET` do painel passou a opcional (tem prioridade se existir). Rotação: `select vault.update_secret(id, '<novo>', 'am_secret')`
+  (cache de 60 s nas funções) e voltar a escrever o código na app.
+- Funções novas em produção: `am-data`, `am-journal`, `am-brief`, `get-etf-holdings`. As funções antigas continuam SEM guarda
+  (ver "Regra de ouro" acima: só se ativa função a função, no mesmo merge que a põe em `GUARDED`).
+- **Bybit bloqueia por país** (CloudFront 403 "block access from your country"). As funções correm na região mais próxima de
+  quem invoca; de fora da UE o teste falha com `{ error:The Amazon CloudFront ... }` (que parece um erro de JSON). Para testar à mão:
+  `curl -H "x-region: eu-west-3" ...`.
+- **`closed-pnl` da Bybit**: `closedPnl` já vem líquido de comissões. `createdTime` é a criação da ORDEM DE FECHO (41% das
+  operações reais têm <1 s entre "abertura" e fecho): NÃO é a abertura da posição. Por isso não há métricas de duração nem
+  "revanche"; hora/dia no diário são do fecho. Para a hora real de abertura seria preciso reconstruir pelas execuções (`/v5/execution/list`).
+- **Crédito Anthropic**: sem saldo na conta da API, `am-brief` e `trade-advisor` (chat) falham com "credit balance is too low".
