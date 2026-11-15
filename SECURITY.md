@@ -108,3 +108,12 @@ Funções só existentes em produção e nunca auditadas (não são do Asset Man
 `am-data` (list, flows_sync, income) e `am-journal` (sync, list) cortam aí, também nos crons; `settings_set` apaga o anterior
 (fluxos, operações, snapshots; continua na Bybit/T212 e volta com "Importar" se a data recuar). Alterável na app (Análise → "Alterar início").
 Nota: `createdTime` da posição (Bybit) é a criação da posição atual, que já foi aumentada/reduzida muitas vezes desde então.
+
+---
+
+# Trade atual (16/11/2026)
+`am-trade` descobre o início do trade atual (último instante em que a posição esteve a zero, percorrendo as execuções do fim para o princípio) e
+reconstrói resultado, comissões, funding, risco e a curva hora a hora. O `createdTime` da posição (Bybit) NÃO serve: o registo mantém-se mesmo
+quando a posição vai a zero (APTUSDT: 10/12/2024, mas o trade atual começou a 29/10/2026 07:44). `am_settings.analysis_start` segue o início do
+trade; se o trade mudar, a app mostra um aviso com o botão "Usar o início deste trade" (que apaga o anterior). A Análise passa a ser: Trade atual
+(resultado, evolução, risco, fluxos), Diário (operações fechadas desde o início) e Exposição.
