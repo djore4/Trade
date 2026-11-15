@@ -2,7 +2,7 @@
 // POST { action, ... } (browser com x-am-secret; crons com o mesmo header):
 //   snapshot                 grava o valor total (Bybit + T212 + PPR) — cron a cada 4h; recusa gravar se uma fonte falhar
 //   list { days? }           -> { snapshots, flows }
-//   flows_sync { days? }     importa depósitos/levantamentos (Bybit) e depósitos/levantamentos (T212)
+//   flows_sync { days? }     capital que entra/sai do perímetro: Bybit (livro de transações da conta de trading: transferências + staking), T212 (depósitos/levantamentos) e compras de PPR
 //   flow_add { eur, ts?, note? } | flow_del { id }   fluxos manuais (compras com cartão/P2P, transferências, etc.)
 //   income                   -> dividendos T212 (cache 12h)
 //   funding { symbols[] }    -> funding atual e intervalo por contrato
@@ -108,38 +108,46 @@ Deno.serve(async (req) => {
       const cutoff = await getAnalysisStart(supa);
       const keys = bybitMainKeys();
       if (keys) {
-        const now = Date.now();
-        for (let w = 0; w * 30 < days; w++) {
-          const end = now - w * 30 * DAY;
-          if (end <= cutoff) break;
-          const start = Math.max(end - 30 * DAY, cutoff);
-          for (const kind of ['dep', 'wd'] as const) {
+        // O perímetro é a conta de trading (UTA), a mesma que o snapshot valoriza. O capital que a atravessa vem do LIVRO DE TRANSAÇÕES:
+        // transferências para/da conta (cobre cartão, P2P e depósitos que passam pelo Funding — os registos de depósito não os mostram)
+        // e subscrições/resgates de staking. `change` já vem com sinal (+ entra, − sai).
+        const LEDGER = ['TRANSFER_IN', 'TRANSFER_OUT', 'FLEXIBLE_STAKING_SUBSCRIPTION', 'FLEXIBLE_STAKING_REDEMPTION'];
+        const now = Date.now(), wins: { s: number; e: number }[] = [];
+        for (let w = 0; w * 7 < days; w++) { const e = now - w * 7 * DAY; if (e <= cutoff) break; wins.push({ s: Math.max(e - 7 * DAY, cutoff), e }); }
+        const doWin = async (w: { s: number; e: number }) => {
+          for (const type of LEDGER) {
             let cursor = '';
-            for (let page = 0; page < 10; page++) {
-              const path = kind === 'dep' ? '/v5/asset/deposit/query-record' : '/v5/asset/withdraw/query-record';
-              const q = `endTime=${end}&limit=50&startTime=${start}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`;
-              const d = await bybitGet(path, q, keys);
-              if (d?.retCode !== 0) { notes.push(`Bybit ${kind}: ${d?.retCode} ${d?.retMsg}`); break; }
-              for (const x of d.result?.rows ?? []) {
-                const coin = String(x.coin);
-                if (kind === 'dep' && String(x.status) !== '3') continue;
-                if (kind === 'wd' && String(x.status).toLowerCase() !== 'success') continue;
-                const ts = num(kind === 'dep' ? x.successAt : x.createTime);
-                if (!ts || ts < cutoff) continue;
-                const amt = kind === 'dep' ? num(x.amount) : -(num(x.amount) + num(x.withdrawFee));
+            for (let page = 0; page < 20; page++) {
+              const q = `accountType=UNIFIED&endTime=${w.e}&limit=50&startTime=${w.s}&type=${type}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`;
+              let d: any = null;
+              for (let t = 0; t < 4; t++) { d = await bybitGet('/v5/account/transaction-log', q, keys); if (d?.retCode !== 10006) break; await sleep(1200 * (t + 1)); }
+              if (d?.retCode !== 0) { notes.push(`Bybit ${type} ${isoDay(w.s)}: ${d?.retCode} ${d?.retMsg}`); break; }
+              for (const x of d.result?.list ?? []) {
+                const ts = num(x.transactionTime), coin = String(x.currency), amt = num(x.change);
+                if (!ts || ts < cutoff || !amt) continue;
                 const usd = await usdValue(coin, amt, ts);
-                const id = `bybit:${kind}:${x.txID || x.withdrawId || ts}:${coin}`;
                 if (usd == null) { unpriced.push(`${coin} ${isoDay(ts)}`); continue; }
                 const e = await eurPerUsd(isoDay(ts)) ?? epuNow;
                 if (!e) { unpriced.push(`${coin} ${isoDay(ts)} (sem câmbio)`); continue; }
-                rows.push({ id, ts: new Date(ts).toISOString(), source: 'bybit', eur: usd * e, usd, coin, auto: true });
+                rows.push({ id: `bybit:ledger:${x.id || `${ts}:${coin}:${type}`}`, ts: new Date(ts).toISOString(), source: 'bybit', eur: usd * e, usd, coin, note: type.startsWith('FLEXIBLE') ? 'staking' : null, auto: true });
               }
               cursor = d.result?.nextPageCursor ?? '';
               if (!cursor) break;
             }
           }
-        }
+        };
+        for (let i = 0; i < wins.length; i += 3) await Promise.all(wins.slice(i, i + 3).map(doWin));
       }
+      // PPR (manual): cada compra é capital que entra no perímetro (o valor do PPR está no snapshot)
+      try {
+        const { data: pp } = await supa.from('am_ppr').select('data').eq('id', 1).maybeSingle();
+        for (const f of pp?.data?.funds ?? []) for (const b of f.buys ?? []) {
+          const ts = Date.parse(String(b.d)); const amt = num(b.amt);
+          if (!ts || ts < cutoff || !amt) continue;
+          const e = await eurPerUsd(isoDay(ts)) ?? epuNow;
+          rows.push({ id: `ppr:${f.id}:${b.id}`, ts: new Date(ts).toISOString(), source: 'ppr', eur: amt, usd: e ? amt / e : amt, coin: 'EUR', note: String(f.name || 'PPR').slice(0, 60), auto: true });
+        }
+      } catch (e) { notes.push(`PPR: ${(e as Error).message}`); }
       if (Deno.env.get('T212_API_KEY')) {
         try {
           const items = await t212Pages('/equity/history/transactions?limit=50', days > 60 ? 6 : 2);

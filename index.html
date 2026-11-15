@@ -2161,10 +2161,23 @@ function renderAnPerf() {
   const P = anPerf(), n = an.snaps.length, cur = P.cur;
   const first = an.snaps[0] ? new Date(an.snaps[0].ts).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' }) : null;
   const seg = `<div class="seg" id="anRange">${Object.keys(AN_RANGES).map(k => `<button data-an="range" data-v="${k}" class="${an.range === k ? 'on' : ''}">${k === 'all' ? 'Tudo' : k.toUpperCase()}</button>`).join('')}</div>`;
-  const netAll = an.flows.reduce((s, f) => s + +(base === 'USD' ? f.usd : f.eur), 0), lastS = an.snaps[an.snaps.length - 1];
-  const curV = lastS ? +(base === 'USD' ? lastS.total_usd : lastS.total_eur) : null;
-  const life = an.flows.length && curV != null && netAll > 0
-    ? `<div class="tiles" style="margin-bottom:14px">${anTile('Capital líquido depositado', money(netAll, cur, 0), `${an.flows.length} fluxos desde ${anStartLbl() || new Date(an.flows[0].ts).toLocaleDateString('pt-PT', { month: 'short', year: 'numeric' })}`)}${anTile('Valor atual vs depositado', smoney(curV - netAll, cur, 0), `${pct((curV / netAll - 1) * 100, 0)} · estimativa`, cls(curV - netAll))}</div>` : '';
+  // Capital vs valor POR FONTE (cada fonte tem a sua fronteira): só é comparável o que entrou/saiu da própria fonte.
+  const lastS = an.snaps[an.snaps.length - 1], usdB = base === 'USD';
+  const srcCap = k => an.flows.filter(f => f.source === k).reduce((a, f) => a + +(usdB ? f.usd : f.eur), 0);
+  const fxu = lastS ? +lastS.eurusd : null;                                   // USD por 1 EUR
+  const inBase = (v, ccy) => v == null || fxu == null ? null : ccy === 'USD' ? (usdB ? v : v / fxu) : (usdB ? v * fxu : v);
+  let life = '';
+  if (lastS && an.flows.length) {
+    const R = [['Bybit (conta de trading)', srcCap('bybit'), inBase(lastS.bybit_usd == null ? null : +lastS.bybit_usd, 'USD')],
+      ['Trading 212', srcCap('t212'), inBase(lastS.t212_val == null ? null : +lastS.t212_val, lastS.t212_ccy === 'USD' ? 'USD' : 'EUR')],
+      ['PPR', srcCap('ppr'), inBase(+lastS.ppr_eur, 'EUR')]].filter(r => r[1] !== 0 || r[2]);
+    const man = srcCap('manual');
+    const capT = R.reduce((a, r) => a + r[1], 0) + man, valT = +(usdB ? lastS.total_usd : lastS.total_eur);
+    const row = (n, c, v) => arow([esc(n), money(c, cur, 0), v == null ? '—' : money(v, cur, 0), v == null ? '—' : `<span class="${cls(v - c)}">${smoney(v - c, cur, 0)}</span>`]);
+    life = `<div class="gt" style="margin-bottom:14px"><div class="lbl" style="margin:0 0 4px">Capital vs valor, por fonte</div>${arow(['Fonte', 'Capital', 'Valor', 'Resultado'], true)}
+      ${R.map(r => row(r[0], r[1], r[2])).join('')}${man ? row('Fluxos manuais', man, null) : ''}${row('Total', capT, valT)}
+      <div class="foot" style="margin-top:6px">Capital = o que entrou e saiu de cada fonte desde ${anStartLbl() || 'o início'}. Bybit: livro de transações da conta de trading (inclui cartão, P2P e depósitos que passam pelo Funding; staking conta como saída). Não inclui capital anterior à data de início, nem o funding/Earn fora da conta de trading.</div></div>`;
+  }
   let body = '';
   if (n < 2) {
     body = life + `<div class="empty">A série real começa agora: há ${n} snapshot${n === 1 ? '' : 's'} (o servidor grava um de 4 em 4 horas). Carrega em <b>Registar agora</b> para gravar o primeiro. Sem passado reconstruído, de propósito: um histórico inventado seria pior do que nenhum.</div>`;
