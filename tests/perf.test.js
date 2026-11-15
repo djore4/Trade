@@ -57,18 +57,16 @@ const H = 3600000, t = (pnl, o, c, extra = {}) => ({ pnl, opened: o * H, closed:
 test('tradeStats', () => {
   const s = P.tradeStats([t(30, 0, 1), t(-10, 2, 3), t(-10, 4, 5), t(-10, 6, 7), t(20, 8, 10)]);
   assert.equal(s.n, 5); assert.equal(s.winRate, 0.4); close(s.total, 20); close(s.expectancy, 4);
-  close(s.profitFactor, 50 / 30); close(s.payoff, 25 / 10); assert.equal(s.maxLosingStreak, 3); close(s.avgHoldMin, 72);
+  close(s.profitFactor, 50 / 30); close(s.payoff, 25 / 10); assert.equal(s.maxLosingStreak, 3);
   close(s.fees, 5); close(s.feesPctOfGross, 0.1);
 });
 test('tradeStats: vazio e sem perdas', () => {
   assert.equal(P.tradeStats([]).n, 0); assert.equal(P.tradeStats([t(5, 0, 1)]).profitFactor, null);
 });
-test('groupStats e tiltCheck', () => {
+test('groupStats', () => {
   const trades = [t(10, 0, 1, { side: 'L' }), t(-5, 2, 3, { side: 'S' }), t(-20, 3.2, 4, { side: 'S' }), t(8, 10, 11, { side: 'L' })];
   const g = P.groupStats(trades, x => x.side);
-  assert.equal(g.find(x => x.key === 'S').n, 2);
-  const tc = P.tiltCheck(trades, 30);               // 3.2h abre 12 min após perda fechada às 3h
-  assert.equal(tc.nAfter, 1); assert.equal(tc.avgAfter, -20);
+  assert.equal(g.find(x => x.key === 'S').n, 2); close(g.find(x => x.key === 'S').total, -25);
 });
 test('fxExposure', () => {
   const r = P.fxExposure([{ ccy: 'USD', value: 60 }, { ccy: 'EUR', value: 40 }, { ccy: 'EUR', value: -5 }]);

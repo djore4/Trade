@@ -2158,14 +2158,18 @@ function renderAnPerf() {
   const P = anPerf(), n = an.snaps.length, cur = P.cur;
   const first = an.snaps[0] ? new Date(an.snaps[0].ts).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' }) : null;
   const seg = `<div class="seg" id="anRange">${Object.keys(AN_RANGES).map(k => `<button data-an="range" data-v="${k}" class="${an.range === k ? 'on' : ''}">${k === 'all' ? 'Tudo' : k.toUpperCase()}</button>`).join('')}</div>`;
+  const netAll = an.flows.reduce((s, f) => s + +(base === 'USD' ? f.usd : f.eur), 0), lastS = an.snaps[an.snaps.length - 1];
+  const curV = lastS ? +(base === 'USD' ? lastS.total_usd : lastS.total_eur) : null;
+  const life = an.flows.length && curV != null && netAll > 0
+    ? `<div class="tiles" style="margin-bottom:14px">${anTile('Capital líquido depositado', money(netAll, cur, 0), `${an.flows.length} fluxos desde ${new Date(an.flows[0].ts).toLocaleDateString('pt-PT', { month: 'short', year: 'numeric' })}`)}${anTile('Valor atual vs depositado', smoney(curV - netAll, cur, 0), `${pct((curV / netAll - 1) * 100, 0)} · estimativa`, cls(curV - netAll))}</div>` : '';
   let body = '';
   if (n < 2) {
-    body = `<div class="empty">A série real começa agora: há ${n} snapshot${n === 1 ? '' : 's'} (o servidor grava um de 4 em 4 horas). Carrega em <b>Registar agora</b> para gravar o primeiro. Sem passado reconstruído, de propósito: um histórico inventado seria pior do que nenhum.</div>`;
+    body = life + `<div class="empty">A série real começa agora: há ${n} snapshot${n === 1 ? '' : 's'} (o servidor grava um de 4 em 4 horas). Carrega em <b>Registar agora</b> para gravar o primeiro. Sem passado reconstruído, de propósito: um histórico inventado seria pior do que nenhum.</div>`;
   } else {
     const r = P.r, tot = r.total, times = r.series.map(p => p.ts);
     const bB = an.bench ? anBenchRet(an.bench.btc, times) : null, bW = an.bench ? anBenchRet(an.bench.wld, times) : null;
     const vs = (b, nm) => b == null ? '' : `<span class="num ${cls(tot - b)}">${pct((tot - b) * 100, 1)}</span> <span class="mut">vs ${nm}</span>`;
-    body = `<div class="tiles">
+    body = life + `<div class="tiles">
       ${anTile('Retorno real', pct(tot * 100, 2), 'sem contar depósitos/levantamentos', cls(tot))}
       ${anTile('Ganho líquido', smoney(r.gain, cur, 0), `fluxos de capital: ${smoney(r.flowsTotal, cur, 0)}`, cls(r.gain))}
       ${anTile('Drawdown máx.', pct(P.dd.max * 100, 1), `atual ${pct(P.dd.current * 100, 1)}`, P.dd.max < -0.25 ? 'neg' : P.dd.max < -0.1 ? 'amber' : '')}
@@ -2181,7 +2185,7 @@ function renderAnPerf() {
     <div class="num ${cls(f.eur)}" style="text-align:right">${smoney(+(base === 'USD' ? f.usd : f.eur), cur, 0)}</div><div style="text-align:right">${f.auto ? '' : `<button class="x" data-an="flowdel" data-id="${esc(f.id)}" aria-label="Apagar">✕</button>`}</div></div>`).join('');
   const warn = !an.flows.length && n >= 2 ? `<div class="warnbox">Sem fluxos de capital registados: qualquer depósito conta como lucro e qualquer levantamento como perda. Importa os automáticos ou adiciona-os à mão.</div>` : '';
   return `<div class="card"><h2>Desempenho real ${seg}</h2>${an.msg ? `<div class="mut" style="font-size:12px;margin-bottom:8px">${esc(an.msg)}</div>` : ''}${body}
-    <div class="foot">${first ? `Série desde ${first} · ${n} snapshots. ` : ''}Retorno por Modified Dietz encadeado (fluxos ponderados pelo tempo). O valor inclui Bybit (equity), Trading 212 (valor oficial) e PPR (valor introduzido).</div>
+    <div class="foot">${first ? `Série desde ${first} · ${n} snapshots. ` : ''}Retorno por Modified Dietz encadeado (fluxos ponderados pelo tempo). O valor inclui Bybit (equity), Trading 212 (valor oficial) e PPR (valor introduzido). "Depositado" é uma estimativa: só conta fluxos que as exchanges listam (cripto ao preço do dia do depósito).</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="pill" data-an="snap">Registar agora</button><button class="pill" data-an="flowsync">Importar depósitos/levantamentos</button></div></div>
   <div class="card"><h2>Fluxos de capital</h2>${warn}${flowRows || '<div class="empty">Nenhum fluxo.</div>'}
     <div class="flowform"><input id="flAmt" class="px num" inputmode="decimal" placeholder="€ (− se levantas)"><input id="flDate" type="date" class="px" value="${new Date().toISOString().slice(0, 10)}"><input id="flNote" class="px" maxlength="60" placeholder="nota (ex.: cartão Bybit)"><button class="pill" data-an="flowadd">Adicionar</button></div>
@@ -2205,20 +2209,19 @@ function renderAnJr() {
   let body;
   if (!S.n) body = `<div class="empty">Sem operações no período. Importa o histórico da Bybit (PnL fechado de perpétuos lineares).</div>`;
   else {
-    const tilt = AMP.tiltCheck(T), lev = AMP.groupStats(T, t => t.lev == null ? null : t.lev <= 3 ? '≤3×' : t.lev <= 6 ? '3–6×' : t.lev <= 10 ? '6–10×' : '>10×');
-    const hr = AMP.groupStats(T, t => t.opened == null ? null : ['00–06h', '06–12h', '12–18h', '18–24h'][Math.floor(new Date(t.opened).getHours() / 6)]);
-    const wd = AMP.groupStats(T, t => t.opened == null ? null : ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][new Date(t.opened).getDay()]);
+    const lev = AMP.groupStats(T, t => t.lev == null ? null : t.lev <= 3 ? '≤3×' : t.lev <= 6 ? '3–6×' : t.lev <= 10 ? '6–10×' : '>10×');
+    const hr = AMP.groupStats(T, t => ['00–06h', '06–12h', '12–18h', '18–24h'][Math.floor(new Date(t.closed).getHours() / 6)]);
+    const wd = AMP.groupStats(T, t => ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][new Date(t.closed).getDay()]);
     body = `<div class="tiles">
       ${anTile('Operações', S.n, `${S.wins} ganhas · ${S.losses} perdidas`)}
       ${anTile('Win rate', fmt(S.winRate * 100, 0) + '%', `payoff ${S.payoff != null ? fmt(S.payoff, 2) : '—'}`)}
       ${anTile('Expectância', smoney(S.expectancy, 'USD', 2), 'por operação (líquida de comissões)', cls(S.expectancy))}
       ${anTile('Profit factor', S.profitFactor != null ? fmt(S.profitFactor, 2) : '—', S.profitFactor != null && S.profitFactor < 1 ? 'a perder dinheiro' : 'lucro bruto / perda bruta', S.profitFactor != null && S.profitFactor < 1 ? 'neg' : '')}
       ${anTile('PnL total', smoney(S.total, 'USD', 0), `comissões ${money(S.fees, 'USD', 0)}${S.feesPctOfGross != null ? ' · ' + fmt(S.feesPctOfGross * 100, 0) + '% do lucro bruto' : ''}`, cls(S.total))}
-      ${anTile('Tempo médio', S.avgHoldMin != null ? (S.avgHoldMin < 120 ? fmt(S.avgHoldMin, 0) + ' min' : fmt(S.avgHoldMin / 60, 1) + ' h') : '—', `pior sequência: ${S.maxLosingStreak} perdas`)}
+      ${anTile('Pior operação', smoney(S.worst, 'USD', 0), `melhor ${smoney(S.best, 'USD', 0)} · pior sequência: ${S.maxLosingStreak} perdas`, cls(S.worst))}
     </div>
-    ${tilt.nAfter >= 3 && tilt.avgAfter != null && tilt.avgRest != null && tilt.avgAfter < tilt.avgRest ? `<div class="warnbox">Padrão de revanche: as ${tilt.nAfter} operações abertas até 30 min depois de uma perda renderam em média ${smoney(tilt.avgAfter, 'USD', 1)}, contra ${smoney(tilt.avgRest, 'USD', 1)} nas restantes.</div>` : ''}
     ${gtable('Por ativo', AMP.groupStats(T, t => t.symbol), 'Ativo')}${gtable('Por lado', AMP.groupStats(T, t => t.side === 'long' ? 'Long' : 'Short'), 'Lado')}
-    ${gtable('Por alavancagem', lev, 'Alav.')}${gtable('Por hora de abertura (local)', hr, 'Hora')}${gtable('Por dia da semana', wd, 'Dia')}
+    ${gtable('Por alavancagem', lev, 'Alav.')}${gtable('Por hora de fecho (local)', hr, 'Hora')}${gtable('Por dia da semana (fecho)', wd, 'Dia')}
     ${gtable('Por etiqueta', AMP.groupStats(T, t => t.tag || null), 'Etiqueta')}`;
   }
   const rows = [...T].sort((a, b) => b.closed - a.closed).slice(0, 25).map(t => `<div class="trade" data-an="trade" data-id="${esc(t.id)}"><div class="arow"><div><b>${esc(t.symbol)}</b> <span class="side ${t.side}" style="margin:0">${t.side === 'long' ? 'LONG' : 'SHORT'}${t.lev ? ' ' + fmt(t.lev, 0) + '×' : ''}</span>${t.tag ? ` <span class="chip">${esc(t.tag)}</span>` : ''}</div>
@@ -2227,7 +2230,7 @@ function renderAnJr() {
   const open = an.theses.filter(t => t.status === 'open'), closed = an.theses.filter(t => t.status !== 'open').slice(0, 5);
   const positions = M ? M.fut.map(f => `<option value="${esc(f.symbol)}">${esc(f.symbol)} ${f.long ? 'LONG' : 'SHORT'}</option>`).join('') : '';
   return `<div class="card"><h2>Diário de operações ${seg}</h2>${an.msg ? `<div class="mut" style="font-size:12px;margin-bottom:8px">${esc(an.msg)}</div>` : ''}${body}
-    <div class="foot">Fonte: PnL fechado da Bybit (perpétuos lineares), tal como reportado. O funding pago não está incluído. Valores em USD.</div>
+    <div class="foot">Fonte: PnL fechado da Bybit (perpétuos lineares), tal como reportado. O PnL já vem com as comissões descontadas; o funding pago pode não estar incluído. A hora de abertura da posição não está disponível neste endpoint, por isso não há métricas de duração. Valores em USD.</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="pill" data-an="jsync" data-v="3">Atualizar</button><button class="pill" data-an="jsync" data-v="365">Importar 1 ano</button></div></div>
   ${rows ? `<div class="card"><h2>Últimas operações <span class="mut" style="font-size:12px;text-transform:none;letter-spacing:0">toca para etiquetar</span></h2>${rows}</div>` : ''}
   <div class="card"><h2>Teses</h2>
@@ -2328,8 +2331,7 @@ function anContext() {
   }
   const T = anTrades().filter(t => t.closed >= Date.now() - 90 * 864e5), S = AMP.tradeStats(T);
   if (S.n) {
-    L.push(`DIÁRIO (90d, Bybit): ${S.n} operações, win rate ${fmt(S.winRate * 100, 0)}%, expectância ${smoney(S.expectancy, 'USD', 2)}/op, profit factor ${S.profitFactor != null ? fmt(S.profitFactor, 2) : 'n/d'}, comissões ${fmt((S.feesPctOfGross || 0) * 100, 0)}% do lucro bruto, pior sequência ${S.maxLosingStreak} perdas.`);
-    const tl = AMP.tiltCheck(T); if (tl.nAfter >= 3) L.push(`Operações abertas ≤30 min após uma perda: ${tl.nAfter}, PnL médio ${smoney(tl.avgAfter, 'USD', 1)} vs ${smoney(tl.avgRest, 'USD', 1)} nas restantes.`);
+    L.push(`DIÁRIO (90d, Bybit): ${S.n} operações, win rate ${fmt(S.winRate * 100, 0)}%, expectância ${smoney(S.expectancy, 'USD', 2)}/op, profit factor ${S.profitFactor != null ? fmt(S.profitFactor, 2) : 'n/d'}, comissões ${fmt((S.feesPctOfGross || 0) * 100, 0)}% do lucro bruto, pior sequência ${S.maxLosingStreak} perdas, PnL total ${smoney(S.total, 'USD', 0)}.`);
   }
   an.theses.filter(t => t.status === 'open').forEach(t => L.push(`TESE ${t.symbol} ${t.side}: "${t.thesis}" — invalida ${t.side === 'long' ? 'abaixo' : 'acima'} de ${t.invalid_px}.`));
   if (M && M.fut.length) {

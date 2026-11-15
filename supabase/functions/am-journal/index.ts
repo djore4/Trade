@@ -5,7 +5,8 @@
 //   tag { id, tag?, note? } etiqueta uma operação (ex.: 'tese', 'fomo', 'stop movido', 'tamanho excessivo')
 //   thesis_add { symbol, side, thesis, invalid_px, source? }   guarda a tese e cria o alerta de invalidação
 //   thesis_list | thesis_close { id }
-// Notas: closedPnl vem da Bybit tal como é; o funding pago NÃO está incluído. Só categoria linear.
+// Notas: closedPnl vem da Bybit já líquido de comissões; o funding pode não estar incluído. Só categoria linear.
+// opened_at = createdTime da ORDEM DE FECHO (≈ closed_at em fechos a mercado) — NÃO é a abertura da posição; não usar para durações.
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { guard } from '../_shared/auth.ts';
 import { bybitGet } from '../_shared/bybit.ts';
