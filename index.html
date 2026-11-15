@@ -515,14 +515,20 @@ function askSecret(msg) {
   });
   return amAsk;
 }
+// Só estas funções já aceitam/exigem o código (x-am-secret). Enviá-lo às restantes faz o browser bloquear o pedido
+// (o CORS das versões antigas não o permite). Acrescentar aqui cada função DEPOIS de redeployada com a guarda.
+const GUARDED = new Set(['am-data', 'am-journal', 'am-brief', 'get-etf-holdings']);
 async function call(name, opts = {}, retried = false) {
-  const { timeout = 25000, ...o } = opts;
-  let secret = store.get('am_secret', '');
-  if (!secret) secret = await askSecret();
+  const { timeout = 25000, quiet = false, ...o } = opts;   // quiet: chamada em segundo plano, nunca abre o ecrã do código
+  const guarded = GUARDED.has(String(name).split('?')[0]);
+  let secret = '';
+  if (guarded) { secret = store.get('am_secret', ''); if (!secret) { if (quiet) throw new Error('sem código de acesso'); secret = await askSecret(); } }
   const ctrl = new AbortController(), to = setTimeout(() => ctrl.abort(), timeout);
   try {
-    const r = await fetch(`${API}/${name}`, { headers: HDR, signal: ctrl.signal, ...o, headers: { ...HDR, ...(o.headers || {}), 'x-am-secret': secret } });
-    if (r.status === 401 && !retried) {
+    const headers = { ...HDR, ...(o.headers || {}) };
+    if (guarded) headers['x-am-secret'] = secret;
+    const r = await fetch(`${API}/${name}`, { signal: ctrl.signal, ...o, headers });
+    if (r.status === 401 && guarded && !retried && !quiet) {
       store.set('am_secret', ''); clearTimeout(to);
       await askSecret('Código inválido ou expirado. Tenta outra vez.');
       return call(name, opts, true);
@@ -2026,7 +2032,7 @@ async function rkLoad(force) {
     const get = s => call(`get-candles?source=bybit&symbol=${encodeURIComponent(s)}&interval=D&limit=120`, { timeout: 20000 }).then(d => d.candles || []).catch(() => null);
     const [btc, ...cs] = await Promise.all([get('BTCUSDT'), ...syms.map(get)]);
     syms.forEach((s, i) => { if (cs[i] && btc) { const r = AMP.betaSigma(cs[i], btc); rk.beta['f:' + s] = r.beta; rk.sigma[s] = r.sigmaD; rk.corr[s] = r.corr; } });
-    try { const fd = await call('am-data', { method: 'POST', headers: { ...HDR, 'content-type': 'application/json' }, body: JSON.stringify({ action: 'funding', symbols: syms }), timeout: 20000 }); rk.fund = fd.funding || {}; } catch (e) {}
+    try { const fd = await amPost('am-data', { action: 'funding', symbols: syms }, 20000, true); rk.fund = fd.funding || {}; } catch (e) {}
     rk.at = Date.now(); rk.sig = sig;
   } finally { rk.busy = false; }
   renderPortfolio(); if (!$('v-whatif').hidden) renderWhatIf();
@@ -2056,9 +2062,9 @@ function rkTiles() {
 
 /* ── Análise (itens 1, 2, 4, 5) ───────────────────────────────────────── */
 const an = { seg: store.get('an-seg', 'perf'), range: store.get('an-range', 'all'), jr: store.get('an-jr', 90), snaps: [], flows: [], trades: [], theses: [], brief: null, divs: null,
-  etf: null, bench: null, at: {}, err: null, msg: '', busy: false, openTrade: null, chart: null, chartEl: null };
+  etf: null, bench: null, at: {}, err: null, msg: '', busy: false, quiet: false, openTrade: null, chart: null, chartEl: null };
 const AN_RANGES = { '1m': 30, '3m': 90, '1y': 365, all: 0 };
-const amPost = (name, body, timeout = 30000) => call(name, { method: 'POST', headers: { ...HDR, 'content-type': 'application/json' }, body: JSON.stringify(body), timeout });
+const amPost = (name, body, timeout = 30000, quiet = an.quiet) => call(name, { method: 'POST', headers: { ...HDR, 'content-type': 'application/json' }, body: JSON.stringify(body), timeout, quiet });
 const anCur = () => base === 'USD' ? 'USD' : 'EUR';
 const anFresh = (k, ms) => Date.now() - (an.at[k] || 0) < ms;
 
@@ -2080,7 +2086,7 @@ async function anLoadBench(force) {
   ]);
   an.bench = { at: Date.now(), btc, wld };
 }
-async function anLoadBrief() { try { an.brief = (await amPost('am-brief', { action: 'latest' }, 15000)).brief; } catch (e) {} renderBrief(); }
+async function anLoadBrief() { try { an.brief = (await amPost('am-brief', { action: 'latest' }, 15000, true)).brief; } catch (e) {} renderBrief(); }
 async function anLoadIncome() {
   if (an.divs && anFresh('inc', 3600000)) return;
   try { an.divs = (await amPost('am-data', { action: 'income' }, 60000)).divs || []; an.at.inc = Date.now(); } catch (e) { an.divs = an.divs || []; }
@@ -2107,7 +2113,7 @@ async function anOpen(force) {
   an.busy = false; renderAn();
 }
 // carrega tudo o que o assistente IA usa (sem bloquear mais de alguns segundos)
-async function anLoadAll() { await Promise.allSettled([anLoadPerf(), anLoadTrades(), anLoadBench(), anLoadIncome()]); }
+async function anLoadAll() { an.quiet = true; try { await Promise.allSettled([anLoadPerf(), anLoadTrades(), anLoadBench(), anLoadIncome()]); } finally { an.quiet = false; } }
 
 function anPerf() {
   const usd = base === 'USD', cutD = AN_RANGES[an.range], cut = cutD ? Date.now() - cutD * 864e5 : 0;
