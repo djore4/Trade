@@ -515,22 +515,25 @@ function askSecret(msg) {
   });
   return amAsk;
 }
-// Só estas funções já aceitam/exigem o código (x-am-secret). Enviá-lo às restantes faz o browser bloquear o pedido
-// (o CORS das versões antigas não o permite). Acrescentar aqui cada função DEPOIS de redeployada com a guarda.
+// O código de acesso segue em TODAS as chamadas, no header `x-client-info` (que o CORS de todas as versões — antigas e novas —
+// já permite; um header novo seria bloqueado pelo browser nas funções ainda não redeployadas). As funções novas aceitam também
+// `x-am-secret`. Sem código guardado: só as funções novas o pedem logo; as outras tentam sem ele e, se o servidor responder 401,
+// pede-se uma vez e repete-se. Chamadas `quiet` (segundo plano) nunca abrem o ecrã do código.
 const GUARDED = new Set(['am-data', 'am-journal', 'am-brief', 'get-etf-holdings']);
 async function call(name, opts = {}, retried = false) {
-  const { timeout = 25000, quiet = false, ...o } = opts;   // quiet: chamada em segundo plano, nunca abre o ecrã do código
-  const guarded = GUARDED.has(String(name).split('?')[0]);
-  let secret = '';
-  if (guarded) { secret = store.get('am_secret', ''); if (!secret) { if (quiet) throw new Error('sem código de acesso'); secret = await askSecret(); } }
+  const { timeout = 25000, quiet = false, ...o } = opts;
+  const guardedNew = GUARDED.has(String(name).split('?')[0]);
+  let secret = store.get('am_secret', '');
+  if (!secret && guardedNew) { if (quiet) throw new Error('sem código de acesso'); secret = await askSecret(); }
   const ctrl = new AbortController(), to = setTimeout(() => ctrl.abort(), timeout);
   try {
     const headers = { ...HDR, ...(o.headers || {}) };
-    if (guarded) headers['x-am-secret'] = secret;
+    if (secret) { headers['x-client-info'] = 'am:' + secret; if (guardedNew) headers['x-am-secret'] = secret; }
     const r = await fetch(`${API}/${name}`, { signal: ctrl.signal, ...o, headers });
-    if (r.status === 401 && guarded && !retried && !quiet) {
-      store.set('am_secret', ''); clearTimeout(to);
-      await askSecret('Código inválido ou expirado. Tenta outra vez.');
+    if (r.status === 401 && !retried && !quiet) {
+      clearTimeout(to);
+      const cur = store.get('am_secret', '');
+      if (!(cur && cur !== secret)) { store.set('am_secret', ''); await askSecret(secret ? 'Código inválido ou expirado. Tenta outra vez.' : 'Esta ligação pede o código de acesso.'); }
       return call(name, opts, true);
     }
     const d = await r.json().catch(() => ({}));
