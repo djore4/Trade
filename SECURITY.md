@@ -78,3 +78,25 @@ deixou de carregar dados. Os testes com `page.route` não o apanham — o Playwr
 O código segue em TODAS as chamadas no header `x-client-info: am:<código>` (já permitido no CORS de qualquer versão de função);
 as funções novas aceitam também `x-am-secret`. Assim a interface pode ser publicada ANTES de fechar as funções antigas, e cada
 função pode ser fechada em separado sem janela de avaria: sem código guardado a app recebe 401, pede-o uma vez e repete.
+
+---
+
+# Estado das guardas em produção (16/11/2026)
+
+**Fechadas e verificadas com chamadas reais** (sem código → 401, código errado → 401, com código → resposta igual à de antes;
+preflight CORS a permitir `x-client-info`): `get-bybit-wallet`, `get-bybit-positions`, `get-t212-portfolio`, `am-ppr`, `am-alerts`,
+`trade-advisor`, `cs-state`, `cs-confirm`, mais as 4 novas (`am-data`, `am-journal`, `am-brief`, `get-etf-holdings`).
+`get-t212-portfolio` continua acessível por dentro (snapshot) via service role.
+
+**Ainda SEM guarda** (por ordem de importância):
+1. `cs-exec`, `cs-order` — colocam ordens, mas o `killswitch`/`dry_run` estão ativos e `cs-state` (que os altera) já está fechada.
+   Precisam do `_shared/bybit.ts` completo no deploy.
+2. `am-alerts-check` — cron (já envia o código do Vault); falta redeployar com a guarda.
+3. `get-bybit-earn`, `cs-bot`, `cs-log`, `cs-stats`, `cs-subscribe`, `cs-settle`, `cs-vol-scan`, `cs-vol-settle` — o último grupo é cron/bot.
+4. Proxies de dados públicos (`get-candles`, `get-news`, `get-stock-history`, `get-liq-map`, `validate-signal`): só gastam quota.
+
+Funções só existentes em produção e nunca auditadas (não são do Asset Manager): `btc-*`, `cs-diag`, `foto-preview`, `super-service`,
+`ficha-extrair`, `importar-extrair`, `sync-matriculas`, `admin-users`, `sf-*`, `prospec-*`.
+
+**Como fechar mais uma função** (zero avaria): o front-end já envia o código a todas; basta redeployar a função com `guard()` e
+`'x-client-info'` no CORS, e confirmar com `curl -H "x-region: eu-west-3"` (sem código/errado = 401, com código = 200).
