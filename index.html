@@ -2065,7 +2065,7 @@ function rkTiles() {
 
 /* ── Análise (itens 1, 2, 4, 5) ───────────────────────────────────────── */
 const an = { seg: store.get('an-seg', 'perf'), range: store.get('an-range', 'all'), jr: store.get('an-jr', 90), snaps: [], flows: [], trades: [], theses: [], brief: null, divs: null,
-  etf: null, bench: null, at: {}, err: null, msg: '', busy: false, quiet: false, openTrade: null, chart: null, chartEl: null };
+  etf: null, bench: null, at: {}, err: null, msg: '', busy: false, quiet: false, start: null, openTrade: null, chart: null, chartEl: null };
 const AN_RANGES = { '1m': 30, '3m': 90, '1y': 365, all: 0 };
 const amPost = (name, body, timeout = 30000, quiet = an.quiet) => call(name, { method: 'POST', headers: { ...HDR, 'content-type': 'application/json' }, body: JSON.stringify(body), timeout, quiet });
 const anCur = () => base === 'USD' ? 'USD' : 'EUR';
@@ -2074,12 +2074,12 @@ const anFresh = (k, ms) => Date.now() - (an.at[k] || 0) < ms;
 async function anLoadPerf(force) {
   if (!force && anFresh('perf', 60000)) return;
   const d = await amPost('am-data', { action: 'list', days: 730 });
-  an.snaps = d.snapshots || []; an.flows = d.flows || []; an.at.perf = Date.now();
+  an.snaps = d.snapshots || []; an.flows = d.flows || []; an.start = d.start || an.start; an.at.perf = Date.now();
 }
 async function anLoadTrades(force) {
   if (!force && anFresh('trades', 60000)) return;
   const [t, h] = await Promise.all([amPost('am-journal', { action: 'list', limit: 2000 }), amPost('am-journal', { action: 'thesis_list' })]);
-  an.trades = t.trades || []; an.theses = h.theses || []; an.at.trades = Date.now();
+  an.trades = t.trades || []; an.theses = h.theses || []; an.start = t.start || an.start; an.at.trades = Date.now();
 }
 async function anLoadBench(force) {
   if (!force && an.bench && Date.now() - an.bench.at < 6 * 3600000) return;
@@ -2164,7 +2164,7 @@ function renderAnPerf() {
   const netAll = an.flows.reduce((s, f) => s + +(base === 'USD' ? f.usd : f.eur), 0), lastS = an.snaps[an.snaps.length - 1];
   const curV = lastS ? +(base === 'USD' ? lastS.total_usd : lastS.total_eur) : null;
   const life = an.flows.length && curV != null && netAll > 0
-    ? `<div class="tiles" style="margin-bottom:14px">${anTile('Capital líquido depositado', money(netAll, cur, 0), `${an.flows.length} fluxos desde ${new Date(an.flows[0].ts).toLocaleDateString('pt-PT', { month: 'short', year: 'numeric' })}`)}${anTile('Valor atual vs depositado', smoney(curV - netAll, cur, 0), `${pct((curV / netAll - 1) * 100, 0)} · estimativa`, cls(curV - netAll))}</div>` : '';
+    ? `<div class="tiles" style="margin-bottom:14px">${anTile('Capital líquido depositado', money(netAll, cur, 0), `${an.flows.length} fluxos desde ${anStartLbl() || new Date(an.flows[0].ts).toLocaleDateString('pt-PT', { month: 'short', year: 'numeric' })}`)}${anTile('Valor atual vs depositado', smoney(curV - netAll, cur, 0), `${pct((curV / netAll - 1) * 100, 0)} · estimativa`, cls(curV - netAll))}</div>` : '';
   let body = '';
   if (n < 2) {
     body = life + `<div class="empty">A série real começa agora: há ${n} snapshot${n === 1 ? '' : 's'} (o servidor grava um de 4 em 4 horas). Carrega em <b>Registar agora</b> para gravar o primeiro. Sem passado reconstruído, de propósito: um histórico inventado seria pior do que nenhum.</div>`;
@@ -2233,8 +2233,8 @@ function renderAnJr() {
   const open = an.theses.filter(t => t.status === 'open'), closed = an.theses.filter(t => t.status !== 'open').slice(0, 5);
   const positions = M ? M.fut.map(f => `<option value="${esc(f.symbol)}">${esc(f.symbol)} ${f.long ? 'LONG' : 'SHORT'}</option>`).join('') : '';
   return `<div class="card"><h2>Diário de operações ${seg}</h2>${an.msg ? `<div class="mut" style="font-size:12px;margin-bottom:8px">${esc(an.msg)}</div>` : ''}${body}
-    <div class="foot">Fonte: PnL fechado da Bybit (perpétuos lineares), tal como reportado. O PnL já vem com as comissões descontadas; o funding pago pode não estar incluído. A hora de abertura da posição não está disponível neste endpoint, por isso não há métricas de duração. Valores em USD.</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="pill" data-an="jsync" data-v="3">Atualizar</button><button class="pill" data-an="jsync" data-v="365">Importar 1 ano</button></div></div>
+    <div class="foot">Fonte: PnL fechado da Bybit (perpétuos lineares), tal como reportado, desde a data de início da análise. O PnL já vem com as comissões descontadas; o funding pago pode não estar incluído. A hora de abertura da posição não está disponível neste endpoint, por isso não há métricas de duração. Valores em USD.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="pill" data-an="jsync" data-v="3">Atualizar</button><button class="pill" data-an="jsync" data-v="730">Importar desde o início</button></div></div>
   ${rows ? `<div class="card"><h2>Últimas operações <span class="mut" style="font-size:12px;text-transform:none;letter-spacing:0">toca para etiquetar</span></h2>${rows}</div>` : ''}
   <div class="card"><h2>Teses</h2>
     ${open.map(t => `<div class="thesis"><div><b>${esc(t.symbol)}</b> <span class="side ${t.side}" style="margin:0">${t.side === 'long' ? 'LONG' : 'SHORT'}</span> <span class="mut">invalida ${t.side === 'long' ? '<' : '>'} ${price(+t.invalid_px)}</span></div><div style="font-size:13px;margin:2px 0">${esc(t.thesis)}</div><button class="pill" data-an="thclose" data-id="${t.id}">Fechar tese</button></div>`).join('') || '<div class="empty">Nenhuma tese aberta. Escreve o porquê antes de entrares: o alerta de invalidação é criado sozinho.</div>'}
@@ -2273,14 +2273,20 @@ function renderAnExp() {
     ${inc && inc.by.length ? `<div class="foot">${inc.by.slice(0, 6).map(b => `${esc(b.ticker)} ${money(b.amt, 'EUR', 2)}`).join(' · ')}</div>` : ''}</div>`;
 }
 
+const anStartLbl = () => an.start ? new Date(an.start).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' }) : null;
+function anStartBar() {
+  const l = anStartLbl();
+  return `<div class="card startbar"><div style="font-size:13px">${l ? `Análise a contar desde <b>${l}</b> (abertura do trade atual). Nada anterior é importado nem mostrado.` : 'Sem data de início: a Análise usa todo o histórico importado.'}</div>
+    <div class="flowform" style="margin-top:8px"><input id="stDate" type="date" class="px" value="${an.start ? an.start.slice(0, 10) : ''}" max="${new Date().toISOString().slice(0, 10)}"><button class="pill" data-an="setstart">Alterar início</button></div></div>`;
+}
 function renderAn() {
   const el = $('anBody'); if (!el) return;
   document.querySelectorAll('#anSeg button').forEach(b => b.classList.toggle('on', b.dataset.v === an.seg));
-  let h = an.err ? `<div class="warnbox">${esc(an.err)}</div>` : '';
+  let h = anStartBar() + (an.err ? `<div class="warnbox">${esc(an.err)}</div>` : '');
   if (an.busy && !(an.snaps.length || an.trades.length)) h += '<div class="empty">A carregar…</div>';
   else h += an.seg === 'perf' ? renderAnPerf() : an.seg === 'jr' ? renderAnJr() : renderAnExp();
   const active = document.activeElement && document.activeElement.id, vals = {};
-  ['flAmt', 'flDate', 'flNote', 'thSym', 'thSide', 'thTxt', 'thPx'].forEach(i => { const e = $(i); if (e) vals[i] = e.value; });
+  ['flAmt', 'flDate', 'flNote', 'thSym', 'thSide', 'thTxt', 'thPx', 'stDate'].forEach(i => { const e = $(i); if (e) vals[i] = e.value; });
   el.innerHTML = h;
   Object.keys(vals).forEach(i => { const e = $(i); if (e && vals[i]) e.value = vals[i]; });
   if (active && $(active)) $(active).focus();
@@ -2297,6 +2303,14 @@ async function anAct(e) {
     b.disabled = true;
     if (a === 'snap') { const d = await amPost('am-data', { action: 'snapshot' }); an.msg = `Snapshot gravado: ${money(base === 'USD' ? d.total_usd : d.total_eur, anCur(), 0)}.`; await anLoadPerf(true); }
     else if (a === 'flowsync') { an.msg = 'A importar… (pode demorar 1–2 min)'; renderAn(); const d = await amPost('am-data', { action: 'flows_sync', days: 730 }, 150000); an.msg = `Encontrados ${d.found}, novos ${d.inserted}.` + (d.unpriced.length ? ` Sem preço (adiciona à mão): ${d.unpriced.slice(0, 4).join(', ')}.` : '') + (d.notes.length ? ` Avisos: ${d.notes.slice(0, 2).join(' · ')}` : ''); await anLoadPerf(true); }
+    else if (a === 'setstart') {
+      const v = $('stDate').value; if (!v) throw new Error('Escolhe a data de início.');
+      const prev = an.start ? an.start.slice(0, 10) : null;
+      if (!confirm(prev && v > prev ? `Alterar o início para ${v} apaga da Análise tudo o que for anterior (continua na Bybit e na T212). Continuar?` : `Alterar o início para ${v}. Depois carrega em "Importar" para trazer o histórico a partir dessa data. Continuar?`)) { b.disabled = false; return; }
+      const d = await amPost('am-data', { action: 'settings_set', start: v + 'T00:00:00Z' });
+      an.start = d.start; an.msg = `Início alterado para ${anStartLbl()}. Apagados: ${d.apagados.fluxos} fluxos, ${d.apagados.operacoes} operações, ${d.apagados.snapshots} snapshots.`;
+      await Promise.all([anLoadPerf(true), anLoadTrades(true)]);
+    }
     else if (a === 'flowadd') {
       const amt = parseFloat(String($('flAmt').value).replace(',', '.')); if (!isFinite(amt) || !amt) throw new Error('Indica o valor em € (negativo para levantamento).');
       await amPost('am-data', { action: 'flow_add', eur: amt, ts: $('flDate').value ? $('flDate').value + 'T12:00:00Z' : undefined, note: $('flNote').value }); $('flAmt').value = ''; $('flNote').value = ''; an.msg = 'Fluxo adicionado.'; await anLoadPerf(true);

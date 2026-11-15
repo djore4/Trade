@@ -10,7 +10,7 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { guard } from '../_shared/auth.ts';
 import { bybitGet } from '../_shared/bybit.ts';
-import { bybitMainKeys, num, sleep } from '../_shared/am-sources.ts';
+import { bybitMainKeys, getAnalysisStart, num, sleep } from '../_shared/am-sources.ts';
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -37,8 +37,11 @@ Deno.serve(async (req) => {
       const days = Math.min(730, Math.max(1, Number(body?.days) || 3));
       const rows: any[] = []; const notes: string[] = [];
       const now = Date.now();
+      const cutoff = await getAnalysisStart(supa);   // nada anterior ao início da análise é importado
       for (let w = 0; w * 7 < days; w++) {
-        const end = now - w * 7 * DAY, start = end - 7 * DAY;
+        const end = now - w * 7 * DAY;
+        if (end <= cutoff) break;
+        const start = Math.max(end - 7 * DAY, cutoff);
         let cursor = '';
         for (let page = 0; page < 20; page++) {
           const q = `category=linear&endTime=${end}&limit=100&startTime=${start}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`;
@@ -46,7 +49,7 @@ Deno.serve(async (req) => {
           if (d?.retCode !== 0) { notes.push(`${d?.retCode} ${d?.retMsg}`); break; }
           for (const x of d.result?.list ?? []) {
             const closed = num(x.updatedTime);
-            if (!x.orderId || !closed) continue;
+            if (!x.orderId || !closed || closed < cutoff) continue;
             rows.push({
               id: String(x.orderId), symbol: String(x.symbol),
               side: x.side === 'Sell' ? 'long' : 'short',      // side = lado da ordem de fecho
@@ -72,9 +75,12 @@ Deno.serve(async (req) => {
 
     if (action === 'list') {
       const limit = Math.min(2000, Math.max(1, Number(body?.limit) || 500));
-      const { data, error } = await supa.from('am_trades').select('*').order('closed_at', { ascending: false }).limit(limit);
+      const cut = await getAnalysisStart(supa);
+      let q = supa.from('am_trades').select('*').order('closed_at', { ascending: false }).limit(limit);
+      if (cut) q = q.gte('closed_at', new Date(cut).toISOString());
+      const { data, error } = await q;
       if (error) return json({ error: error.message }, 400);
-      return json({ trades: data });
+      return json({ trades: data, start: cut ? new Date(cut).toISOString() : null });
     }
 
     if (action === 'tag') {

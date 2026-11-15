@@ -8,6 +8,13 @@ import { bybitGet, type BybitKeys } from './bybit.ts';
 export const num = (v: unknown) => { const x = Number(v); return Number.isFinite(x) ? x : 0; };
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+// Data (ms) a partir da qual a Análise conta (am_settings.analysis_start). Nada anterior é importado nem mostrado. 0 = sem corte.
+export async function getAnalysisStart(supa: any): Promise<number> {
+  const { data } = await supa.from('am_settings').select('value').eq('key', 'analysis_start').maybeSingle();
+  const t = data?.value ? Date.parse(String(data.value)) : NaN;
+  return Number.isFinite(t) ? t : 0;
+}
+
 // Conta PRINCIPAL (a que a app mostra) — não a AI subaccount do bot.
 export function bybitMainKeys(): BybitKeys | null {
   const apiKey = Deno.env.get('BYBIT_API_KEY') ?? '';
