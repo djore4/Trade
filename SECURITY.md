@@ -49,3 +49,10 @@ migração `supabase/migrations/20261116_am_analytics.sql`, funções `am-data`,
 - Sem histórico reconstruído: a curva real começa no 1.º snapshot. Um passado inventado seria pior do que nenhum.
 - O snapshot **recusa gravar** se uma fonte falhar (evita quedas falsas no gráfico).
 - Retorno por Modified Dietz encadeado, não TWR "puro" (precisaria do valor exato no instante de cada fluxo).
+
+## Regra de ouro ao ativar a guarda função a função
+O front-end só envia `x-am-secret` às funções listadas em `GUARDED` (`index.html`). As versões antigas não o têm
+nos headers CORS permitidos, por isso o browser **bloqueia o pedido real** se o header for enviado.
+Ao redeployar uma função com a guarda, acrescenta o nome dela a `GUARDED` **no mesmo PR/merge**.
+(Bug real de 15/11/2026: o front-end enviou o header a todas as funções antes de estas serem redeployadas e a app
+deixou de carregar dados. Os testes com `page.route` não o apanham — o Playwright responde sozinho ao preflight.)
