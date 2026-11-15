@@ -376,7 +376,7 @@ input.px{width:100%;background:var(--card2);color:var(--text);border:1px solid v
 
   <!-- ══ ANÁLISE ══ -->
   <main class="view" id="v-an" hidden>
-    <div class="anhead"><div class="seg" id="anSeg"><button data-an="seg" data-v="perf">Desempenho</button><button data-an="seg" data-v="jr">Diário</button><button data-an="seg" data-v="exp">Exposição</button></div></div>
+    <div class="anhead"><div class="seg" id="anSeg"><button data-an="seg" data-v="perf">Trade atual</button><button data-an="seg" data-v="jr">Diário</button><button data-an="seg" data-v="exp">Exposição</button></div></div>
     <div id="anBody"></div>
   </main>
 
@@ -2064,9 +2064,8 @@ function rkTiles() {
 }
 
 /* ── Análise (itens 1, 2, 4, 5) ───────────────────────────────────────── */
-const an = { seg: store.get('an-seg', 'perf'), range: store.get('an-range', 'all'), jr: store.get('an-jr', 90), snaps: [], flows: [], trades: [], theses: [], brief: null, divs: null,
-  etf: null, bench: null, at: {}, err: null, msg: '', busy: false, quiet: false, start: null, openTrade: null, chart: null, chartEl: null };
-const AN_RANGES = { '1m': 30, '3m': 90, '1y': 365, all: 0 };
+const an = { seg: store.get('an-seg', 'perf'), range: 'all', jr: store.get('an-jr', 90), snaps: [], flows: [], trades: [], theses: [], brief: null, divs: null,
+  etf: null, trade: null, at: {}, err: null, msg: '', busy: false, quiet: false, start: null, openTrade: null, chart: null, chartEl: null };
 const amPost = (name, body, timeout = 30000, quiet = an.quiet) => call(name, { method: 'POST', headers: { ...HDR, 'content-type': 'application/json' }, body: JSON.stringify(body), timeout, quiet });
 const anCur = () => base === 'USD' ? 'USD' : 'EUR';
 const anFresh = (k, ms) => Date.now() - (an.at[k] || 0) < ms;
@@ -2081,13 +2080,9 @@ async function anLoadTrades(force) {
   const [t, h] = await Promise.all([amPost('am-journal', { action: 'list', limit: 2000 }), amPost('am-journal', { action: 'thesis_list' })]);
   an.trades = t.trades || []; an.theses = h.theses || []; an.start = t.start || an.start; an.at.trades = Date.now();
 }
-async function anLoadBench(force) {
-  if (!force && an.bench && Date.now() - an.bench.at < 6 * 3600000) return;
-  const [btc, wld] = await Promise.all([
-    call('get-candles?source=bybit&symbol=BTCUSDT&interval=D&limit=1000', { timeout: 20000 }).then(d => d.candles || []).catch(() => []),
-    call('get-candles?source=yahoo&symbol=IWDA.AS&interval=1d&range=5y', { timeout: 20000 }).then(d => d.candles || []).catch(() => []),
-  ]);
-  an.bench = { at: Date.now(), btc, wld };
+async function anLoadTrade(force) {
+  if (!force && anFresh('trade', 45000)) return;
+  an.trade = await amPost('am-trade', { action: 'current' }, 120000); an.at.trade = Date.now();
 }
 async function anLoadBrief() { try { an.brief = (await amPost('am-brief', { action: 'latest' }, 15000, true)).brief; } catch (e) {} renderBrief(); }
 async function anLoadIncome() {
@@ -2108,7 +2103,7 @@ async function anOpen(force) {
   an.busy = true; an.err = null; renderAn();
   try {
     const jobs = [];
-    if (an.seg === 'perf') jobs.push(anLoadPerf(force), anLoadBench(force));
+    if (an.seg === 'perf') jobs.push(anLoadTrade(force), anLoadPerf(force), rkLoad());
     else if (an.seg === 'jr') jobs.push(anLoadTrades(force));
     else jobs.push(anLoadIncome(), anLoadEtf(), rkLoad());
     await Promise.all(jobs);
@@ -2116,51 +2111,12 @@ async function anOpen(force) {
   an.busy = false; renderAn();
 }
 // carrega tudo o que o assistente IA usa (sem bloquear mais de alguns segundos)
-async function anLoadAll() { an.quiet = true; try { await Promise.allSettled([anLoadPerf(), anLoadTrades(), anLoadBench(), anLoadIncome()]); } finally { an.quiet = false; } }
+async function anLoadAll() { an.quiet = true; try { await Promise.allSettled([anLoadTrade(), anLoadPerf(), anLoadTrades(), anLoadIncome()]); } finally { an.quiet = false; } }
 
-function anPerf() {
-  const usd = base === 'USD', cutD = AN_RANGES[an.range], cut = cutD ? Date.now() - cutD * 864e5 : 0;
-  let S = an.snaps.map(s => ({ ts: Date.parse(s.ts), v: +(usd ? s.total_usd : s.total_eur) }));
-  const F = an.flows.map(f => ({ ts: Date.parse(f.ts), amt: +(usd ? f.usd : f.eur) }));
-  if (cut) { const i = S.findIndex(s => s.ts >= cut); S = i < 0 ? S.slice(-1) : S.slice(Math.max(0, i - 1)); }
-  const r = AMP.twr(S, F.filter(f => !S.length || f.ts > S[0].ts));
-  return { S, r, dd: AMP.drawdown(r.series), vol: AMP.annualVol(r.rets, r.series), cur: usd ? 'USD' : 'EUR' };
-}
-function anBenchRet(cs, times) { const s = AMP.rebase(cs, times).filter(x => x.idx != null); return s.length > 1 ? s[s.length - 1].idx / 100 - 1 : null; }
-
-function ensureAnChart() {
-  const el = $('anChart'); if (!el || !window.LightweightCharts) return null;
-  if (an.chart && an.chartEl === el) return an.chart;
-  if (an.chart) { try { an.chart.remove(); } catch (e) {} an.chart = null; }
-  const L = LightweightCharts;
-  an.chart = L.createChart(el, {
-    autoSize: true, handleScroll: false, handleScale: false,
-    layout: { background: { type: L.ColorType.Solid, color: 'transparent' }, textColor: cv('--mut'), fontSize: 11 },
-    grid: { vertLines: { visible: false }, horzLines: { color: cv('--line') } },
-    rightPriceScale: { borderVisible: false, minimumWidth: 56 }, timeScale: { borderVisible: false, fixLeftEdge: true, fixRightEdge: true },
-    localization: { locale: 'pt-PT' }, crosshair: { mode: L.CrosshairMode.Magnet, vertLine: { labelVisible: false } },
-  });
-  an.chartEl = el; return an.chart;
-}
-function paintAnChart(P) {
-  const c = ensureAnChart(); if (!c) return;
-  const tm = a => { const seen = new Set(); return a.filter(p => { const t = Math.floor(p.ts / 1000); if (seen.has(t)) return false; seen.add(t); return true; }).map(p => ({ time: Math.floor(p.ts / 1000), value: p.idx })); };
-  const add = (data, color, w) => { const s = c.addLineSeries({ color, lineWidth: w, priceLineVisible: false, lastValueVisible: true, priceFormat: { type: 'custom', formatter: v => fmt(v, 1), minMove: 0.01 } }); s.setData(data); };
-  const times = P.r.series.map(p => p.ts);
-  if (an.bench) {
-    const btc = AMP.rebase(an.bench.btc, times).filter(x => x.idx != null), wld = AMP.rebase(an.bench.wld, times).filter(x => x.idx != null);
-    if (wld.length > 1) add(tm(wld), '#5b8cff', 1.5);
-    if (btc.length > 1) add(tm(btc), '#f7931a', 1.5);
-  }
-  add(tm(P.r.series), cv('--green') || '#2ecc8f', 2.5);
-  c.timeScale().fitContent();
-}
 
 const anTile = (k, v, nt, c) => `<div class="tile"><div class="lbl">${k}</div><div class="v num ${c || ''}">${v}</div><div class="n">${nt}</div></div>`;
-function renderAnPerf() {
-  const P = anPerf(), n = an.snaps.length, cur = P.cur;
-  const first = an.snaps[0] ? new Date(an.snaps[0].ts).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' }) : null;
-  const seg = `<div class="seg" id="anRange">${Object.keys(AN_RANGES).map(k => `<button data-an="range" data-v="${k}" class="${an.range === k ? 'on' : ''}">${k === 'all' ? 'Tudo' : k.toUpperCase()}</button>`).join('')}</div>`;
+function anCapitalBlock() {
+  const cur = anCur();
   // Capital vs valor POR FONTE (cada fonte tem a sua fronteira): só é comparável o que entrou/saiu da própria fonte.
   const lastS = an.snaps[an.snaps.length - 1], usdB = base === 'USD';
   const srcCap = k => an.flows.filter(f => f.source === k).reduce((a, f) => a + +(usdB ? f.usd : f.eur), 0);
@@ -2178,36 +2134,71 @@ function renderAnPerf() {
       ${R.map(r => row(r[0], r[1], r[2])).join('')}${man ? row('Fluxos manuais', man, null) : ''}${row('Total', capT, valT)}
       <div class="foot" style="margin-top:6px">Capital = o que entrou e saiu de cada fonte desde ${anStartLbl() || 'o início'}. Bybit: livro de transações da conta de trading (inclui cartão, P2P e depósitos que passam pelo Funding; staking conta como saída). Não inclui capital anterior à data de início, nem o funding/Earn fora da conta de trading.</div></div>`;
   }
-  let body = '';
-  if (n < 2) {
-    body = life + `<div class="empty">A série real começa agora: há ${n} snapshot${n === 1 ? '' : 's'} (o servidor grava um de 4 em 4 horas). Carrega em <b>Registar agora</b> para gravar o primeiro. Sem passado reconstruído, de propósito: um histórico inventado seria pior do que nenhum.</div>`;
-  } else {
-    const r = P.r, tot = r.total, times = r.series.map(p => p.ts);
-    const bB = an.bench ? anBenchRet(an.bench.btc, times) : null, bW = an.bench ? anBenchRet(an.bench.wld, times) : null;
-    const vs = (b, nm) => b == null ? '' : `<span class="num ${cls(tot - b)}">${pct((tot - b) * 100, 1)}</span> <span class="mut">vs ${nm}</span>`;
-    body = life + `<div class="tiles">
-      ${anTile('Retorno real', pct(tot * 100, 2), 'sem contar depósitos/levantamentos', cls(tot))}
-      ${anTile('Ganho líquido', smoney(r.gain, cur, 0), `fluxos de capital: ${smoney(r.flowsTotal, cur, 0)}`, cls(r.gain))}
-      ${anTile('Drawdown máx.', pct(P.dd.max * 100, 1), `atual ${pct(P.dd.current * 100, 1)}`, P.dd.max < -0.25 ? 'neg' : P.dd.max < -0.1 ? 'amber' : '')}
-      ${P.vol != null ? anTile('Volatilidade', fmt(P.vol * 100, 0) + '%', 'anualizada') : ''}
-      ${bB != null ? anTile('BTC (mesmo período)', pct(bB * 100, 1), vs(bB, 'tu'), cls(bB)) : ''}
-      ${bW != null ? anTile('MSCI World (IWDA)', pct(bW * 100, 1), vs(bW, 'tu'), cls(bW)) : ''}
-    </div>
-    <div class="cwrap" style="margin-top:14px;height:220px"><div id="anChart" style="height:220px"></div></div>
-    <div class="pflegend" style="position:static;margin-top:6px;font-size:12px"><span style="color:var(--green)">━ Tu</span> <span style="color:#f7931a">━ BTC</span> <span style="color:#5b8cff">━ MSCI World</span> <span class="mut">(base 100 · BTC em USD, sem câmbio)</span></div>
-    ${bB != null && bW != null && tot < Math.max(bB, bW) ? `<div class="warnbox">Pergunta incómoda: no mesmo período, ${bB > bW ? 'só deteres BTC' : 'um ETF de bolsa global'} teria rendido mais (${pct(Math.max(bB, bW) * 100, 1)} vs ${pct(tot * 100, 1)}). O que é que a tua atividade acrescentou?</div>` : ''}`;
-  }
+  return life;
+}
+function anFlowsBlock() {
+  const cur = anCur();
   const flowRows = [...an.flows].reverse().slice(0, 12).map(f => `<div class="arow"><div>${new Date(f.ts).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: '2-digit' })} <span class="chip">${esc(f.source)}</span>${f.note ? ` <span class="mut">${esc(f.note)}</span>` : ''}</div>
     <div class="num ${cls(f.eur)}" style="text-align:right">${smoney(+(base === 'USD' ? f.usd : f.eur), cur, 0)}</div><div style="text-align:right">${f.auto ? '' : `<button class="x" data-an="flowdel" data-id="${esc(f.id)}" aria-label="Apagar">✕</button>`}</div></div>`).join('');
-  const warn = !an.flows.length && n >= 2 ? `<div class="warnbox">Sem fluxos de capital registados: qualquer depósito conta como lucro e qualquer levantamento como perda. Importa os automáticos ou adiciona-os à mão.</div>` : '';
-  return `<div class="card"><h2>Desempenho real ${seg}</h2>${an.msg ? `<div class="mut" style="font-size:12px;margin-bottom:8px">${esc(an.msg)}</div>` : ''}${body}
-    <div class="foot">${first ? `Série desde ${first} · ${n} snapshots. ` : ''}Retorno por Modified Dietz encadeado (fluxos ponderados pelo tempo). O valor inclui Bybit (equity), Trading 212 (valor oficial) e PPR (valor introduzido). "Depositado" é uma estimativa: só conta fluxos que as exchanges listam (cripto ao preço do dia do depósito).</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="pill" data-an="snap">Registar agora</button><button class="pill" data-an="flowsync">Importar depósitos/levantamentos</button></div></div>
-  <div class="card"><h2>Fluxos de capital</h2>${warn}${flowRows || '<div class="empty">Nenhum fluxo.</div>'}
+  return `  <div class="card"><h2>Fluxos de capital</h2>${flowRows || '<div class="empty">Nenhum fluxo.</div>'}
     <div class="flowform"><input id="flAmt" class="px num" inputmode="decimal" placeholder="€ (− se levantas)"><input id="flDate" type="date" class="px" value="${new Date().toISOString().slice(0, 10)}"><input id="flNote" class="px" maxlength="60" placeholder="nota (ex.: cartão Bybit)"><button class="pill" data-an="flowadd">Adicionar</button></div>
     <div class="foot">Compras com cartão/P2P e transferências que a Bybit não lista como depósito têm de ser adicionadas aqui, senão distorcem o retorno.</div></div>`;
 }
-
+function ensureAnChart() {
+  const el = $('anChart'); if (!el || !window.LightweightCharts) return null;
+  if (an.chart && an.chartEl === el) return an.chart;
+  if (an.chart) { try { an.chart.remove(); } catch (e) {} an.chart = null; }
+  const L = LightweightCharts;
+  an.chart = L.createChart(el, {
+    autoSize: true, handleScroll: false, handleScale: false,
+    layout: { background: { type: L.ColorType.Solid, color: 'transparent' }, textColor: cv('--mut'), fontSize: 11 },
+    grid: { vertLines: { visible: false }, horzLines: { color: cv('--line') } },
+    rightPriceScale: { borderVisible: false, minimumWidth: 56 }, timeScale: { borderVisible: false, fixLeftEdge: true, fixRightEdge: true },
+    localization: { locale: 'pt-PT' }, crosshair: { mode: L.CrosshairMode.Magnet, vertLine: { labelVisible: false } },
+  });
+  an.chartEl = el; return an.chart;
+}
+function paintTradeChart() {
+  const T = an.trade; if (!T || !T.curve || T.curve.length < 2) return;
+  const c = ensureAnChart(); if (!c) return;
+  const sr = c.addLineSeries({ color: T.net >= 0 ? cv('--green') : cv('--red'), lineWidth: 2, priceLineVisible: false, lastValueVisible: true, priceFormat: { type: 'custom', formatter: v => fmt(v, 0) + ' $', minMove: 0.01 } });
+  const seen = new Set();
+  sr.setData(T.curve.map(p => ({ time: Math.floor(p.t / 1000), value: p.pnl })).filter(p => !seen.has(p.time) && seen.add(p.time)));
+  sr.createPriceLine({ price: 0, color: cv('--mut'), lineWidth: 1, lineStyle: 2, axisLabelVisible: false });
+  c.timeScale().fitContent();
+}
+function renderAnTrade() {
+  const T = an.trade;
+  const refresh = `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="pill" data-an="trefresh">Atualizar</button></div>`;
+  if (!T) return '<div class="card"><div class="empty">A obter o trade atual…</div></div>';
+  if (!T.open) return `<div class="card"><h2>Trade atual</h2><div class="empty">Sem posição aberta na Bybit.</div></div>` + anFlowsBlock();
+  if (!T.start) return `<div class="card"><h2>Trade atual · ${esc(T.symbol)}</h2><div class="warnbox">Não consegui descobrir quando este trade começou (${esc((T.notes || []).join(' · ') || 'sem detalhe')}). Podes fixar a data à mão em "Alterar início".</div></div>`;
+  const st = new Date(T.start), days = (Date.now() - st.getTime()) / 864e5;
+  const dist = T.liq > 0 && T.mark > 0 ? Math.abs(T.mark - T.liq) / T.mark * 100 : null;
+  const roe = T.capital > 0 ? T.net / T.capital * 100 : null;
+  const usd = (v, d = 2) => smoney(v, 'USD', d);
+  const mism = an.start && Math.abs(st.getTime() - Date.parse(an.start)) > 60000
+    ? `<div class="warnbox">O início deste trade é <b>${st.toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</b>, mas a Análise conta desde ${anStartLbl()}. <button class="pill" data-an="adopt" style="margin-top:6px">Usar o início deste trade (apaga o anterior)</button></div>` : '';
+  return `${mism}<div class="card"><h2>Trade atual · ${esc(T.symbol)} <span class="side ${T.side}" style="margin:0">${T.side === 'long' ? 'LONG' : 'SHORT'} ${fmt(T.lev, 1)}×</span></h2>
+    <div class="mut" style="font-size:12.5px;margin-bottom:10px">Desde ${st.toLocaleString('pt-PT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })} · há ${fmt(days, 0)} dias · ${T.fills} execuções · ${fmt(T.size, 0)} ${esc(T.symbol.replace(/USDT$|USDC$/, ''))} a ${price(T.avg)}</div>
+    <div class="tiles">
+      ${anTile('Resultado', usd(T.net, 0), roe != null ? `${pct(roe, 0)} do capital que entrou (${money(T.capital, 'USD', 0)})` : 'desde o início', cls(T.net))}
+      ${anTile('Não realizado', usd(T.upl, 0), `mark ${price(T.mark)} vs entrada ${price(T.avg)}`, cls(T.upl))}
+      ${anTile('Realizado', usd(T.realized, 2), T.realized === 0 ? 'sem reduções até agora' : 'reduções parciais', cls(T.realized))}
+      ${anTile('Comissões', usd(-T.fees, 2), 'desde o início')}
+      ${anTile('Funding', usd(T.funding, 2), T.funding >= 0 ? 'recebido' : 'pago', cls(T.funding))}
+    </div>
+    <div class="lbl" style="margin:16px 0 4px">Evolução do resultado</div>
+    <div class="cwrap" style="height:220px"><div id="anChart" style="height:220px"></div></div>
+    <div class="foot">Resultado do trade em USD, hora a hora desde o início: realizado − comissões + funding + não realizado ao preço de fecho de cada hora.</div></div>
+  <div class="card"><h2>Risco atual</h2><div class="tiles">
+    ${anTile('Até à liquidação', dist != null ? fmt(dist, 1) + '%' : '—', T.liq > 0 ? `liquida a ${price(T.liq)}` : '', dist != null && dist < 15 ? 'neg' : dist != null && dist < 25 ? 'amber' : 'pos')}
+    ${anTile('Alavancagem', fmt(T.lev, 1) + '×', `nocional ${money(T.notional, 'USD', 0)}`, T.lev > 5 ? 'neg' : T.lev > 3 ? 'amber' : '')}
+    ${anTile('Stop-loss', T.sl > 0 ? price(T.sl) : 'sem stop', T.sl > 0 ? `${fmt(Math.abs(T.mark - T.sl) / T.mark * 100, 1)}% abaixo/acima do mark` : 'a posição só sai por liquidação', T.sl > 0 ? '' : 'neg')}
+    ${M && M.fut && M.fut.length ? rkTiles() : ''}</div></div>
+  ${(T.notes || []).length ? `<div class="foot" style="margin:0 0 12px">Avisos: ${esc(T.notes.join(' · '))}</div>` : ''}
+  ${anFlowsBlock()}${refresh}`;
+}
 const TAGS = ['tese', 'plano', 'fomo', 'vingança', 'stop movido', 'tamanho excessivo', 'sem stop', 'saída cedo', 'saída tarde', 'sorte'];
 function anTrades() {
   const cut = an.jr ? Date.now() - an.jr * 864e5 : 0;
@@ -2296,25 +2287,26 @@ function renderAn() {
   const el = $('anBody'); if (!el) return;
   document.querySelectorAll('#anSeg button').forEach(b => b.classList.toggle('on', b.dataset.v === an.seg));
   let h = anStartBar() + (an.err ? `<div class="warnbox">${esc(an.err)}</div>` : '');
-  if (an.busy && !(an.snaps.length || an.trades.length)) h += '<div class="empty">A carregar…</div>';
-  else h += an.seg === 'perf' ? renderAnPerf() : an.seg === 'jr' ? renderAnJr() : renderAnExp();
+  if (an.busy && !(an.trade || an.snaps.length || an.trades.length)) h += '<div class="empty">A carregar… (descobrir o início do trade demora alguns segundos)</div>';
+  else h += an.seg === 'perf' ? renderAnTrade() : an.seg === 'jr' ? renderAnJr() : renderAnExp();
   const active = document.activeElement && document.activeElement.id, vals = {};
   ['flAmt', 'flDate', 'flNote', 'thSym', 'thSide', 'thTxt', 'thPx', 'stDate'].forEach(i => { const e = $(i); if (e) vals[i] = e.value; });
   el.innerHTML = h;
   Object.keys(vals).forEach(i => { const e = $(i); if (e && vals[i]) e.value = vals[i]; });
   if (active && $(active)) $(active).focus();
-  if (an.seg === 'perf' && an.snaps.length > 1) paintAnChart(anPerf());
+  if (an.seg === 'perf') paintTradeChart();
 }
 async function anAct(e) {
   const b = e.target.closest('[data-an]'); if (!b) return;
   const a = b.dataset.an, v = b.dataset.v, id = b.dataset.id;
   try {
     if (a === 'seg') { an.seg = v; store.set('an-seg', v); an.msg = ''; return anOpen(); }
-    if (a === 'range') { an.range = v; store.set('an-range', v); return renderAn(); }
     if (a === 'jr') { an.jr = +v; store.set('an-jr', an.jr); return renderAn(); }
     if (a === 'trade') { an.openTrade = an.openTrade === id ? null : id; return renderAn(); }
     b.disabled = true;
-    if (a === 'snap') { const d = await amPost('am-data', { action: 'snapshot' }); an.msg = `Snapshot gravado: ${money(base === 'USD' ? d.total_usd : d.total_eur, anCur(), 0)}.`; await anLoadPerf(true); }
+    if (a === 'trefresh') { an.trade = null; renderAn(); await anLoadTrade(true); }
+    else if (a === 'adopt') { const d = await amPost('am-trade', { action: 'adopt' }, 120000); an.start = d.start; an.msg = `Início fixado em ${anStartLbl()}. Apagados: ${d.apagados.fluxos} fluxos, ${d.apagados.operacoes} operações.`; await Promise.all([anLoadTrade(true), anLoadPerf(true), anLoadTrades(true)]); }
+    else if (a === 'snap') { const d = await amPost('am-data', { action: 'snapshot' }); an.msg = `Snapshot gravado: ${money(base === 'USD' ? d.total_usd : d.total_eur, anCur(), 0)}.`; await anLoadPerf(true); }
     else if (a === 'flowsync') { an.msg = 'A importar… (pode demorar 1–2 min)'; renderAn(); const d = await amPost('am-data', { action: 'flows_sync', days: 730 }, 150000); an.msg = `Encontrados ${d.found}, novos ${d.inserted}.` + (d.unpriced.length ? ` Sem preço (adiciona à mão): ${d.unpriced.slice(0, 4).join(', ')}.` : '') + (d.notes.length ? ` Avisos: ${d.notes.slice(0, 2).join(' · ')}` : ''); await anLoadPerf(true); }
     else if (a === 'setstart') {
       const v = $('stDate').value; if (!v) throw new Error('Escolhe a data de início.');
@@ -2354,14 +2346,13 @@ function renderBrief() {
 // contexto adicional para o assistente (desempenho real, diário, teses, risco dinâmico)
 function anContext() {
   const L = [];
-  if (an.snaps.length > 1) {
-    const P = anPerf(); L.push(`DESEMPENHO REAL (${an.snaps.length} snapshots): retorno ${pct(P.r.total * 100, 2)}, ganho líquido de fluxos ${smoney(P.r.gain, P.cur, 0)}, drawdown máx. ${pct(P.dd.max * 100, 1)} (atual ${pct(P.dd.current * 100, 1)}).`);
-    if (an.bench) { const tm = P.r.series.map(p => p.ts), b = anBenchRet(an.bench.btc, tm), w = anBenchRet(an.bench.wld, tm); L.push(`Mesmo período: BTC ${b != null ? pct(b * 100, 1) : 'n/d'}, MSCI World ${w != null ? pct(w * 100, 1) : 'n/d'}.`); }
-    if (!an.flows.length) L.push('ATENÇÃO: não há fluxos de capital registados, por isso o retorno pode estar distorcido por depósitos/levantamentos.');
+  if (an.trade && an.trade.open && an.trade.start) {
+    const T = an.trade;
+    L.push(`TRADE ATUAL ${T.symbol} ${T.side} ${fmt(T.lev, 1)}× desde ${new Date(T.start).toLocaleString('pt-PT')}: ${fmt(T.size, 0)} a ${price(T.avg)} (mark ${price(T.mark)}). Resultado ${smoney(T.net, 'USD', 0)} (não realizado ${smoney(T.upl, 'USD', 0)}, comissões ${fmt(T.fees, 2)}, funding ${smoney(T.funding, 'USD', 2)}); capital que entrou desde o início ${fmt(T.capital, 0)} USD. Liquidação a ${price(T.liq)}${T.sl > 0 ? `, stop ${price(T.sl)}` : ', SEM stop'}. A análise só conta desde o início deste trade.`);
   }
-  const T = anTrades().filter(t => t.closed >= Date.now() - 90 * 864e5), S = AMP.tradeStats(T);
+  const T = anTrades(), S = AMP.tradeStats(T);
   if (S.n) {
-    L.push(`DIÁRIO (90d, Bybit): ${S.n} operações, win rate ${fmt(S.winRate * 100, 0)}%, expectância ${smoney(S.expectancy, 'USD', 2)}/op, profit factor ${S.profitFactor != null ? fmt(S.profitFactor, 2) : 'n/d'}, comissões ${fmt((S.feesPctOfGross || 0) * 100, 0)}% do lucro bruto, pior sequência ${S.maxLosingStreak} perdas, PnL total ${smoney(S.total, 'USD', 0)}.`);
+    L.push(`DIÁRIO (desde o início do trade, Bybit): ${S.n} operações, win rate ${fmt(S.winRate * 100, 0)}%, expectância ${smoney(S.expectancy, 'USD', 2)}/op, profit factor ${S.profitFactor != null ? fmt(S.profitFactor, 2) : 'n/d'}, comissões ${fmt((S.feesPctOfGross || 0) * 100, 0)}% do lucro bruto, pior sequência ${S.maxLosingStreak} perdas, PnL total ${smoney(S.total, 'USD', 0)}.`);
   }
   an.theses.filter(t => t.status === 'open').forEach(t => L.push(`TESE ${t.symbol} ${t.side}: "${t.thesis}" — invalida ${t.side === 'long' ? 'abaixo' : 'acima'} de ${t.invalid_px}.`));
   if (M && M.fut.length) {
