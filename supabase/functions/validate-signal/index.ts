@@ -1,9 +1,9 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import {
-import { guard } from '../_shared/auth.ts';
   Bars, Row, Config, Stats,
   defaultConfig, computeIndicators, generateSignal, regimeOf, backtest, round, TF_MAP,
 } from "./engine.ts";
+import { guard } from '../_shared/auth.ts';
 
 /*
  * validate-signal — camada de I/O (Deno edge function)
