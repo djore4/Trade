@@ -1,8 +1,9 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { guard } from '../_shared/auth.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-am-secret',
 };
 
 // Mapa de liquidacoes ESTIMADO para um perpetuo linear da Bybit  (?symbol=APTUSDT&window=1d|1w|1m).
@@ -87,6 +88,7 @@ async function okx(coin: string) {
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  { const denied = await guard(req, corsHeaders); if (denied) return denied; }
   try {
     const q = new URL(req.url).searchParams;
     const symbol = (q.get('symbol') || '').toUpperCase();

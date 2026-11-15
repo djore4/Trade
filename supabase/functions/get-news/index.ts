@@ -1,8 +1,9 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { guard } from '../_shared/auth.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-am-secret',
 };
 
 // Proxy de RSS/Atom -> JSON (resolve CORS e rate-limits de serviços terceiros).
@@ -61,6 +62,7 @@ function parseFeed(xml: string) {
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  { const denied = await guard(req, corsHeaders); if (denied) return denied; }
   try {
     const feed = new URL(req.url).searchParams.get('feed') || '';
     if (!feed) {

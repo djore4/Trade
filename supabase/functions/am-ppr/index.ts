@@ -5,10 +5,11 @@
 //                               senão devolve { conflict: true, data, rev } (o cliente junta e repete)
 // Usa a service role (tabela am_ppr fechada).
 import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { guard } from '../_shared/auth.ts';
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-am-secret',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 const json = (b: unknown, s = 200) =>
@@ -34,6 +35,7 @@ function validate(data: any): string | null {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
+  { const denied = await guard(req, cors); if (denied) return denied; }
   if (req.method !== 'POST') return json({ error: 'POST only' }, 405);
   try {
     const supa = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);

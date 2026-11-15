@@ -8,10 +8,11 @@
 // se cs_bot_state.auto_confirm=true). Usa a service role.
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { bybitKeysFromEnv, bybitGet, bybitPost, fetchFilters, roundStep, roundTick } from '../_shared/bybit.ts';
+import { guard } from '../_shared/auth.ts';
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-am-secret',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 const json = (b: unknown, s = 200) =>
@@ -21,6 +22,7 @@ const utcDayStart = () => { const d = new Date(); d.setUTCHours(0, 0, 0, 0); ret
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
+  { const denied = await guard(req, cors); if (denied) return denied; }
   if (req.method !== 'POST') return json({ error: 'POST only' }, 405);
   try {
     const supa = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);

@@ -285,6 +285,17 @@ input.px{width:100%;background:var(--card2);color:var(--text);border:1px solid v
 @keyframes bl{0%,80%,100%{opacity:.25}40%{opacity:1}}
 
 /* Tab bar */
+.anhead{margin-bottom:12px} .anhead .seg{display:flex} .anhead .seg button{flex:1}
+.arow{display:grid;grid-template-columns:1.6fr .7fr .9fr;gap:8px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px}
+.arow.head{color:var(--mut);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;padding-top:0}
+.gt .arow{grid-template-columns:1.2fr .5fr .6fr 1fr}
+.trade{cursor:pointer} .trade:last-child .arow{border-bottom:0}
+.tagrow{display:flex;gap:6px;flex-wrap:wrap;padding:4px 0 10px} .pill.sel{border-color:var(--accent);background:var(--card)}
+.warnbox{background:color-mix(in srgb,var(--amber) 14%,transparent);border:1px solid color-mix(in srgb,var(--amber) 45%,transparent);border-radius:12px;padding:10px 12px;font-size:12.5px;line-height:1.5;margin:10px 0}
+.flowform{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center} .flowform .px{flex:1 1 120px;min-width:0}
+.thesis{padding:10px 0;border-bottom:1px solid var(--line)}
+.xbar{display:grid;grid-template-columns:44px 1fr 42px;gap:8px;align-items:center;margin:8px 0;font-size:13px} .xb{height:10px;background:var(--card2);border-radius:6px;overflow:hidden} .xb i{display:block;height:100%;border-radius:6px}
+.briefbody{font-size:14px;line-height:1.6}
 .tabbar{position:fixed;left:0;right:0;bottom:0;height:calc(var(--tabh) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);
   background:color-mix(in srgb,var(--card) 90%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--line);display:flex;z-index:20}
 .tabbar button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--mut);font-size:10.5px;font-weight:600;position:relative}
@@ -363,6 +374,12 @@ input.px{width:100%;background:var(--card2);color:var(--text);border:1px solid v
     </div>
   </main>
 
+  <!-- ══ ANÁLISE ══ -->
+  <main class="view" id="v-an" hidden>
+    <div class="anhead"><div class="seg" id="anSeg"><button data-an="seg" data-v="perf">Desempenho</button><button data-an="seg" data-v="jr">Diário</button><button data-an="seg" data-v="exp">Exposição</button></div></div>
+    <div id="anBody"></div>
+  </main>
+
   <!-- ══ TRADE ══ -->
   <main class="view" id="v-trade" hidden>
     <div class="card" id="tSummary"></div>
@@ -412,6 +429,7 @@ input.px{width:100%;background:var(--card2);color:var(--text);border:1px solid v
 
   <!-- ══ ASSISTENTE IA ══ -->
   <main class="view" id="v-ai" hidden>
+    <div class="card" id="aiBrief"></div>
     <div class="card">
       <h2>Assistente IA <button class="pill" id="aiClear" style="padding:3px 10px;font-size:11px">Limpar</button></h2>
       <div class="presets" id="aiSug" style="margin-bottom:14px"></div>
@@ -426,6 +444,7 @@ input.px{width:100%;background:var(--card2);color:var(--text);border:1px solid v
 
 <nav class="tabbar" id="tabbar">
   <button data-t="portfolio" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12A9 9 0 1 1 12 3v9z"/><path d="M15 3.5A9 9 0 0 1 20.5 9H15z"/></svg>Portefólio</button>
+  <button data-t="an"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Análise</button>
   <button data-t="trade"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v3M7 14v3M7 6h0"/><rect x="4.5" y="6" width="5" height="8" rx="1"/><path d="M17 7v3M17 18v3"/><rect x="14.5" y="10" width="5" height="8" rx="1"/></svg>Trade</button>
   <button data-t="news"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h13v14H6a2 2 0 0 1-2-2z"/><path d="M17 9h3v8a2 2 0 0 1-2 2"/><path d="M8 9h5M8 13h5"/></svg>Notícias</button>
   <button data-t="whatif"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>What-if</button>
@@ -433,6 +452,7 @@ input.px{width:100%;background:var(--card2);color:var(--text);border:1px solid v
 </nav>
 
 <script src="vendor/lightweight-charts.standalone.production.js"></script>
+<script src="lib/perf.js"></script>
 <script>
 'use strict';
 const API = 'https://yifxgiwmibjaornighvt.supabase.co/functions/v1';
@@ -474,11 +494,39 @@ function ago(ts) {
   const h = Math.round(m / 60); if (h < 24) return `há ${h} h`;
   return `há ${Math.round(h / 24)} d`;
 }
-async function call(name, opts = {}) {
+/* Acesso: todas as funções exigem o código de acesso (AM_SECRET). Fica só neste dispositivo (localStorage). */
+let amAsk = null;
+function askSecret(msg) {
+  if (amAsk) return amAsk;
+  amAsk = new Promise(resolve => {
+    const o = document.createElement('div');
+    o.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(0,0,0,.72)';
+    o.innerHTML = '<form style="width:100%;max-width:340px;background:var(--card,#1c1c1e);color:var(--text,#fff);border:1px solid var(--line,#333);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:12px">'
+      + '<b>Código de acesso</b><span class="amMsg" style="font-size:13px;opacity:.7"></span>'
+      + '<input type="password" autocomplete="current-password" style="padding:12px;border-radius:12px;border:1px solid var(--line,#333);background:transparent;color:inherit;font-size:16px">'
+      + '<button style="padding:12px;border-radius:12px;border:0;background:var(--accent,#3b82f6);color:#fff;font-size:16px">Entrar</button></form>';
+    o.querySelector('.amMsg').textContent = msg || 'Introduz o código para abrir a app.';
+    document.body.appendChild(o);
+    const inp = o.querySelector('input'); inp.focus();
+    o.querySelector('form').onsubmit = e => {
+      e.preventDefault(); const v = inp.value.trim(); if (!v) return;
+      store.set('am_secret', v); o.remove(); amAsk = null; resolve(v);
+    };
+  });
+  return amAsk;
+}
+async function call(name, opts = {}, retried = false) {
   const { timeout = 25000, ...o } = opts;
+  let secret = store.get('am_secret', '');
+  if (!secret) secret = await askSecret();
   const ctrl = new AbortController(), to = setTimeout(() => ctrl.abort(), timeout);
   try {
-    const r = await fetch(`${API}/${name}`, { headers: HDR, signal: ctrl.signal, ...o });
+    const r = await fetch(`${API}/${name}`, { headers: HDR, signal: ctrl.signal, ...o, headers: { ...HDR, ...(o.headers || {}), 'x-am-secret': secret } });
+    if (r.status === 401 && !retried) {
+      store.set('am_secret', ''); clearTimeout(to);
+      await askSecret('Código inválido ou expirado. Tenta outra vez.');
+      return call(name, opts, true);
+    }
     const d = await r.json().catch(() => ({}));
     if (!r.ok || d.error) throw new Error(d.error || `HTTP ${r.status}`);
     return d;
@@ -735,8 +783,11 @@ function risks(M) {
   const out = [];
   M.fut.forEach(f => {
     if (f.liqDist != null) {
-      if (f.liqDist < 15) out.push({ id: 'liq:' + f.symbol, lvl: 'red', t: `${f.symbol}: a só ${fmt(f.liqDist, 1)}% da liquidação (${price(f.liq)}).` });
-      else if (f.liqDist < 25) out.push({ id: 'liq:' + f.symbol, lvl: 'amber', t: `${f.symbol}: ${fmt(f.liqDist, 1)}% de distância à liquidação (${price(f.liq)}) — margem curta.` });
+      // limiar fixo (15%/25%) OU relativo à volatilidade do próprio ativo (distância em σ diários): um alt volátil a 15% está bem mais perto do que o BTC a 15%
+      const sg = AMP.liqSigmas(f.liqDist, rk.sigma[f.symbol]);
+      let lvl = f.liqDist < 15 ? 'red' : f.liqDist < 25 ? 'amber' : null;
+      if (sg != null) { if (sg < 3) lvl = 'red'; else if (sg < 5 && lvl !== 'red') lvl = 'amber'; }
+      if (lvl) out.push({ id: 'liq:' + f.symbol, lvl, t: `${f.symbol}: a ${fmt(f.liqDist, 1)}% da liquidação (${price(f.liq)})${sg != null ? ` = ${fmt(sg, 1)}× a volatilidade diária (${fmt(rk.sigma[f.symbol] * 100, 1)}%)` : ''}.` });
     }
     if (!f.sl) out.push({ id: 'sl:' + f.symbol, lvl: 'amber', t: `${f.symbol}: sem stop-loss definido.` });
   });
@@ -815,9 +866,11 @@ function renderPortfolio() {
     ${tile('Top 3', fmt(top3 / M.value * 100, 0) + '%', 'concentração')}
     ${tile('Exposição USD', fmt(usd / M.value * 100, 0) + '%', 'risco cambial')}
     ${M.b ? tile('Cripto (equity)', fmt(M.b.value / M.value * 100, 0) + '%', 'do portefólio total') : ''}
+    ${rkTiles()}
   </div>` : '';
   $('risk').hidden = !(M.value > 0);
   renderNotifs();
+  rkLoad().catch(() => {});
   pfEnsure();
 }
 
@@ -1101,7 +1154,12 @@ const PRESETS = [
   ['PPR −10%', () => setGroup('pp', -10)], ['PPR +10%', () => setGroup('pp', 10)],
   ['Cripto −20%', () => setGroup('cr', -20)], ['Cripto −35%', () => setGroup('cr', -35)], ['Cripto +30%', () => setGroup('cr', 30)],
   ['Crash (bolsa −30%, cripto −45%)', () => { setGroup('eq', -30); setGroup('cr', -45); }],
+  ['BTC −10% (por beta)', () => btcShock(-10)], ['BTC −20% (por beta)', () => btcShock(-20)], ['BTC −35% (por beta)', () => btcShock(-35)], ['BTC +20% (por beta)', () => btcShock(20)],
 ];
+// choque do BTC propagado a cada futuro pelo seu beta (sem dados de beta: assume 1 e avisa no nome do botão via rk.at)
+function btcShock(p) {
+  scen.pct = {}; M.fut.forEach(f => { const b = rkBeta(f); scen.pct[f.id] = Math.round(Math.max(-90, Math.min(300, (b == null ? 1 : b) * p))); });
+}
 function fxFactor(ccy) {
   const s = scen.fx / 100;   // variação de EUR/USD
   if (base === 'EUR' && ccy === 'USD') return 1 / (1 + s);
@@ -1152,7 +1210,7 @@ function renderWhatIf() {
   $('presets').innerHTML = PRESETS.map((p, i) => `<button class="pill" data-p="${i}">${esc(p[0])}</button>`).join('');
   const rows = [];
   M.holdings.filter(h => h.kind === 't212' || h.kind === 'ppr').sort((a, b) => b.value - a.value).forEach(h => rows.push(wrow(h.id, h.label, h.name, h.price, h.pxCcy, -100, 200, false)));
-  M.fut.forEach(f => rows.push(wrow(f.id, `${f.symbol} · ${f.long ? 'LONG' : 'SHORT'} ${fmt(f.lev, 0)}×`, 'Futuros Bybit · liq. ' + (f.liq ? price(f.liq) : '—'), f.mark, 'USDT', -90, 300, true)));
+  M.fut.forEach(f => rows.push(wrow(f.id, `${f.symbol} · ${f.long ? 'LONG' : 'SHORT'} ${fmt(f.lev, 0)}×`, 'Futuros Bybit · liq. ' + (f.liq ? price(f.liq) : '—') + (rkBeta(f) != null ? ` · β ${fmt(rkBeta(f), 2)}${AMP.btcMoveToLiquidate(f, rkBeta(f)) != null ? ' · BTC ' + pct(AMP.btcMoveToLiquidate(f, rkBeta(f)), 0) + ' liquida' : ''}` : ''), f.mark, 'USDT', -90, 300, true)));
   $('wiRows').innerHTML = rows.join('') || '<div class="empty">Sem ativos.</div>';
   $('fxShock').value = scen.fx; $('fxShockV').textContent = (scen.fx > 0 ? '+' : '') + scen.fx + '%';
   renderWhatIfSummary();
@@ -1189,7 +1247,7 @@ function aiContext_() {
   if (m.effLev != null) L.push(`Alavancagem efetiva da Bybit ${m.effLev.toFixed(1)}x; saldo da wallet totalmente alocado como margem: ${m.b && m.fut.reduce((a, f) => a + f.im, 0) >= m.b.walletUsd * 0.98 ? 'sim' : 'não'}.`);
   const hl = (news.assets.concat(news.market)).slice(0, 14);
   if (hl.length) L.push('MANCHETES RECENTES:\n' + hl.map(i => `- [${i.src}${i.tag ? '/' + i.tag : ''}] ${i.title}`).join('\n'));
-  return L.join('\n');
+  return L.join('\n') + anContext();
 }
 function renderChat() {
   $('msgs').innerHTML = (chat.length ? chat.map(m => `<div class="msg ${m.role === 'user' ? 'u' : 'a'}">${m.role === 'user' ? esc(m.content).replace(/\n/g, '<br>') : md(m.content)}</div>`).join('')
@@ -1201,6 +1259,7 @@ const SUGG = ['Analisa o meu portefólio', 'Qual é o meu maior risco agora?', '
 async function aiSend(text) {
   text = (text || '').trim(); if (!text || aiBusy) return;
   if (!news.market.length) { try { await Promise.race([loadNews(), new Promise(r => setTimeout(r, 6000))]); } catch (e) {} }
+  try { await Promise.race([anLoadAll(), new Promise(r => setTimeout(r, 6000))]); } catch (e) {}
   chat.push({ role: 'user', content: text }); aiBusy = true; $('aiSend').disabled = true; $('aiIn').value = ''; renderChat();
   try {
     const ctrl = new AbortController(), to = setTimeout(() => ctrl.abort(), 150000);
@@ -1955,7 +2014,327 @@ function renderLiqPanel(it, sym) {
 $('tLiq').addEventListener('click', e => { const b = e.target.closest('[data-lw]'); if (!b) return; ui.liqWin = b.dataset.lw; saveUi(); liq.key = ''; liqEnsure(); });
 
 /* ── navegação / eventos ─────────────────────────────────────────────────── */
-const TABS = ['portfolio', 'trade', 'news', 'whatif', 'ai'];
+/* ── Risco dinâmico (item 3): beta/volatilidade vs BTC e funding ─────────── */
+const rk = { at: 0, sig: '', busy: false, beta: {}, sigma: {}, corr: {}, fund: {} };
+const rkBeta = f => rk.beta['f:' + f.symbol];
+async function rkLoad(force) {
+  if (!M || !M.fut.length || rk.busy) return;
+  const syms = [...new Set(M.fut.map(f => f.symbol))], sig = syms.join(',');
+  if (!force && rk.sig === sig && Date.now() - rk.at < 30 * 60000) return;
+  rk.busy = true;
+  try {
+    const get = s => call(`get-candles?source=bybit&symbol=${encodeURIComponent(s)}&interval=D&limit=120`, { timeout: 20000 }).then(d => d.candles || []).catch(() => null);
+    const [btc, ...cs] = await Promise.all([get('BTCUSDT'), ...syms.map(get)]);
+    syms.forEach((s, i) => { if (cs[i] && btc) { const r = AMP.betaSigma(cs[i], btc); rk.beta['f:' + s] = r.beta; rk.sigma[s] = r.sigmaD; rk.corr[s] = r.corr; } });
+    try { const fd = await call('am-data', { method: 'POST', headers: { ...HDR, 'content-type': 'application/json' }, body: JSON.stringify({ action: 'funding', symbols: syms }), timeout: 20000 }); rk.fund = fd.funding || {}; } catch (e) {}
+    rk.at = Date.now(); rk.sig = sig;
+  } finally { rk.busy = false; }
+  renderPortfolio(); if (!$('v-whatif').hidden) renderWhatIf();
+}
+// impacto estimado (USD) nas posições de futuros de um choque do BTC (%), via beta
+function rkShockUsd(shock) {
+  let d = 0, ok = 0;
+  M.fut.forEach(f => { const b = rkBeta(f); if (b == null) return; ok++; d += f.notional * (b * shock / 100) * (f.long ? 1 : -1); });
+  return ok ? d : null;
+}
+function rkTiles() {
+  if (!M.fut.length || !M.b) return '';
+  const tile = (k, v, nt, c) => `<div class="tile"><div class="lbl">${k}</div><div class="v num ${c || ''}">${v}</div><div class="n">${nt}</div></div>`;
+  let out = '';
+  const fc = AMP.fundingCarry(M.fut.map(f => ({ symbol: f.symbol, notional: f.notional, long: f.long })), rk.fund);
+  if (fc.per.length) {
+    const m = fc.total * 30 / M.b.equityUsd * 100;
+    out += tile('Funding / dia', (fc.total >= 0 ? '+' : '−') + money(Math.abs(fc.total), 'USD', 2), `${pct(m, 1)} do equity/mês · ${fc.total >= 0 ? 'recebes' : 'pagas'}`, fc.total < 0 && m < -3 ? 'neg' : fc.total < 0 && m < -1 ? 'amber' : '');
+  }
+  const sh = rkShockUsd(-10);
+  if (sh != null && M.b.equityUsd > 0) out += tile('BTC −10%', pct(sh / M.b.equityUsd * 100, 1), `do equity, por beta (${smoney(sh, 'USD', 0)})`, sh / M.b.equityUsd < -0.15 ? 'neg' : sh / M.b.equityUsd < -0.07 ? 'amber' : '');
+  let w = null;
+  M.fut.forEach(f => { const m = AMP.btcMoveToLiquidate(f, rkBeta(f)); if (m != null && (w == null || Math.abs(m) < Math.abs(w.m))) w = { m, s: f.symbol }; });
+  if (w) out += tile('BTC liquida', pct(w.m, 0), `${esc(w.s)} (por beta)`, Math.abs(w.m) < 10 ? 'neg' : Math.abs(w.m) < 20 ? 'amber' : '');
+  return out;
+}
+
+/* ── Análise (itens 1, 2, 4, 5) ───────────────────────────────────────── */
+const an = { seg: store.get('an-seg', 'perf'), range: store.get('an-range', 'all'), jr: store.get('an-jr', 90), snaps: [], flows: [], trades: [], theses: [], brief: null, divs: null,
+  etf: null, bench: null, at: {}, err: null, msg: '', busy: false, openTrade: null, chart: null, chartEl: null };
+const AN_RANGES = { '1m': 30, '3m': 90, '1y': 365, all: 0 };
+const amPost = (name, body, timeout = 30000) => call(name, { method: 'POST', headers: { ...HDR, 'content-type': 'application/json' }, body: JSON.stringify(body), timeout });
+const anCur = () => base === 'USD' ? 'USD' : 'EUR';
+const anFresh = (k, ms) => Date.now() - (an.at[k] || 0) < ms;
+
+async function anLoadPerf(force) {
+  if (!force && anFresh('perf', 60000)) return;
+  const d = await amPost('am-data', { action: 'list', days: 730 });
+  an.snaps = d.snapshots || []; an.flows = d.flows || []; an.at.perf = Date.now();
+}
+async function anLoadTrades(force) {
+  if (!force && anFresh('trades', 60000)) return;
+  const [t, h] = await Promise.all([amPost('am-journal', { action: 'list', limit: 2000 }), amPost('am-journal', { action: 'thesis_list' })]);
+  an.trades = t.trades || []; an.theses = h.theses || []; an.at.trades = Date.now();
+}
+async function anLoadBench(force) {
+  if (!force && an.bench && Date.now() - an.bench.at < 6 * 3600000) return;
+  const [btc, wld] = await Promise.all([
+    call('get-candles?source=bybit&symbol=BTCUSDT&interval=D&limit=1000', { timeout: 20000 }).then(d => d.candles || []).catch(() => []),
+    call('get-candles?source=yahoo&symbol=IWDA.AS&interval=1d&range=5y', { timeout: 20000 }).then(d => d.candles || []).catch(() => []),
+  ]);
+  an.bench = { at: Date.now(), btc, wld };
+}
+async function anLoadBrief() { try { an.brief = (await amPost('am-brief', { action: 'latest' }, 15000)).brief; } catch (e) {} renderBrief(); }
+async function anLoadIncome() {
+  if (an.divs && anFresh('inc', 3600000)) return;
+  try { an.divs = (await amPost('am-data', { action: 'income' }, 60000)).divs || []; an.at.inc = Date.now(); } catch (e) { an.divs = an.divs || []; }
+}
+const yEtfSym = h => yahooSym(h.id.slice(2), (st.instr[h.id.slice(2)] || {}).shortName);
+async function anLoadEtf() {
+  if (!M) return;
+  const etfs = M.holdings.filter(h => h.kind === 't212' && h.cat === 'ETFs');
+  const key = etfs.map(yEtfSym).sort().join(',');
+  if (!key) { an.etf = { key, map: {} }; return; }
+  if (an.etf && an.etf.key === key && anFresh('etf', 6 * 3600000)) return;
+  try { const d = await call('get-etf-holdings?symbols=' + encodeURIComponent(key), { timeout: 40000 }); an.etf = { key, map: d.etfs || {} }; an.at.etf = Date.now(); }
+  catch (e) { an.etf = { key, map: {}, err: e.message }; }
+}
+async function anOpen(force) {
+  an.busy = true; an.err = null; renderAn();
+  try {
+    const jobs = [];
+    if (an.seg === 'perf') jobs.push(anLoadPerf(force), anLoadBench(force));
+    else if (an.seg === 'jr') jobs.push(anLoadTrades(force));
+    else jobs.push(anLoadIncome(), anLoadEtf(), rkLoad());
+    await Promise.all(jobs);
+  } catch (e) { an.err = e.message; }
+  an.busy = false; renderAn();
+}
+// carrega tudo o que o assistente IA usa (sem bloquear mais de alguns segundos)
+async function anLoadAll() { await Promise.allSettled([anLoadPerf(), anLoadTrades(), anLoadBench(), anLoadIncome()]); }
+
+function anPerf() {
+  const usd = base === 'USD', cutD = AN_RANGES[an.range], cut = cutD ? Date.now() - cutD * 864e5 : 0;
+  let S = an.snaps.map(s => ({ ts: Date.parse(s.ts), v: +(usd ? s.total_usd : s.total_eur) }));
+  const F = an.flows.map(f => ({ ts: Date.parse(f.ts), amt: +(usd ? f.usd : f.eur) }));
+  if (cut) { const i = S.findIndex(s => s.ts >= cut); S = i < 0 ? S.slice(-1) : S.slice(Math.max(0, i - 1)); }
+  const r = AMP.twr(S, F.filter(f => !S.length || f.ts > S[0].ts));
+  return { S, r, dd: AMP.drawdown(r.series), vol: AMP.annualVol(r.rets, r.series), cur: usd ? 'USD' : 'EUR' };
+}
+function anBenchRet(cs, times) { const s = AMP.rebase(cs, times).filter(x => x.idx != null); return s.length > 1 ? s[s.length - 1].idx / 100 - 1 : null; }
+
+function ensureAnChart() {
+  const el = $('anChart'); if (!el || !window.LightweightCharts) return null;
+  if (an.chart && an.chartEl === el) return an.chart;
+  if (an.chart) { try { an.chart.remove(); } catch (e) {} an.chart = null; }
+  const L = LightweightCharts;
+  an.chart = L.createChart(el, {
+    autoSize: true, handleScroll: false, handleScale: false,
+    layout: { background: { type: L.ColorType.Solid, color: 'transparent' }, textColor: cv('--mut'), fontSize: 11 },
+    grid: { vertLines: { visible: false }, horzLines: { color: cv('--line') } },
+    rightPriceScale: { borderVisible: false, minimumWidth: 56 }, timeScale: { borderVisible: false, fixLeftEdge: true, fixRightEdge: true },
+    localization: { locale: 'pt-PT' }, crosshair: { mode: L.CrosshairMode.Magnet, vertLine: { labelVisible: false } },
+  });
+  an.chartEl = el; return an.chart;
+}
+function paintAnChart(P) {
+  const c = ensureAnChart(); if (!c) return;
+  const tm = a => { const seen = new Set(); return a.filter(p => { const t = Math.floor(p.ts / 1000); if (seen.has(t)) return false; seen.add(t); return true; }).map(p => ({ time: Math.floor(p.ts / 1000), value: p.idx })); };
+  const add = (data, color, w) => { const s = c.addLineSeries({ color, lineWidth: w, priceLineVisible: false, lastValueVisible: true, priceFormat: { type: 'custom', formatter: v => fmt(v, 1), minMove: 0.01 } }); s.setData(data); };
+  const times = P.r.series.map(p => p.ts);
+  if (an.bench) {
+    const btc = AMP.rebase(an.bench.btc, times).filter(x => x.idx != null), wld = AMP.rebase(an.bench.wld, times).filter(x => x.idx != null);
+    if (wld.length > 1) add(tm(wld), '#5b8cff', 1.5);
+    if (btc.length > 1) add(tm(btc), '#f7931a', 1.5);
+  }
+  add(tm(P.r.series), cv('--green') || '#2ecc8f', 2.5);
+  c.timeScale().fitContent();
+}
+
+const anTile = (k, v, nt, c) => `<div class="tile"><div class="lbl">${k}</div><div class="v num ${c || ''}">${v}</div><div class="n">${nt}</div></div>`;
+function renderAnPerf() {
+  const P = anPerf(), n = an.snaps.length, cur = P.cur;
+  const first = an.snaps[0] ? new Date(an.snaps[0].ts).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' }) : null;
+  const seg = `<div class="seg" id="anRange">${Object.keys(AN_RANGES).map(k => `<button data-an="range" data-v="${k}" class="${an.range === k ? 'on' : ''}">${k === 'all' ? 'Tudo' : k.toUpperCase()}</button>`).join('')}</div>`;
+  let body = '';
+  if (n < 2) {
+    body = `<div class="empty">A série real começa agora: há ${n} snapshot${n === 1 ? '' : 's'} (o servidor grava um de 4 em 4 horas). Carrega em <b>Registar agora</b> para gravar o primeiro. Sem passado reconstruído, de propósito: um histórico inventado seria pior do que nenhum.</div>`;
+  } else {
+    const r = P.r, tot = r.total, times = r.series.map(p => p.ts);
+    const bB = an.bench ? anBenchRet(an.bench.btc, times) : null, bW = an.bench ? anBenchRet(an.bench.wld, times) : null;
+    const vs = (b, nm) => b == null ? '' : `<span class="num ${cls(tot - b)}">${pct((tot - b) * 100, 1)}</span> <span class="mut">vs ${nm}</span>`;
+    body = `<div class="tiles">
+      ${anTile('Retorno real', pct(tot * 100, 2), 'sem contar depósitos/levantamentos', cls(tot))}
+      ${anTile('Ganho líquido', smoney(r.gain, cur, 0), `fluxos de capital: ${smoney(r.flowsTotal, cur, 0)}`, cls(r.gain))}
+      ${anTile('Drawdown máx.', pct(P.dd.max * 100, 1), `atual ${pct(P.dd.current * 100, 1)}`, P.dd.max < -0.25 ? 'neg' : P.dd.max < -0.1 ? 'amber' : '')}
+      ${P.vol != null ? anTile('Volatilidade', fmt(P.vol * 100, 0) + '%', 'anualizada') : ''}
+      ${bB != null ? anTile('BTC (mesmo período)', pct(bB * 100, 1), vs(bB, 'tu'), cls(bB)) : ''}
+      ${bW != null ? anTile('MSCI World (IWDA)', pct(bW * 100, 1), vs(bW, 'tu'), cls(bW)) : ''}
+    </div>
+    <div class="cwrap" style="margin-top:14px;height:220px"><div id="anChart" style="height:220px"></div></div>
+    <div class="pflegend" style="position:static;margin-top:6px;font-size:12px"><span style="color:var(--green)">━ Tu</span> <span style="color:#f7931a">━ BTC</span> <span style="color:#5b8cff">━ MSCI World</span> <span class="mut">(base 100 · BTC em USD, sem câmbio)</span></div>
+    ${bB != null && bW != null && tot < Math.max(bB, bW) ? `<div class="warnbox">Pergunta incómoda: no mesmo período, ${bB > bW ? 'só deteres BTC' : 'um ETF de bolsa global'} teria rendido mais (${pct(Math.max(bB, bW) * 100, 1)} vs ${pct(tot * 100, 1)}). O que é que a tua atividade acrescentou?</div>` : ''}`;
+  }
+  const flowRows = [...an.flows].reverse().slice(0, 12).map(f => `<div class="arow"><div>${new Date(f.ts).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: '2-digit' })} <span class="chip">${esc(f.source)}</span>${f.note ? ` <span class="mut">${esc(f.note)}</span>` : ''}</div>
+    <div class="num ${cls(f.eur)}" style="text-align:right">${smoney(+(base === 'USD' ? f.usd : f.eur), cur, 0)}</div><div style="text-align:right">${f.auto ? '' : `<button class="x" data-an="flowdel" data-id="${esc(f.id)}" aria-label="Apagar">✕</button>`}</div></div>`).join('');
+  const warn = !an.flows.length && n >= 2 ? `<div class="warnbox">Sem fluxos de capital registados: qualquer depósito conta como lucro e qualquer levantamento como perda. Importa os automáticos ou adiciona-os à mão.</div>` : '';
+  return `<div class="card"><h2>Desempenho real ${seg}</h2>${an.msg ? `<div class="mut" style="font-size:12px;margin-bottom:8px">${esc(an.msg)}</div>` : ''}${body}
+    <div class="foot">${first ? `Série desde ${first} · ${n} snapshots. ` : ''}Retorno por Modified Dietz encadeado (fluxos ponderados pelo tempo). O valor inclui Bybit (equity), Trading 212 (valor oficial) e PPR (valor introduzido).</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="pill" data-an="snap">Registar agora</button><button class="pill" data-an="flowsync">Importar depósitos/levantamentos</button></div></div>
+  <div class="card"><h2>Fluxos de capital</h2>${warn}${flowRows || '<div class="empty">Nenhum fluxo.</div>'}
+    <div class="flowform"><input id="flAmt" class="px num" inputmode="decimal" placeholder="€ (− se levantas)"><input id="flDate" type="date" class="px" value="${new Date().toISOString().slice(0, 10)}"><input id="flNote" class="px" maxlength="60" placeholder="nota (ex.: cartão Bybit)"><button class="pill" data-an="flowadd">Adicionar</button></div>
+    <div class="foot">Compras com cartão/P2P e transferências que a Bybit não lista como depósito têm de ser adicionadas aqui, senão distorcem o retorno.</div></div>`;
+}
+
+const TAGS = ['tese', 'plano', 'fomo', 'vingança', 'stop movido', 'tamanho excessivo', 'sem stop', 'saída cedo', 'saída tarde', 'sorte'];
+function anTrades() {
+  const cut = an.jr ? Date.now() - an.jr * 864e5 : 0;
+  return an.trades.map(t => ({ id: t.id, symbol: t.symbol, side: t.side, pnl: +t.pnl, fees: +t.fees, lev: +t.lev || null, opened: t.opened_at ? Date.parse(t.opened_at) : null, closed: Date.parse(t.closed_at), tag: t.tag, note: t.note, entry: +t.entry, exit: +t.exit, qty: +t.qty }))
+    .filter(t => t.closed >= cut);
+}
+const arow = (cells, head) => `<div class="arow${head ? ' head' : ''}">${cells.map((c, i) => `<div${i ? ' style="text-align:right"' : ''}>${c}</div>`).join('')}</div>`;
+function gtable(title, rows, label) {
+  if (!rows.length) return '';
+  return `<div class="gt"><div class="lbl" style="margin:12px 0 4px">${title}</div>${arow([label || 'Grupo', 'Nº', 'Win', 'PnL'], true)}${rows.slice(0, 8).map(r => arow([esc(String(r.key)), r.n, fmt(r.winRate * 100, 0) + '%', `<span class="${cls(r.total)}">${smoney(r.total, 'USD', 0)}</span>`])).join('')}</div>`;
+}
+function renderAnJr() {
+  const T = anTrades(), S = AMP.tradeStats(T);
+  const seg = `<div class="seg">${[[30, '30d'], [90, '90d'], [365, '1a'], [0, 'Tudo']].map(([v, l]) => `<button data-an="jr" data-v="${v}" class="${an.jr === v ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+  let body;
+  if (!S.n) body = `<div class="empty">Sem operações no período. Importa o histórico da Bybit (PnL fechado de perpétuos lineares).</div>`;
+  else {
+    const tilt = AMP.tiltCheck(T), lev = AMP.groupStats(T, t => t.lev == null ? null : t.lev <= 3 ? '≤3×' : t.lev <= 6 ? '3–6×' : t.lev <= 10 ? '6–10×' : '>10×');
+    const hr = AMP.groupStats(T, t => t.opened == null ? null : ['00–06h', '06–12h', '12–18h', '18–24h'][Math.floor(new Date(t.opened).getHours() / 6)]);
+    const wd = AMP.groupStats(T, t => t.opened == null ? null : ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][new Date(t.opened).getDay()]);
+    body = `<div class="tiles">
+      ${anTile('Operações', S.n, `${S.wins} ganhas · ${S.losses} perdidas`)}
+      ${anTile('Win rate', fmt(S.winRate * 100, 0) + '%', `payoff ${S.payoff != null ? fmt(S.payoff, 2) : '—'}`)}
+      ${anTile('Expectância', smoney(S.expectancy, 'USD', 2), 'por operação (líquida de comissões)', cls(S.expectancy))}
+      ${anTile('Profit factor', S.profitFactor != null ? fmt(S.profitFactor, 2) : '—', S.profitFactor != null && S.profitFactor < 1 ? 'a perder dinheiro' : 'lucro bruto / perda bruta', S.profitFactor != null && S.profitFactor < 1 ? 'neg' : '')}
+      ${anTile('PnL total', smoney(S.total, 'USD', 0), `comissões ${money(S.fees, 'USD', 0)}${S.feesPctOfGross != null ? ' · ' + fmt(S.feesPctOfGross * 100, 0) + '% do lucro bruto' : ''}`, cls(S.total))}
+      ${anTile('Tempo médio', S.avgHoldMin != null ? (S.avgHoldMin < 120 ? fmt(S.avgHoldMin, 0) + ' min' : fmt(S.avgHoldMin / 60, 1) + ' h') : '—', `pior sequência: ${S.maxLosingStreak} perdas`)}
+    </div>
+    ${tilt.nAfter >= 3 && tilt.avgAfter != null && tilt.avgRest != null && tilt.avgAfter < tilt.avgRest ? `<div class="warnbox">Padrão de revanche: as ${tilt.nAfter} operações abertas até 30 min depois de uma perda renderam em média ${smoney(tilt.avgAfter, 'USD', 1)}, contra ${smoney(tilt.avgRest, 'USD', 1)} nas restantes.</div>` : ''}
+    ${gtable('Por ativo', AMP.groupStats(T, t => t.symbol), 'Ativo')}${gtable('Por lado', AMP.groupStats(T, t => t.side === 'long' ? 'Long' : 'Short'), 'Lado')}
+    ${gtable('Por alavancagem', lev, 'Alav.')}${gtable('Por hora de abertura (local)', hr, 'Hora')}${gtable('Por dia da semana', wd, 'Dia')}
+    ${gtable('Por etiqueta', AMP.groupStats(T, t => t.tag || null), 'Etiqueta')}`;
+  }
+  const rows = [...T].sort((a, b) => b.closed - a.closed).slice(0, 25).map(t => `<div class="trade" data-an="trade" data-id="${esc(t.id)}"><div class="arow"><div><b>${esc(t.symbol)}</b> <span class="side ${t.side}" style="margin:0">${t.side === 'long' ? 'LONG' : 'SHORT'}${t.lev ? ' ' + fmt(t.lev, 0) + '×' : ''}</span>${t.tag ? ` <span class="chip">${esc(t.tag)}</span>` : ''}</div>
+    <div class="mut" style="text-align:right;font-size:12px">${new Date(t.closed).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' })}</div><div class="num ${cls(t.pnl)}" style="text-align:right">${smoney(t.pnl, 'USD', 2)}</div></div>
+    ${an.openTrade === t.id ? `<div class="tagrow">${TAGS.map(g => `<button class="pill${t.tag === g ? ' sel' : ''}" data-an="tag" data-id="${esc(t.id)}" data-v="${esc(g)}">${esc(g)}</button>`).join('')}${t.tag ? `<button class="pill" data-an="tag" data-id="${esc(t.id)}" data-v="">limpar</button>` : ''}</div>` : ''}</div>`).join('');
+  const open = an.theses.filter(t => t.status === 'open'), closed = an.theses.filter(t => t.status !== 'open').slice(0, 5);
+  const positions = M ? M.fut.map(f => `<option value="${esc(f.symbol)}">${esc(f.symbol)} ${f.long ? 'LONG' : 'SHORT'}</option>`).join('') : '';
+  return `<div class="card"><h2>Diário de operações ${seg}</h2>${an.msg ? `<div class="mut" style="font-size:12px;margin-bottom:8px">${esc(an.msg)}</div>` : ''}${body}
+    <div class="foot">Fonte: PnL fechado da Bybit (perpétuos lineares), tal como reportado. O funding pago não está incluído. Valores em USD.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="pill" data-an="jsync" data-v="3">Atualizar</button><button class="pill" data-an="jsync" data-v="365">Importar 1 ano</button></div></div>
+  ${rows ? `<div class="card"><h2>Últimas operações <span class="mut" style="font-size:12px;text-transform:none;letter-spacing:0">toca para etiquetar</span></h2>${rows}</div>` : ''}
+  <div class="card"><h2>Teses</h2>
+    ${open.map(t => `<div class="thesis"><div><b>${esc(t.symbol)}</b> <span class="side ${t.side}" style="margin:0">${t.side === 'long' ? 'LONG' : 'SHORT'}</span> <span class="mut">invalida ${t.side === 'long' ? '<' : '>'} ${price(+t.invalid_px)}</span></div><div style="font-size:13px;margin:2px 0">${esc(t.thesis)}</div><button class="pill" data-an="thclose" data-id="${t.id}">Fechar tese</button></div>`).join('') || '<div class="empty">Nenhuma tese aberta. Escreve o porquê antes de entrares: o alerta de invalidação é criado sozinho.</div>'}
+    ${closed.length ? `<div class="foot">Recentes: ${closed.map(t => `${esc(t.symbol)} (${t.status === 'invalidated' ? 'invalidada' : 'fechada'})`).join(' · ')}</div>` : ''}
+    <div class="flowform"><input id="thSym" class="px" list="thList" placeholder="Símbolo" maxlength="24"><datalist id="thList">${positions}</datalist>
+      <select id="thSide" class="px"><option value="long">Long</option><option value="short">Short</option></select>
+      <input id="thTxt" class="px" maxlength="300" placeholder="Porquê (1 linha)"><input id="thPx" class="px num" inputmode="decimal" placeholder="Preço que invalida"><button class="pill" data-an="thadd">Guardar</button></div></div>`;
+}
+
+function renderAnExp() {
+  if (!M) M = buildModel();
+  const fx = AMP.fxExposure(M.holdings), bar = (l, p, c) => `<div class="xbar"><div class="xl">${esc(l)}</div><div class="xb"><i style="width:${Math.min(100, p)}%;background:${c}"></i></div><div class="xv num">${fmt(p, 0)}%</div></div>`;
+  const etfs = M.holdings.filter(h => h.kind === 't212' && h.cat === 'ETFs'), stocks = M.holdings.filter(h => h.kind === 't212' && h.cat === 'Ações');
+  let lt = '';
+  if (!etfs.length) lt = `<div class="empty">Sem ETFs na Trading 212: nada a decompor.</div>`;
+  else if (!an.etf) lt = `<div class="empty">A obter as posições dos ETFs…</div>`;
+  else {
+    const ok = etfs.map(h => ({ h, d: an.etf.map[yEtfSym(h)] })).filter(x => x.d && x.d.holdings);
+    const miss = etfs.filter(h => !(an.etf.map[yEtfSym(h)] && an.etf.map[yEtfSym(h)].holdings));
+    if (!ok.length) lt = `<div class="empty">Look-through indisponível: o Yahoo não devolveu as posições (${esc(an.etf.err || (miss[0] && (an.etf.map[yEtfSym(miss[0])] || {}).error) || 'sem dados')}).</div>`;
+    else {
+      const rows = AMP.lookThrough(ok.map(x => ({ label: x.h.label, value: x.h.value, holdings: x.d.holdings })), stocks.map(h => ({ symbol: yahooSym(h.id.slice(2), (st.instr[h.id.slice(2)] || {}).shortName), name: h.name, value: h.value })), M.value).slice(0, 10);
+      lt = rows.map(r => `<div class="arow"><div>${esc(r.name)} ${r.overlap ? '<span class="chip">direto + ETF</span>' : ''}<div class="mut" style="font-size:11px">${r.direct > 0 ? 'direto ' + money(r.direct, base, 0) : ''}${r.direct > 0 && r.viaEtf > 0 ? ' · ' : ''}${r.viaEtf > 0 ? 'via ' + esc(r.from.join(', ')) + ' ' + money(r.viaEtf, base, 0) : ''}</div></div>
+        <div class="num ${r.pct >= 5 ? 'amber' : ''}" style="text-align:right">${fmt(r.pct, 1)}%</div><div class="num" style="text-align:right">${money(r.value, base, 0)}</div></div>`).join('')
+        + `<div class="foot">Só as ~10 maiores posições de cada ETF (${ok.map(x => `${esc(x.h.label)} ${fmt(x.d.coverage, 0)}%`).join(' · ')} do fundo). A exposição real é maior.${miss.length ? ' Sem dados: ' + miss.map(h => esc(h.label)).join(', ') + '.' : ''}</div>`;
+    }
+  }
+  const inc = an.divs ? AMP.income(an.divs) : null, tv = M.t ? M.t.value : 0;
+  const fc = rk.fund && M.fut.length ? AMP.fundingCarry(M.fut.map(f => ({ symbol: f.symbol, notional: f.notional, long: f.long })), rk.fund) : null;
+  return `<div class="card"><h2>Exposição cambial</h2>${fx.map(x => bar(x.ccy, x.pct, x.ccy === 'USD' ? 'var(--accent)' : 'var(--blue)')).join('') || '<div class="empty">Sem posições.</div>'}
+    <div class="foot">Cripto e futuros contam como USD. Base de apresentação: ${esc(base)}.</div></div>
+  <div class="card"><h2>Exposição efetiva por empresa</h2>${lt}</div>
+  <div class="card"><h2>Rendimento</h2><div class="tiles">
+    ${anTile('Dividendos 12m', inc ? money(inc.total12m, 'EUR', 2) : an.divs ? '—' : '…', inc && tv > 0 ? `${fmt(inc.total12m / conv(tv, base, 'EUR') * 100, 2)}% da T212` : 'Trading 212')}
+    ${fc && fc.per.length ? anTile('Funding / mês', (fc.total >= 0 ? '+' : '−') + money(Math.abs(fc.total * 30), 'USD', 0), fc.total >= 0 ? 'a receber (estimativa)' : 'a pagar (estimativa)', fc.total < 0 ? 'amber' : 'pos') : ''}</div>
+    ${inc && inc.by.length ? `<div class="foot">${inc.by.slice(0, 6).map(b => `${esc(b.ticker)} ${money(b.amt, 'EUR', 2)}`).join(' · ')}</div>` : ''}</div>`;
+}
+
+function renderAn() {
+  const el = $('anBody'); if (!el) return;
+  document.querySelectorAll('#anSeg button').forEach(b => b.classList.toggle('on', b.dataset.v === an.seg));
+  let h = an.err ? `<div class="warnbox">${esc(an.err)}</div>` : '';
+  if (an.busy && !(an.snaps.length || an.trades.length)) h += '<div class="empty">A carregar…</div>';
+  else h += an.seg === 'perf' ? renderAnPerf() : an.seg === 'jr' ? renderAnJr() : renderAnExp();
+  const active = document.activeElement && document.activeElement.id, vals = {};
+  ['flAmt', 'flDate', 'flNote', 'thSym', 'thSide', 'thTxt', 'thPx'].forEach(i => { const e = $(i); if (e) vals[i] = e.value; });
+  el.innerHTML = h;
+  Object.keys(vals).forEach(i => { const e = $(i); if (e && vals[i]) e.value = vals[i]; });
+  if (active && $(active)) $(active).focus();
+  if (an.seg === 'perf' && an.snaps.length > 1) paintAnChart(anPerf());
+}
+async function anAct(e) {
+  const b = e.target.closest('[data-an]'); if (!b) return;
+  const a = b.dataset.an, v = b.dataset.v, id = b.dataset.id;
+  try {
+    if (a === 'seg') { an.seg = v; store.set('an-seg', v); an.msg = ''; return anOpen(); }
+    if (a === 'range') { an.range = v; store.set('an-range', v); return renderAn(); }
+    if (a === 'jr') { an.jr = +v; store.set('an-jr', an.jr); return renderAn(); }
+    if (a === 'trade') { an.openTrade = an.openTrade === id ? null : id; return renderAn(); }
+    b.disabled = true;
+    if (a === 'snap') { const d = await amPost('am-data', { action: 'snapshot' }); an.msg = `Snapshot gravado: ${money(base === 'USD' ? d.total_usd : d.total_eur, anCur(), 0)}.`; await anLoadPerf(true); }
+    else if (a === 'flowsync') { an.msg = 'A importar… (pode demorar 1–2 min)'; renderAn(); const d = await amPost('am-data', { action: 'flows_sync', days: 730 }, 150000); an.msg = `Encontrados ${d.found}, novos ${d.inserted}.` + (d.unpriced.length ? ` Sem preço (adiciona à mão): ${d.unpriced.slice(0, 4).join(', ')}.` : '') + (d.notes.length ? ` Avisos: ${d.notes.slice(0, 2).join(' · ')}` : ''); await anLoadPerf(true); }
+    else if (a === 'flowadd') {
+      const amt = parseFloat(String($('flAmt').value).replace(',', '.')); if (!isFinite(amt) || !amt) throw new Error('Indica o valor em € (negativo para levantamento).');
+      await amPost('am-data', { action: 'flow_add', eur: amt, ts: $('flDate').value ? $('flDate').value + 'T12:00:00Z' : undefined, note: $('flNote').value }); $('flAmt').value = ''; $('flNote').value = ''; an.msg = 'Fluxo adicionado.'; await anLoadPerf(true);
+    }
+    else if (a === 'flowdel') { await amPost('am-data', { action: 'flow_del', id }); await anLoadPerf(true); }
+    else if (a === 'jsync') { an.msg = 'A importar da Bybit…'; renderAn(); const d = await amPost('am-journal', { action: 'sync', days: +v }, 150000); an.msg = `Encontradas ${d.found}, novas ${d.inserted}.` + (d.notes.length ? ` Avisos: ${d.notes[0]}` : ''); await anLoadTrades(true); }
+    else if (a === 'tag') { await amPost('am-journal', { action: 'tag', id, tag: v || null }); const t = an.trades.find(x => x.id === id); if (t) t.tag = v || null; }
+    else if (a === 'thadd') {
+      const px = parseFloat(String($('thPx').value).replace(',', '.'));
+      await amPost('am-journal', { action: 'thesis_add', symbol: $('thSym').value.trim().toUpperCase(), side: $('thSide').value, thesis: $('thTxt').value, invalid_px: px });
+      $('thTxt').value = ''; $('thPx').value = ''; $('thSym').value = ''; an.msg = 'Tese guardada; alerta de invalidação criado.'; await anLoadTrades(true); loadAlerts && loadAlerts();
+    }
+    else if (a === 'thclose') { await amPost('am-journal', { action: 'thesis_close', id: +id }); await anLoadTrades(true); }
+    else if (a === 'brief') { b.textContent = 'A gerar…'; const d = await amPost('am-brief', { action: 'run', force: true, push: false }, 120000); an.brief = d.brief || an.brief; renderBrief(); return; }
+    an.err = null;
+  } catch (er) { an.err = er.message; }
+  renderAn();
+}
+
+function renderBrief() {
+  const el = $('aiBrief'); if (!el) return;
+  const b = an.brief;
+  el.innerHTML = `<h2>Briefing <button class="pill" data-an="brief" style="padding:3px 10px;font-size:11px">${b ? 'Gerar agora' : 'Gerar'}</button></h2>`
+    + (b ? `<div class="briefbody">${esc(b.body).replace(/\n+/g, '<br>')}</div><div class="foot" style="margin-top:6px">${new Date(b.created_at).toLocaleString('pt-PT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })} · gerado de manhã pelo servidor</div>`
+      : '<div class="mut" style="font-size:13px">Ainda sem briefing. É gerado todas as manhãs e enviado por notificação (precisa do cron e da chave Anthropic no servidor).</div>');
+}
+
+// contexto adicional para o assistente (desempenho real, diário, teses, risco dinâmico)
+function anContext() {
+  const L = [];
+  if (an.snaps.length > 1) {
+    const P = anPerf(); L.push(`DESEMPENHO REAL (${an.snaps.length} snapshots): retorno ${pct(P.r.total * 100, 2)}, ganho líquido de fluxos ${smoney(P.r.gain, P.cur, 0)}, drawdown máx. ${pct(P.dd.max * 100, 1)} (atual ${pct(P.dd.current * 100, 1)}).`);
+    if (an.bench) { const tm = P.r.series.map(p => p.ts), b = anBenchRet(an.bench.btc, tm), w = anBenchRet(an.bench.wld, tm); L.push(`Mesmo período: BTC ${b != null ? pct(b * 100, 1) : 'n/d'}, MSCI World ${w != null ? pct(w * 100, 1) : 'n/d'}.`); }
+    if (!an.flows.length) L.push('ATENÇÃO: não há fluxos de capital registados, por isso o retorno pode estar distorcido por depósitos/levantamentos.');
+  }
+  const T = anTrades().filter(t => t.closed >= Date.now() - 90 * 864e5), S = AMP.tradeStats(T);
+  if (S.n) {
+    L.push(`DIÁRIO (90d, Bybit): ${S.n} operações, win rate ${fmt(S.winRate * 100, 0)}%, expectância ${smoney(S.expectancy, 'USD', 2)}/op, profit factor ${S.profitFactor != null ? fmt(S.profitFactor, 2) : 'n/d'}, comissões ${fmt((S.feesPctOfGross || 0) * 100, 0)}% do lucro bruto, pior sequência ${S.maxLosingStreak} perdas.`);
+    const tl = AMP.tiltCheck(T); if (tl.nAfter >= 3) L.push(`Operações abertas ≤30 min após uma perda: ${tl.nAfter}, PnL médio ${smoney(tl.avgAfter, 'USD', 1)} vs ${smoney(tl.avgRest, 'USD', 1)} nas restantes.`);
+  }
+  an.theses.filter(t => t.status === 'open').forEach(t => L.push(`TESE ${t.symbol} ${t.side}: "${t.thesis}" — invalida ${t.side === 'long' ? 'abaixo' : 'acima'} de ${t.invalid_px}.`));
+  if (M && M.fut.length) {
+    M.fut.forEach(f => { const b = rkBeta(f), sg = AMP.liqSigmas(f.liqDist, rk.sigma[f.symbol]), m = AMP.btcMoveToLiquidate(f, b);
+      if (b != null) L.push(`RISCO ${f.symbol}: beta ao BTC ${fmt(b, 2)}${sg != null ? `, liquidação a ${fmt(sg, 1)}σ diários` : ''}${m != null ? `, liquida com BTC ${pct(m, 0)}` : ''}.`); });
+    const fc = AMP.fundingCarry(M.fut.map(f => ({ symbol: f.symbol, notional: f.notional, long: f.long })), rk.fund); if (fc.per.length) L.push(`Funding estimado: ${fc.total >= 0 ? 'recebes' : 'pagas'} ${fmt(Math.abs(fc.total), 2)} USD/dia.`);
+  }
+  return L.length ? '\n' + L.join('\n') : '';
+}
+
+const TABS = ['portfolio', 'an', 'trade', 'news', 'whatif', 'ai'];
 function go(t) {
   if (!TABS.includes(t)) t = 'portfolio';
   TABS.forEach(x => { $('v-' + x).hidden = x !== t; });
@@ -1965,7 +2344,9 @@ function go(t) {
   if (t === 'portfolio') pfEnsure();
   if (t === 'news') loadNews();
   if (t === 'whatif') renderWhatIf();
-  if (t === 'ai') renderChat();
+  if (t === 'ai') { renderChat(); renderBrief(); anLoadBrief(); }
+  if (t === 'an') anOpen();
+  if (t === 'whatif') rkLoad();
   if (t !== 'ai') window.scrollTo({ top: 0 });
 }
 $('tabbar').onclick = e => { const b = e.target.closest('button'); if (b) go(b.dataset.t); };
@@ -1984,6 +2365,7 @@ $('wiRows').addEventListener('input', e => {
   if (e.target.dataset.r) setPct(e.target.dataset.r, +e.target.value, false);
   else if (e.target.dataset.px) { const v = parseFloat(String(e.target.value).replace(',', '.')), cur = +e.target.dataset.cur; if (isFinite(v) && cur > 0 && v >= 0) setPct(e.target.dataset.px, (v / cur - 1) * 100, true); }
 });
+$('v-an').addEventListener('click', anAct); $('aiBrief').addEventListener('click', anAct);
 $('aiSug').innerHTML = SUGG.map(s => `<button class="pill">${esc(s)}</button>`).join('');
 $('aiSug').onclick = e => { const b = e.target.closest('.pill'); if (b) aiSend(b.textContent); };
 $('aiSend').onclick = () => aiSend($('aiIn').value);

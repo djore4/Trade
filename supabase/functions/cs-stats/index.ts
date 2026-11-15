@@ -1,10 +1,11 @@
 // cs-stats — agrega o desempenho REAL das sugestões já pontuadas: expectância
 // líquida por escalão de score, por sensibilidade e por liquidez. Leitura p/ a app.
 import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { guard } from '../_shared/auth.ts';
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-am-secret',
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
 };
 const json = (b: unknown, s = 200) =>
@@ -25,6 +26,7 @@ function agg(rows: any[]) {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
+  { const denied = await guard(req, cors); if (denied) return denied; }
   try {
     const supa = createClient(
       Deno.env.get('SUPABASE_URL')!,

@@ -1,8 +1,9 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { guard } from '../_shared/auth.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-am-secret',
 };
 
 async function hmacSign(message: string, secret: string): Promise<string> {
@@ -60,6 +61,7 @@ Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
+  { const denied = await guard(req, corsHeaders); if (denied) return denied; }
 
   try {
     const apiKey = Deno.env.get('BYBIT_API_KEY') ?? '';

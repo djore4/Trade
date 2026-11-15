@@ -8,6 +8,7 @@
 // mexer muito". Cada alerta é gravado para validação futura (houve expansão?).
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3.6.7';
+import { guard } from '../_shared/auth.ts';
 
 type Kline = { closes: number[]; highs: number[]; lows: number[]; opens: number[]; vols: number[] };
 type LSR = { buy: number; sell: number };
@@ -83,7 +84,7 @@ function csDIDir(h: number[], l: number[], c: number[], p = 14): number | null {
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-am-secret',
   'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
 };
 const json = (b: unknown, s = 200) =>
@@ -186,6 +187,7 @@ function csTilt(funding: number | null, lsLongPct: number | null): { side: strin
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
+  { const denied = await guard(req, cors); if (denied) return denied; }
   try {
     const supa = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
     const body = await req.json().catch(() => ({}));
