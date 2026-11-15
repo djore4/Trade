@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import {
+import { guard } from '../_shared/auth.ts';
   Bars, Row, Config, Stats,
   defaultConfig, computeIndicators, generateSignal, regimeOf, backtest, round, TF_MAP,
 } from "./engine.ts";
@@ -34,7 +35,7 @@ import {
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-am-secret',
 };
 
 const BYBIT = 'https://api.bybit.com';
@@ -80,6 +81,7 @@ async function fetchBybit(symbol: string, tf: string, maxBars: number): Promise<
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  { const denied = await guard(req, corsHeaders); if (denied) return denied; }
 
   try {
     const url = new URL(req.url);

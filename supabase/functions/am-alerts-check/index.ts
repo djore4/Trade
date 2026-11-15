@@ -4,6 +4,7 @@
 // Disparo unico por defeito; com repeat=true re-arma quando a condicao deixa de se verificar.
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3.6.7';
+import { guard } from '../_shared/auth.ts';
 
 const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { 'Content-Type': 'application/json' } });
 const fmtNum = (v: number) => v >= 100 ? v.toFixed(2) : v >= 1 ? v.toFixed(3) : v.toFixed(5);
@@ -49,7 +50,8 @@ async function yahooPrice(sym: string): Promise<number | null> {
   } catch (_e) { return null; }
 }
 
-Deno.serve(async () => {
+Deno.serve(async (req: Request) => {
+  { const denied = await guard(req, {}); if (denied) return denied; }
   try {
     const supa = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
     const { data: alerts, error } = await supa.from('am_alerts').select('*').eq('active', true);

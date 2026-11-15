@@ -61,7 +61,7 @@ supabase functions deploy cs-confirm
 select cron.schedule('cs-bot', '*/15 * * * *', $$
   select net.http_post(
     url    := 'https://<PROJECT>.supabase.co/functions/v1/cs-bot',
-    headers:= jsonb_build_object('Content-Type','application/json','Authorization','Bearer <ANON_OR_SERVICE_KEY>'),
+    headers:= jsonb_build_object('Content-Type','application/json','Authorization','Bearer <ANON_OR_SERVICE_KEY>','x-am-secret','<AM_SECRET>'),
     body   := '{}'::jsonb
   );
 $$);

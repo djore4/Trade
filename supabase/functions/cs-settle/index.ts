@@ -2,10 +2,11 @@
 // TP1) a partir das velas de 15m da Bybit, líquido de custos. Idempotente.
 // Chamada pelo cron (pg_cron, 15 min) e/ou pelo browser. Usa a service role.
 import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { guard } from '../_shared/auth.ts';
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-am-secret',
   'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
 };
 const json = (b: unknown, s = 200) =>
@@ -56,6 +57,7 @@ function settle(row: any, bars: Bar[]) {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
+  { const denied = await guard(req, cors); if (denied) return denied; }
   try {
     const supa = createClient(
       Deno.env.get('SUPABASE_URL')!,

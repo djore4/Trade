@@ -3,10 +3,11 @@
 // permitidos. Se CS_BOT_SECRET estiver definida, POST exige-a (x-cs-secret ou
 // body.secret) — evita que quem tenha só a anon key mexa nos interruptores.
 import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { guard } from '../_shared/auth.ts';
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-cs-secret',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-cs-secret, x-am-secret',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
 };
 const json = (b: unknown, s = 200) =>
@@ -19,6 +20,7 @@ const TXT = new Set(['sensitivity']);
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
+  { const denied = await guard(req, cors); if (denied) return denied; }
   try {
     const supa = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 

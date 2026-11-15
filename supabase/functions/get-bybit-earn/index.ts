@@ -19,10 +19,11 @@
 // de cada bloco para diagnóstico imediato.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { bybitGet, type BybitKeys } from "../_shared/bybit.ts";
+import { guard } from '../_shared/auth.ts';
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-am-secret',
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
 };
 const json = (b: unknown, s = 200) =>
@@ -125,6 +126,7 @@ async function fundingBalance(k: BybitKeys) {
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
+  { const denied = await guard(req, cors); if (denied) return denied; }
   if (req.method !== 'GET') return json({ error: 'GET only' }, 405);
 
   const k = masterKeys();

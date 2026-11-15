@@ -2,10 +2,11 @@
 // Chamada do browser com a anon key; usa a service role para escrever na tabela
 // fechada public.cs_suggestions.
 import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { guard } from '../_shared/auth.ts';
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-am-secret',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 const json = (b: unknown, s = 200) =>
@@ -13,6 +14,7 @@ const json = (b: unknown, s = 200) =>
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
+  { const denied = await guard(req, cors); if (denied) return denied; }
   if (req.method !== 'POST') return json({ error: 'POST only' }, 405);
   try {
     const supa = createClient(

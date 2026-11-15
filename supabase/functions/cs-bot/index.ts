@@ -12,10 +12,11 @@ import {
   type Candidate, type Kline, type LSR,
 } from '../_shared/cs-engine.ts';
 import { bybitKeysFromEnv, bybitGet } from '../_shared/bybit.ts';
+import { guard } from '../_shared/auth.ts';
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-am-secret',
   'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
 };
 const json = (b: unknown, s = 200) =>
@@ -63,6 +64,7 @@ async function pool<T>(items: T[], fn: (t: T) => Promise<void>, n: number): Prom
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
+  { const denied = await guard(req, cors); if (denied) return denied; }
   try {
     const supa = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
     const { data: st } = await supa.from('cs_bot_state').select('*').eq('id', 1).single();

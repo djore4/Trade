@@ -9,10 +9,11 @@
 // Usa a service role (tabelas am_* fechadas). Não devolve segredos (só a chave pública VAPID).
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3.6.7';
+import { guard } from '../_shared/auth.ts';
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-am-secret',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 const json = (b: unknown, s = 200) =>
@@ -23,6 +24,7 @@ const SYMBOL_RE = /^[A-Z0-9.=^\-]{1,24}$/;
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
+  { const denied = await guard(req, cors); if (denied) return denied; }
   if (req.method !== 'POST') return json({ error: 'POST only' }, 405);
   try {
     const supa = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
