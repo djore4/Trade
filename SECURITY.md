@@ -100,3 +100,11 @@ Funções só existentes em produção e nunca auditadas (não são do Asset Man
 
 **Como fechar mais uma função** (zero avaria): o front-end já envia o código a todas; basta redeployar a função com `guard()` e
 `'x-client-info'` no CORS, e confirmar com `curl -H "x-region: eu-west-3"` (sem código/errado = 401, com código = 200).
+
+---
+
+# Início da análise (16/11/2026)
+`am_settings.analysis_start` (hoje 10/12/2024, criação da posição APTUSDT aberta) define o primeiro instante que a Análise conta.
+`am-data` (list, flows_sync, income) e `am-journal` (sync, list) cortam aí, também nos crons; `settings_set` apaga o anterior
+(fluxos, operações, snapshots; continua na Bybit/T212 e volta com "Importar" se a data recuar). Alterável na app (Análise → "Alterar início").
+Nota: `createdTime` da posição (Bybit) é a criação da posição atual, que já foi aumentada/reduzida muitas vezes desde então.

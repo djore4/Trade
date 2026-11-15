@@ -6,10 +6,11 @@
 //   flow_add { eur, ts?, note? } | flow_del { id }   fluxos manuais (compras com cartão/P2P, transferências, etc.)
 //   income                   -> dividendos T212 (cache 12h)
 //   funding { symbols[] }    -> funding atual e intervalo por contrato
+//   settings_get | settings_set { start }   data de início da análise (nada anterior é importado/mostrado; set apaga o anterior)
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { guard } from '../_shared/auth.ts';
 import { bybitGet } from '../_shared/bybit.ts';
-import { bybitMainKeys, bybitEquity, eurPerUsd, t212Account, pprValueEur, num, sleep } from '../_shared/am-sources.ts';
+import { bybitMainKeys, bybitEquity, eurPerUsd, t212Account, pprValueEur, getAnalysisStart, num, sleep } from '../_shared/am-sources.ts';
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -89,13 +90,14 @@ Deno.serve(async (req) => {
     /* ── list ── */
     if (action === 'list') {
       const days = Math.min(1500, Math.max(1, Number(body?.days) || 400));
-      const from = new Date(Date.now() - days * DAY).toISOString();
+      const start = await getAnalysisStart(supa);
+      const from = new Date(Math.max(Date.now() - days * DAY, start)).toISOString();
       const [s, f] = await Promise.all([
         supa.from('am_snapshots').select('ts,total_eur,total_usd,bybit_usd,t212_val,t212_ccy,ppr_eur,eurusd').gte('ts', from).order('ts').limit(6000),
         supa.from('am_flows').select('id,ts,source,eur,usd,coin,note,auto').gte('ts', from).order('ts').limit(3000),
       ]);
       if (s.error || f.error) return json({ error: (s.error || f.error)!.message }, 400);
-      return json({ snapshots: s.data, flows: f.data });
+      return json({ snapshots: s.data, flows: f.data, start: start ? new Date(start).toISOString() : null });
     }
 
     /* ── flows_sync ── */
@@ -103,11 +105,14 @@ Deno.serve(async (req) => {
       const days = Math.min(730, Math.max(1, Number(body?.days) || 45));
       const rows: any[] = [], unpriced: string[] = [], notes: string[] = [];
       const epuNow = await eurPerUsd();
+      const cutoff = await getAnalysisStart(supa);
       const keys = bybitMainKeys();
       if (keys) {
         const now = Date.now();
         for (let w = 0; w * 30 < days; w++) {
-          const end = now - w * 30 * DAY, start = end - 30 * DAY;
+          const end = now - w * 30 * DAY;
+          if (end <= cutoff) break;
+          const start = Math.max(end - 30 * DAY, cutoff);
           for (const kind of ['dep', 'wd'] as const) {
             let cursor = '';
             for (let page = 0; page < 10; page++) {
@@ -120,7 +125,7 @@ Deno.serve(async (req) => {
                 if (kind === 'dep' && String(x.status) !== '3') continue;
                 if (kind === 'wd' && String(x.status).toLowerCase() !== 'success') continue;
                 const ts = num(kind === 'dep' ? x.successAt : x.createTime);
-                if (!ts) continue;
+                if (!ts || ts < cutoff) continue;
                 const amt = kind === 'dep' ? num(x.amount) : -(num(x.amount) + num(x.withdrawFee));
                 const usd = await usdValue(coin, amt, ts);
                 const id = `bybit:${kind}:${x.txID || x.withdrawId || ts}:${coin}`;
@@ -141,7 +146,7 @@ Deno.serve(async (req) => {
           for (const x of items) {
             const t = String(x.type || '').toUpperCase();
             if (t !== 'DEPOSIT' && t !== 'WITHDRAW' && t !== 'WITHDRAWAL') continue;
-            const ts = Date.parse(x.dateTime); if (!ts) continue;
+            const ts = Date.parse(x.dateTime); if (!ts || ts < cutoff) continue;
             const a = num(x.amount), amt = t === 'DEPOSIT' ? Math.abs(a) : -Math.abs(a);
             const ccy = String(x.currency || 'EUR');
             const e = await eurPerUsd(isoDay(ts)) ?? epuNow;
@@ -182,17 +187,39 @@ Deno.serve(async (req) => {
     /* ── rendimento (dividendos T212) ── */
     if (action === 'income') {
       const { data: c } = await supa.from('pf_cache').select('v,at').eq('k', 't212:divs').maybeSingle();
-      if (c && Date.now() - Date.parse(c.at) < 12 * 3600_000 && !body?.force) return json({ divs: c.v, cached: true });
+      const cutI = await getAnalysisStart(supa);
+      const since = (a: any[]) => (a || []).filter((d: any) => d.ts >= cutI);
+      if (c && Date.now() - Date.parse(c.at) < 12 * 3600_000 && !body?.force) return json({ divs: since(c.v), cached: true });
       if (!Deno.env.get('T212_API_KEY')) return json({ divs: [], note: 'T212 não configurada' });
       try {
         const items = await t212Pages('/equity/history/dividends?limit=50', 4);
         const divs = items.map((x: any) => ({ ts: Date.parse(x.paidOn), amt: num(x.amountInEuro ?? x.amount), ticker: String(x.ticker || '?').split('_')[0] })).filter((d: any) => d.ts);
         await supa.from('pf_cache').upsert({ k: 't212:divs', v: divs, at: new Date().toISOString() });
-        return json({ divs, cached: false });
+        return json({ divs: since(divs), cached: false });
       } catch (e) {
-        if (c) return json({ divs: c.v, cached: true, stale: true, error: (e as Error).message });
+        if (c) return json({ divs: since(c.v), cached: true, stale: true, error: (e as Error).message });
         return json({ error: (e as Error).message }, 502);
       }
+    }
+
+    /* ── início da análise ── */
+    if (action === 'settings_get') {
+      const st = await getAnalysisStart(supa);
+      return json({ start: st ? new Date(st).toISOString() : null });
+    }
+    if (action === 'settings_set') {
+      const t = body?.start ? Date.parse(String(body.start)) : NaN;
+      if (!Number.isFinite(t) || t > Date.now() || t < Date.parse('2015-01-01')) return json({ error: 'data inválida (não pode ser futura)' }, 400);
+      const iso = new Date(t).toISOString();
+      const { error: e1 } = await supa.from('am_settings').upsert({ key: 'analysis_start', value: iso, updated_at: new Date().toISOString() });
+      if (e1) return json({ error: e1.message }, 400);
+      // apaga o que é anterior (continua a existir na Bybit/T212; volta com "Importar" se a data recuar)
+      const [f, tr, sn] = await Promise.all([
+        supa.from('am_flows').delete().lt('ts', iso).select('id'),
+        supa.from('am_trades').delete().lt('closed_at', iso).select('id'),
+        supa.from('am_snapshots').delete().lt('ts', iso).select('ts'),
+      ]);
+      return json({ ok: true, start: iso, apagados: { fluxos: f.data?.length ?? 0, operacoes: tr.data?.length ?? 0, snapshots: sn.data?.length ?? 0 } });
     }
 
     /* ── funding ── */
