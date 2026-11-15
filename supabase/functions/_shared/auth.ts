@@ -7,7 +7,7 @@
  * FALHA FECHADA: sem segredo (env AM_SECRET ou Vault 'am_secret'), TODOS os pedidos são recusados (503).
  *
  * Aceita, por ordem:
- *   1. header `x-am-secret: <AM_SECRET>`            (browser e cron)
+ *   1. header `x-am-secret: <código>` ou `x-client-info: am:<código>`   (browser e cron)
  *   2. `Authorization: Bearer <SERVICE_ROLE_KEY>`   (chamadas internas função→função)
  *
  * A publishable key NÃO autentica nada: está no JS público.
@@ -59,7 +59,10 @@ export async function guard(req: Request, corsHeaders: Record<string, string>): 
   const secret = await getSecret();
   if (!secret) return fail(503, 'código de acesso não configurado no servidor (acesso recusado por defeito).');
 
-  if (await safeEqual(req.headers.get('x-am-secret') ?? '', secret)) return null;
+  // `x-am-secret` (funções novas) ou `x-client-info: am:<código>` (permitido no CORS de todas as versões, logo seguro durante a migração)
+  const xci = req.headers.get('x-client-info') ?? '';
+  const given = req.headers.get('x-am-secret') || (xci.startsWith('am:') ? xci.slice(3) : '');
+  if (await safeEqual(given, secret)) return null;
 
   const svc = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
   const bearer = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');

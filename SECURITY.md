@@ -73,3 +73,8 @@ deixou de carregar dados. Os testes com `page.route` não o apanham — o Playwr
   operações reais têm <1 s entre "abertura" e fecho): NÃO é a abertura da posição. Por isso não há métricas de duração nem
   "revanche"; hora/dia no diário são do fecho. Para a hora real de abertura seria preciso reconstruir pelas execuções (`/v5/execution/list`).
 - **Crédito Anthropic**: sem saldo na conta da API, `am-brief` e `trade-advisor` (chat) falham com "credit balance is too low".
+
+## Migração sem avaria (16/11/2026)
+O código segue em TODAS as chamadas no header `x-client-info: am:<código>` (já permitido no CORS de qualquer versão de função);
+as funções novas aceitam também `x-am-secret`. Assim a interface pode ser publicada ANTES de fechar as funções antigas, e cada
+função pode ser fechada em separado sem janela de avaria: sem código guardado a app recebe 401, pede-o uma vez e repete.
