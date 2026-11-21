@@ -862,10 +862,10 @@ function renderPortfolio() {
   const loadingFirst = !M.holdings.length && !errs.length;
   const mx = Math.max(M.value, M.cost, 1);
   const parts = [];
-  if (M.b) parts.push(`Bybit <b class="num">${money(M.b.value)}</b>`);
-  if (M.t) parts.push(`Trading 212 <b class="num">${money(M.t.value)}</b>`);
+  if (M.b) parts.push(`Bybit <b class="num">${money(M.b.value, base, 0)}</b>`);
+  if (M.t) parts.push(`T212 <b class="num">${money(M.t.value, base, 0)}</b>`);
   const pprV = M.holdings.filter(h => h.kind === 'ppr').reduce((a, h) => a + h.value, 0);
-  if (pprV > 0) parts.push(`PPR <b class="num">${money(pprV)}</b>`);
+  if (pprV > 0) parts.push(`PPR <b class="num">${money(pprV, base, 0)}</b>`);
   $('heroBody').innerHTML = M.holdings.length ? `
     <div class="lbl">Valor atual do portefólio</div>
     <div class="big num" id="heroVal">${money(M.value)}</div>
@@ -874,7 +874,7 @@ function renderPortfolio() {
       <div class="row"><span class="mut">Investido</span><div class="track"><div class="fill" style="width:${M.cost / mx * 100}%;background:var(--mut)"></div></div><b class="num">${money(M.cost)}</b></div>
       <div class="row"><span class="mut">Atual</span><div class="track"><div class="fill" style="width:${M.value / mx * 100}%;background:${M.pnl >= 0 ? 'var(--green)' : 'var(--red)'}"></div></div><b class="num">${money(M.value)}</b></div>
     </div>
-    <div class="parts">${parts.join('<span>+</span>')}<span>= <b class="num">${money(M.value)}</b></span></div>` : loadingFirst ? SKEL : `<div class="empty">Sem dados — vê as notificações (🔔).</div>`;
+    <div class="parts">${parts.join('<span>+</span>')}<span>= <b class="num">${money(M.value, base, 0)}</b></span></div>` : loadingFirst ? SKEL : `<div class="empty">Sem dados — vê as notificações (🔔).</div>`;
   if (M.holdings.length) { tween($('heroVal'), lastHero, M.value, v => money(v)); lastHero = M.value; }
 
   renderAlloc(loadingFirst);
