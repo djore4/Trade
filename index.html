@@ -331,7 +331,7 @@ input.px{width:100%;background:var(--card2);color:var(--text);border:1px solid v
       </div>
       <div>
         <div class="wordmark"><span class="a">Asset</span> <span class="b">Manager</span></div>
-        <div class="tagline">Bybit · Trading 212</div>
+        <div class="tagline">Bybit · T212</div>
       </div>
     </div>
     <div class="ctrl">
@@ -584,6 +584,17 @@ async function loadFx() {
   }
 }
 
+/* Fear & Greed do BTC (alternative.me, API pública com CORS) */
+const fng = { v: null, err: null, at: 0 };
+async function loadFng() {
+  try {
+    const d = await (await fetch('https://api.alternative.me/fng/?limit=1')).json();
+    const v = parseInt(d?.data?.[0]?.value, 10);
+    if (!(v >= 0)) throw new Error('sem valor');
+    fng.v = v; fng.err = null; fng.at = Date.now();
+  } catch (e) { fng.err = 'Fear & Greed indisponível'; }
+}
+
 /* ── carregamento ────────────────────────────────────────────────────────── */
 async function loadBybit() {
   try {
@@ -805,7 +816,9 @@ function risks(M) {
 let M = null, lastHero = null, firstDraw = true;
 function renderStatus() {
   const chip = (name, ok, err, at) => `<span title="${esc(err || '')}"><i class="dot ${ok ? 'ok' : err ? 'bad' : ''} ${ok && st.loading ? 'live' : ''}"></i>${name}</span>`;
-  $('status').innerHTML = chip('Bybit', !!st.bbWal, st.err.bb, st.at.bb) + chip('Trading 212' + (st.tStale || st.tLocal ? ' (cache)' : ''), !!st.t212, st.err.t, st.at.t) + chip('Câmbio', !!fx.eurusd, st.err.fx, 0).replace('<span ', '<span class="fxlink" data-fx="1" role="button" tabindex="0" ')
+  const fgLbl = v => v <= 24 ? 'Medo extremo' : v <= 44 ? 'Medo' : v <= 55 ? 'Neutro' : v <= 75 ? 'Ganância' : 'Ganância extrema';
+  $('status').innerHTML = chip('Bybit', !!st.bbWal, st.err.bb, st.at.bb) + chip('T212' + (st.tStale || st.tLocal ? ' (cache)' : ''), !!st.t212, st.err.t, st.at.t)
+    + chip('F&G BTC' + (fng.v != null ? ` <b class="num">${fng.v}</b>` : ''), fng.v != null, fng.err, 0).replace('<span title="', `<span title="${fng.v != null ? fgLbl(fng.v) + ' · ' : ''}`)
     + (fx.eurusd ? `<span class="fxlink" data-fx="1">EUR/USD ${fmt(fx.eurusd, 4)}</span>` : '') + (base === 'BTC' && fx.btcusd ? `<span>BTC ${money(fx.btcusd, 'USD', 0)}</span>` : '');
 }
 const SKEL = `<div class="sk" style="height:12px;width:40%"></div><div class="sk" style="height:40px;width:70%;margin:12px 0"></div><div class="sk" style="height:12px;width:55%"></div><div class="sk" style="height:10px;margin-top:20px"></div><div class="sk" style="height:10px;margin-top:10px;width:80%"></div>`;
@@ -2136,6 +2149,7 @@ async function tick(force) {
     if (force || Date.now() - al.at > 60000) jobs.push(loadAlerts());
     if (force || Date.now() - st.tReq > 45000) jobs.push(loadT212(force));
     if (force || !fx.eurusd || Date.now() - st.at.fx > 600000) jobs.push(loadFx());
+    if (force || fng.v == null || Date.now() - fng.at > 600000) jobs.push(loadFng());
     await Promise.all(jobs.map(j => j.then(renderAll)));   // cada fonte atualiza a UI assim que responde (a T212 lenta não bloqueia o resto)
     if (Date.now() - pprAt > 45000) pprPull();
   } finally { busy = false; st.loading = false; $('refresh').classList.remove('spin'); renderAll(); }
