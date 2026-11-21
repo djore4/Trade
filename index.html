@@ -832,7 +832,7 @@ function renderStatus() {
   const stale = ageS > 120 ? `<span class="amber" title="Última atualização com sucesso">⚠ dados de há ${ageS < 3600 ? Math.round(ageS / 60) + ' min' : Math.round(ageS / 3600) + ' h'}</span>` : '';
   const fgLbl = v => v <= 24 ? 'Medo extremo' : v <= 44 ? 'Medo' : v <= 55 ? 'Neutro' : v <= 75 ? 'Ganância' : 'Ganância extrema';
   $('status').innerHTML = chip('Bybit', !!st.bbWal, st.err.bb, st.at.bb) + chip('T212' + (st.tStale || st.tLocal ? ' (cache)' : ''), !!st.t212, st.err.t, st.at.t)
-    + chip('Câmbio' + (fx.eurusd ? ` EUR/USD ${fmt(fx.eurusd, 4)}` : ''), !!fx.eurusd, st.err.fx || fxTip, 0, fxCol).replace('<span ', '<span class="fxlink" data-fx="1" role="button" tabindex="0" ')
+    + chip(fx.eurusd ? `EUR/USD ${fmt(fx.eurusd, 4)}` : 'EUR/USD', !!fx.eurusd, st.err.fx || fxTip, 0, fxCol).replace('<span ', '<span class="fxlink" data-fx="1" role="button" tabindex="0" ')
     + chip('F&G BTC' + (fng.v != null ? ` <b class="num">${fng.v}</b>` : ''), fng.v != null, fng.err, 0, fng.v != null ? fgCol(fng.v) : null).replace('<span title="', `<span class="fxlink" data-fng="1" role="button" tabindex="0" title="${fng.v != null ? fgLbl(fng.v) + ' · ' : ''}`)
     + (liqF ? chip(`${esc(liqF.coin)} liq <b class="num">${fmt(liqF.liqDist, 1)}%</b>`, true, `Distância do preço atual ao preço de liquidação (${price(liqF.liq)})`, 0, liqF.liqDist < 15 ? 'var(--red)' : liqF.liqDist < 25 ? 'var(--amber)' : 'var(--green)') : '')
     + (base === 'BTC' && fx.btcusd ? `<span>BTC ${money(fx.btcusd, 'USD', 0)}</span>` : '') + stale;
