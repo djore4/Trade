@@ -569,8 +569,13 @@ async function lastClose(sym) {
   const d = await call(`get-stock-history?symbol=${encodeURIComponent(sym)}&range=5d&interval=1d`);
   const p = d.points || []; return p.length ? p[p.length - 1].c : null;
 }
+async function prevClose(sym) {
+  const d = await call(`get-stock-history?symbol=${encodeURIComponent(sym)}&range=5d&interval=1d`);
+  const p = d.points || []; return p.length > 1 ? p[p.length - 2].c : null;
+}
 async function loadFx() {
   try {
+    prevClose('EURUSD=X').then(v => { if (v) { fx.eurusdPrev = v; store.set('fxcache', fx); } }).catch(() => {});
     const [a, b, c] = await Promise.all([lastClose('EURUSD=X'), lastClose('EURGBP=X'), lastClose('BTC-USD').catch(() => null)]);
     if (!a) throw new Error('sem EURUSD');
     fx.eurusd = a; if (b) fx.eurgbp = b; if (c) fx.btcusd = c; st.err.fx = null; st.at.fx = Date.now(); store.set('fxcache', fx);
@@ -815,11 +820,17 @@ function risks(M) {
 /* ── render: Portefólio ──────────────────────────────────────────────────── */
 let M = null, lastHero = null, firstDraw = true;
 function renderStatus() {
-  const chip = (name, ok, err, at) => `<span title="${esc(err || '')}"><i class="dot ${ok ? 'ok' : err ? 'bad' : ''} ${ok && st.loading ? 'live' : ''}"></i>${name}</span>`;
+  // col (opcional): cor semântica do indicador (substitui verde/vermelho de "ligado/erro")
+  const chip = (name, ok, err, at, col) => `<span title="${esc(err || '')}"><i class="dot ${col ? '' : ok ? 'ok' : err ? 'bad' : ''} ${ok && st.loading ? 'live' : ''}"${col ? ` style="background:${col}"` : ''}></i>${col ? `<span style="color:${col}">${name}</span>` : name}</span>`;
+  const fgCol = v => v <= 24 ? 'var(--red)' : v <= 44 ? 'var(--accent)' : v <= 55 ? 'var(--amber)' : v <= 75 ? 'color-mix(in srgb,var(--green) 65%,var(--amber))' : 'var(--green)';
+  // Câmbio: cor = impacto no portefólio (EUR/USD a subir => ativos em USD valem menos em €)
+  const fxCh = fx.eurusd && fx.eurusdPrev ? (fx.eurusd / fx.eurusdPrev - 1) * 100 : null;
+  const fxCol = fxCh == null ? null : Math.abs(fxCh) < 0.05 ? 'var(--amber)' : fxCh > 0 ? 'var(--red)' : 'var(--green)';
+  const fxTip = fxCh == null ? '' : `${fxCh > 0 ? '+' : ''}${fmt(fxCh, 2)}% vs dia anterior · ${fxCh > 0 ? 'prejudica' : fxCh < -0.05 ? 'favorece' : 'sem impacto relevante em'} ativos em USD`;
   const fgLbl = v => v <= 24 ? 'Medo extremo' : v <= 44 ? 'Medo' : v <= 55 ? 'Neutro' : v <= 75 ? 'Ganância' : 'Ganância extrema';
   $('status').innerHTML = chip('Bybit', !!st.bbWal, st.err.bb, st.at.bb) + chip('T212' + (st.tStale || st.tLocal ? ' (cache)' : ''), !!st.t212, st.err.t, st.at.t)
-    + chip('Câmbio' + (fx.eurusd ? ` EUR/USD ${fmt(fx.eurusd, 4)}` : ''), !!fx.eurusd, st.err.fx, 0).replace('<span ', '<span class="fxlink" data-fx="1" role="button" tabindex="0" ')
-    + chip('F&G BTC' + (fng.v != null ? ` <b class="num">${fng.v}</b>` : ''), fng.v != null, fng.err, 0).replace('<span title="', `<span class="fxlink" data-fng="1" role="button" tabindex="0" title="${fng.v != null ? fgLbl(fng.v) + ' · ' : ''}`)
+    + chip('Câmbio' + (fx.eurusd ? ` EUR/USD ${fmt(fx.eurusd, 4)}` : ''), !!fx.eurusd, st.err.fx || fxTip, 0, fxCol).replace('<span ', '<span class="fxlink" data-fx="1" role="button" tabindex="0" ')
+    + chip('F&G BTC' + (fng.v != null ? ` <b class="num">${fng.v}</b>` : ''), fng.v != null, fng.err, 0, fng.v != null ? fgCol(fng.v) : null).replace('<span title="', `<span class="fxlink" data-fng="1" role="button" tabindex="0" title="${fng.v != null ? fgLbl(fng.v) + ' · ' : ''}`)
     + (base === 'BTC' && fx.btcusd ? `<span>BTC ${money(fx.btcusd, 'USD', 0)}</span>` : '');
 }
 const SKEL = `<div class="sk" style="height:12px;width:40%"></div><div class="sk" style="height:40px;width:70%;margin:12px 0"></div><div class="sk" style="height:12px;width:55%"></div><div class="sk" style="height:10px;margin-top:20px"></div><div class="sk" style="height:10px;margin-top:10px;width:80%"></div>`;
