@@ -2070,11 +2070,6 @@ async function rkLoad(force) {
   renderPortfolio(); if (!$('v-whatif').hidden) renderWhatIf();
 }
 // impacto estimado (USD) nas posições de futuros de um choque do BTC (%), via beta
-function rkShockUsd(shock) {
-  let d = 0, ok = 0;
-  M.fut.forEach(f => { const b = rkBeta(f); if (b == null) return; ok++; d += f.notional * (b * shock / 100) * (f.long ? 1 : -1); });
-  return ok ? d : null;
-}
 function rkTiles() {
   if (!M.fut.length || !M.b) return '';
   const tile = (k, v, nt, c) => `<div class="tile"><div class="lbl">${k}</div><div class="v num ${c || ''}">${v}</div><div class="n">${nt}</div></div>`;
@@ -2084,11 +2079,6 @@ function rkTiles() {
     const m = fc.total * 30 / M.b.equityUsd * 100;
     out += tile('Funding / dia', (fc.total >= 0 ? '+' : '−') + money(Math.abs(fc.total), 'USD', 2), `${pct(m, 1)} do equity/mês · ${fc.total >= 0 ? 'recebes' : 'pagas'}`, fc.total < 0 && m < -3 ? 'neg' : fc.total < 0 && m < -1 ? 'amber' : '');
   }
-  const sh = rkShockUsd(-10);
-  if (sh != null && M.b.equityUsd > 0) out += tile('BTC −10%', pct(sh / M.b.equityUsd * 100, 1), `do equity, por beta (${smoney(sh, 'USD', 0)})`, sh / M.b.equityUsd < -0.15 ? 'neg' : sh / M.b.equityUsd < -0.07 ? 'amber' : '');
-  let w = null;
-  M.fut.forEach(f => { const m = AMP.btcMoveToLiquidate(f, rkBeta(f)); if (m != null && (w == null || Math.abs(m) < Math.abs(w.m))) w = { m, s: f.symbol }; });
-  if (w) out += tile('BTC liquida', pct(w.m, 0), `${esc(w.s)} (por beta)`, Math.abs(w.m) < 10 ? 'neg' : Math.abs(w.m) < 20 ? 'amber' : '');
   return out;
 }
 
