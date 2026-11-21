@@ -393,6 +393,7 @@ input.px{width:100%;background:var(--card2);color:var(--text);border:1px solid v
     <div class="card" id="tAlerts"><h2>Alertas <span class="mut" id="alCount"></span></h2><div id="alPush"></div><div id="alForm"></div><div id="alList"></div></div>
     <div class="card" id="tPpr" hidden></div>
     <div class="card" id="tAll"></div>
+    <div class="card" id="tAct" hidden></div>
   </main>
 
   <!-- ══ NOTÍCIAS ══ -->
@@ -827,12 +828,14 @@ function renderStatus() {
   const fxCol = fxCh == null ? null : Math.abs(fxCh) < 0.05 ? 'var(--amber)' : fxCh > 0 ? 'var(--red)' : 'var(--green)';
   const fxTip = fxCh == null ? '' : `${fxCh > 0 ? '+' : ''}${fmt(fxCh, 2)}% vs dia anterior · ${fxCh > 0 ? 'prejudica' : fxCh < -0.05 ? 'favorece' : 'sem impacto relevante em'} ativos em USD`;
   const liqF = M && M.fut ? M.fut.filter(f => f.liqDist != null).sort((a, b) => a.liqDist - b.liqDist)[0] : null;
+  const lastAt = Math.max(st.at.bb || 0, st.at.t || 0), ageS = lastAt ? (Date.now() - lastAt) / 1000 : 0;
+  const stale = ageS > 120 ? `<span class="amber" title="Última atualização com sucesso">⚠ dados de há ${ageS < 3600 ? Math.round(ageS / 60) + ' min' : Math.round(ageS / 3600) + ' h'}</span>` : '';
   const fgLbl = v => v <= 24 ? 'Medo extremo' : v <= 44 ? 'Medo' : v <= 55 ? 'Neutro' : v <= 75 ? 'Ganância' : 'Ganância extrema';
   $('status').innerHTML = chip('Bybit', !!st.bbWal, st.err.bb, st.at.bb) + chip('T212' + (st.tStale || st.tLocal ? ' (cache)' : ''), !!st.t212, st.err.t, st.at.t)
     + chip('Câmbio' + (fx.eurusd ? ` EUR/USD ${fmt(fx.eurusd, 4)}` : ''), !!fx.eurusd, st.err.fx || fxTip, 0, fxCol).replace('<span ', '<span class="fxlink" data-fx="1" role="button" tabindex="0" ')
     + chip('F&G BTC' + (fng.v != null ? ` <b class="num">${fng.v}</b>` : ''), fng.v != null, fng.err, 0, fng.v != null ? fgCol(fng.v) : null).replace('<span title="', `<span class="fxlink" data-fng="1" role="button" tabindex="0" title="${fng.v != null ? fgLbl(fng.v) + ' · ' : ''}`)
     + (liqF ? chip(`${esc(liqF.coin)} liq <b class="num">${fmt(liqF.liqDist, 1)}%</b>`, true, `Distância do preço atual ao preço de liquidação (${price(liqF.liq)})`, 0, liqF.liqDist < 15 ? 'var(--red)' : liqF.liqDist < 25 ? 'var(--amber)' : 'var(--green)') : '')
-    + (base === 'BTC' && fx.btcusd ? `<span>BTC ${money(fx.btcusd, 'USD', 0)}</span>` : '');
+    + (base === 'BTC' && fx.btcusd ? `<span>BTC ${money(fx.btcusd, 'USD', 0)}</span>` : '') + stale;
 }
 const SKEL = `<div class="sk" style="height:12px;width:40%"></div><div class="sk" style="height:40px;width:70%;margin:12px 0"></div><div class="sk" style="height:12px;width:55%"></div><div class="sk" style="height:10px;margin-top:20px"></div><div class="sk" style="height:10px;margin-top:10px;width:80%"></div>`;
 
@@ -1631,7 +1634,31 @@ function selectTrade(id) {
   if (ui.sel === id) return;                         // sem scroll: a página fica onde o utilizador a deixou
   ui.sel = id; saveUi(); renderTrade(); loadCandles(true); startLive();
 }
+/* Atividade dos últimos 30 dias (diário Bybit: closed-pnl, já líquido de comissões) */
+const act = { trades: null, at: 0, busy: false, since: null };
+async function actLoad(force) {
+  if (act.busy || (!force && act.trades && Date.now() - act.at < 600000)) return;
+  act.busy = true;
+  try { const d = await amPost('am-journal', { action: 'list', limit: 2000 }, 20000, true); act.trades = d.trades || []; act.since = d.start || null; act.at = Date.now(); } catch (e) {} finally { act.busy = false; }
+  actRender();
+}
+function actRender() {
+  const el = $('tAct'); if (!el) return;
+  if (!act.trades) { el.hidden = true; return; }
+  const cut = Date.now() - 30 * 86400000, since = act.since ? Date.parse(act.since) : 0, from = Math.max(cut, since);
+  const T = act.trades.filter(t => Date.parse(t.closed_at) >= from);
+  if (!T.length) { el.hidden = true; return; }
+  const net = T.reduce((a, t) => a + (+t.pnl || 0), 0), fees = T.reduce((a, t) => a + (+t.fees || 0), 0), gross = net + fees;
+  const w = T.filter(t => +t.pnl > 0).length;
+  const usd = v => smoney(v, 'USD', 0), m = (k, v, c) => `<div class="m"><div class="k">${k}</div><div class="v num ${c || ''}">${v}</div></div>`;
+  const days = Math.max(1, Math.round((Date.now() - from) / 86400000));
+  el.hidden = false;
+  el.innerHTML = `<h2>Atividade · ${since > cut ? 'desde o início do trade atual' : 'últimos 30 dias'} <span class="mut">${days}d</span></h2>
+    <div class="fgrid">${m('Fechos', T.length)}${m('Acertos', fmt(w / T.length * 100, 0) + '%')}${m('PnL bruto', usd(gross), cls(gross))}${m('Comissões', usd(-fees), fees > 0 ? 'neg' : '')}${m('PnL líquido', usd(net), cls(net))}${m('Comissões / PnL bruto', gross > 0 ? fmt(fees / gross * 100, 0) + '%' : '—', fees > Math.abs(gross) * 0.3 ? 'amber' : '')}</div>
+    <div class="foot">Valores em USD, só futuros lineares Bybit (closed-pnl). As liquidações não aparecem discriminadas e o funding pode não estar incluído.</div>`;
+}
 function openTrade() {
+  actLoad();
   renderTrade();
   if (!ensureChart()) return;
   liqEnsure();
@@ -2188,6 +2215,7 @@ function renderAll() {
   if (!$('v-trade').hidden) renderTrade();
 }
 $('refresh').onclick = () => { tick(true); };
+setInterval(() => { if (!document.hidden) renderStatus(); }, 20000);   // mantém o aviso de dados velhos atualizado
 let busy = false;
 async function tick(force) {
   if (busy) return; busy = true; st.loading = true; $('refresh').classList.add('spin'); renderStatus();
