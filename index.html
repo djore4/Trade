@@ -114,8 +114,6 @@ button:active{transform:scale(.96)}
 .cmp .row{display:grid;grid-template-columns:64px 1fr auto;gap:10px;align-items:center;margin:6px 0;font-size:13px}
 .cmp .track{height:10px;border-radius:6px;background:var(--card2);overflow:hidden}
 .cmp .fill{height:100%;border-radius:6px;transition:width .7s cubic-bezier(.2,.8,.2,1)}
-.parts{display:flex;gap:6px;flex-wrap:nowrap;white-space:nowrap;overflow:hidden;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-size:min(12.5px,3.3vw);color:var(--mut)}
-.parts b{color:var(--text);font-weight:600}
 svg.spark{width:100%;height:64px;display:block;margin-top:10px}
 
 /* Donut */
@@ -861,11 +859,6 @@ function renderPortfolio() {
   if (st.acctErr) errs.push(`T212 (conta): ${/403/.test(st.acctErr) ? 'a key não tem permissão de dados da conta' : esc(st.acctErr)}`);
   const loadingFirst = !M.holdings.length && !errs.length;
   const mx = Math.max(M.value, M.cost, 1);
-  const parts = [];
-  if (M.b) parts.push(`Bybit <b class="num">${money(M.b.value, base, 0)}</b>`);
-  if (M.t) parts.push(`T212 <b class="num">${money(M.t.value, base, 0)}</b>`);
-  const pprV = M.holdings.filter(h => h.kind === 'ppr').reduce((a, h) => a + h.value, 0);
-  if (pprV > 0) parts.push(`PPR <b class="num">${money(pprV, base, 0)}</b>`);
   $('heroBody').innerHTML = M.holdings.length ? `
     <div class="lbl">Valor atual do portefólio</div>
     <div class="big num" id="heroVal">${money(M.value)}</div>
@@ -873,8 +866,7 @@ function renderPortfolio() {
     <div class="cmp">
       <div class="row"><span class="mut">Investido</span><div class="track"><div class="fill" style="width:${M.cost / mx * 100}%;background:var(--mut)"></div></div><b class="num">${money(M.cost)}</b></div>
       <div class="row"><span class="mut">Atual</span><div class="track"><div class="fill" style="width:${M.value / mx * 100}%;background:${M.pnl >= 0 ? 'var(--green)' : 'var(--red)'}"></div></div><b class="num">${money(M.value)}</b></div>
-    </div>
-    <div class="parts">${parts.join('<span>+</span>')}<span>= <b class="num">${money(M.value, base, 0)}</b></span></div>` : loadingFirst ? SKEL : `<div class="empty">Sem dados — vê as notificações (🔔).</div>`;
+    </div>` : loadingFirst ? SKEL : `<div class="empty">Sem dados — vê as notificações (🔔).</div>`;
   if (M.holdings.length) { tween($('heroVal'), lastHero, M.value, v => money(v)); lastHero = M.value; }
 
   renderAlloc(loadingFirst);
