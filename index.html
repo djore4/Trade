@@ -1866,7 +1866,7 @@ function ensurePfChart() {
     autoSize: true, handleScroll: false, handleScale: false,
     layout: { background: { type: L.ColorType.Solid, color: 'transparent' }, textColor: cv('--mut'), fontSize: 11 },
     grid: { vertLines: { visible: false }, horzLines: { color: cv('--line') } },
-    rightPriceScale: { borderVisible: false, minimumWidth: 76, scaleMargins: { top: 0.14, bottom: 0.08 } },
+    rightPriceScale: { borderVisible: false, minimumWidth: 48, scaleMargins: { top: 0.14, bottom: 0.08 } },
     timeScale: { borderVisible: false, timeVisible: true, secondsVisible: false, fixLeftEdge: true, fixRightEdge: true,
       tickMarkFormatter: (t, type) => { const d = new Date(t * 1000); return type <= 2 ? d.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' }) : d.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }); } },
     localization: { locale: 'pt-PT', timeFormatter: t => new Date(t * 1000).toLocaleString('pt-PT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) },
