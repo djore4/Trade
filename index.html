@@ -389,6 +389,7 @@ input.px{width:100%;background:var(--card2);color:var(--text);border:1px solid v
           </div>
     <div class="card" id="tLiq" hidden></div>
     <div class="card" id="tDetail"></div>
+    <div class="card" id="tCalc" hidden></div>
     <div class="card" id="tAlerts"><h2>Alertas <span class="mut" id="alCount"></span></h2><div id="alPush"></div><div id="alForm"></div><div id="alList"></div></div>
     <div class="card" id="tPpr" hidden></div>
     <div class="card" id="tAll"></div>
@@ -825,10 +826,12 @@ function renderStatus() {
   const fxCh = fx.eurusd && fx.eurusdPrev ? (fx.eurusd / fx.eurusdPrev - 1) * 100 : null;
   const fxCol = fxCh == null ? null : Math.abs(fxCh) < 0.05 ? 'var(--amber)' : fxCh > 0 ? 'var(--red)' : 'var(--green)';
   const fxTip = fxCh == null ? '' : `${fxCh > 0 ? '+' : ''}${fmt(fxCh, 2)}% vs dia anterior · ${fxCh > 0 ? 'prejudica' : fxCh < -0.05 ? 'favorece' : 'sem impacto relevante em'} ativos em USD`;
+  const liqF = M && M.fut ? M.fut.filter(f => f.liqDist != null).sort((a, b) => a.liqDist - b.liqDist)[0] : null;
   const fgLbl = v => v <= 24 ? 'Medo extremo' : v <= 44 ? 'Medo' : v <= 55 ? 'Neutro' : v <= 75 ? 'Ganância' : 'Ganância extrema';
   $('status').innerHTML = chip('Bybit', !!st.bbWal, st.err.bb, st.at.bb) + chip('T212' + (st.tStale || st.tLocal ? ' (cache)' : ''), !!st.t212, st.err.t, st.at.t)
     + chip('Câmbio' + (fx.eurusd ? ` EUR/USD ${fmt(fx.eurusd, 4)}` : ''), !!fx.eurusd, st.err.fx || fxTip, 0, fxCol).replace('<span ', '<span class="fxlink" data-fx="1" role="button" tabindex="0" ')
     + chip('F&G BTC' + (fng.v != null ? ` <b class="num">${fng.v}</b>` : ''), fng.v != null, fng.err, 0, fng.v != null ? fgCol(fng.v) : null).replace('<span title="', `<span class="fxlink" data-fng="1" role="button" tabindex="0" title="${fng.v != null ? fgLbl(fng.v) + ' · ' : ''}`)
+    + (liqF ? chip(`${esc(liqF.coin)} liq <b class="num">${fmt(liqF.liqDist, 1)}%</b>`, true, `Distância do preço atual ao preço de liquidação (${price(liqF.liq)})`, 0, liqF.liqDist < 15 ? 'var(--red)' : liqF.liqDist < 25 ? 'var(--amber)' : 'var(--green)') : '')
     + (base === 'BTC' && fx.btcusd ? `<span>BTC ${money(fx.btcusd, 'USD', 0)}</span>` : '');
 }
 const SKEL = `<div class="sk" style="height:12px;width:40%"></div><div class="sk" style="height:40px;width:70%;margin:12px 0"></div><div class="sk" style="height:12px;width:55%"></div><div class="sk" style="height:10px;margin-top:20px"></div><div class="sk" style="height:10px;margin-top:10px;width:80%"></div>`;
@@ -863,6 +866,7 @@ function renderPortfolio() {
     <div class="lbl">Valor atual do portefólio</div>
     <div class="big num" id="heroVal">${money(M.value)}</div>
     <div class="num ${cls(M.pnl)}" style="font-weight:600">${smoney(M.pnl)} · ${pct(M.pct)} <span class="mut" style="font-weight:400">vs investido</span></div>
+    ${M.pnl < 0 && M.value > 0 ? `<div class="mut" style="font-size:12px;margin-top:2px">precisa de <b class="num">+${fmt((M.cost / M.value - 1) * 100, 1)}%</b> para empatar</div>` : ''}
     <div class="cmp">
       <div class="row"><span class="mut">Investido</span><div class="track"><div class="fill" style="width:${M.cost / mx * 100}%;background:var(--mut)"></div></div><b class="num">${money(M.cost)}</b></div>
       <div class="row"><span class="mut">Atual</span><div class="track"><div class="fill" style="width:${M.value / mx * 100}%;background:${M.pnl >= 0 ? 'var(--green)' : 'var(--red)'}"></div></div><b class="num">${money(M.value)}</b></div>
@@ -1394,12 +1398,37 @@ function renderTradePpr() {
   }).join('') + '<div class="foot">Sem cotação em tempo real: o valor da unidade é o que indicaste no Portefólio.</div>';
 }
 
+/* Calculadora de margem: quanto recua a liquidação ao adicionar margem (estimativa: cada 1 USD de margem desloca a liquidação 1/tamanho) */
+let calcF = null, calcVal = '';
+function marginCalcUpdate() {
+  const f = calcF, out = $('mcOut'); if (!f || !out) return;
+  const v = parseFloat(String(calcVal).replace(',', '.')), usd = v > 0 ? conv(v, base, 'USD') : null;
+  const tgtLiq = f.long ? f.mark * 0.7 : f.mark * 1.3, needUsd = Math.max(0, (f.long ? f.liq - tgtLiq : tgtLiq - f.liq) * f.size), needB = conv(needUsd, 'USD', base);
+  let h = '';
+  if (usd != null) {
+    const nl = f.long ? f.liq - usd / f.size : f.liq + usd / f.size;
+    h = nl <= 0 ? `<div>Nova liquidação: <b>sem preço de liquidação</b> (margem cobre a posição)</div>`
+      : `<div>Nova liquidação: <b class="num">${price(nl)}</b> <span class="mut">(antes ${price(f.liq)})</span></div><div>Distância: <b class="num">${fmt(Math.abs(f.mark - nl) / f.mark * 100, 1)}%</b> <span class="mut">(antes ${fmt(f.liqDist, 1)}%)</span></div>`;
+  }
+  if (needB != null && needUsd > 0) h += `<div class="mut" style="margin-top:4px">Para ficar a 30% da liquidação: <b class="num">+${money(needB, base, 0)}</b> de margem</div>`;
+  out.innerHTML = h;
+}
+function renderMarginCalc(f) {
+  const el = $('tCalc'); calcF = f && f.liq > 0 && f.size > 0 ? f : null;
+  el.hidden = !calcF; if (!calcF) { el.dataset.sym = ''; return; }
+  if (el.dataset.sym !== f.symbol) {
+    el.dataset.sym = f.symbol;
+    el.innerHTML = `<h2>Adicionar margem · ${esc(f.symbol)}</h2><div style="display:flex;gap:8px;align-items:center;margin-bottom:8px"><input id="mcIn" type="text" inputmode="decimal" placeholder="Valor em ${esc(base)}" value="${esc(calcVal)}" style="flex:1;min-width:0;padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--text);font:inherit"><span class="mut">${esc(base)}</span></div><div class="num" id="mcOut" style="font-size:13px;line-height:1.6"></div><div class="foot">Estimativa linear (cada 1 USD de margem desloca a liquidação 1/tamanho). Margem cruzada ou comissões podem alterar o resultado. Adicionar margem a uma posição perdedora aumenta a perda possível.</div>`;
+    $('mcIn').addEventListener('input', e => { calcVal = e.target.value; marginCalcUpdate(); });
+  }
+  marginCalcUpdate();
+}
 function renderTrade() {
   const items = tradeItems();
   renderTradePpr();
   if (!items.length) {
     $('tSummary').innerHTML = '<div class="empty">Sem posições com gráfico (ações, ETFs ou futuros).</div>';
-    $('tChips').innerHTML = ''; $('tDetail').innerHTML = ''; $('tAll').innerHTML = ''; return;
+    $('tChips').innerHTML = ''; $('tDetail').innerHTML = ''; $('tAll').innerHTML = ''; renderMarginCalc(null); return;
   }
   let sel = curItem(items);
   if (!sel) { sel = items[0]; ui.sel = sel.id; saveUi(); if (!$('v-trade').hidden) loadCandles(true); }
@@ -1430,12 +1459,15 @@ function renderTrade() {
       <div class="fgrid">${m('PnL aberto', smoney(sel.pnl) + ' · ' + pct(roe, 1), cls(f.upl))}${m('Tamanho', qv(fmt(f.size, 2)) + ' ' + esc(f.coin))}${m('Nocional', money(f.notional, 'USD', 0))}
       ${m('Entrada', price(f.avg))}${m('Mark', price(f.mark))}${m('Liquidação', f.liq ? price(f.liq) : '—')}
       ${m('Dist. liquidação', f.liqDist != null ? fmt(f.liqDist, 1) + '%' : '—', dc)}${m('Margem', money(f.im, 'USD', 0))}
+      ${m('Para empatar', f.mark > 0 && f.avg > 0 ? (f.avg / f.mark >= 1 ? '+' : '') + fmt((f.avg / f.mark - 1) * 100, 1) + '%' : '—', (f.long ? f.avg > f.mark : f.avg < f.mark) ? 'amber' : 'pos')}
       ${m('Stop-loss', f.sl ? price(f.sl) : 'não definido', f.sl ? '' : 'amber')}${m('Take-profit', f.tp ? price(f.tp) : '—')}</div>`;
+    renderMarginCalc(f);
   } else if (sel.kind === 'stock') {
+    renderMarginCalc(null);
     const h = sel.h, px = h.pxCcy === 'GBX' ? fmt(h.price, 0) + ' p' : price(h.price) + ' ' + h.pxCcy, av = h.pxCcy === 'GBX' ? fmt(h.avg, 0) + ' p' : price(h.avg) + ' ' + h.pxCcy;
     $('tDetail').innerHTML = `<h2>Posição · ${esc(h.label)} <span class="chip" style="margin:0">${esc(sel.tag)}</span></h2>
       <div class="fgrid">${m('PnL aberto', smoney(h.pnl) + ' · ' + pct(h.pnlPct, 1), cls(h.pnl))}${m('Valor', money(h.value))}${m('Peso', M && M.value ? fmt(h.value / M.value * 100, 1) + '%' : '—')}
-      ${m('Quantidade', qv(fmt(h.qty, h.qty % 1 ? 4 : 0)))}${m('Preço médio', av)}${m('Preço', px)}${m('Investido', money(h.cost))}</div>`;
+      ${m('Quantidade', qv(fmt(h.qty, h.qty % 1 ? 4 : 0)))}${m('Preço médio', av)}${m('Preço', px)}${m('Investido', money(h.cost))}${h.price > 0 && h.avg > 0 ? m('Para empatar', (h.avg / h.price >= 1 ? '+' : '') + fmt((h.avg / h.price - 1) * 100, 1) + '%', h.avg > h.price ? 'amber' : 'pos') : ''}</div>`;
   }
 
   // tabela de todas as posições
