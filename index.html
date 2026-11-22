@@ -323,6 +323,7 @@ input.px{width:100%;background:var(--card2);color:var(--text);border:1px solid v
 .prform label{display:block;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--mut);margin-bottom:4px}
 .prform input,.prbar input,.prbar select{width:100%;min-width:0;background:var(--card2);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit}
 .prcar{width:12px;color:var(--mut)}
+.prtog{display:flex;align-items:center;gap:6px;font:inherit;letter-spacing:inherit;text-transform:inherit;color:inherit;font-weight:inherit;padding:0;text-align:left}
 .prfund{border-bottom:1px solid var(--line)}
 .prrow{display:grid;grid-template-columns:14px minmax(0,1fr) auto 64px;gap:10px;align-items:center;width:calc(100% + 12px);margin:0 -6px;padding:12px 6px;border-radius:10px;text-align:left;font:inherit;color:inherit}
 .prrow:hover{background:var(--card2)}
@@ -974,7 +975,7 @@ $('notifPanel').addEventListener('click', e => {
 // pprFunds: [{ id, name, price: { v, d } | null, buys: [{ id, d, amt, units }] }] — valores em EUR, guardado neste dispositivo
 // Fonte de verdade: Supabase (função am-ppr), partilhada por todos os dispositivos. O localStorage é só cache/offline.
 let pprRev = store.get('ppr-rev', null), pprDirty = store.get('ppr-dirty', false), pprBusy = false, pprAt = 0, pprSyncMsg = '';
-let pprPanel = null, pprFunds = store.get('ppr', []), pprSel = store.get('ppr-sel', null), pprAdding = false, pprMsg = '';
+let pprOpen = false, pprPanel = null, pprFunds = store.get('ppr', []), pprSel = store.get('ppr-sel', null), pprAdding = false, pprMsg = '';
 if (!Array.isArray(pprFunds)) pprFunds = [];
 const pprNum = v => { const x = parseFloat(String(v).trim().replace(/\s/g, '').replace(',', '.')); return isFinite(x) ? x : NaN; };
 const pprToday = () => new Date().toISOString().slice(0, 10);
@@ -1077,12 +1078,15 @@ function renderPpr() {
       ${[...f.buys].sort((a, b) => b.d.localeCompare(a.d)).map(b => `<div class="hrow"><div><span class="t">${esc(b.d)}</span></div><div class="s">${qv(fmt(b.units, 4))} un. · ${b.units ? qv(fmt(b.amt / b.units, 4)) : '—'} €/un.</div><div class="r num"><b>${e(b.amt)}</b></div><div class="r"><button class="x" data-bd="${esc(b.id)}" aria-label="Remover entrada" title="Remover">×</button></div></div>`).join('')}
     </div></div>`;
   }).join('');
-  $('ppr').innerHTML = `<h2>PPR${pprFunds.length ? `<span class="num prtot">${money(tot, 'EUR')}</span>` : ''}</h2>${rows}
+  const head = `<h2 style="margin-bottom:${pprOpen ? 12 : 0}px"><button class="prtog" id="prTog" aria-expanded="${pprOpen}"><span class="prcar">${pprOpen ? '▾' : '▸'}</span> PPR <span>${pprFunds.length || ''}</span></button>${pprFunds.length ? `<span class="num prtot">${money(tot, 'EUR')}</span>` : ''}</h2>`;
+  if (!pprOpen) { $('ppr').innerHTML = head; return; }
+  $('ppr').innerHTML = head + `${rows}
     ${pprMsg ? `<div class="mut" style="font-size:12px;margin-top:8px">${esc(pprMsg)}</div>` : ''}
     <div class="prbar" style="margin-top:10px">${pprAdding || !pprFunds.length ? `<input id="prName" placeholder="Nome do PPR (ex.: Casa da Moeda …)" maxlength="60" aria-label="Nome do PPR"><button class="btn" id="prCreate">Criar PPR</button>${pprFunds.length ? '<button class="pill" id="prCancel">Cancelar</button>' : ''}` : '<button class="pill" id="prNew">+ Novo PPR</button>'}</div>
     <div class="foot" id="prSync" style="margin-top:8px">${esc(pprSyncMsg)}</div>`;
 }
 $('ppr').addEventListener('click', e => {
+  if (e.target.closest('#prTog')) { pprOpen = !pprOpen; renderPpr(); return; }
   const r = e.target.closest('[data-pf]'); if (!r) return;
   pprSel = pprSel === r.dataset.pf ? null : r.dataset.pf; pprPanel = null; pprMsg = ''; store.set('ppr-sel', pprSel); renderPpr();
 });
