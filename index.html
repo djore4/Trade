@@ -34,6 +34,7 @@ html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   padding:max(14px,env(safe-area-inset-top)) 16px calc(var(--tabh) + env(safe-area-inset-bottom) + 28px);transition:background .25s,color .25s}
 .wrap{max-width:1080px;margin:0 auto}
+@media (min-width:1280px){.wrap{max-width:1360px}}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;transition:transform .12s,background .15s,border-color .15s,opacity .15s}
 button:active{transform:scale(.96)}
 .pos{color:var(--green)} .neg{color:var(--red)} .mut{color:var(--mut)} .amber{color:var(--amber)}
@@ -117,10 +118,17 @@ button:active{transform:scale(.96)}
 svg.spark{width:100%;height:64px;display:block;margin-top:10px}
 
 /* Donut */
-.alloc{display:grid;grid-template-columns:170px minmax(0,1fr);gap:18px;align-items:center}
+.alloc{display:grid;grid-template-columns:clamp(170px,40%,320px) minmax(0,1fr);gap:18px;align-items:center}
 .allocside{min-width:0}
-@media (min-width:900px){.alloc{grid-template-columns:200px minmax(0,1fr);gap:24px}.lg,.lgh{grid-template-columns:12px minmax(0,1fr) 52px 72px 100px}.lg{padding:9px 0}}
-@media (max-width:560px){.alloc{grid-template-columns:1fr}.donutwrap{max-width:200px;margin:0 auto}}
+#alloc{container-type:inline-size}
+@container (min-width:640px){.alloc{gap:28px}.lg,.lgh{grid-template-columns:12px minmax(0,1fr) 56px 80px 110px}.lg{padding:10px 0;font-size:13.5px}}
+@container (max-width:460px){.alloc{grid-template-columns:1fr}.donutwrap{max-width:240px;margin:0 auto}}
+.donutwrap{width:100%}
+svg.donut circle[data-s]{cursor:pointer;transition:opacity .2s,stroke-width .2s}
+.lg[data-s]{cursor:pointer;border-radius:8px;transition:opacity .2s,background .15s}
+.lg[data-s]:hover{background:var(--card2)}
+.lg.sel{background:var(--card2)}
+.lg.dim,svg.donut.hasSel circle.dim{opacity:.35}
 svg.donut{width:100%;height:auto;display:block}
 svg.donut.anim{animation:pop .55s ease-out}
 svg.donut circle{transition:stroke-dasharray .6s ease,stroke-dashoffset .6s ease}
@@ -307,12 +315,25 @@ input.px{width:100%;background:var(--card2);color:var(--text);border:1px solid v
 .view[hidden]{display:none}
 .view{animation:viewin .28s ease-out}
 @keyframes viewin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-.prgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:12px 0}
-.prform{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr)) auto;gap:8px;align-items:end;margin:10px 0 4px}
+.prform{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin:10px 0 4px}
+.prform>div{flex:1 1 130px;min-width:0}
+.prform>button{flex:none}
+.prdet .hrow .t{white-space:nowrap}
+.prdet .hrow{grid-template-columns:minmax(0,1fr) auto auto 30px;align-items:center;gap:12px}
 .prform label{display:block;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--mut);margin-bottom:4px}
 .prform input,.prbar input,.prbar select{width:100%;min-width:0;background:var(--card2);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit}
-.prtog{display:flex;align-items:center;gap:6px;font:inherit;letter-spacing:inherit;text-transform:inherit;color:inherit;font-weight:inherit;padding:0;text-align:left}
-.prcar{width:12px}
+.prcar{width:12px;color:var(--mut)}
+.prfund{border-bottom:1px solid var(--line)}
+.prrow{display:grid;grid-template-columns:14px minmax(0,1fr) auto 64px;gap:10px;align-items:center;width:calc(100% + 12px);margin:0 -6px;padding:12px 6px;border-radius:10px;text-align:left;font:inherit;color:inherit}
+.prrow:hover{background:var(--card2)}
+.prn{font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prp{text-align:right;font-weight:700}
+.prtot{text-transform:none;letter-spacing:0;font-size:14px;color:var(--text)}
+.prdet{padding:2px 0 14px 24px}
+.prstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:12px}
+.prstats .lbl{font-size:10.5px}.prstats b{display:block;font-size:15px;margin-top:2px}
+.pract{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.pill.on{border-color:var(--accent);color:var(--accent)}
 .prbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
 .prbar select,.prbar input{flex:1;min-width:140px;width:auto}
 .prform input:focus,.prbar input:focus,.prbar select:focus{outline:2px solid color-mix(in srgb,var(--accent) 60%,transparent);outline-offset:0;border-color:transparent}
@@ -724,18 +745,20 @@ function buildModel() {
 /* ── gráficos ────────────────────────────────────────────────────────────── */
 const PAL = ['#5b8cff', '#f7931a', '#2ecc8f', '#b08cff', '#ff6b8a', '#39c5d4', '#e8c547', '#8a8a97'];
 const CATCOL = { 'PPR': '#2ecc8f', 'Ações': '#5b8cff', 'ETFs': '#b08cff', 'Cripto': '#f7931a', 'Cash': '#8a8a97', 'Outros': '#39c5d4' };
-function donut(slices, total, c1, c2, anim) {
-  const R = 62, C = 2 * Math.PI * R; let off = 0;
+function donut(slices, total, c1, c2, anim, sel) {
+  const R = 62, C = 2 * Math.PI * R; let off = 0, c3 = '';
+  const hit = sel != null && slices.find(x => x.label === sel);
+  if (hit) { c1 = hit.label.length > 12 ? hit.label.slice(0, 11) + '…' : hit.label; c2 = money(hit.value, base, 0); c3 = fmt(hit.value / total * 100, 1) + '%'; }
   const arcs = slices.map(s => {
     const len = s.value / total * C, d = Math.max(0, len - 1.6);
-    const el = `<circle r="${R}" cx="80" cy="80" fill="none" stroke="${s.color}" stroke-width="22" stroke-dasharray="${d} ${C - d}" stroke-dashoffset="${-off}" transform="rotate(-90 80 80)"/>`;
+    const on = sel === s.label, el = `<circle data-s="${esc(s.label)}" class="${sel != null && !on ? 'dim' : ''}" r="${R}" cx="80" cy="80" fill="none" stroke="${s.color}" stroke-width="${on ? 28 : 22}" stroke-dasharray="${d} ${C - d}" stroke-dashoffset="${-off}" transform="rotate(-90 80 80)"/>`;
     off += len; return el;
   }).join('');
-  return `<svg viewBox="0 0 160 160" class="donut${anim ? ' anim' : ''}" role="img" aria-label="Distribuição do portefólio"><circle r="${R}" cx="80" cy="80" fill="none" stroke="var(--card2)" stroke-width="22"/>${arcs}
-    <text x="80" y="76" text-anchor="middle" font-size="9.5" fill="var(--mut)" style="letter-spacing:.1em;text-transform:uppercase">${esc(c1)}</text>
-    <text x="80" y="94" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">${esc(c2)}</text></svg>`;
+  return `<svg viewBox="0 0 160 160" class="donut${anim ? ' anim' : ''}${sel != null ? ' hasSel' : ''}" role="img" aria-label="Distribuição do portefólio"><circle r="${R}" cx="80" cy="80" fill="none" stroke="var(--card2)" stroke-width="22"/>${arcs}
+    <text x="80" y="${c3 ? 72 : 76}" text-anchor="middle" font-size="9.5" fill="var(--mut)" style="letter-spacing:.1em;text-transform:uppercase">${esc(c1)}</text>
+    <text x="80" y="${c3 ? 89 : 94}" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">${esc(c2)}</text>${c3 ? `<text x="80" y="104" text-anchor="middle" font-size="9.5" fill="var(--mut)">${esc(c3)}</text>` : ''}</svg>`;
 }
-let allocBy = store.get('allocBy', 'cat');
+let allocBy = store.get('allocBy', 'cat'), allocSel = null;   // allocSel: grupo realçado (clique no donut ou na legenda)
 /* Variação por grupo da alocação: 24h (preço atual vs há 24h) ou vs compra média (resultado / investido). Modo por grupo, guardado. */
 let allocMode = store.get('allocMode', {});   // só { _d: '24h' | 'avg' }: um único switch global
 const dd = { map: new Map(), at: 0, busy: false, key: '', miss: false };      // id da posição -> variação em 24h na moeda base
@@ -847,13 +870,14 @@ function renderAlloc(loadingFirst) {
   if (!M) return;
   const slices = allocSlices(M), tot = slices.reduce((a, s) => a + s.value, 0);
   const m = curMode();
+  if (allocSel != null && !slices.some(x => x.label === allocSel)) allocSel = null;
   $('alloc').innerHTML = tot > 0 ? `
     <h2>Alocação <span class="seg" id="allocSeg">
       ${[['cat', 'Categoria'], ['asset', 'Ativo'], ['ccy', 'Moeda']].map(([k, l]) => `<button data-a="${k}" class="${allocBy === k ? 'on' : ''}">${l}</button>`).join('')}</span></h2>
-    <div class="alloc"><div class="donutwrap">${donut(slices, tot, 'Total', money(tot, base, 0), firstDraw)}</div>
+    <div class="alloc"><div class="donutwrap">${donut(slices, tot, 'Total', money(tot, base, 0), firstDraw, allocSel)}</div>
     <div class="allocside"><div class="lgmode"><span>Variação:</span><span class="seg" id="modeSeg">${[['24h', '24h'], ['avg', 'vs compra']].map(([k, l]) => `<button data-gm="${k}" class="${m === k ? 'on' : ''}">${l}</button>`).join('')}</span></div>
     <div class="lgh"><i></i><span>Grupo</span><span>Peso</span><span>Valor</span><span>${m === 'avg' ? 'vs compra' : '24h'}</span></div>
-    <div class="legend">${slices.map(s => `<div class="lg"><i class="sw" style="background:${s.color}"></i><span>${esc(s.label)}</span><b class="num">${fmt(s.value / tot * 100, 1)}%</b><span class="mut num">${money(s.value, base, 0)}</span>${allocChip(s)}</div>`).join('')}</div></div></div>`
+    <div class="legend">${slices.map(s => `<div class="lg${allocSel === s.label ? ' sel' : allocSel != null ? ' dim' : ''}" data-s="${esc(s.label)}"><i class="sw" style="background:${s.color}"></i><span>${esc(s.label)}</span><b class="num">${fmt(s.value / tot * 100, 1)}%</b><span class="mut num">${money(s.value, base, 0)}</span>${allocChip(s)}</div>`).join('')}</div></div></div>`
     : loadingFirst ? `<div class="sk" style="height:150px"></div>` : '';
   if (tot > 0) firstDraw = false;
 }
@@ -950,7 +974,7 @@ $('notifPanel').addEventListener('click', e => {
 // pprFunds: [{ id, name, price: { v, d } | null, buys: [{ id, d, amt, units }] }] — valores em EUR, guardado neste dispositivo
 // Fonte de verdade: Supabase (função am-ppr), partilhada por todos os dispositivos. O localStorage é só cache/offline.
 let pprRev = store.get('ppr-rev', null), pprDirty = store.get('ppr-dirty', false), pprBusy = false, pprAt = 0, pprSyncMsg = '';
-let pprOpen = false, pprFunds = store.get('ppr', []), pprSel = store.get('ppr-sel', null), pprAdding = false, pprMsg = '';
+let pprPanel = null, pprFunds = store.get('ppr', []), pprSel = store.get('ppr-sel', null), pprAdding = false, pprMsg = '';
 if (!Array.isArray(pprFunds)) pprFunds = [];
 const pprNum = v => { const x = parseFloat(String(v).trim().replace(/\s/g, '').replace(',', '.')); return isFinite(x) ? x : NaN; };
 const pprToday = () => new Date().toISOString().slice(0, 10);
@@ -1027,42 +1051,51 @@ function pprSave() {
   if (typeof pf !== 'undefined') pf.at = 0;   // força o gráfico de evolução a refletir já o novo valor
 }
 function renderPpr() {
-  if (!pprFunds.some(f => f.id === pprSel)) pprSel = pprFunds.length ? pprFunds[0].id : null;
-  const f = pprFunds.find(x => x.id === pprSel), c = f ? pprCalc(f) : null;
-  const e = v => money(v, 'EUR');
-  const tot = pprFunds.reduce((a, x) => a + pprCalc(x).value, 0);
-  const head = `<h2 style="margin-bottom:${pprOpen ? 12 : 0}px"><button class="prtog" id="prTog" aria-expanded="${pprOpen}" aria-controls="prBody"><span class="prcar">${pprOpen ? '▾' : '▸'}</span> PPR <span>${pprFunds.length || ''}</span></button>${pprOpen || !pprFunds.length ? '' : `<span class="num" style="text-transform:none;letter-spacing:0;font-size:14px;color:var(--text)">${money(tot, 'EUR')}</span>`}</h2>`;
-  if (!pprOpen) { $('ppr').innerHTML = head; return; }
-  $('ppr').innerHTML = head + `<div id="prBody">
-    <div class="prbar">${pprFunds.length ? `<select id="prSel" aria-label="PPR">${pprFunds.map(x => `<option value="${esc(x.id)}"${x.id === pprSel ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select>` : ''}
-      ${pprAdding || !pprFunds.length ? `<input id="prName" placeholder="Nome do PPR (ex.: Casa da Moeda …)" maxlength="60" aria-label="Nome do PPR"><button class="btn" id="prCreate">Criar PPR</button>${pprFunds.length ? '<button class="pill" id="prCancel">Cancelar</button>' : ''}`
-        : '<button class="pill" id="prNew">+ Novo PPR</button>'}</div>
-    <div class="mut" style="font-size:12px;min-height:18px">${esc(pprMsg)}</div>
-    ${f ? `<div class="prgrid">
-        <div class="tile"><div class="lbl">Valor atual</div><div class="v num">${e(c.value)}</div><div class="n">${c.priced ? `${qv(c.units ? fmt(c.units, 4) : '0')} un. × ${qv(fmt(f.price.v, 4))} €` : 'sem preço da unidade: usa o investido'}</div></div>
-        <div class="tile"><div class="lbl">Investido</div><div class="v num">${e(c.inv)}</div><div class="n">${f.buys.length} entrada${f.buys.length === 1 ? '' : 's'}</div></div>
-        <div class="tile"><div class="lbl">Resultado</div><div class="v num ${cls(c.pnl)}">${c.priced ? smoney(c.pnl, 'EUR') : '—'}</div><div class="n ${cls(c.pnl)}">${c.priced ? pct(c.pct) : ''}</div></div>
-        <div class="tile"><div class="lbl">Unidades</div><div class="v num">${qv(fmt(c.units, 4))}</div><div class="n">custo médio ${c.units ? qv(fmt(c.avg, 4)) + ' €' : '—'}</div></div>
+  if (pprSel && !pprFunds.some(f => f.id === pprSel)) pprSel = null;
+  if (!pprSel && pprFunds.length === 1) pprSel = pprFunds[0].id;
+  const e = v => money(v, 'EUR'), tot = pprFunds.reduce((a, x) => a + pprCalc(x).value, 0);
+  const rows = pprFunds.map(f => {
+    const c = pprCalc(f), open = f.id === pprSel;
+    const row = `<button class="prrow" data-pf="${esc(f.id)}" aria-expanded="${open}"><span class="prcar">${open ? '▾' : '▸'}</span><span class="prn">${esc(f.name)}</span><span class="num">${e(c.value)}</span><span class="num prp ${c.priced ? cls(c.pnl) : ''}">${c.priced ? pct(c.pct) : '—'}</span></button>`;
+    if (!open) return `<div class="prfund">${row}</div>`;
+    const panel = pprPanel === 'buy'
+      ? `<form class="prform" id="prBuy" autocomplete="off"><div><label for="prAmt">Montante (€)</label><input id="prAmt" inputmode="decimal" placeholder="ex.: 500" required></div><div><label for="prU">Unidades</label><input id="prU" inputmode="decimal" placeholder="ex.: 41,2345" required></div><div><label for="prD">Data</label><input id="prD" type="date" value="${pprToday()}" required></div><button class="btn" type="submit">Guardar</button></form>`
+      : pprPanel === 'price'
+      ? `<form class="prform" id="prPrice" autocomplete="off"><div><label for="prPx">Valor da unidade (€)</label><input id="prPx" inputmode="decimal" placeholder="ex.: 12,3456" value="${f.price ? esc(String(f.price.v).replace('.', ',')) : ''}" required></div><div><label for="prPxD">Data</label><input id="prPxD" type="date" value="${pprToday()}"></div><button class="btn" type="submit">Guardar</button></form>`
+      : pprPanel === 'more'
+      ? `<form class="prform" id="prNews" autocomplete="off"><div><label for="prQ">Pesquisa de notícias</label><input id="prQ" placeholder="${esc(f.name)}" value="${esc(f.q || '')}" maxlength="80"></div><button class="pill" type="submit">Guardar</button></form><div style="margin-top:8px"><button class="pill" id="prDel">Apagar este PPR</button></div>` : '';
+    const act = (k, l) => `<button class="pill${pprPanel === k ? ' on' : ''}" data-pp="${k}">${l}</button>`;
+    return `<div class="prfund open">${row}<div class="prdet">
+      <div class="prstats">
+        <div><span class="lbl">Resultado</span><b class="num ${c.priced ? cls(c.pnl) : ''}">${c.priced ? smoney(c.pnl, 'EUR') : '—'}</b></div>
+        <div><span class="lbl">Investido</span><b class="num">${e(c.inv)}</b></div>
+        <div><span class="lbl">Unidades</span><b class="num">${qv(fmt(c.units, 4))}</b></div>
+        <div><span class="lbl">Valor/unidade</span><b class="num">${c.priced ? qv(fmt(f.price.v, 4)) + ' €' : '—'}</b></div>
       </div>
-      <form class="prform" id="prPrice" autocomplete="off"><div><label for="prPx">Valor atual da unidade (€)</label><input id="prPx" inputmode="decimal" placeholder="ex.: 12,3456" value="${f.price ? esc(String(f.price.v).replace('.', ',')) : ''}"></div><div><label for="prPxD">Data</label><input id="prPxD" type="date" value="${esc(f.price ? f.price.d : pprToday())}"></div><button class="pill" type="submit">Atualizar preço</button></form>
-      <form class="prform" id="prNews" autocomplete="off"><div style="grid-column:1/-2"><label for="prQ">Pesquisa de notícias</label><input id="prQ" placeholder="${esc(f.name)}" value="${esc(f.q || '')}" maxlength="80"></div><button class="pill" type="submit">Guardar</button></form>
-      <h2 style="margin-top:16px">Adicionar compra</h2>
-      <form class="prform" id="prBuy" autocomplete="off"><div><label for="prD">Data</label><input id="prD" type="date" value="${pprToday()}" required></div><div><label for="prAmt">Montante (€)</label><input id="prAmt" inputmode="decimal" placeholder="ex.: 500" required></div><div><label for="prU">Unidades compradas</label><input id="prU" inputmode="decimal" placeholder="ex.: 41,2345" required></div><button class="btn" type="submit">Adicionar</button></form>
-      ${[...f.buys].sort((a, b) => b.d.localeCompare(a.d)).map(b => `<div class="hrow"><div><span class="t">${esc(b.d)}</span></div><div class="r num"><b>${e(b.amt)}</b></div><div class="s">${qv(fmt(b.units, 4))} un. · ${b.units ? qv(fmt(b.amt / b.units, 4)) : '—'} €/un.</div><div class="r"><button class="x" data-bd="${esc(b.id)}" aria-label="Remover entrada" title="Remover">×</button></div></div>`).join('')}
-      <div style="margin-top:10px"><button class="pill" id="prDel">Apagar este PPR</button></div>` : '<div class="empty">Cria o teu primeiro PPR para registar compras.</div>'}
-    <div class="foot" id="prSync" style="margin-top:8px">${esc(pprSyncMsg)}</div></div>`;
+      <div class="pract">${act('buy', '+ Compra')}${act('price', 'Atualizar preço')}${act('more', '⋯')}</div>
+      ${panel}
+      ${[...f.buys].sort((a, b) => b.d.localeCompare(a.d)).map(b => `<div class="hrow"><div><span class="t">${esc(b.d)}</span></div><div class="s">${qv(fmt(b.units, 4))} un. · ${b.units ? qv(fmt(b.amt / b.units, 4)) : '—'} €/un.</div><div class="r num"><b>${e(b.amt)}</b></div><div class="r"><button class="x" data-bd="${esc(b.id)}" aria-label="Remover entrada" title="Remover">×</button></div></div>`).join('')}
+    </div></div>`;
+  }).join('');
+  $('ppr').innerHTML = `<h2>PPR${pprFunds.length ? `<span class="num prtot">${money(tot, 'EUR')}</span>` : ''}</h2>${rows}
+    ${pprMsg ? `<div class="mut" style="font-size:12px;margin-top:8px">${esc(pprMsg)}</div>` : ''}
+    <div class="prbar" style="margin-top:10px">${pprAdding || !pprFunds.length ? `<input id="prName" placeholder="Nome do PPR (ex.: Casa da Moeda …)" maxlength="60" aria-label="Nome do PPR"><button class="btn" id="prCreate">Criar PPR</button>${pprFunds.length ? '<button class="pill" id="prCancel">Cancelar</button>' : ''}` : '<button class="pill" id="prNew">+ Novo PPR</button>'}</div>
+    <div class="foot" id="prSync" style="margin-top:8px">${esc(pprSyncMsg)}</div>`;
 }
-$('ppr').addEventListener('click', e => { if (e.target.closest('#prTog')) { pprOpen = !pprOpen; renderPpr(); } });
-$('ppr').addEventListener('change', e => { if (e.target.id === 'prSel') { pprSel = e.target.value; pprMsg = ''; store.set('ppr-sel', pprSel); renderPpr(); } });
+$('ppr').addEventListener('click', e => {
+  const r = e.target.closest('[data-pf]'); if (!r) return;
+  pprSel = pprSel === r.dataset.pf ? null : r.dataset.pf; pprPanel = null; pprMsg = ''; store.set('ppr-sel', pprSel); renderPpr();
+});
 $('ppr').addEventListener('click', e => {
   const t = e.target.closest('button'); if (!t) return;
-  if (t.id === 'prNew') { pprAdding = true; pprMsg = ''; renderPpr(); const i = $('prName'); if (i) i.focus(); }
+  if (t.dataset.pp) { pprPanel = pprPanel === t.dataset.pp ? null : t.dataset.pp; pprMsg = ''; renderPpr(); const i = $(pprPanel === 'buy' ? 'prAmt' : pprPanel === 'price' ? 'prPx' : 'prQ'); if (i) i.focus(); }
+  else if (t.id === 'prNew') { pprAdding = true; pprMsg = ''; renderPpr(); const i = $('prName'); if (i) i.focus(); }
   else if (t.id === 'prCancel') { pprAdding = false; pprMsg = ''; renderPpr(); }
   else if (t.id === 'prCreate') {
     const name = $('prName').value.trim();
     if (!name) { pprMsg = 'Indica o nome do PPR.'; renderPpr(); return; }
     const id = Date.now().toString(36);
-    pprFunds.push({ id, name, price: null, buys: [] }); pprSel = id; pprAdding = false; pprMsg = ''; pprSave();
+    pprFunds.push({ id, name, price: null, buys: [] }); pprSel = id; pprPanel = 'buy'; pprAdding = false; pprMsg = ''; pprSave();
   }
   else if (t.dataset.bd) { const f = pprFunds.find(x => x.id === pprSel); if (f) { f.buys = f.buys.filter(b => b.id !== t.dataset.bd); pprMsg = ''; pprSave(); } }
   else if (t.id === 'prDel') {
@@ -1080,13 +1113,13 @@ $('ppr').addEventListener('submit', e => {
     f.buys.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), d, amt, units });
     // o preço implícito da compra mais recente serve de preço da unidade, se ainda não houver um mais recente
     if (!f.price || d > f.price.d) f.price = { v: amt / units, d };
-    pprMsg = 'Compra adicionada.'; pprSave();
+    pprMsg = 'Compra adicionada.'; pprPanel = null; pprSave();
   } else if (e.target.id === 'prPrice') {
     const v = pprNum($('prPx').value), d = $('prPxD').value || pprToday();
     if (!(v > 0)) { pprMsg = 'Indica um valor da unidade positivo.'; renderPpr(); return; }
-    f.price = { v, d }; f.pxh = (f.pxh || []).filter(p => p.d !== d).concat([{ d, v }]); pprMsg = 'Preço atualizado.'; pprSave();
+    f.price = { v, d }; f.pxh = (f.pxh || []).filter(p => p.d !== d).concat([{ d, v }]); pprMsg = 'Preço atualizado.'; pprPanel = null; pprSave();
   } else if (e.target.id === 'prNews') {
-    f.q = $('prQ').value.trim(); pprMsg = 'Pesquisa de notícias guardada.'; pprSave();
+    f.q = $('prQ').value.trim(); pprMsg = 'Pesquisa de notícias guardada.'; pprPanel = null; pprSave();
   }
 });
 
@@ -2181,10 +2214,11 @@ $('tabbar').onclick = e => { const b = e.target.closest('button'); if (b) go(b.d
 // o switch usa pointerup (e não click): se a lista for redesenhada a meio do toque, o click perdia-se
 $('alloc').addEventListener('pointerup', e => {
   if (e.pointerType === 'mouse' && e.button !== 0) return;
+  const sl = e.target.closest('[data-s]'); if (sl) { allocSel = allocSel === sl.dataset.s ? null : sl.dataset.s; renderAlloc(); return; }
   const g = e.target.closest('[data-gm]'); if (g) { allocMode = { _d: g.dataset.gm }; store.set('allocMode', allocMode); renderAlloc(); return; }
 });
 $('alloc').onclick = e => {
-   const b = e.target.closest('[data-a]'); if (b) { allocBy = b.dataset.a; store.set('allocBy', allocBy); renderPortfolio(); } };
+   const b = e.target.closest('[data-a]'); if (b) { allocBy = b.dataset.a; allocSel = null; store.set('allocBy', allocBy); renderPortfolio(); } };
 $('newsSeg').onclick = e => { const b = e.target.closest('button'); if (!b) return; news.tab = b.dataset.n; document.querySelectorAll('#newsSeg button').forEach(x => x.classList.toggle('on', x === b)); renderNews(); };
 $('presets').onclick = e => { const b = e.target.closest('[data-p]'); if (b) { PRESETS[+b.dataset.p][1](); saveScen(); renderWhatIf(); } };
 $('fxShock').oninput = e => { scen.fx = +e.target.value; saveScen(); $('fxShockV').textContent = (scen.fx > 0 ? '+' : '') + scen.fx + '%'; renderWhatIfSummary(); };
