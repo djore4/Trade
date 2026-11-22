@@ -392,7 +392,6 @@ input.px{width:100%;background:var(--card2);color:var(--text);border:1px solid v
     <div class="card" id="tCalc" hidden></div>
     <div class="card" id="tAlerts"><h2>Alertas <span class="mut" id="alCount"></span></h2><div id="alPush"></div><div id="alForm"></div><div id="alList"></div></div>
     <div class="card" id="tPpr" hidden></div>
-    <div class="card" id="tAll"></div>
     <div class="card" id="tAct" hidden></div>
   </main>
 
@@ -1431,7 +1430,7 @@ function renderTrade() {
   renderTradePpr();
   if (!items.length) {
     $('tSummary').innerHTML = '<div class="empty">Sem posições com gráfico (ações, ETFs ou futuros).</div>';
-    $('tChips').innerHTML = ''; $('tDetail').innerHTML = ''; $('tAll').innerHTML = ''; renderMarginCalc(null); return;
+    $('tChips').innerHTML = ''; $('tDetail').innerHTML = ''; renderMarginCalc(null); return;
   }
   let sel = curItem(items);
   if (!sel) { sel = items[0]; ui.sel = sel.id; saveUi(); if (!$('v-trade').hidden) loadCandles(true); }
@@ -1472,13 +1471,6 @@ function renderTrade() {
       <div class="fgrid">${m('PnL aberto', smoney(h.pnl) + ' · ' + pct(h.pnlPct, 1), cls(h.pnl))}${m('Valor', money(h.value))}${m('Peso', M && M.value ? fmt(h.value / M.value * 100, 1) + '%' : '—')}
       ${m('Quantidade', qv(fmt(h.qty, h.qty % 1 ? 4 : 0)))}${m('Preço médio', av)}${m('Preço', px)}${m('Investido', money(h.cost))}${h.price > 0 && h.avg > 0 ? m('Para empatar', (h.avg / h.price >= 1 ? '+' : '') + fmt((h.avg / h.price - 1) * 100, 1) + '%', h.avg > h.price ? 'amber' : 'pos') : ''}</div>`;
   }
-
-  // tabela de todas as posições
-  $('tAll').innerHTML = `<h2>Todas as posições abertas</h2><div class="trow head"><div>Ativo</div><div class="hide-s">Tamanho</div><div>Entrada → Preço</div><div>PnL</div></div>` + (pos.length ? pos.map(i => {
-    const sz = qv(i.kind === 'fut' ? fmt(i.f.size, 2) : fmt(i.h.qty, i.h.qty % 1 ? 3 : 0)), ppr = i.kind === 'ppr';
-    const e = i.kind === 'fut' ? `${price(i.f.avg)} → ${price(i.f.mark)}` : `${price(i.h.avg)} → ${price(i.h.price)}`;
-    return `<div class="trow"${ppr ? '' : ` data-sel="${esc(i.id)}"`}><div><b>${esc(i.label)}</b> <span class="chip">${esc(i.tag)}</span></div><div class="hide-s num">${sz}</div><div class="num" style="font-size:12.5px">${e}</div><div class="num ${cls(i.pnl)}"><b>${smoney(i.pnl)}</b><div style="font-size:11px">${pct(i.pct, 1)}</div></div></div>`;
-  }).join('') : '<div class="empty">Sem posições abertas.</div>');
 
   renderLevels();
   renderAlerts(items, sel);
@@ -1672,7 +1664,6 @@ function setFullscreen(on) {
   $('fsBtn').textContent = on ? '✕' : '⛶';
 }
 $('tChips').onclick = e => { const b = e.target.closest('[data-sel]'); if (b) selectTrade(b.dataset.sel); };
-$('tAll').onclick = e => { const r = e.target.closest('[data-sel]'); if (r) selectTrade(r.dataset.sel); };
 $('tfSeg').onclick = e => { const b = e.target.closest('[data-tf]'); if (!b) return; const it = curItem(tradeItems()); if (!it) return; ui.tf[it.src.source] = b.dataset.tf; saveUi(); renderTfSeg(); loadCandles(true); startLive(); };
 $('indSeg').onclick = e => { const b = e.target.closest('[data-i]'); if (!b) return; ui.ind[b.dataset.i] = !ui.ind[b.dataset.i]; saveUi(); b.classList.toggle('on', ui.ind[b.dataset.i]); paintSeries(false); renderLevels(); if (b.dataset.i === 'liq') liqEnsure(); };
 $('fsBtn').onclick = () => setFullscreen(!$('chartCard').classList.contains('fs'));
