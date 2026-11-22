@@ -117,7 +117,9 @@ button:active{transform:scale(.96)}
 svg.spark{width:100%;height:64px;display:block;margin-top:10px}
 
 /* Donut */
-.alloc{display:grid;grid-template-columns:170px 1fr;gap:18px;align-items:center}
+.alloc{display:grid;grid-template-columns:170px minmax(0,1fr);gap:18px;align-items:center}
+.allocside{min-width:0}
+@media (min-width:900px){.alloc{grid-template-columns:200px minmax(0,1fr);gap:24px}.lg,.lgh{grid-template-columns:12px minmax(0,1fr) 52px 72px 100px}.lg{padding:9px 0}}
 @media (max-width:560px){.alloc{grid-template-columns:1fr}.donutwrap{max-width:200px;margin:0 auto}}
 svg.donut{width:100%;height:auto;display:block}
 svg.donut.anim{animation:pop .55s ease-out}
@@ -849,9 +851,9 @@ function renderAlloc(loadingFirst) {
     <h2>Alocação <span class="seg" id="allocSeg">
       ${[['cat', 'Categoria'], ['asset', 'Ativo'], ['ccy', 'Moeda']].map(([k, l]) => `<button data-a="${k}" class="${allocBy === k ? 'on' : ''}">${l}</button>`).join('')}</span></h2>
     <div class="alloc"><div class="donutwrap">${donut(slices, tot, 'Total', money(tot, base, 0), firstDraw)}</div>
-    <div class="lgmode"><span>Variação:</span><span class="seg" id="modeSeg">${[['24h', '24h'], ['avg', 'vs compra']].map(([k, l]) => `<button data-gm="${k}" class="${m === k ? 'on' : ''}">${l}</button>`).join('')}</span></div>
+    <div class="allocside"><div class="lgmode"><span>Variação:</span><span class="seg" id="modeSeg">${[['24h', '24h'], ['avg', 'vs compra']].map(([k, l]) => `<button data-gm="${k}" class="${m === k ? 'on' : ''}">${l}</button>`).join('')}</span></div>
     <div class="lgh"><i></i><span>Grupo</span><span>Peso</span><span>Valor</span><span>${m === 'avg' ? 'vs compra' : '24h'}</span></div>
-    <div class="legend">${slices.map(s => `<div class="lg"><i class="sw" style="background:${s.color}"></i><span>${esc(s.label)}</span><b class="num">${fmt(s.value / tot * 100, 1)}%</b><span class="mut num">${money(s.value, base, 0)}</span>${allocChip(s)}</div>`).join('')}</div></div>`
+    <div class="legend">${slices.map(s => `<div class="lg"><i class="sw" style="background:${s.color}"></i><span>${esc(s.label)}</span><b class="num">${fmt(s.value / tot * 100, 1)}%</b><span class="mut num">${money(s.value, base, 0)}</span>${allocChip(s)}</div>`).join('')}</div></div></div>`
     : loadingFirst ? `<div class="sk" style="height:150px"></div>` : '';
   if (tot > 0) firstDraw = false;
 }
