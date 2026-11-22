@@ -117,7 +117,9 @@ button:active{transform:scale(.96)}
 svg.spark{width:100%;height:64px;display:block;margin-top:10px}
 
 /* Donut */
-.alloc{display:grid;grid-template-columns:170px 1fr;gap:18px;align-items:center}
+.alloc{display:grid;grid-template-columns:170px minmax(0,1fr);gap:18px;align-items:center}
+.allocside{min-width:0}
+@media (min-width:900px){.alloc{grid-template-columns:200px minmax(0,1fr);gap:24px}.lg,.lgh{grid-template-columns:12px minmax(0,1fr) 52px 72px 100px}.lg{padding:9px 0}}
 @media (max-width:560px){.alloc{grid-template-columns:1fr}.donutwrap{max-width:200px;margin:0 auto}}
 svg.donut{width:100%;height:auto;display:block}
 svg.donut.anim{animation:pop .55s ease-out}
@@ -129,10 +131,8 @@ svg.donut circle{transition:stroke-dasharray .6s ease,stroke-dashoffset .6s ease
 .lg>span:nth-child(2){overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lg>b,.lg>.mut,.lgh>span:nth-child(n+3){text-align:right;font-variant-numeric:tabular-nums}
 .lgh{padding:0 0 4px;border-bottom:1px solid var(--line);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
-.lgv{font:inherit;font-size:12.5px;font-weight:700;background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:3px 7px;cursor:pointer;color:var(--mut);width:100%;text-align:right;line-height:1.25;touch-action:manipulation;-webkit-tap-highlight-color:transparent;font-variant-numeric:tabular-nums}
-.lgv:active{transform:scale(.96)}
+.lgv{display:block;font-size:12.5px;font-weight:700;color:var(--mut);width:100%;text-align:right;line-height:1.25;font-variant-numeric:tabular-nums}
 .lgv small{display:block;font-weight:500;font-size:11px;opacity:.85}
-.lgv em{font-style:normal;font-size:9.5px;font-weight:600;opacity:.7;margin-left:4px;text-transform:uppercase;letter-spacing:.03em}
 .lgv.pos{color:var(--green)}.lgv.neg{color:var(--red)}
 .lgmode{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:2px 0 8px;font-size:12px;color:var(--mut)}
 @media (max-width:420px){.lg,.lgh{grid-template-columns:10px minmax(0,1fr) 40px 56px 86px;gap:6px}.lg{font-size:12.5px}}
@@ -737,7 +737,7 @@ function donut(slices, total, c1, c2, anim) {
 }
 let allocBy = store.get('allocBy', 'cat');
 /* Variação por grupo da alocação: 24h (preço atual vs há 24h) ou vs compra média (resultado / investido). Modo por grupo, guardado. */
-let allocMode = store.get('allocMode', {});
+let allocMode = store.get('allocMode', {});   // só { _d: '24h' | 'avg' }: um único switch global
 const dd = { map: new Map(), at: 0, busy: false, key: '', miss: false };      // id da posição -> variação em 24h na moeda base
 async function loadDayDelta() {
   if (dd.busy || !M || !M.holdings.length) return;
@@ -838,21 +838,22 @@ function renderStatus() {
 }
 const SKEL = `<div class="sk" style="height:12px;width:40%"></div><div class="sk" style="height:40px;width:70%;margin:12px 0"></div><div class="sk" style="height:12px;width:55%"></div><div class="sk" style="height:10px;margin-top:20px"></div><div class="sk" style="height:10px;margin-top:10px;width:80%"></div>`;
 
-const modeOf = k => (allocMode[k] || allocMode._d) === 'avg' ? 'avg' : '24h';
-function allocChip(s, mixed) {
-  const m = modeOf(s.label), v = groupChg(s.hs, m), tip = m === 'avg' ? 'vs compra média' : 'últimas 24h', tag = mixed && v ? `<em>${m === 'avg' ? 'PM' : '24h'}</em>` : '';
-  return `<button class="lgv ${v == null ? '' : cls(v.amt)}" data-m="${esc(s.label)}" title="${tip} · toca para alternar">${v == null ? '—' : pct(v.pct, 1)}<small>${v == null ? '' : smoney(v.amt, base, Math.abs(v.amt) >= 100 ? 0 : 2)}${tag}</small></button>`;
+const curMode = () => allocMode._d === 'avg' ? 'avg' : '24h';
+function allocChip(s) {
+  const v = groupChg(s.hs, curMode());
+  return `<span class="lgv ${v == null ? '' : cls(v.amt)}">${v == null ? '—' : pct(v.pct, 1)}<small>${v == null ? '' : smoney(v.amt, base, Math.abs(v.amt) >= 100 ? 0 : 2)}</small></span>`;
 }
 function renderAlloc(loadingFirst) {
   if (!M) return;
-  const slices = allocSlices(M), tot = slices.reduce((a, s) => a + s.value, 0), mixed = new Set(slices.map(s => modeOf(s.label))).size > 1;
+  const slices = allocSlices(M), tot = slices.reduce((a, s) => a + s.value, 0);
+  const m = curMode();
   $('alloc').innerHTML = tot > 0 ? `
     <h2>Alocação <span class="seg" id="allocSeg">
       ${[['cat', 'Categoria'], ['asset', 'Ativo'], ['ccy', 'Moeda']].map(([k, l]) => `<button data-a="${k}" class="${allocBy === k ? 'on' : ''}">${l}</button>`).join('')}</span></h2>
     <div class="alloc"><div class="donutwrap">${donut(slices, tot, 'Total', money(tot, base, 0), firstDraw)}</div>
-    <div class="lgmode"><span>Variação:</span><span class="seg" id="modeSeg">${[['24h', '24h'], ['avg', 'vs compra']].map(([k, l]) => `<button data-gm="${k}" class="${slices.every(s => modeOf(s.label) === k) ? 'on' : ''}">${l}</button>`).join('')}</span></div>
-    <div class="lgh"><i></i><span>Grupo</span><span>Peso</span><span>Valor</span><span>${modeOf(slices[0].label) === 'avg' && slices.every(s => modeOf(s.label) === 'avg') ? 'vs compra' : slices.every(s => modeOf(s.label) === '24h') ? '24h' : '24h / compra'}</span></div>
-    <div class="legend">${slices.map(s => `<div class="lg"><i class="sw" style="background:${s.color}"></i><span>${esc(s.label)}</span><b class="num">${fmt(s.value / tot * 100, 1)}%</b><span class="mut num">${money(s.value, base, 0)}</span>${allocChip(s, mixed)}</div>`).join('')}</div></div>`
+    <div class="allocside"><div class="lgmode"><span>Variação:</span><span class="seg" id="modeSeg">${[['24h', '24h'], ['avg', 'vs compra']].map(([k, l]) => `<button data-gm="${k}" class="${m === k ? 'on' : ''}">${l}</button>`).join('')}</span></div>
+    <div class="lgh"><i></i><span>Grupo</span><span>Peso</span><span>Valor</span><span>${m === 'avg' ? 'vs compra' : '24h'}</span></div>
+    <div class="legend">${slices.map(s => `<div class="lg"><i class="sw" style="background:${s.color}"></i><span>${esc(s.label)}</span><b class="num">${fmt(s.value / tot * 100, 1)}%</b><span class="mut num">${money(s.value, base, 0)}</span>${allocChip(s)}</div>`).join('')}</div></div></div>`
     : loadingFirst ? `<div class="sk" style="height:150px"></div>` : '';
   if (tot > 0) firstDraw = false;
 }
@@ -2177,11 +2178,10 @@ function go(t) {
   if (t !== 'ai') window.scrollTo({ top: 0 });
 }
 $('tabbar').onclick = e => { const b = e.target.closest('button'); if (b) go(b.dataset.t); };
-// o toque no grupo usa pointerup (e não click): se a lista for redesenhada a meio do toque, o click perdia-se
+// o switch usa pointerup (e não click): se a lista for redesenhada a meio do toque, o click perdia-se
 $('alloc').addEventListener('pointerup', e => {
   if (e.pointerType === 'mouse' && e.button !== 0) return;
   const g = e.target.closest('[data-gm]'); if (g) { allocMode = { _d: g.dataset.gm }; store.set('allocMode', allocMode); renderAlloc(); return; }
-  const c = e.target.closest('[data-m]'); if (c) { const k = c.dataset.m; allocMode[k] = modeOf(k) === 'avg' ? '24h' : 'avg'; store.set('allocMode', allocMode); renderAlloc(); }
 });
 $('alloc').onclick = e => {
    const b = e.target.closest('[data-a]'); if (b) { allocBy = b.dataset.a; store.set('allocBy', allocBy); renderPortfolio(); } };
