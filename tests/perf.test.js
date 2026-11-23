@@ -84,3 +84,14 @@ test('income 12m', () => {
   const now = 400 * D, r = P.income([{ ts: now - 10 * D, amt: 5, ticker: 'A' }, { ts: now - 400 * D, amt: 99, ticker: 'A' }, { ts: now - 5 * D, amt: 2, ticker: 'B' }], now);
   close(r.total12m, 7); assert.equal(r.by[0].ticker, 'A');
 });
+
+test('netCapital: levantamento reduz o capital e não cria ganho falso', () => {
+  // 3000 depositados, 500 levantados (venda de ETFs): capital líquido 2500; valor atual 2800 → ganho 300 (+12%)
+  const r = P.netCapital([{ ts: 1, eur: 3000 }, { ts: 2, eur: -500 }], 2800);
+  close(r.deposits, 3000); close(r.withdrawals, 500); close(r.net, 2500); close(r.gain, 300); close(r.pct, 12); assert.equal(r.first, 1);
+});
+test('netCapital: ignora lixo e sem valor não calcula ganho', () => {
+  const r = P.netCapital([{ ts: 1, eur: NaN }, { ts: 2, eur: 0 }, { ts: 3, eur: 100 }], null);
+  close(r.net, 100); assert.equal(r.gain, null); assert.equal(r.pct, null); assert.equal(r.n, 1);
+  assert.equal(P.netCapital([], 10).pct, null);
+});

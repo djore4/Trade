@@ -4,6 +4,7 @@
 //   list { days? }           -> { snapshots, flows }
 //   flows_sync { days? }     capital que entra/sai do perímetro: Bybit (livro de transações da conta de trading: transferências + staking), T212 (depósitos/levantamentos) e compras de PPR
 //   flow_add { eur, ts?, note? } | flow_del { id }   fluxos manuais (compras com cartão/P2P, transferências, etc.)
+//   t212_capital { force? }  -> { items:[{ref,ts,eur}], complete, at } depósitos (+) e levantamentos (−) T212 de SEMPRE (sem corte da análise); sincroniza por etapas e guarda em pf_cache
 //   income                   -> dividendos T212 (cache 12h)
 //   funding { symbols[] }    -> funding atual e intervalo por contrato
 //   settings_get | settings_set { start }   data de início da análise (nada anterior é importado/mostrado; set apaga o anterior)
@@ -190,6 +191,48 @@ Deno.serve(async (req) => {
       if (!id.startsWith('manual:')) return json({ error: 'só os fluxos manuais podem ser apagados' }, 400);
       const { error } = await supa.from('am_flows').delete().eq('id', id);
       return error ? json({ error: error.message }, 400) : json({ ok: true });
+    }
+
+    /* ── capital líquido T212 (depósitos − levantamentos, histórico completo) ── */
+    if (action === 't212_capital') {
+      if (!Deno.env.get('T212_API_KEY')) return json({ items: [], complete: true, note: 'T212 não configurada' });
+      const K = 't212:capital';
+      const { data: c } = await supa.from('pf_cache').select('v,at').eq('k', K).maybeSingle();
+      const cur = c?.v && Array.isArray(c.v.items) ? c.v : { items: [], next: null, complete: false };
+      const age = c ? Date.now() - Date.parse(c.at) : Infinity;
+      if (cur.complete && age < 6 * 3600_000 && !body?.force) return json({ items: cur.items, complete: true, at: c!.at, cached: true });
+      // completo mas velho: só as páginas mais recentes (dedupe por referência); incompleto: continua de onde ficou
+      const resume = !cur.complete && cur.next;
+      let nextUrl: string | null = resume ? `https://${new URL(t212Base()).host}${cur.next}` : `${t212Base()}/equity/history/transactions?limit=50`;
+      const maxPages = resume || !cur.items.length ? 6 : 2;
+      const byRef = new Map<string, any>(cur.items.map((x: any) => [x.ref, x]));
+      let hitEnd = false, error: string | null = null, nextPath: string | null = resume ? cur.next : null;
+      for (let i = 0; i < maxPages && nextUrl; i++) {
+        if (i) await sleep(11000);
+        const r = await fetch(nextUrl, { headers: t212Headers(), signal: AbortSignal.timeout(15000) });
+        if (!r.ok) { error = `T212 ${r.status}`; break; }
+        const d = await r.json();
+        for (const x of d.items ?? []) {
+          const t = String(x.type || '').toUpperCase();
+          if (t !== 'DEPOSIT' && t !== 'WITHDRAW' && t !== 'WITHDRAWAL') continue;
+          const ts = Date.parse(x.dateTime); if (!ts) continue;
+          const a = num(x.amount), amt = t === 'DEPOSIT' ? Math.abs(a) : -Math.abs(a);
+          const ccy = String(x.currency || 'EUR');
+          const e = ccy === 'EUR' ? 1 : (await eurPerUsd(isoDay(ts)) ?? await eurPerUsd());
+          let eur: number | null = null;
+          if (ccy === 'EUR') eur = amt; else if (ccy === 'USD' && e) eur = amt * e;
+          if (eur == null) continue;
+          byRef.set(String(x.reference || ts), { ref: String(x.reference || ts), ts: new Date(ts).toISOString(), eur });
+        }
+        nextPath = d.nextPagePath ?? null;
+        nextUrl = nextPath ? `https://${new URL(t212Base()).host}${nextPath}` : null;
+        if (!nextPath) hitEnd = true;
+      }
+      const complete = resume || !cur.items.length ? hitEnd : (cur.complete || hitEnd);
+      const items = [...byRef.values()].sort((a, b) => Date.parse(a.ts) - Date.parse(b.ts));
+      const v = { items, next: complete ? null : (resume || !cur.items.length ? nextPath : cur.next), complete };
+      await supa.from('pf_cache').upsert({ k: K, v, at: new Date().toISOString() });
+      return json({ items, complete, at: new Date().toISOString(), ...(error ? { error } : {}) });
     }
 
     /* ── rendimento (dividendos T212) ── */
