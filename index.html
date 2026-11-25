@@ -669,7 +669,7 @@ async function loadCapital(force) {
     const d = await amPost('am-data', { action: 't212_capital', force: !!force }, 120000, true);
     cap.items = d.items || []; cap.complete = !!d.complete; cap.at = Date.now(); cap.err = d.error || null;
     store.set(CAP_KEY, { items: cap.items, complete: cap.complete, at: cap.at });
-  } catch (e) { cap.err = e.message; } finally { cap.busy = false; }
+  } catch (e) { cap.err = e.message; cap.at = Date.now(); } finally { cap.busy = false; }   // cap.at: não martela o servidor a cada tick quando falha
 }
 
 /* ── modelo unificado (tudo convertido para a moeda base) ────────────────── */
@@ -901,7 +901,10 @@ function renderAlloc(loadingFirst) {
 // Trading 212: retorno sobre o capital líquido (depósitos − levantamentos). Ao contrário do "investido" (custo das posições
 // abertas), um levantamento sai do valor E do capital, por isso vender ETFs e levantar não distorce o resultado.
 function capitalLine() {
-  if (!M || !M.t || !cap.items || !cap.items.length) return cap.busy || (st.t212 && cap.items == null) ? '<div class="mut" style="font-size:11px;margin-top:10px">T212 · a calcular capital líquido…</div>' : '';
+  if (!M || !M.t || !cap.items || !cap.items.length) {
+    if (cap.err && cap.items == null && !cap.busy) return `<div class="mut" style="font-size:11px;margin-top:10px">T212 · capital líquido indisponível <span class="amber">(${esc(cap.err)})</span></div>`;
+    return cap.busy || (st.t212 && cap.items == null) ? '<div class="mut" style="font-size:11px;margin-top:10px">T212 · a calcular capital líquido…</div>' : '';
+  }
   const r = AMP.netCapital(cap.items.map(x => ({ ts: Date.parse(x.ts), eur: conv(x.eur, 'EUR', base) })), M.t.value);
   if (r.net <= 0 || r.gain == null) return '';
   const part = cap.complete ? '' : ' <span class="amber">(histórico a sincronizar)</span>';
