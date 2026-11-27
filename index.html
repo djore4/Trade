@@ -113,6 +113,7 @@ button:active{transform:scale(.96)}
 /* Investido vs atual */
 .cmp{margin:14px 0 4px}
 .cmp .row{display:grid;grid-template-columns:64px 1fr auto;gap:10px;align-items:center;margin:6px 0;font-size:13px}
+.cmp .row.kv{display:flex;justify-content:space-between;align-items:baseline;gap:10px;white-space:nowrap}
 .cmp .track{height:10px;border-radius:6px;background:var(--card2);overflow:hidden}
 .cmp .fill{height:100%;border-radius:6px;transition:width .7s cubic-bezier(.2,.8,.2,1)}
 svg.spark{width:100%;height:64px;display:block;margin-top:10px}
@@ -909,7 +910,7 @@ function capitalLine() {
   if (r.net <= 0 || r.gain == null) return '';
   const part = cap.complete ? '' : ' <span class="amber">(histórico a sincronizar)</span>';
   return `<div class="cmp" style="margin-top:10px;border-top:1px solid var(--line);padding-top:10px">
-    <div class="row" style="justify-content:space-between"><span class="mut">T212 · capital líquido</span><b class="num">${money(r.net)}</b></div>
+    <div class="row kv"><span class="mut">T212 · capital líquido</span><b class="num">${money(r.net)}</b></div>
     <div class="mut" style="font-size:11px">depositado ${money(r.deposits, base, 0)} − levantado ${money(r.withdrawals, base, 0)}${part}</div>
     <div class="num ${cls(r.gain)}" style="font-weight:600;margin-top:4px">${smoney(r.gain)} · ${pct(r.pct)} <span class="mut" style="font-weight:400">sobre capital líquido</span></div></div>`;
 }
