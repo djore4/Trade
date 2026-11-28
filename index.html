@@ -482,7 +482,7 @@ const store = {
 const n = v => { const x = parseFloat(v); return isFinite(x) ? x : 0; };
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const cls = v => v > 0.005 ? 'pos' : v < -0.005 ? 'neg' : '';
-const fmt = (v, d = 2) => v.toLocaleString('pt-PT', { minimumFractionDigits: d, maximumFractionDigits: d });
+const fmt = (v, d = 2) => v.toLocaleString('pt-PT', { minimumFractionDigits: d, maximumFractionDigits: d, useGrouping: 'always' });
 let base = store.get('base', 'EUR');
 if (!['EUR', 'USD', 'BTC'].includes(base)) base = 'EUR';   // GBP foi substituída por BTC
 /* Modo demonstração: oculta valores monetários e quantidades do portefólio (as % mantêm-se). O contexto do assistente usa sempre valores reais. */
@@ -494,7 +494,7 @@ function money(v, c = base, d = 2) {
   if (hidden()) return '•••••';
   if (c === 'BTC') return (v < 0 ? '−' : '') + '₿' + fmt(Math.abs(v), Math.abs(v) >= 1 ? 4 : 6);
   const cur = c === 'USDT' ? 'USD' : c;
-  try { return new Intl.NumberFormat('pt-PT', { style: 'currency', currency: cur, minimumFractionDigits: d, maximumFractionDigits: d }).format(v); }
+  try { return new Intl.NumberFormat('pt-PT', { style: 'currency', currency: cur, minimumFractionDigits: d, maximumFractionDigits: d, useGrouping: 'always' }).format(v); }
   catch (e) { return fmt(v, d) + ' ' + c; }
 }
 const smoney = (v, c = base, d = 2) => v == null || !isFinite(v) ? '—' : (v >= 0 ? '+' : '−') + money(Math.abs(v), c, d);
