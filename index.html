@@ -657,22 +657,6 @@ async function loadT212(force) {
   st.err.t = last ? last.message : 'erro';        // mantém os últimos dados bons
 }
 
-/* ── capital líquido T212 (depósitos − levantamentos, histórico completo) ───────
-   O servidor sincroniza por etapas (limite de pedidos da T212); aqui só se repete até vir completo. */
-const CAP_KEY = 't212cap';
-const cap = Object.assign({ items: null, complete: false, at: 0, busy: false, err: null }, store.get(CAP_KEY, {}) || {});
-async function loadCapital(force) {
-  if (cap.busy || !st.t212) return;
-  if (!force && cap.complete && Date.now() - cap.at < 6 * 3600e3) return;
-  if (!cap.complete && cap.at && Date.now() - cap.at < 20000 && !force) return;
-  cap.busy = true;
-  try {
-    const d = await amPost('am-data', { action: 't212_capital', force: !!force }, 120000, true);
-    cap.items = d.items || []; cap.complete = !!d.complete; cap.at = Date.now(); cap.err = d.error || null;
-    store.set(CAP_KEY, { items: cap.items, complete: cap.complete, at: cap.at });
-  } catch (e) { cap.err = e.message; cap.at = Date.now(); } finally { cap.busy = false; }   // cap.at: não martela o servidor a cada tick quando falha
-}
-
 /* ── modelo unificado (tudo convertido para a moeda base) ────────────────── */
 const T_GUESS = t => /_US_EQ$/.test(t) ? 'USD' : /d_EQ$/.test(t) ? 'EUR' : /l_EQ$/.test(t) ? 'GBX' : null;
 const cleanTicker = t => { let s = String(t || '?').split('_')[0]; if (/^[A-Z0-9]{2,}[a-z]$/.test(s)) s = s.slice(0, -1); return s; };
@@ -899,21 +883,6 @@ function renderAlloc(loadingFirst) {
     : loadingFirst ? `<div class="sk" style="height:150px"></div>` : '';
   if (tot > 0) firstDraw = false;
 }
-// Trading 212: retorno sobre o capital líquido (depósitos − levantamentos). Ao contrário do "investido" (custo das posições
-// abertas), um levantamento sai do valor E do capital, por isso vender ETFs e levantar não distorce o resultado.
-function capitalLine() {
-  if (!M || !M.t || !cap.items || !cap.items.length) {
-    if (cap.err && cap.items == null && !cap.busy) return `<div class="mut" style="font-size:11px;margin-top:10px">T212 · capital líquido indisponível <span class="amber">(${esc(cap.err)})</span></div>`;
-    return cap.busy || (st.t212 && cap.items == null) ? '<div class="mut" style="font-size:11px;margin-top:10px">T212 · a calcular capital líquido…</div>' : '';
-  }
-  const r = AMP.netCapital(cap.items.map(x => ({ ts: Date.parse(x.ts), eur: conv(x.eur, 'EUR', base) })), M.t.value);
-  if (r.net <= 0 || r.gain == null) return '';
-  const part = cap.complete ? '' : ' <span class="amber">(histórico a sincronizar)</span>';
-  return `<div class="cmp" style="margin-top:10px;border-top:1px solid var(--line);padding-top:10px">
-    <div class="row kv"><span class="mut">T212 · capital líquido</span><b class="num">${money(r.net)}</b></div>
-    <div class="mut" style="font-size:11px">depositado ${money(r.deposits, base, 0)} − levantado ${money(r.withdrawals, base, 0)}${part}</div>
-    <div class="num ${cls(r.gain)}" style="font-weight:600;margin-top:4px">${smoney(r.gain)} · ${pct(r.pct)} <span class="mut" style="font-weight:400">sobre capital líquido</span></div></div>`;
-}
 function renderPortfolio() {
   M = buildModel();
   const errs = [];
@@ -930,7 +899,7 @@ function renderPortfolio() {
     <div class="cmp">
       <div class="row"><span class="mut">Investido</span><div class="track"><div class="fill" style="width:${M.cost / mx * 100}%;background:var(--mut)"></div></div><b class="num">${money(M.cost)}</b></div>
       <div class="row"><span class="mut">Atual</span><div class="track"><div class="fill" style="width:${M.value / mx * 100}%;background:${M.pnl >= 0 ? 'var(--green)' : 'var(--red)'}"></div></div><b class="num">${money(M.value)}</b></div>
-    </div>${capitalLine()}` : loadingFirst ? SKEL : `<div class="empty">Sem dados — vê as notificações (🔔).</div>`;
+    </div>` : loadingFirst ? SKEL : `<div class="empty">Sem dados — vê as notificações (🔔).</div>`;
   if (M.holdings.length) { tween($('heroVal'), lastHero, M.value, v => money(v)); lastHero = M.value; }
 
   renderAlloc(loadingFirst);
@@ -2288,7 +2257,6 @@ async function tick(force) {
     if (force || fng.v == null || Date.now() - fng.at > 600000) jobs.push(loadFng());
     await Promise.all(jobs.map(j => j.then(renderAll)));   // cada fonte atualiza a UI assim que responde (a T212 lenta não bloqueia o resto)
     if (Date.now() - pprAt > 45000) pprPull();
-    loadCapital(false).then(renderAll);   // fora do tick: pode demorar (a T212 limita os pedidos) e não deve bloquear a atualização
   } finally { busy = false; st.loading = false; $('refresh').classList.remove('spin'); renderAll(); }
 }
 document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
