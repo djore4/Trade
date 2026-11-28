@@ -489,12 +489,12 @@ if (!['EUR', 'USD', 'BTC'].includes(base)) base = 'EUR';   // GBP foi substituí
 let priv = store.get('priv', false), revealN = 0;
 const hidden = () => priv && revealN === 0;
 const qv = t => hidden() ? '•••' : t;
-function money(v, c = base, d = 2) {
+function money(v, c = base, d = 2, grp = false) {
   if (v == null || !isFinite(v)) return '—';
   if (hidden()) return '•••••';
   if (c === 'BTC') return (v < 0 ? '−' : '') + '₿' + fmt(Math.abs(v), Math.abs(v) >= 1 ? 4 : 6);
   const cur = c === 'USDT' ? 'USD' : c;
-  try { return new Intl.NumberFormat('pt-PT', { style: 'currency', currency: cur, minimumFractionDigits: d, maximumFractionDigits: d }).format(v); }
+  try { return new Intl.NumberFormat('pt-PT', { style: 'currency', currency: cur, minimumFractionDigits: d, maximumFractionDigits: d, ...(grp ? { useGrouping: 'always' } : {}) }).format(v); }
   catch (e) { return fmt(v, d) + ' ' + c; }
 }
 const smoney = (v, c = base, d = 2) => v == null || !isFinite(v) ? '—' : (v >= 0 ? '+' : '−') + money(Math.abs(v), c, d);
@@ -893,14 +893,14 @@ function renderPortfolio() {
   const mx = Math.max(M.value, M.cost, 1);
   $('heroBody').innerHTML = M.holdings.length ? `
     <div class="lbl">Valor atual do portefólio</div>
-    <div class="big num" id="heroVal">${money(M.value)}</div>
+    <div class="big num" id="heroVal">${money(M.value, base, 2, true)}</div>
     <div class="num ${cls(M.pnl)}" style="font-weight:600">${smoney(M.pnl)} · ${pct(M.pct)} <span class="mut" style="font-weight:400">vs investido</span></div>
     ${M.pnl < 0 && M.value > 0 ? `<div class="mut" style="font-size:12px;margin-top:2px">precisa de <b class="num">+${fmt((M.cost / M.value - 1) * 100, 1)}%</b> para empatar</div>` : ''}
     <div class="cmp">
       <div class="row"><span class="mut">Investido</span><div class="track"><div class="fill" style="width:${M.cost / mx * 100}%;background:var(--mut)"></div></div><b class="num">${money(M.cost)}</b></div>
       <div class="row"><span class="mut">Atual</span><div class="track"><div class="fill" style="width:${M.value / mx * 100}%;background:${M.pnl >= 0 ? 'var(--green)' : 'var(--red)'}"></div></div><b class="num">${money(M.value)}</b></div>
     </div>` : loadingFirst ? SKEL : `<div class="empty">Sem dados — vê as notificações (🔔).</div>`;
-  if (M.holdings.length) { tween($('heroVal'), lastHero, M.value, v => money(v)); lastHero = M.value; }
+  if (M.holdings.length) { tween($('heroVal'), lastHero, M.value, v => money(v, base, 2, true)); lastHero = M.value; }
 
   renderAlloc(loadingFirst);
   dayEnsure();
